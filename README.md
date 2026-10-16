@@ -1,4 +1,4 @@
-# Pi Flux r1 – reverse-engineered printable parts
+# Pi Fluks r1 – reverse-engineered printable parts
 
 Rebuilt from the photos in `Pi_Flux_r1_-_Build_Guide.pdf`. The guide has no CAD
 drawings, so this is a **functional re-creation**, not a copy of the original files.
@@ -51,3 +51,21 @@ The optional back attachment is **not** modelled. The guide shows too little of 
 | `M25_PIL` | 2.2 | set `BRASS_INSERT=true` in `face.scad` for heat-set inserts |
 
 Set `SIDE_CUTOUT=false` in `face.scad` for the version with no side cutout (keyboard wired to the GPIO).
+
+## project briefing
+- ruggedized, strong case, rubber corners
+- boots into kiwix
+- local offline maps, wikipedia, prepper, medical
+- no networking (no wifi, no lan)
+- no bluetooth
+- power by battery bank, solar charger
+- pi 5
+- screen pi, tough protected
+- illuninated keyboard
+- bom from pi flux project 
+- rubber seals for openings (not cooling)
+- no sound
+
+
+
+
