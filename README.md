@@ -57,7 +57,7 @@ Set `SIDE_CUTOUT=false` in `face.scad` for the version with no side cutout (keyb
 
 ## project briefing
 - ruggedized, strong case, rubber corners
-- boots into kiwix
+- boots into project nomad
 - local offline maps, wikipedia, prepper, medical
 - no networking (no wifi, no lan)
 - no bluetooth
@@ -65,7 +65,7 @@ Set `SIDE_CUTOUT=false` in `face.scad` for the version with no side cutout (keyb
 - zimablade 7700
 - screen tough protected
 - no keyboard
-- bom from pi flux project 
+- 1Tb SATA SSD storagr
 - rubber seals for openings (not cooling)
 - no sound
 
