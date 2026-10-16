@@ -47,6 +47,7 @@ in `common.scad`. Imprinted text: "π·FLUKS/AI" on the face and inside the back
 - rubber seals for openings (not cooling)
 - no sound
 - clock important (correct date and time RTC)
+- preferred hardware shops: [tinytronics.nl](https://www.tinytronics.nl), [bol.com](https://www.bol.com) (no Amazon)
 
 ## Target hardware (r2, Pi 5 route)
 
