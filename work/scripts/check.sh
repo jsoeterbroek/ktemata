@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /home/joost/Development/pi_flux/cad
+cd "$(dirname "$0")/../../cad"
 parts="bottom face kbs pull button"
 comps="display pi battery keyboard uadp"
 pairs=""

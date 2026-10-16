@@ -9,15 +9,15 @@ then re-export.
 
 | STL (`stl/`) | Source (`cad/`) | Print orientation |
 |---|---|---|
-| `pi_flux_bottom.stl` – back shell | `bottom.scad` | back plate down, supports for the port window bridges only |
-| `pi_flux_face.stl` – front face | `face.scad` | face plate down |
-| `pi_flux_keyboard_support.stl` | `keyboard_support.scad` | flat |
-| `pi_flux_pull_switch.stl` – USB-C U-adapter pull switch | `pull_switch.scad` | top face (ring tab) down |
-| `pi_flux_power_button.stl` – battery button plunger | `power_button.scad` | cap end down |
+| `pi_fluks_bottom.stl` – back shell | `bottom.scad` | back plate down, supports for the port window bridges only |
+| `pi_fluks_face.stl` – front face | `face.scad` | face plate down |
+| `pi_fluks_keyboard_support.stl` | `keyboard_support.scad` | flat |
+| `pi_fluks_pull_switch.stl` – USB-C U-adapter pull switch | `pull_switch.scad` | top face (ring tab) down |
+| `pi_fluks_power_button.stl` – battery button plunger | `power_button.scad` | cap end down |
 
 `cad/assembly.scad` shows everything with stand-in components (`-D EXPLODE=40`).
 `-D 'CHECK="bottom:pi"'` intersects one part with another, which is handy for clearance checks.
-To re-export the STLs: `python3 cad/tools/export.py`
+To re-export the STLs: `python3 cad/tools/export.py`. To refresh the images in `renders/` afterwards: `python3 cad/tools/render.py`
 
 ## Rugged exterior
 

@@ -13,6 +13,7 @@ Not a git repo. Back up before large changes (a prior version is in `work/backup
 ```bash
 python3 cad/tools/export.py              # export all parts to stl/ (binary, centred, on z=0), prints size + open-edge count
 python3 cad/tools/export.py face bottom  # export only some parts (names: bottom face keyboard_support pull_switch power_button)
+python3 cad/tools/render.py              # regenerate renders/*.png (after export; pi_fluks_* views use the STLs); args filter by name, e.g. asm_iso
 bash work/scripts/check.sh               # interference check of every part vs. every component/part (slow, minutes)
 openscad -D 'CHECK="bottom:pi"' -o /tmp/x.stl cad/assembly.scad   # single interference pair
 openscad -o out.png --render --imgsize=1400,1100 --camera=75,90,17,60,0,35,430 cad/assembly.scad  # render preview

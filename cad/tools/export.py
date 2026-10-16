@@ -3,8 +3,8 @@
 import subprocess, struct, sys, os, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__)); CAD = os.path.dirname(HERE)
 OUT = os.path.join(os.path.dirname(CAD), 'stl')
-PARTS = {'bottom':'pi_flux_bottom', 'face':'pi_flux_face', 'keyboard_support':'pi_flux_keyboard_support',
-         'pull_switch':'pi_flux_pull_switch', 'power_button':'pi_flux_power_button'}
+PARTS = {'bottom':'pi_fluks_bottom', 'face':'pi_fluks_face', 'keyboard_support':'pi_fluks_keyboard_support',
+         'pull_switch':'pi_fluks_pull_switch', 'power_button':'pi_fluks_power_button'}
 
 def read_ascii(path):
     tris, cur = [], []
