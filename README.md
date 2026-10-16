@@ -57,7 +57,7 @@ Set `SIDE_CUTOUT=false` in `face.scad` for the version with no side cutout (keyb
 
 ## project briefing
 - ruggedized, strong case, rubber corners
-- boots into project nomad
+- boots into project nomad, no AI
 - local offline maps, wikipedia, prepper, medical
 - no networking (no wifi, no lan)
 - no bluetooth
