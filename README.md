@@ -36,13 +36,15 @@ in `common.scad`. Imprinted text: "π·FLUKS/AI" on the face and inside the back
 - ruggedized, strong case, rubber corners
 - boots into ubuntu - project nomad, no AI
 - local offline maps, wikipedia, prepper, medical
-- no networking (no wifi, no lan)
+- no networking (no wifi, no lan); exception: optional Meshtastic LoRa (switchable)
 - no bluetooth
 - power by battery (UPS board), solar charger; optional solar cells on backside
 - Raspberry PI 5 16 GB (ZimaBlade 7700 dropped, see below)
 - 5" sunlight-readable LCD (DSI), no e-paper
 - wired USB keyboard (no Bluetooth) + pimoroni trackball breakout
 - BME688 (successor of BME680) Breakout - Air Quality, Temperature, Pressure, Humidity Sensor
+- nice to have: extra small OLED screen (ESP32 LilyGO) for the environment readings and warnings
+- nice to have: Meshtastic (LoRa mesh messaging, off-grid)
 - 1Tb SSD storage (NVMe 2230/2242 preferred, SATA possible)
 - rubber seals for openings (not cooling)
 - no sound
@@ -66,15 +68,17 @@ in `common.scad`. Imprinted text: "π·FLUKS/AI" on the face and inside the back
 | Environment sensor | **Pimoroni BME688** (temp, RH, pressure, VOC/gas index; I2C) | No CO2 or particulates. For those, use Sensirion **SEN66** (PM1–10, CO2, VOC, NOx, T, RH; 55.5 × 25.6 × 21.5 mm, about 90 mA, I2C 0x6B; Adafruit SEN6x breakout). Mount it in a vented pocket on the outer wall with a membrane vent, away from Pi heat, or temperature/RH read high. The SEN66 needs real airflow (inlet + outlet). |
 | Storage | 1 TB NVMe 2230/2242 on an M.2 board | Small and fast. A 1 TB 2.5" SATA SSD also works through the Waveshare PCIe-to-SATA HAT+, but needs a noticeably thicker case. M.2 **SATA** drives don't work on Pi 5 NVMe boards. Check stacking against the UPS board. |
 | Clock | Pi 5 built-in RTC + **Panasonic ML-2020** rechargeable cell on the J5 battery connector | Needed with no networking (no NTP). Enable trickle charging: `dtparam=rtc_bbat_vchg=3000000` in `/boot/firmware/config.txt`. |
-| Radios off | `dtoverlay=disable-wifi` and `dtoverlay=disable-bt` in `config.txt` | Matches "no networking, no Bluetooth". |
+| Small OLED + Meshtastic (nice to have) | **LilyGO T3-S3** (ESP32-S3, SX1262 LoRa **868 MHz**, 0.96" SSD1306 OLED; about 56 × 36 mm) running Meshtastic firmware | One board does both. Meshtastic's telemetry module reads BME68x and SEN6x (incl. SEN66) sensors directly, and `telemetry.environment_screen_enabled` shows the readings on the OLED. So put the environment sensor on the LilyGO's I2C, not the Pi's. The LilyGO connects to the Pi by internal USB (serial). The Pi reads telemetry and messages with the Meshtastic Python library/CLI and can show them in a local web page next to NOMAD. Powered from the UPS 5 V, it keeps showing readings with the Pi off. **Warnings:** Meshtastic has no threshold alerts, so warnings come from a Pi-side script (screen/notification) or, for warnings on the OLED itself with the Pi off, custom ESP32 firmware (which replaces Meshtastic on that board). Upgrade option: **T-Beam Supreme** (1.3" OLED, SX1262, GPS) adds a GPS fix for the offline maps and a second time source for the RTC, but it's larger and has an 18650 holder; check its size. Set the LoRa region to `EU_868`. |
+| Radios off | `dtoverlay=disable-wifi` and `dtoverlay=disable-bt` in `config.txt`; disable Wi-Fi/Bluetooth in the Meshtastic config too | Matches "no networking, no Bluetooth". Meshtastic LoRa is the only radio (it transmits); put it behind a hardware switch so the device can be fully radio-silent. |
 
-Check I2C address collisions before wiring: BME688 0x76/0x77, trackball 0x0A, SEN66 0x6B, plus the UPS fuel gauge.
+Check I2C address collisions before wiring: BME688 0x76/0x77, trackball 0x0A, SEN66 0x6B, plus the UPS fuel gauge. With the LilyGO option the sensors move to the LilyGO's I2C bus (its OLED is at 0x3C).
 
 ### CAD changes this implies (not done yet)
 - Display pocket and holes for the DFR0550-V2 (`DISP_*`, `DISP_HOLES`). The Pi pattern stays 58 × 49, but the frame is 3 mm taller and 3 mm thinner than the r1 display.
 - Battery bay for the UPS board + 4× 21700 instead of the INIU bank (`BAT_*`, `BTN_*`). The battery push-button plunger and the USB-C U-adapter pull switch may no longer be needed.
 - Keyboard PCB mount for the wired keyboard (`KB_*`) and an internal USB cable route; drop the side cutout.
 - Vented sensor pocket in the side wall; trackball window in the face; a sealed USB-C charge port (rubber plug).
+- Optional LilyGO T3-S3: small OLED window in the face (for example beside the keyboard), board mount, internal USB cable to the Pi; SMA bulkhead for an external 868 MHz antenna in the top edge (sealed with an O-ring); a radio on/off switch. Keep the antenna away from the Pi and the display flex cable.
 
 
 
