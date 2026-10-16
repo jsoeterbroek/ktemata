@@ -1,0 +1,10 @@
+# Third-party material (kept locally, not redistributed)
+Pi_Flux_r1_-_Build_Guide.pdf
+build_guide.txt
+extracted/
+*.jpg
+MilDef-*.png
+
+# Scratch / working files (keep the helper scripts)
+work/*
+!work/scripts/
