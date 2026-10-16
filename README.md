@@ -5,6 +5,9 @@ drawings, so this is a **functional re-creation**, not a copy of the original fi
 Everything is parametric OpenSCAD. Measure your own parts, edit `cad/common.scad`,
 then re-export.
 
+## Project Nomad
+based on project nomad
+
 ## Files
 
 | STL (`stl/`) | Source (`cad/`) | Print orientation |
@@ -61,7 +64,7 @@ Set `SIDE_CUTOUT=false` in `face.scad` for the version with no side cutout (keyb
 - power by battery bank, solar charger
 - pi 5
 - screen pi, tough protected
-- illuninated keyboard
+- no keyboard
 - bom from pi flux project 
 - rubber seals for openings (not cooling)
 - no sound
