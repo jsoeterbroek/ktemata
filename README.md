@@ -62,7 +62,7 @@ Set `SIDE_CUTOUT=false` in `face.scad` for the version with no side cutout (keyb
 - no networking (no wifi, no lan)
 - no bluetooth
 - power by battery bank, solar charger
-- zimablade
+- zimablade 7700
 - screen tough protected
 - no keyboard
 - bom from pi flux project 
