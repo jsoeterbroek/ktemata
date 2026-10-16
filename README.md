@@ -62,8 +62,8 @@ Set `SIDE_CUTOUT=false` in `face.scad` for the version with no side cutout (keyb
 - no networking (no wifi, no lan)
 - no bluetooth
 - power by battery bank, solar charger
-- pi 5
-- screen pi, tough protected
+- zimablade
+- screen tough protected
 - no keyboard
 - bom from pi flux project 
 - rubber seals for openings (not cooling)
