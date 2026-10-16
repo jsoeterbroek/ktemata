@@ -6,9 +6,9 @@ Everything is parametric OpenSCAD. Measure your own parts, edit `cad/common.scad
 then re-export.
 
 ## Project Nomad
-based on project nomad
+Based on project nomad
 
-https://youtu.be/o4Bd-bleNDU?is=Fc3EMUCg8lrdhqlE
+### See: https://youtu.be/o4Bd-bleNDU?is=Fc3EMUCg8lrdhqlE
 
 ## Files
 
@@ -31,45 +31,49 @@ left and right grip zones carry vertical ribs. The face has bevelled windows and
 case screws. Everything prints without supports. To tune it, edit `BUMP*`, `EDGE_CZ`, `RIB_*` and `RIB_ZONES`
 in `common.scad`. Imprinted text: "π·FLUKS/AI" on the face and inside the back.
 
-The optional back attachment is **not** modelled. The guide shows too little of it.
-
-## Where the dimensions come from
-
-* **Scale**: from the Waveshare 5-DSI-TOUCH-A datasheet drawing (129 × 72.8 × 7.8 mm,
-  M2.5 holes 117 × 61 outer and 58 × 49 inner). The display is visible in the overview photo (p.3).
-  → body ≈ **150 × 183 mm** (**156 × 189 mm** over the corner bumpers), thickness **34.5 mm** (bottom 24 + face 10.5).
-* Pull-switch slot position (46.2 / 27.5 / 66.2 mm) is taken from the drawing printed on the mat.
-* The Pi 5 hangs on the display's inner holes. Its ports face the **right** wall (guide: "prime the
-  right USB port"), and its USB-C sits under the pull switch.
-* 6 case screws (M2.5×10, from the back, into pilot holes in the face): 4 corners and 2 on the
-  screen/keyboard divider. 4 optional M2.5×10 screws go into the display standoffs.
-
-## Check these before printing (estimates)
-
-| Parameter | Value | Why |
-|---|---|---|
-| `BAT_W/H/T` | 112 × 70 × 16 | INIU size estimated from the photo |
-| `BTN_X`, `BTN_Z` | 108, 10 | battery button position |
-| `UADP*` | 7 × 12.5 × 20.5, male 5.25 from top | your U adapter. It stands upright: male into the Pi, female below (cable runs under the Pi; the guide notes some coolers need fin trimming) |
-| `KB_PCB*`, `KB_WIN` | 137 × 72 PCB | keyboard PCB size and key window |
-| `W`, `L`, `H_BOT`, `H_FACE` | 150, 183, 24, 10.5 | from photo scaling, ±3 mm |
-| `M25_PIL` | 2.2 | set `BRASS_INSERT=true` in `face.scad` for heat-set inserts |
-
-Set `SIDE_CUTOUT=false` in `face.scad` for the version with no side cutout (keyboard wired to the GPIO).
 
 ## project briefing
 - ruggedized, strong case, rubber corners
-- boots into project nomad, no AI
+- boots into ubuntu - project nomad, no AI
 - local offline maps, wikipedia, prepper, medical
 - no networking (no wifi, no lan)
 - no bluetooth
-- power by battery bank, solar charger
-- zimablade 7700
-- screen tough protected
-- no keyboard
-- 1Tb SATA SSD storagr
+- power by battery (UPS board), solar charger; optional solar cells on backside
+- Raspberry PI 5 16 GB (ZimaBlade 7700 dropped, see below)
+- 5" sunlight-readable LCD (DSI), no e-paper
+- wired USB keyboard (no Bluetooth) + pimoroni trackball breakout
+- BME688 (successor of BME680) Breakout - Air Quality, Temperature, Pressure, Humidity Sensor
+- 1Tb SSD storage (NVMe 2230/2242 preferred, SATA possible)
 - rubber seals for openings (not cooling)
 - no sound
+- clock important (correct date and time RTC)
+
+## Target hardware (r2, Pi 5 route)
+
+> **The CAD still models the r1 parts** (Waveshare 5" DSI, Bluetooth mini keyboard, INIU power bank).
+> The parts below are chosen but not modelled yet. Measure them and update `cad/common.scad` before printing.
+
+| Function | Choice | Notes |
+|---|---|---|
+| Board | Raspberry Pi 5, 16 GB | Project NOMAD is officially x86-64 only for now. ARM64 support is being built by the maintainers (no date). Until then, run Kiwix (Wikipedia, medical, prepper) and ProtoMaps directly, or use a community ARM build. |
+| Display | **DFRobot DFR0550-V2** 5" IPS DSI, 800×480, optically bonded, 550 cd/m², anti-glare, capacitive touch | 120.7 × 75.8 × 4.9 mm, frame holes 113 × 68, Pi holes 58 × 49 (same Pi pattern as now). About 2.3 W. Brighter and less reflective outdoors than the r1 Waveshare 5" DSI (about 1.2 W, glossy, no brightness rating). Fallback: keep the Waveshare. |
+| Power | **Waveshare UPS HAT (E)**: 4× 21700, 5 V 6 A out, USB-C PD 3.0 in (5–20 V, up to 40 W), I2C fuel gauge | Charges and powers the Pi at the same time, so plugging in solar or a charger does not reboot it. Most power banks drop their output for a moment when a charger is connected, which resets the Pi. 88 × 56 mm board, but the 21700 cells (Ø21 × 70 mm) set the case depth. Alternatives: SunFounder PiPower 5 (5–15 V PD in, 5 V 5 A), Geekworm X1200 (2× 18650) / X1202 (4× 18650; not compatible with the X1002 bottom NVMe board). |
+| Solar | Foldable 20–30 W panel with a regulated **USB-C PD** output, into the UPS USB-C port | The UPS boards don't document raw solar input. Don't connect a bare panel; use one with a PD/regulator output or a small solar charge controller in between. |
+| Solar on case back (nice to have) | Thin ETFE panel (about 5–6 V) through a small solar power manager (MPPT) | The back is about 150 × 183 mm, so expect at most about 5 W peak and 2–3 W in practice. That only stretches idle time; it can't power the device while in use. Solar power banks with built-in cells charge just as slowly. |
+| Keyboard | **Wired USB**, no Bluetooth: RP2040/Pico-based keyboard running KMK/QMK (USB HID) | Best fit: a custom PCB on the existing `KB_PCB` footprint (137 × 72), or the open-source Solder Party **BBQ20KBD** (BlackBerry Q20 keys + trackpad, USB HID; sold out since Jan 2026). mini PiQWERTY (Pico, 107 × 65 mm) has no Ctrl/Alt, so it's poor for a Linux terminal. Use a short internal USB cable to a Pi USB port; the side cutout is then no longer needed (`SIDE_CUTOUT=false`). |
+| Pointer | Pimoroni trackball breakout (I2C) | Needs a small uinput daemon to act as a mouse. Not needed if the BBQ20KBD trackpad is used. |
+| Environment sensor | **Pimoroni BME688** (temp, RH, pressure, VOC/gas index; I2C) | No CO2 or particulates. For those, use Sensirion **SEN66** (PM1–10, CO2, VOC, NOx, T, RH; 55.5 × 25.6 × 21.5 mm, about 90 mA, I2C 0x6B; Adafruit SEN6x breakout). Mount it in a vented pocket on the outer wall with a membrane vent, away from Pi heat, or temperature/RH read high. The SEN66 needs real airflow (inlet + outlet). |
+| Storage | 1 TB NVMe 2230/2242 on an M.2 board | Small and fast. A 1 TB 2.5" SATA SSD also works through the Waveshare PCIe-to-SATA HAT+, but needs a noticeably thicker case. M.2 **SATA** drives don't work on Pi 5 NVMe boards. Check stacking against the UPS board. |
+| Clock | Pi 5 built-in RTC + **Panasonic ML-2020** rechargeable cell on the J5 battery connector | Needed with no networking (no NTP). Enable trickle charging: `dtparam=rtc_bbat_vchg=3000000` in `/boot/firmware/config.txt`. |
+| Radios off | `dtoverlay=disable-wifi` and `dtoverlay=disable-bt` in `config.txt` | Matches "no networking, no Bluetooth". |
+
+Check I2C address collisions before wiring: BME688 0x76/0x77, trackball 0x0A, SEN66 0x6B, plus the UPS fuel gauge.
+
+### CAD changes this implies (not done yet)
+- Display pocket and holes for the DFR0550-V2 (`DISP_*`, `DISP_HOLES`). The Pi pattern stays 58 × 49, but the frame is 3 mm taller and 3 mm thinner than the r1 display.
+- Battery bay for the UPS board + 4× 21700 instead of the INIU bank (`BAT_*`, `BTN_*`). The battery push-button plunger and the USB-C U-adapter pull switch may no longer be needed.
+- Keyboard PCB mount for the wired keyboard (`KB_*`) and an internal USB cable route; drop the side cutout.
+- Vented sensor pocket in the side wall; trackball window in the face; a sealed USB-C charge port (rubber plug).
 
 
 

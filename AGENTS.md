@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Parametric OpenSCAD re-creation of the 3D-printed case for the "Pi Flux r1" handheld (Pi 5 + 5" Waveshare DSI display + mini keyboard + INIU power bank). It is reverse-engineered from the photos in `Pi_Flux_r1_-_Build_Guide.pdf` (text in `build_guide.txt`, page images in `work/pages/`). No original CAD exists. Many dimensions are estimates; see the "Check these before printing" table in `README.md`. The device has a rugged/military styling (corner bumpers, chamfered edges, grip ribs). Imprinted branding is "π·FLUKS/AI".
 
-Not a git repo. Back up before large changes (a prior version is in `work/backup_v1/`). Tooling: OpenSCAD 2021.01 (CGAL, slow on many booleans), Python 3.
+**Target hardware is changing (r2).** The CAD still models the r1 components above. The chosen r2 parts are in `README.md` ("Target hardware"): Pi 5, DFRobot DFR0550-V2 5" DSI LCD, Waveshare UPS HAT (E) with 4× 21700 cells and solar over USB-C PD, a **wired USB** keyboard (no Bluetooth), Pimoroni trackball, BME688 (optionally SEN66), 1 TB NVMe, and the Pi 5 RTC with an ML-2020 cell. The ZimaBlade and e-paper displays were considered and rejected; don't reintroduce them. No Wi-Fi, LAN, Bluetooth or sound. When modelling r2 parts, keep the existing r1 geometry working (add parameters or options rather than deleting) unless told otherwise.
+
+Git repo. Commit or back up before large changes (an older version is also in `work/backup_v1/`). Tooling: OpenSCAD 2021.01 (CGAL, slow on many booleans), Python 3.
 
 ## Commands
 
