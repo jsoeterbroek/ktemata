@@ -8,6 +8,8 @@ then re-export.
 ## Project Nomad
 based on project nomad
 
+https://youtu.be/o4Bd-bleNDU?is=Fc3EMUCg8lrdhqlE
+
 ## Files
 
 | STL (`stl/`) | Source (`cad/`) | Print orientation |
