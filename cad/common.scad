@@ -23,7 +23,8 @@ M25_PIL  = 2.2;     // pilot hole for self tapping into plastic (use 3.6 for bra
 M25_HEAD = 5.2;     // counterbore for head
 BOSS_D   = 7;
 // 6 case screws: 4 corners + 2 on the screen/keyboard divider
-CASE_SCREWS = [[8.5,8.5],[W-8.5,8.5],[6.5,90],[W-6.5,90],[8.5,L-8.5],[W-8.5,L-8.5]];
+// (side bosses at x=6 so they overlap the 3 mm wall; tangent bosses make non-manifold edges)
+CASE_SCREWS = [[8.5,8.5],[W-8.5,8.5],[6,90],[W-6,90],[8.5,L-8.5],[W-8.5,L-8.5]];
 
 // ---------------- display (Waveshare 5-DSI-TOUCH-A) ----------------
 DISP_W = 129; DISP_H = 72.8; DISP_T = 7.8; DISP_R = 4; DISP_POST = 5;

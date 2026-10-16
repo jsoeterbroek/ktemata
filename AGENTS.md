@@ -19,7 +19,7 @@ openscad -D 'CHECK="bottom:pi"' -o /tmp/x.stl cad/assembly.scad   # single inter
 openscad -o out.png --render --imgsize=1400,1100 --camera=75,90,17,60,0,35,430 cad/assembly.scad  # render preview
 ```
 
-`open edges: 0` from export.py means the mesh is manifold. Any other value is a regression. In check.sh, a "HIT" whose bbox is flat in one axis (or that throws an empty-bbox traceback) is a zero-volume contact and is expected. Only volumetric bboxes are real collisions.
+`bad edges: 0` from export.py means the mesh is manifold (no open edges, no edges shared by >2 faces, which slicers flag as non-manifold). Touching-but-not-overlapping solids (tangent bosses, flush faces) are the usual cause: overlap them by ≥0.5 mm. Any other value is a regression. In check.sh, a "HIT" whose bbox is flat in one axis (or that throws an empty-bbox traceback) is a zero-volume contact and is expected. Only volumetric bboxes are real collisions.
 
 ## Architecture
 

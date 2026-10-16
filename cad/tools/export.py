@@ -25,13 +25,13 @@ def write_bin(path, tris, name):
             f.write(struct.pack('<12fH', *[x/l for x in n], *a, *b, *c, 0))
 
 def check_manifold(tris):
+    """Edges not shared by exactly one face in each direction (open or non-manifold, as slicers report)."""
     edges = {}
     for t in tris:
         for i in range(3):
             e = (t[i], t[(i+1) % 3])
             edges[e] = edges.get(e, 0) + 1
-    bad = sum(1 for (a, b), n in edges.items() if edges.get((b, a), 0) != n)
-    return bad
+    return sum(1 for (a, b), n in edges.items() if n != 1 or edges.get((b, a), 0) != 1)
 
 os.makedirs(OUT, exist_ok=True)
 for part, fname in PARTS.items():
@@ -47,4 +47,4 @@ for part, fname in PARTS.items():
     tris = [[tuple(p[i]+off[i] for i in range(3)) for p in t] for t in tris]
     write_bin(os.path.join(OUT, fname + '.stl'), tris, fname)
     print(f'{fname:28s} {max(xs)-min(xs):6.1f} x {max(ys)-min(ys):6.1f} x {max(zs)-min(zs):5.1f} mm  '
-          f'{len(tris):6d} tris  open edges: {check_manifold(tris)}')
+          f'{len(tris):6d} tris  bad edges: {check_manifold(tris)}')

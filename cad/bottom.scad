@@ -53,6 +53,8 @@ module pull_cut() {
 // ---- top-right port box (two USB-C sized slots in the top wall)
 PB_X = PULL_SLOT_X0 + PULL_SLOT_W + 3; PB_W = 28; PB_D = PI_Y0 - 2;   // stays clear of the Pi pcb
 module port_box() {
+    // 1 mm pad bridging into the top wall so box and wall fuse (flush faces gave non-manifold edges)
+    at(PB_X, WALL + 0.5, FLOOR) cube([PB_W, 1, H_BOT-FLOOR-2.5]);
     at(PB_X, WALL) translate([0, -(PB_D-WALL), FLOOR]) difference() {
         cube([PB_W, PB_D-WALL, H_BOT-FLOOR-2.5]);
         translate([2, -1, -1]) cube([PB_W-4, PB_D-WALL-1, H_BOT-FLOOR-4.5]);
