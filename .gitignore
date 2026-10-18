@@ -5,6 +5,11 @@ extracted/
 *.jpg
 MilDef-*.png
 
+# Downloaded reference videos (transcripts are tracked)
+reference/yt/*.webm
+reference/yt/*.mp4
+reference/yt/*.mkv
+
 # Scratch / working files (keep the helper scripts)
 work/*
 !work/scripts/

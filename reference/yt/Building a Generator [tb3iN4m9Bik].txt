@@ -1,0 +1,289 @@
+I want to build a hand crank generator
+that can be used to produce electricity
+anywhere to either charge my phone Power
+a light or an upcoming project that
+requires one there are many hand crank
+generators available online and I've
+previously tested one for charging my
+phone though due to a large gear ratio
+and cheap brushed motor as a generator
+it was very inefficient it's quite
+common to use brushed electric motors as
+generators because if you spin the shaft
+you can actually generate electricity at
+the wires but the problem is with this
+is that it needs to spin at really high
+RPM so the speed that you can spin a
+hand crank at is far too low for this
+kind of motor to generate say 10 volts
+or so uh so we need a huge gear ratio to
+convert the hand crank speed up to the
+higher RPM at the motor speed
+alternatively we can build our own
+alternator I've done this in the past
+when I built a flywheel battery which
+used an axial flux alternator to
+generate electricity this worked by
+spinning two two plates of magnets
+either side of some copper coils each
+magnet is mounted with alternating poles
+so one has its North Pole facing the
+camera and the next has its South Pole
+facing the camera so when placing a coil
+next to the magnets and spinning them
+the magnetic field changes creating a
+current within the coil and because of
+the alternating magnet poles this magnet
+will produce a current in this direction
+and the other magnet will produce it in
+the opposite direction and the direction
+of the current flow will alternate as
+the mag maget spin so let's replicate
+this alternated design with some small
+modifications to make it suitable for a
+hand crank generator I started by
+printing the plate that will hold the
+magnets or otherwise known as the rotor
+as it rotates within the alternator this
+was simply printed from pla plastic as
+it's cheap non-conductive and doesn't
+affect the magnetic fields then I bought
+some highquality n52 grade magnets that
+simply press fit into the rotor making
+sure the polarity of each magnet it
+alternates around the circumference I
+then printed a housing that will hold
+the rotor as well as a shaft that is
+keyed which will be important later then
+I printed the mount for the stator or
+the stationary portion of the alternator
+which will eventually hold the coils in
+position and finally on top of that I
+can mount the second rotor which is also
+keyed to keep it spinning at the same
+rate as the first rotor on the other
+side now I need to make the coils that
+will be sandwiched between the two at
+first I used this8 mm en naved copper
+wire but it didn't allow many turns of
+wire resulting in a low output voltage
+the number of turns of wire in the coil
+is very important as generally more
+turns of wire means a higher output
+voltage so I rewind the coils with much
+thinner wire so that I could get more
+turns which should increase the voltage
+another factor that affects the output
+voltage is the speed at which the
+magnets pass the coils so I 3D printed a
+gear ratio that will allow me to spin
+the rotors faster which increasing es
+the voltage
+significantly the final method to
+increasing the output voltage is to
+connect the coils in series similar to
+connecting two batteries in series will
+double the voltage this works the same
+with the coils so I wound seven more
+coils each with 350 turns of wire making
+a total of eight coils and 2,800 turns
+of wire which were all glued to the
+central stator and and solder together
+in a configuration of two in series and
+four in parallel which as I just
+mentioned the number of coils in series
+affects the output voltage and the
+number of coils in parallel affects the
+current capabilities so two in series
+should produce about 15 to 20 volts and
+four in parallel should be able to
+handle the current produced by my manual
+arm strength the coils are then soldered
+to a full Bridge rectifier which is just
+four diodes that convert the alternating
+current current or AC into direct
+current or DC this works because the
+diodes only let electricity flow through
+in One Direction so if the coil produces
+current in the clockwise Direction it
+will flow from the coil down through
+this diode over towards the LED then
+after the LED it will flow towards the
+top of the rectifier and down through
+this diode which connects it back to the
+coil completing the circuit but if the
+coil creates current in the
+anticlockwise direction it will flow
+through this wire to the rectifier down
+through this diode over to the LED back
+towards the top of the rectifier and
+down through the diode to complete the
+circuit so no matter the current
+direction in the coil the current
+direction at the LED or the output is
+always the same and I also added a few
+small capacitors to try create a
+smoother output voltage so with a small
+voltmeter connected to the output of the
+rectifier we can see the generated
+electricity when the handle is spun
+though this is only with one rotor
+spinning and by attaching the second
+rotor we can greatly increase the
+magnetic field within the coils
+essentially doubling the output
+voltage I think glued an xt60 connector
+to the frame of the generator which will
+be used to Output the generated power
+and attach the other half of the frame
+to cover up the electronics and finally
+I added a handle to the crank and there
+we have it a 3D printed hand crank
+generator so how well does it work so to
+test how well the generator works I made
+this small cable which has an xt60
+connector to plug into the generator and
+then just has some crocodile Clips on
+the other end so we can uh see if it
+will power any various electronic items
+uh unfortunately I don't have any 12vt
+LED or light bulbs um but this fault
+meter lights up just by turning it which
+is essentially an LED in itself uh but
+what I do have is the brushed electric
+motor that I showed earlier in the video
+so let's see if this runs uh through
+hand power alone so we'll just connect
+the crocodile Clips onto there and then
+spin the
+generator
+[Music]
+well that's working the
+um it's quite impressive how much more
+resistance it adds to the to the
+generator I can't really hold this
+whilst I turn
+it yeah it's quite a lot of resistance
+to turn that and if I spin the generator
+even faster see if it goes higher
+RM
+that actually works really well so it
+must be generating quite a lot lot of
+power uh it definitely increases the
+resistance a lot uh let's see what else
+we can power I've got um I've got a bank
+of super capacitors which were from my
+uh super capacitor dragster a few years
+ago uh I haven't actually used them in a
+while so I don't know whether they have
+any charge uh so if I plug these in like
+that and
+then it' be nice to have a bit of a
+longer wire but that's going to have to
+do move those out of the way and
+then wind this
+up I assume the um the voltage the
+voltmeter on the top here doesn't show
+anything at the moment because I assume
+it needs a minimum voltage to actually
+show something so I'll tell you what I'm
+going to
+do
+is I'll use
+my
+multimeter right there we go I've got
+the voltmeter connected up to the
+capacitors now so you can see what
+they're at so 1.3 volts at the
+moment and if I turn
+this it's charging up quicker than I
+thought it would do 2
+volts I don't know when the LED
+voltmeter starts turning
+on oh there voltmeters is turning on now
+so it's saying 2.8
+volts slightly different to the
+multimeter but it's not bad uh I think
+these are so these are 3vt capacitors
+and I think it's six in series so uh
+that's 18 volt
+so guess we can charge this up for a
+little
+bit it's charging up surprisingly fast
+actually let's see if I if I turn it
+slow see if it still
+generates yes so if I turn it
+slow it just generates a bit slow and if
+I really crank
+it then we get more
+volts okay uh I don't really know what
+to do with that voltage now I guess we
+could I guess we could power the motor
+um right connecting the crocodile Clips
+to the
+motor
+oh wow
+[Music]
+that's quite a lot of uh energy stored
+just from cranking this thing around
+for for probably not even more than a
+minute really didn't take long at all to
+get up to 5
+volts okay moving on from the
+capacitors uh I have this small uh well
+actually it's quite large uh I have this
+5vt regulator which outputs USB power
+see if I can charge my phone with this
+thing I think compared to charging the
+capacitors and the motor charging the
+phone will be very easy so uh let's give
+that a go so I haven't actually made a
+cable for charging my phone directly
+from this so I'm just going to use the
+crocodile clip uh
+cable uh which I guess I can clip onto
+the bottom of this
+board it's not the most ideal solution
+because it could short out USB plug in
+the other
+end USBC then I can plug my phone in the
+other end hopefully this doesn't kill my
+phone um how should I prop this out
+maybe I lean it down and use use this
+big coil of
+wire so I need to
+produce a minimum of 5 volts for it to
+charge and
+it's
+charging it says uh 1 hour 13 minutes to
+charge from
+45% if I
+stop yeah it detects USB
+disconnected if I turn it
+again
+charging there's far less resistance
+charging my phone uh because I guess I
+think this thing is only 5 Vols 1 amp uh
+so so that's only 5 Watts total whereas
+when we're charging the super capacitors
+or powering the motor it's probably you
+know 10 to 20 watts or so so it it's
+much more difficult to turn but this
+thing I'm not sure I could crank this
+for an hour and 13 minutes uh to get my
+phone to fall but it it
+works it's not bad so if any of you want
+to build your own hand crank generator
+for charging your phone or powering
+anything else uh the 3D printer files
+for this are freely available uh via the
+link in the description below which will
+go to printables uh and all of the
+information about the bearing sizes the
+bolt sizes the magnet sizes uh all the
+coil wire diameters Etc uh will also be
+mentioned on the prinables description
+so uh let me know if you build your own
+hand crank generator and uh click
+subscribe and a thumbs up if you like
+the project goodbye
