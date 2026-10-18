@@ -43,7 +43,7 @@ in `common.scad`. Imprinted text: "π·FLUKS/AI" on the face and inside the back
 - 5" sunlight-readable LCD (DSI), no e-paper
 - wired USB keyboard (no Bluetooth) + pimoroni trackball breakout
 - BME688 (successor of BME680) Breakout - Air Quality, Temperature, Pressure, Humidity Sensor
-- nice to have: extra small OLED screen (ESP32 LilyGO) for the environment readings and warnings, and battery status (important)
+- nice to have: extra small OLED screen (ESP32 LilyGO) for the environment readings and warnings, and battery status (important); cycles through at least 4 screens: time (default), battery power, environment data, storage %; auto-switches to the relevant screen when a threshold is passed
 - 1Tb SSD storage (NVMe 2230/2242 preferred, SATA possible)
 - rubber seals for openings (not cooling)
 - no sound
@@ -73,12 +73,42 @@ in `common.scad`. Imprinted text: "π·FLUKS/AI" on the face and inside the back
 
 Check I2C address collisions before wiring: BME688 0x76/0x77, trackball 0x0A, SEN66 0x6B, plus the UPS fuel gauge. With the LilyGO option the sensors and the UPS battery monitor (0x2D) move to the LilyGO's I2C bus (its OLED is at 0x3C). Don't connect them to both the Pi and the LilyGO; two I2C masters on one bus cause trouble.
 
+### Status OLED: screens and alerts
+
+At least four screens, cycled with a button. The **time** screen is the default.
+
+| # | Screen | Content | Source |
+|---|---|---|---|
+| 1 | **Time** (default) | HH:MM, date, weekday; small battery % and alert icons | ESP32 clock, set from the Pi over USB when it runs; a **DS3231 RTC** (I2C 0x68) on the LilyGO keeps the time after a full power loss with the Pi off |
+| 2 | **Battery power** | charge %, voltage, current (charging/discharging), input present (solar/crank), estimated time left | UPS HAT (E) battery monitor (0x2D) |
+| 3 | **Environment** | temperature, humidity, pressure + 3 h trend (falling fast = weather warning), VOC/air-quality index; CO2 and PM2.5 if the SEN66 is fitted | BME688 / SEN66 |
+| 4 | **Storage** | % used and free GB of the 1 TB SSD | Pi over USB; with the Pi off, shows the last value and its age |
+
+**Navigation:** one sealed push button on the case, wired to an ESP32 GPIO. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert.
+
+**Auto-switch on thresholds:** when a value passes a threshold, the OLED jumps to that screen and marks the value (inverted/blinking). It stays there until the condition clears or the alert is acknowledged, then returns to the time screen. An acknowledged alert comes back only if it gets worse (warning → critical). With several alerts at once, priority is battery > environment > storage. Thresholds use hysteresis so a value hovering at the limit doesn't flap. Thresholds are stored in the ESP32 (NVS) and can be changed from the Pi over USB.
+
+Starting thresholds (tune them in use):
+
+| Value | Warning | Critical |
+|---|---|---|
+| Battery charge | ≤ 20 % | ≤ 10 % (the Pi also does a safe shutdown) |
+| Ambient temperature | > 35 °C or < 0 °C | > 45 °C |
+| Humidity | > 85 % RH | |
+| Pressure | falls > 3 hPa in 3 h | falls > 6 hPa in 3 h |
+| Air quality (BME688 IAQ/VOC index) | > 200 | > 300 |
+| CO2 (SEN66) | > 1500 ppm | > 2500 ppm |
+| PM2.5 (SEN66) | > 35 µg/m³ | > 75 µg/m³ |
+| Storage used | ≥ 90 % | ≥ 97 % |
+
+**Power and OLED care:** the ESP32 runs all the time from the UPS. Awake with the screen on, it draws roughly 0.3–0.5 W, which is about 10 % of the battery per day. So it sleeps between readings (light sleep, sensor reads about once a minute) and turns the OLED off after about 1 min idle; a button press or an alert wakes it. Small pixel shifts on the time screen reduce OLED burn-in.
+
 ### CAD changes this implies (not done yet)
 - Display pocket and holes for the DFR0550-V2 (`DISP_*`, `DISP_HOLES`). The Pi pattern stays 58 × 49, but the frame is 3 mm taller and 3 mm thinner than the r1 display.
 - Battery bay for the UPS board + 4× 21700 instead of the INIU bank (`BAT_*`, `BTN_*`). The battery push-button plunger and the USB-C U-adapter pull switch may no longer be needed.
 - Keyboard PCB mount for the wired keyboard (`KB_*`) and an internal USB cable route; drop the side cutout.
 - Vented sensor pocket in the side wall; trackball window in the face; a sealed USB-C charge port (rubber plug), shared by solar and the hand crank through an internal MPPT charge module (find room for it).
-- Optional LilyGO status OLED: small window in the face (for example beside the keyboard), board mount, internal USB cable to the Pi, I2C wiring to the sensor pocket and the UPS board. No antenna.
+- Optional LilyGO status OLED: small window in the face (for example beside the keyboard), a sealed push button for cycling screens, a DS3231 RTC module, board mount, internal USB cable to the Pi, I2C wiring to the sensor pocket and the UPS board. No antenna.
 
 
 
