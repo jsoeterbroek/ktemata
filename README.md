@@ -103,6 +103,6 @@ Starting thresholds (tune them in use):
 - Display pocket and holes for the DFR0550-V2 (`DISP_*`, `DISP_HOLES`). The Pi pattern stays 58 × 49, but the frame is 3 mm taller and 3 mm thinner than the r1 display.
 - Battery bay for the UPS board + 4× 21700 instead of the INIU bank (`BAT_*`, `BTN_*`). The battery push-button plunger and the USB-C U-adapter pull switch may no longer be needed.
 - Keyboard PCB mount for the wired keyboard (`KB_*`) and an internal USB cable route; drop the side cutout.
-- Vented sensor pocket in the side wall; trackball window in the face; a sealed USB-C charge port (rubber plug), shared by solar and the hand crank through an internal MPPT charge module (find room for it).
+- Vented sensor pocket in the side wall; a sealed USB-C charge port (rubber plug), shared by solar and the hand crank through an internal MPPT charge module (find room for it).
 - Optional LilyGO status OLED: small window in the face (for example beside the keyboard), a sealed push button for cycling screens, a DS3231 RTC module, board mount, internal USB cable to the Pi, I2C wiring to the sensor pocket and the UPS board. No antenna.
 
