@@ -1,0 +1,9 @@
+# Runtime Python dependencies for the project tooling.
+#
+#   cad/tools/export.py, cad/tools/render.py   stdlib only (drive the openscad CLI)
+#   work/scripts/crop.py                       Pillow (PDF page crops with a measurement grid)
+#
+# Install into the local venv:
+#   uv venv .venv && uv pip install -r packages.txt
+
+Pillow>=12.0

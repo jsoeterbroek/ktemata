@@ -11,6 +11,11 @@ reference/yt/*.mp4
 reference/yt/*.mkv
 reference/content/
 
+# Python environment (uv / venv)
+.venv/
+__pycache__/
+*.pyc
+
 # Scratch / working files (keep the helper scripts)
 work/*
 !work/scripts/
