@@ -36,6 +36,12 @@ See [`BOM.md`](BOM.md) for the r2 shopping list (Kiwi Electronics primary, with 
 Bol alternates). It excludes the FireBeetle 2 ESP32-UE and 1.3" OLED, which are already owned, and flags
 the current display / UPS / NVMe / button fit caveats.
 
+## Wiring
+
+See [`docs/WIRING.md`](docs/WIRING.md) for the power and data/I²C block diagrams, pin-level tables and wiring
+rules. It also links the editable KiCad 10 schematic (`docs/pi_flux_r2_wiring.kicad_sch`, PDF/SVG/PNG) and
+the netlist-style [`docs/pi_flux_r2_connections.csv`](docs/pi_flux_r2_connections.csv).
+
 ## Python environment
 
 ```bash
@@ -129,7 +135,7 @@ button are not used in r2.
 | Status button | **TinyTronics PBS-33B** 12 mm panel-mount momentary NO pushbutton ([black](https://www.tinytronics.nl/en/switches/manual-switches/push-buttons-and-switches/black-push-button-12mm-reset-pbs-33b)) | Fits the modelled 12.2 mm `OLED_BTN_D` hole. One terminal to GPIO4, the other to GND (`INPUT_PULLUP`). Not IP-rated; add a rubber boot for the sealed build, or use a 16 mm IP67 metal button and enlarge the top-wall hole. Short press = next screen, long press = acknowledge. |
 | Radios off | `dtoverlay=disable-wifi` and `dtoverlay=disable-bt` in `config.txt`; Wi-Fi/Bluetooth off in the FireBeetle firmware | Matches "no networking, no Bluetooth". No hardware radio switch needed. |
 
-Check I2C address collisions before wiring: BME688 0x76/0x77, trackball 0x0A, SEN66 0x6B, plus the UPS fuel gauge. With the FireBeetle option the sensors and the UPS battery monitor (0x2D) move to its I2C bus (its OLED is at 0x3C, SDA GPIO21, SCL GPIO22). Don't connect them to both the Pi and the FireBeetle; two I2C masters on one bus cause trouble.
+Check I2C address collisions before wiring: BME688 0x76/0x77, trackball 0x0A, SEN66 0x6B, plus the UPS fuel gauge. With the FireBeetle option the sensors, trackball and UPS battery monitor (0x2D) move to its I2C bus (its OLED is at 0x3C, SDA GPIO21, SCL GPIO22). Don't connect them to both the Pi and the FireBeetle; two I2C masters on one bus cause trouble. Trackball forwarding to the Pi is still to be added in the firmware.
 
 ### Considered and rejected (r2)
 

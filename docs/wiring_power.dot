@@ -1,0 +1,25 @@
+digraph power {
+  graph [rankdir=TB, splines=spline, nodesep=0.45, ranksep=0.55, fontname="DejaVu Sans", bgcolor="white", pad=0.2];
+  node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=11, margin="0.14,0.08", color="#555555", penwidth=1.2];
+  edge [fontname="DejaVu Sans", fontsize=9, color="#c0392b", penwidth=1.8, arrowsize=0.7];
+
+  solar [label=<<b>Foldable solar panel</b><br/>20–30 W · regulated USB-C PD>, fillcolor="#fff4cc"];
+  crank [label=<<b>Hand crank generator</b><br/>USB-C output · external>, fillcolor="#fff4cc"];
+  port  [label=<<b>Sealed USB-C charge port</b><br/>top wall · rubber plug>, fillcolor="#e8f4ff"];
+  mppt  [label=<<b>MPPT / charger</b><br/>bq25185 5 V boost<br/>or DFRobot Solar Power Manager 5V>, fillcolor="#e8f4ff"];
+  ups   [label=<<b>Waveshare UPS HAT (E)</b><br/>4× 21700 in series (4S)<br/>USB-C PD input · 5 V 6 A output<br/>I²C 0x2D · power switch>, fillcolor="#ffe8e8"];
+  pi    [label=<<b>Raspberry Pi 5</b><br/>pogo-pin 5 V + GND<br/>RTC ML-2020 on J5>, fillcolor="#e8ffe8"];
+  fb    [label=<<b>FireBeetle 2 ESP32-UE</b><br/>5 V in from UPS USB-A<br/>3V3 · GND · SDA21 · SCL22>, fillcolor="#e8ffe8"];
+  rtc   [label=<<b>Pi RTC cell</b><br/>Panasonic ML-2020<br/>2-pin JST → J5>, fillcolor="#f0e8ff"];
+
+  solar -> port [label="USB-C"];
+  crank -> port [label="USB-C"];
+  port -> mppt [label="5–20 V"];
+  mppt -> ups [label="5 V → USB-C in"];
+  ups -> pi [label="pogo pins: 5 V / GND", color="#d35400", penwidth=2.4];
+  ups -> fb [label="USB-A: 5 V / GND", color="#d35400", penwidth=2.4];
+  pi -> rtc [label="RTC backup", style=dashed, color="#8e44ad"];
+
+  { rank=same; solar; crank; }
+  { rank=same; pi; fb; }
+}

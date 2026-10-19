@@ -1,0 +1,42 @@
+From,From pin/pad,Net,To,To pin/pad,Cable / notes
+Solar panel (20-30 W USB-C PD),USB-C out,CHG_VBUS,Sealed USB-C port,outside female,USB-C cable; regulated 5 V/PD source
+Hand crank generator,USB-C out,CHG_VBUS,Sealed USB-C port,outside female,USB-C cable; separate from case
+Sealed USB-C port,inside male,CHG_VBUS,MPPT/charger,VIN+,5-20 V input; panel-mount pigtail
+Sealed USB-C port,inside male,CHG_GND,MPPT/charger,VIN-,Common ground
+MPPT/charger,VOUT 5V,UPS_CHG_VBUS,UPS HAT (E),USB-C input,5 V output to UPS; no PD negotiation needed
+MPPT/charger,VOUT GND,UPS_CHG_GND,UPS HAT (E),USB-C GND,Common ground
+UPS HAT (E),POGO 5V,UPS_POGO_5V,Raspberry Pi 5,5 V pogo pad,Pogo pins; no wire
+UPS HAT (E),POGO GND,UPS_POGO_GND,Raspberry Pi 5,GND pogo pad,Pogo pins; no wire
+UPS HAT (E),USB-A 5V,UPS_USBA_5V,FireBeetle 2,5V pin,USB-A to 2-pin 5 V lead; keeps OLED alive with Pi off
+UPS HAT (E),USB-A GND,GND,FireBeetle 2,GND,Common ground
+UPS HAT (E),I2C SDA,I2C_SDA,FireBeetle 2,GPIO21 / SDA,JST/dupont; 3.3 V logic
+UPS HAT (E),I2C SCL,I2C_SCL,FireBeetle 2,GPIO22 / SCL,JST/dupont; 3.3 V logic
+UPS HAT (E),I2C GND,GND,FireBeetle 2,GND,Common ground; do not also connect to Pi I2C
+UPS HAT (E),4S battery +,BATT_4S_P,UPS HAT (E),V1/V4 pack positive,4x21700 in series; fuse in positive lead
+UPS HAT (E),4S battery -,BATT_4S_N,UPS HAT (E),V4/V1 pack negative,4x21700 in series; insulated
+Raspberry Pi 5,DSI,DSI_FPC,DFR0550-V2 display,DSI,Pi 5 Standard-Mini 22-pin to 15-pin FFC; touch I2C over FFC
+Raspberry Pi 5,PCIe,PCIE_FPC,Seeed M.2 BASE,PCIe FPC,PCIe FPC; 1 TB 2230 NVMe on BASE
+Raspberry Pi 5,USB-A 1,USB_KEYBOARD,Wired USB keyboard,USB,Short USB-A cable
+Raspberry Pi 5,USB-A 2,USB_FB_SERIAL,FireBeetle 2,USB-C,Data-only USB cable preferred (VBUS disconnected)
+Raspberry Pi 5,RTC J5,VBAT_PI_P,Panasonic ML-2020,+,2-pin JST; enable rtc_bbat_vchg
+Raspberry Pi 5,RTC J5,VBAT_PI_N,Panasonic ML-2020,-,2-pin JST
+FireBeetle 2,3V3,3V3,OLED module,VCC,3.3 V only
+FireBeetle 2,GND,GND,OLED module,GND,Common ground
+FireBeetle 2,GPIO21 / SDA,I2C_SDA,OLED module,SDA,STEMMA QT/Qwiic cable; address 0x3C
+FireBeetle 2,GPIO22 / SCL,I2C_SCL,OLED module,SCL,STEMMA QT/Qwiic cable
+FireBeetle 2,3V3,3V3,BME688,VCC,3.3 V only
+FireBeetle 2,GND,GND,BME688,GND,Common ground
+FireBeetle 2,GPIO21 / SDA,I2C_SDA,BME688,SDA,Address 0x76 or 0x77
+FireBeetle 2,GPIO22 / SCL,I2C_SCL,BME688,SCL,
+FireBeetle 2,3V3,3V3,DS3231 RTC,VCC,3.3 V only
+FireBeetle 2,GND,GND,DS3231 RTC,GND,Common ground
+FireBeetle 2,GPIO21 / SDA,I2C_SDA,DS3231 RTC,SDA,Address 0x68; CR1220 fitted
+FireBeetle 2,GPIO22 / SCL,I2C_SCL,DS3231 RTC,SCL,
+FireBeetle 2,3V3,3V3,Pimoroni Trackball,VCC,3.3 V only; optional
+FireBeetle 2,GND,GND,Pimoroni Trackball,GND,Common ground; optional
+FireBeetle 2,GPIO21 / SDA,I2C_SDA,Pimoroni Trackball,SDA,Address 0x0A; firmware forwarding pending
+FireBeetle 2,GPIO22 / SCL,I2C_SCL,Pimoroni Trackball,SCL,Firmware forwarding pending
+FireBeetle 2,GPIO4,BTN,Status button,PBS-33B terminal 1,INPUT_PULLUP
+FireBeetle 2,GND,GND,Status button,PBS-33B terminal 2,Other terminal to GND
+Raspberry Pi 5,5 V pogo,UPS_POGO_5V,UPS HAT (E),POGO 5V,See power diagram
+Raspberry Pi 5,GND,UPS_POGO_GND,UPS HAT (E),POGO GND,Common ground

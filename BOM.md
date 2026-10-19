@@ -11,6 +11,8 @@ Bol search links are given as alternates. Treat `≈` prices as estimates.
 Preferred shops: **Kiwi Electronics** (primary, NL), **Tinytronics**, **Robotshop EU**, **Bol.com**.
 No Amazon links.
 
+Wiring/connection diagrams: [`docs/WIRING.md`](docs/WIRING.md).
+
 ---
 
 ## Read this first — fit / compatibility notes
@@ -53,7 +55,7 @@ No Amazon links.
 | 6 | **21700 single-cell holders with solder tabs** | 4 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=21700%20battery%20holder) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=21700%20batterijhouder%20soldeerlip) | ≈ € 2 each | For the single-row r2 tray. Reuse the holders supplied with the UPS HAT if your batch includes them. |
 | 7 | **Battery wiring kit** – 20–22 AWG silicone wire, 5 A fuse + holder, heat-shrink, insulation rings | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=silicone%20wire%2022AWG) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=silicone%20draad%2022AWG%20rood%20zwart) | ≈ € 12 | 4S pack; fuse in the positive lead. Keep the series wiring short and insulated. |
 | 8 | **Pimoroni BME688 breakout** | 1 | [Kiwi 10899](https://www.kiwi-electronics.com/en/bme688-4-in-1-air-quality-breakout-gas-temperature-pressure-humidity-10899) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=Pimoroni%20BME688) | € 25.40 | PIM575, Qw/ST connector, 3.3 V. Fits the vented side pocket. |
-| 9 | **Pimoroni Trackball Breakout** | 1 | [Kiwi 20243](https://www.kiwi-electronics.com/en/trackball-breakout-20243) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=Pimoroni%20trackball) | € 18.74 | Kiwi out of stock. I²C 0x0A; connect to the Pi bus, not the FireBeetle sensor bus. |
+| 9 | **Pimoroni Trackball Breakout** | 1 | [Kiwi 20243](https://www.kiwi-electronics.com/en/trackball-breakout-20243) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=Pimoroni%20trackball) | € 18.74 | Kiwi out of stock. I²C 0x0A; connect to the FireBeetle bus (firmware forwarding pending). Do not also connect to the Pi. |
 | 10 | **DS3231 RTC breakout** | 1 | [Kiwi 2252](https://www.kiwi-electronics.com/en/adafruit-ds3231-precision-rtc-breakout-2252) | € 19.35 | Adafruit 23 × 17.6 mm; CR1220 backup. Keeps the FireBeetle clock when the Pi is off. |
 | 11 | **CR1220 coin cell** | 1 | [Kiwi 750](https://www.kiwi-electronics.com/en/cr1220-battery-750) | € 2.77 | For the DS3231. |
 | 12 | **Pi 5 RTC battery – Panasonic ML-2020 with JST plug** | 1 | [Kiwi 11586](https://www.kiwi-electronics.com/en/rtc-battery-for-raspberry-pi-5-11586) | € 5.43 | Official Pi 5 RTC cell; fits J5. |

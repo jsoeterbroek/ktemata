@@ -1,0 +1,29 @@
+digraph data {
+  graph [rankdir=LR, splines=spline, nodesep=0.4, ranksep=0.7, fontname="DejaVu Sans", bgcolor="white", pad=0.2];
+  node [shape=box, style="rounded,filled", fontname="DejaVu Sans", fontsize=11, margin="0.14,0.08", color="#555555", penwidth=1.2];
+  edge [fontname="DejaVu Sans", fontsize=9, penwidth=1.8, arrowsize=0.7];
+
+  pi [label=<<b>Raspberry Pi 5</b><br/>DSI · PCIe · USB-A ×2<br/>RTC J5 · 5 V pogo>, fillcolor="#e8ffe8"];
+  disp [label=<<b>DFR0550-V2 5" DSI</b><br/>15-pin FFC · capacitive touch>, fillcolor="#e8f4ff"];
+  nvme [label=<<b>Seeed M.2 BASE</b><br/>+ 1 TB 2230 NVMe<br/>PCIe FPC>, fillcolor="#e8f4ff"];
+  kbd [label=<<b>Wired USB keyboard</b><br/>137 × 72 PCB>, fillcolor="#e8f4ff"];
+  fb [label=<<b>FireBeetle 2 ESP32-UE</b><br/>I²C master<br/>SDA21 · SCL22 · GPIO4<br/>USB serial to Pi>, fillcolor="#e8ffe8"];
+  oled [label=<<b>1.3" OLED</b><br/>I²C 0x3C · 3V3>, fillcolor="#fff4cc"];
+  bme [label=<<b>BME688</b><br/>I²C 0x76/0x77 · 3V3>, fillcolor="#fff4cc"];
+  rtc [label=<<b>DS3231 RTC</b><br/>I²C 0x68 · CR1220 · 3V3>, fillcolor="#fff4cc"];
+  track [label=<<b>Pimoroni Trackball</b><br/>I²C 0x0A · 3V3<br/>firmware forwarding pending>, fillcolor="#fff4cc"];
+  btn [label=<<b>PBS-33B button</b><br/>GPIO4 → GND>, fillcolor="#f0e8ff"];
+  ups [label=<<b>UPS HAT (E)</b><br/>I²C 0x2D · 3V3 logic>, fillcolor="#ffe8e8"];
+  note [shape=note, label=<<b>I²C power / ground</b><br/>OLED, BME688, DS3231 and trackball:<br/>3V3 + GND from the FireBeetle<br/>All GNDs common with UPS/Pi<br/>Fit only one set of 4.7 kΩ pull-ups>, fillcolor="#f7f7f7"];
+
+  pi -> disp [label="DSI FFC (touch I²C)", color="#2980b9", penwidth=2.4];
+  pi -> nvme [label="PCIe FPC", color="#2980b9", penwidth=2.4];
+  kbd -> pi [label="USB-A", color="#2980b9", penwidth=2.4];
+  fb -> pi [label="USB serial\ntelemetry / commands", dir=both, color="#2980b9", penwidth=2.4];
+  fb -> oled [label="I²C", color="#27ae60"];
+  fb -> bme [label="I²C", color="#27ae60"];
+  fb -> rtc [label="I²C", color="#27ae60"];
+  fb -> track [label="I²C", color="#27ae60", style=dashed];
+  fb -> ups [label="I²C", color="#27ae60"];
+  btn -> fb [label="GPIO4", color="#8e44ad"];
+}
