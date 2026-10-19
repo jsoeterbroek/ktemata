@@ -30,6 +30,12 @@ To re-export the STLs: `python3 cad/tools/export.py` (use `--r1` for the origina
 To refresh the images in `renders/` afterwards: `python3 cad/tools/render.py` (add `--r1` to include the r1-only views).
 `R1=1 bash work/scripts/check.sh` runs the old interference set; the default is r2.
 
+## Shopping list / BOM
+
+See [`BOM.md`](BOM.md) for the r2 shopping list (Kiwi Electronics primary, with Tinytronics / Robotshop /
+Bol alternates). It excludes the FireBeetle 2 ESP32-UE and 1.3" OLED, which are already owned, and flags
+the current display / UPS / NVMe / button fit caveats.
+
 ## Python environment
 
 ```bash
