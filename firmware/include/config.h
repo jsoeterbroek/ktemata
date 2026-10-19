@@ -33,6 +33,16 @@
 #define I2C_CLOCK_HZ 100000
 
 // ---------------------------------------------------------------------------
+// Clock / timezone
+// ---------------------------------------------------------------------------
+// POSIX TZ string used by the OLED clock. Default: Europe/Amsterdam with
+// European DST rules. The Pi sends UTC; the DS3231 stores UTC; the firmware
+// applies this timezone only when rendering the time screen.
+#ifndef TIMEZONE
+#define TIMEZONE "CET-1CEST,M3.5.0,M10.5.0/3"
+#endif
+
+// ---------------------------------------------------------------------------
 // UI timing
 // ---------------------------------------------------------------------------
 #define SCREEN_WIDTH 128

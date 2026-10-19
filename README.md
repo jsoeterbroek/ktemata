@@ -86,6 +86,10 @@ stopped):
 printf '{"cmd":"time","epoch":%s}\n' "$(date +%s)" > /dev/ttyUSB0
 ```
 
+The example sends a **UTC** epoch (`date +%s`); the FireBeetle converts it to
+`TIMEZONE` (default Europe/Amsterdam, with DST) only for the OLED. Change
+`TIMEZONE` in `firmware/include/config.h` for another region.
+
 ## Rugged exterior
 
 The corner bumpers stand 3 mm proud. The body edges have a 3 mm 45° chamfer on the front and back, and the
@@ -148,7 +152,7 @@ At least four screens, cycled with a button. The **time** screen is the default.
 
 | # | Screen | Content | Source |
 |---|---|---|---|
-| 1 | **Time** (default) | HH:MM, date, weekday; small battery % and alert icons | ESP32 clock, set from the Pi over USB when it runs; a **DS3231 RTC** (I2C 0x68) on the FireBeetle keeps the time after a full power loss with the Pi off |
+| 1 | **Time** (default) | HH:MM, date, weekday; small battery % and alert icons | ESP32 clock, set from the Pi over USB when it runs; the Pi sends UTC and the firmware applies `TIMEZONE` (default **Europe/Amsterdam**, including DST); a **DS3231 RTC** (I2C 0x68) on the FireBeetle keeps UTC after a full power loss with the Pi off |
 | 2 | **Battery power** | charge %, voltage, current (charging/discharging), input present (solar/crank), estimated time left | UPS HAT (E) battery monitor (0x2D) |
 | 3 | **Environment** | temperature, humidity, pressure + 3 h trend (falling fast = weather warning), VOC/air-quality index; CO2 and PM2.5 if the SEN66 is fitted | BME688 / SEN66 |
 | 4 | **Storage** | % used and free GB of the 1 TB SSD | Pi over USB; with the Pi off, shows the last value and its age |

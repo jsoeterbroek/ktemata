@@ -23,6 +23,8 @@
 #include <Wire.h>
 #include <bme68xLibrary.h>
 #include <math.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "config.h"
 #include "ups_hat_e.h"
@@ -584,17 +586,22 @@ void drawAlertBar() {
 }
 
 void renderTimeScreen() {
-  const DateTime t = currentTime();
+  // The RTC and epochNow() are UTC. Convert to the configured local timezone
+  // (Europe/Amsterdam by default) only for rendering, so DST is handled here.
+  const time_t utc = static_cast<time_t>(epochNow());
+  struct tm local = {};
+  localtime_r(&utc, &local);
   char buf[40];
 
-  snprintf(buf, sizeof(buf), "%02u:%02u", t.hour(), t.minute());
+  snprintf(buf, sizeof(buf), "%02d:%02d", local.tm_hour, local.tm_min);
   display.setTextSize(3);
   display.setTextColor(OLED_WHITE);
   display.setCursor(19, 12);
   display.print(buf);
 
-  snprintf(buf, sizeof(buf), "%s %02u %s %04u",
-           WEEKDAYS[t.dayOfTheWeek()], t.day(), MONTHS[t.month() - 1], t.year());
+  snprintf(buf, sizeof(buf), "%s %02d %s %04d",
+           WEEKDAYS[local.tm_wday], local.tm_mday, MONTHS[local.tm_mon],
+           local.tm_year + 1900);
   display.setTextSize(1);
   display.setCursor((SCREEN_WIDTH - static_cast<int>(strlen(buf)) * 6) / 2, 38);
   display.print(buf);
@@ -944,6 +951,10 @@ void setup() {
 
   Serial.println();
   Serial.println("{\"type\":\"log\",\"msg\":\"Pi Fluks r2 status OLED\"}");
+
+  // POSIX timezone rules (including DST) for the OLED clock.
+  setenv("TZ", TIMEZONE, 1);
+  tzset();
   Serial.printf(
       "{\"type\":\"log\",\"msg\":\"mcu\",\"model\":\"%s\",\"cores\":%u,"
       "\"flash\":%u,\"psram_found\":%s,\"psram\":%u}\n",
@@ -998,7 +1009,20 @@ void setup() {
     Serial.println("{\"type\":\"log\",\"msg\":\"UPS HAT (E) found\"}");
   }
 
-  buildTime = DateTime(F(__DATE__), F(__TIME__));
+  // Build time is local to the build machine. Convert it to a UTC epoch so
+  // the unsynced fallback clock is consistent with the DS3231/Pi UTC store.
+  const DateTime buildLocal(F(__DATE__), F(__TIME__));
+  struct tm buildTm = {};
+  buildTm.tm_year = buildLocal.year() - 1900;
+  buildTm.tm_mon = buildLocal.month() - 1;
+  buildTm.tm_mday = buildLocal.day();
+  buildTm.tm_hour = buildLocal.hour();
+  buildTm.tm_min = buildLocal.minute();
+  buildTm.tm_sec = buildLocal.second();
+  buildTm.tm_isdst = -1;
+  const time_t buildEpoch = mktime(&buildTm);
+  buildTime = buildEpoch > 0 ? DateTime(static_cast<uint32_t>(buildEpoch)) : buildLocal;
+
   lastInteractionMs = millis();
   lastPressureSampleMs = millis();
   lastTelemetryMs = millis();

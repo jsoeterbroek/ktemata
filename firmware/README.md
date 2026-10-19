@@ -30,14 +30,15 @@ ESP32-D0WDR2-V3, 16 MB flash, psram_found=true, 2095103 bytes PSRAM
 ```
 
 The 1.3" 4-pin OLED was verified at 0x3C with the default SH1106 build: the
-time/date screen renders correctly.
+time/date screen renders correctly. The clock uses the `TIMEZONE` setting
+(default `Europe/Amsterdam`, including DST) and the Pi sends UTC.
 
 ## Bring-up status
 
 | Item | State |
 |---|---|
 | FireBeetle 2 ESP32-UE | flashed; 16 MB flash and 2 MB PSRAM verified over serial |
-| 1.3" 4-pin OLED | **working** at 0x3C, default SH1106 build; time/date renders |
+| 1.3" 4-pin OLED | **working** at 0x3C, default SH1106 build; time/date renders in `TIMEZONE` |
 | DS3231 RTC | not fitted; the clock starts from the build timestamp |
 | BME688 | not fitted; the environment screen reports it missing |
 | UPS HAT (E) | not fitted; the battery line shows `BAT --` |
@@ -182,7 +183,10 @@ Pi → ESP32 (one JSON object per line):
 {"cmd":"status"}
 ```
 
-`epoch` should be the Pi's local time (the firmware has no timezone logic).
+`epoch` is a **UTC** Unix timestamp (`date +%s`). The DS3231 stores UTC; the OLED converts to
+`TIMEZONE` only when rendering, so the Pi's local timezone does not matter and DST is handled by the
+POSIX TZ rule. Default `TIMEZONE` is `CET-1CEST,M3.5.0,M10.5.0/3` (Europe/Amsterdam); change it in
+`include/config.h` for another zone.
 `screen` index: 0 time, 1 battery, 2 environment, 3 storage.
 
 Without a DS3231 the clock is lost on reset. Set it over USB (stop the serial
