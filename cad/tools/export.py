@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
-"""Export all parts to ../stl as binary STL, dropped onto z=0 and centred on x/y."""
+"""Export parts to ../stl as binary STL, dropped onto z=0 and centred on x/y.
+
+  python3 cad/tools/export.py                 # r2 parts (default)
+  python3 cad/tools/export.py --r1            # original r1 set instead
+  python3 cad/tools/export.py face bottom     # only some parts
+"""
 import subprocess, struct, sys, os, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__)); CAD = os.path.dirname(HERE)
 OUT = os.path.join(os.path.dirname(CAD), 'stl')
 PARTS = {'bottom':'pi_fluks_bottom', 'face':'pi_fluks_face', 'keyboard_support':'pi_fluks_keyboard_support',
+         'charge_plug':'pi_fluks_charge_plug',
          'pull_switch':'pi_fluks_pull_switch', 'power_button':'pi_fluks_power_button'}
+LEGACY = {'pull_switch', 'power_button'}
 
 def read_ascii(path):
     tris, cur = [], []
@@ -33,15 +40,23 @@ def check_manifold(tris):
             edges[e] = edges.get(e, 0) + 1
     return sum(1 for (a, b), n in edges.items() if n != 1 or edges.get((b, a), 0) != 1)
 
+args = sys.argv[1:]
+r1 = '--r1' in args
+args = [a for a in args if a != '--r1']
+extra = ['-D', 'R2=false'] if r1 else []
+
 os.makedirs(OUT, exist_ok=True)
 for part, fname in PARTS.items():
-    if len(sys.argv) > 1 and part not in sys.argv[1:]: continue
+    if r1 is False and part in LEGACY: continue
+    if args and part not in args: continue
     with tempfile.TemporaryDirectory() as td:
         tmp = os.path.join(td, 'p.stl')
-        r = subprocess.run(['openscad', '-o', tmp, '-D', f'PART="{part}"', os.path.join(CAD, 'export.scad')],
+        r = subprocess.run(['openscad', '-o', tmp, *extra, '-D', f'PART="{part}"', os.path.join(CAD, 'export.scad')],
                            capture_output=True, text=True)
         if r.returncode or not os.path.exists(tmp): print(r.stderr); sys.exit(1)
         tris = read_ascii(tmp)
+    if not tris:
+        print(f'{fname:28s} EMPTY (part not available in this mode)'); continue
     xs = [p[0] for t in tris for p in t]; ys = [p[1] for t in tris for p in t]; zs = [p[2] for t in tris for p in t]
     off = (-(min(xs)+max(xs))/2, -(min(ys)+max(ys))/2, -min(zs))
     tris = [[tuple(p[i]+off[i] for i in range(3)) for p in t] for t in tris]

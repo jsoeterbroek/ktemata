@@ -25,12 +25,18 @@ VIEWS = {
     'pi_fluks_face':             ('stl:face', (1200, 950), ISO, [], True),
     'pi_fluks_face_front':       ('stl:face', (1200, 950), BACK, [], True),
     'pi_fluks_keyboard_support': ('stl:keyboard_support', (1200, 950), ISO, [], True),
+    'pi_fluks_charge_plug':      ('stl:charge_plug', (900, 700), ISO, [], True),
     'pi_fluks_power_button':     ('stl:power_button', (1200, 950), ISO, [], True),
     'pi_fluks_pull_switch':      ('stl:pull_switch', (1200, 950), ISO, [], True),
 }
 
+R1_ONLY = {'power_button', 'pull_switch', 'pi_fluks_power_button', 'pi_fluks_pull_switch'}
+
 def render(name, td):
     src, (w, h), cam, extra, full = VIEWS[name]
+    extra = list(extra)
+    if name in R1_ONLY and not src.startswith('stl:'):
+        extra += ['-D', 'R2=false']
     if src.startswith('stl:'):
         src = os.path.join(td, name + '.scad')
         open(src, 'w').write(f'color("#4a72b0") import("{os.path.join(STL, "pi_fluks_" + VIEWS[name][0][4:] + ".stl")}");\n')
@@ -42,7 +48,9 @@ def render(name, td):
     r = subprocess.run(cmd, capture_output=True, text=True)
     return name, r.returncode, r.stderr.strip().splitlines()[-1:] if r.returncode else ''
 
-names = [n for n in VIEWS if len(sys.argv) < 2 or any(a in n for a in sys.argv[1:])]
+args = [a for a in sys.argv[1:] if a != '--r1']
+names = [n for n in VIEWS
+         if (args and any(a in n for a in args)) or (not args and (n not in R1_ONLY or '--r1' in sys.argv[1:]))]
 with tempfile.TemporaryDirectory() as td, ThreadPoolExecutor(os.cpu_count() or 4) as ex:
     for name, rc, err in ex.map(lambda n: render(n, td), names):
         print(f'{"ok  " if rc == 0 else "FAIL"} {name}.png {err or ""}')
