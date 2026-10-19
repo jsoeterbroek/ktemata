@@ -9,6 +9,7 @@ MilDef-*.png
 reference/yt/*.webm
 reference/yt/*.mp4
 reference/yt/*.mkv
+reference/content/
 
 # Scratch / working files (keep the helper scripts)
 work/*
