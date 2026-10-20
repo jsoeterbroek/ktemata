@@ -13,6 +13,8 @@ No Amazon links.
 
 Wiring/connection diagrams: [`docs/WIRING.md`](docs/WIRING.md).
 
+PocketTerm35 donor feasibility: [`docs/POCKETTERM35-FEASIBILITY.md`](docs/POCKETTERM35-FEASIBILITY.md).
+
 ---
 
 ## Read this first — fit / compatibility notes

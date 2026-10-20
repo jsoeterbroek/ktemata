@@ -36,6 +36,12 @@ See [`BOM.md`](BOM.md) for the r2 shopping list (Kiwi Electronics primary, with 
 Bol alternates). It excludes the FireBeetle 2 ESP32-UE and 1.3" OLED, which are already owned, and flags
 the current display / UPS / NVMe / button fit caveats.
 
+## Hardware alternatives
+
+Thinking of using a Waveshare PocketTerm35 as a parts donor for the screen/keyboard/MCU? See
+[`docs/POCKETTERM35-FEASIBILITY.md`](docs/POCKETTERM35-FEASIBILITY.md). Short version: not a good donor for
+the 5" r2 design, but the RP2040 USB keyboard is the one part worth prototyping separately.
+
 ## Wiring
 
 See [`docs/WIRING.md`](docs/WIRING.md) for the power and data/I²C block diagrams, pin-level tables and wiring
