@@ -50,7 +50,7 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 | FireBeetle → UPS HAT | I²C, GND | 0x2D fuel gauge; UPS I²C logic is 3.3 V. Do **not** also connect to the Pi. |
 | Button → FireBeetle | GPIO4 → GND | PBS-33B momentary NO; firmware uses `INPUT_PULLUP`. |
 
-> **Keyboard option:** the r1 **Phistone Mini Keyboard** can use its 2.4 GHz USB-A dongle (same `USB_KEYBOARD` link) or Bluetooth (no cable; enable the Pi's Bluetooth and pair). The default wiring above is the wired USB keyboard. The FireBeetle radios stay off either way.
+> **r3 keyboard option:** the **Phistone Mini Keyboard** can use its 2.4 GHz USB-A dongle (same `USB_KEYBOARD` link) or Bluetooth (no cable; enable the Pi's Bluetooth and pair). The wiring above is the r2 wired USB keyboard. The FireBeetle radios stay off either way.
 
 ---
 

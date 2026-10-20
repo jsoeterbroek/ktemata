@@ -4,6 +4,8 @@
 // Use at(x,y) to place things in these "drawing" coordinates.
 //
 // R2 selects the current target hardware (Pi 5 + DFR0550-V2 + UPS HAT (E) + 4x21700).
+// r3 is a build variant of r2 with the same geometry: only the keyboard/radio changes
+// (Phistone Mini Keyboard, 2.4 GHz dongle or Bluetooth). See docs/R3.md.
 // The original r1 case (Waveshare display + INIU power bank) is still available:
 //   openscad -D 'R2=false' ...
 //   python3 cad/tools/export.py --r1

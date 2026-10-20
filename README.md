@@ -1,9 +1,10 @@
-# Pi Fluks – reverse-engineered printable parts (r1 + r2)
+# Pi Fluks – reverse-engineered printable parts (r1 + r2 + r3)
 
 The r1 geometry was rebuilt from the photos in `Pi_Flux_r1_-_Build_Guide.pdf`. The guide has no CAD
 drawings, so this is a **functional re-creation**, not a copy of the original files. The r2 target hardware
-is modelled by default; everything is parametric OpenSCAD. Measure your own parts, edit `cad/common.scad`,
-then re-export.
+is modelled by default; everything is parametric OpenSCAD. **r3** is the same mechanical build with the
+Phistone Mini Keyboard (2.4 GHz dongle or Bluetooth) instead of the wired USB keyboard — same STLs, no CAD
+change. Measure your own parts, edit `cad/common.scad`, then re-export.
 
 ## Project Nomad
 Based on project nomad
@@ -12,10 +13,19 @@ Based on project nomad
 
 ## Files
 
-The default build is now **r2** (Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700). The original r1 parts are still
-in the repository and compile with `-D R2=false` / `export.py --r1`.
+### Build variants
 
-| STL (`stl/`) | Source (`cad/`) | Print orientation | r2 |
+| Build | Mechanics | Keyboard / radios |
+|---|---|---|
+| **r1** | Original reverse-engineered Waveshare 5" DSI + INIU power bank case; r1-only pull switch and battery button | Original r1 keyboard; no r2 electronics |
+| **r2** | Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700; current CAD default | Wired USB keyboard; Wi-Fi/Bluetooth off |
+| **r3** | **Same mechanical build and STLs as r2** | **Phistone Mini Keyboard** (2.4 GHz USB dongle or Bluetooth 5.0); Wi-Fi off; Pi Bluetooth optional, FireBeetle radios off |
+
+The default CAD is **r2** (Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700). The original r1 parts are still
+in the repository and compile with `-D R2=false` / `export.py --r1`. **r3 uses the same STLs as r2**; only
+the keyboard/radio configuration changes. See [`docs/R3.md`](docs/R3.md).
+
+| STL (`stl/`) | Source (`cad/`) | Print orientation | r2 / r3 |
 |---|---|---|---|
 | `pi_fluks_bottom.stl` – back shell | `bottom.scad` | back plate down, no supports | yes |
 | `pi_fluks_face.stl` – front face | `face.scad` | face plate down | yes |
@@ -32,7 +42,7 @@ To refresh the images in `renders/` afterwards: `python3 cad/tools/render.py` (a
 
 ## Shopping list / BOM
 
-See [`BOM.md`](BOM.md) for the r2 shopping list (Kiwi Electronics primary, with Tinytronics / Robotshop /
+See [`BOM.md`](BOM.md) for the r2/r3 shopping list (Kiwi Electronics primary, with Tinytronics / Robotshop /
 Bol alternates). It excludes the FireBeetle 2 ESP32-UE and 1.3" OLED, which are already owned, and flags
 the current display / UPS / NVMe / button fit caveats.
 
@@ -137,17 +147,17 @@ button are not used in r2.
 | Solar | Foldable 20–30 W panel with a regulated **USB-C PD** output, into the UPS USB-C port | The UPS boards don't document raw solar input. Don't connect a bare panel; use one with a PD/regulator output or a small solar charge controller in between. |
 | Hand crank (backup, nice to have) | **Separate** crank generator with rectifier + buffer capacitor, feeding the **same MPPT charge input** as solar, into the one sealed USB-C charge port | Emergency top-up for night and clouds, not a main source. Rough estimate: 10–20 W of arm effort gives about 5–10 W into the battery after losses, so 1 minute of cranking ≈ 1 minute of use, and a full charge (about 70 Wh) would take about 7–14 h. Sellers' "20 W" ratings are peaks. Kept outside the case: there's no room next to the 21700 cells, you can't hold the device steady against the crank torque, a shaft would break the seal, and it would add weight all the time. Build options: the 3D-printed axial-flux design in `reference/yt/Building a Generator [tb3iN4m9Bik].txt` (N52 magnets, 8 coils × 350 turns, gearbox, full-bridge rectifier), or a commercial USB-C crank generator. The MPPT/input-voltage regulation matters: without it the input collapses whenever cranking slows (in the video the phone kept showing "USB disconnected"). Later option: a clip-on module on the (not yet modelled) back attachment. A pedal generator gives several times more power. |
 | Solar on case back (nice to have) | Thin ETFE panel (about 5–6 V) through a small solar power manager (MPPT) | The r1 back is 150 × 183 mm; the r2 back is 150 × 205 mm, so expect at most about 5–6 W peak and 2–3 W in practice. That only stretches idle time; it can't power the device while in use. Solar power banks with built-in cells charge just as slowly. |
-| Keyboard | **Wired USB** is the default: RP2040/Pico-based keyboard running KMK/QMK (USB HID). **Fallback:** reuse the **Phistone Mini Keyboard** from the r1 build (2.4 GHz + Bluetooth 5.0, 134 × 74 × 12.7 mm, USB-C, 100 h, RGB/air mouse) | Best fit: a custom PCB on the existing `KB_PCB` footprint (137 × 72), the open-source Solder Party **BBQ20KBD** (BlackBerry Q20 keys + trackpad, USB HID; sold out since Jan 2026), or the Phistone r1 keyboard. The Phistone body is close to the 137 × 72 support and is what the r1 face was built around; use its 2.4 GHz dongle in the spare Pi USB-A port, or pair it over Bluetooth (enable BT). Its layout is cramped and the Ctrl/punctuation positions are non-standard — test before committing. mini PiQWERTY (Pico, 107 × 65 mm) has no Ctrl/Alt, so it's poor for a Linux terminal. With the Phistone fallback the side cutout can stay off; set its 2.4G/BT switch before closing and charge it before assembly, or add a small sealed access. |
+| Keyboard | **r2:** wired USB, RP2040/Pico-based keyboard running KMK/QMK (USB HID). **r3:** **Phistone Mini Keyboard** from the r1 build (2.4 GHz + Bluetooth 5.0, 134 × 74 × 12.7 mm, USB-C, 100 h, RGB/air mouse) | Best fit: a custom PCB on the existing `KB_PCB` footprint (137 × 72), the open-source Solder Party **BBQ20KBD** (BlackBerry Q20 keys + trackpad, USB HID; sold out since Jan 2026), or the Phistone r1 keyboard. The Phistone body is close to the 137 × 72 support and is what the r1 face was built around; use its 2.4 GHz dongle in the spare Pi USB-A port, or pair it over Bluetooth (enable BT). Its layout is cramped and the Ctrl/punctuation positions are non-standard — test before committing. mini PiQWERTY (Pico, 107 × 65 mm) has no Ctrl/Alt, so it's poor for a Linux terminal. With the r3 Phistone keyboard the side cutout can stay off; set its 2.4G/BT switch before closing and charge it before assembly, or add a small sealed access. |
 | Environment sensor | **Pimoroni BME688** (temp, RH, pressure, VOC/gas index; I2C) | No CO2 or particulates. For those, use Sensirion **SEN66** (PM1–10, CO2, VOC, NOx, T, RH; 55.5 × 25.6 × 21.5 mm, about 90 mA, I2C 0x6B; Adafruit SEN6x breakout). Mount it in a vented pocket on the outer wall with a membrane vent, away from Pi heat, or temperature/RH read high. The SEN66 needs real airflow (inlet + outlet). |
 | Storage | 1 TB NVMe 2230/2242 on an M.2 board | Small and fast. A 1 TB 2.5" SATA SSD also works through the Waveshare PCIe-to-SATA HAT+, but needs a noticeably thicker case. M.2 **SATA** drives don't work on Pi 5 NVMe boards. Check stacking against the UPS board. |
 | Clock | Pi 5 built-in RTC + **Panasonic ML-2020** rechargeable cell on the J5 battery connector | Needed with no networking (no NTP). Enable trickle charging: `dtparam=rtc_bbat_vchg=3000000` in `/boot/firmware/config.txt`. |
 | Status OLED | **DFRobot FireBeetle 2 ESP32-UE (N16R2, DFR1140) with a 1.3" 4-pin I2C OLED (SH1106/SSD1306)** (ESP32-WROOM-32UE-N16R2, 16 MB flash, 2 MB PSRAM, 25.4 × 60 mm; the external antenna is not needed) running the custom PlatformIO firmware in `firmware/` | Shows **battery status** (charge %, voltage, charging/discharging, input present, estimated time left) and the environment readings, with warnings (low battery, high temperature, poor air) on screen. Works with the Pi off, so the battery level can be checked without booting. The ESP32 is the I2C master for the sensors (BME688, optional SEN66) and for the UPS HAT (E) battery monitor (I2C 0x2D, reachable by cable; Waveshare documents voltage, current, power, capacity % and USB-C input state; check the register manual). Powered from the UPS 5 V. It sends all readings to the Pi over internal USB (serial), so the Pi doesn't need its own I2C link to them. Its Wi-Fi/Bluetooth stay off in the firmware. |
 | Status button | **TinyTronics PBS-33B** 12 mm panel-mount momentary NO pushbutton ([black](https://www.tinytronics.nl/en/switches/manual-switches/push-buttons-and-switches/black-push-button-12mm-reset-pbs-33b)) | Fits the modelled 12.2 mm `OLED_BTN_D` hole. One terminal to GPIO4, the other to GND (`INPUT_PULLUP`). Not IP-rated; add a rubber boot for the sealed build, or use a 16 mm IP67 metal button and enlarge the top-wall hole. Short press = next screen, long press = acknowledge. |
-| Radios off | Default: `dtoverlay=disable-wifi` and `dtoverlay=disable-bt`; Wi-Fi/Bluetooth off in the FireBeetle firmware. **Exception:** if using the Phistone keyboard over Bluetooth, enable the Pi's Bluetooth only (leave Wi-Fi off); its 2.4 GHz dongle mode uses the spare Pi USB-A port instead. | Matches "no networking, no Bluetooth" in the default build; a Bluetooth/2.4 GHz keyboard is an explicit input-device exception. No hardware radio switch needed. |
+| Radios off | **r2 default:** `dtoverlay=disable-wifi` and `dtoverlay=disable-bt`; Wi-Fi/Bluetooth off in the FireBeetle firmware. **r3:** either use the Phistone 2.4 GHz dongle in the spare Pi USB-A, or enable the Pi's Bluetooth only (leave Wi-Fi off); FireBeetle radios stay off. | r2 matches "no networking, no Bluetooth". r3 treats the keyboard radio as an explicit input-device exception. No hardware radio switch needed. |
 
 Check I2C address collisions before wiring: BME688 0x76/0x77, trackball 0x0A, SEN66 0x6B, plus the UPS fuel gauge. With the FireBeetle option the sensors, trackball and UPS battery monitor (0x2D) move to its I2C bus (its OLED is at 0x3C, SDA GPIO21, SCL GPIO22). Don't connect them to both the Pi and the FireBeetle; two I2C masters on one bus cause trouble. Trackball forwarding to the Pi is still to be added in the firmware.
 
-### Considered and rejected (r2)
+### Considered and rejected (r2/r3)
 
 - **MH-Real-Time Clock Modules - 2 (DS1302) for the OLED clock:** rejected. It is a 3-wire DS1302 (CE/SCLK/I/O), not I2C, so it needs three GPIOs and a separate driver (RTClib does not support it). It also has no TCXO and drifts far more than the DS3231. The DS3231 stays on the ESP32 I2C bus at 0x68; the Pi 5's own RTC + ML-2020 remains the Pi's clock. Keep a DS1302 only as a bench spare.
 - **Adafruit MAX17048 QT for battery monitoring:** rejected. The UPS HAT (E) uses four 21700 cells **in series (4S)**, while the MAX17048 is a 1S gauge (2.5–4.5 V). It cannot measure the 12.0–16.8 V pack, and tapping one cell gives only that cell's voltage/SoC, not the pack's. The HAT's BQ4050-based gauge at 0x2D already reports pack voltage/current/power, charge %, remaining mAh, per-cell voltages and USB-C input state to the ESP32 while the Pi is off. A second gauge would only duplicate less accurate data and create conflicting battery alerts. The MAX17048 is useful only for a separate 1S cell (for example an ESP32 backup LiPo), which this build does not have.

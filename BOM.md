@@ -1,6 +1,7 @@
 # Pi Fluks r2 — shopping list / BOM
 
-Scope: the hardware in `README.md` ("Target hardware") for the **r2** build.
+Scope: the hardware in `README.md` ("Target hardware") for the **r2** build. The **r3** build uses the same
+parts, with the Phistone Mini Keyboard instead of a wired USB keyboard; see [`docs/R3.md`](docs/R3.md).
 The **DFRobot FireBeetle 2 ESP32-UE** and the **1.3" 128×64 I²C OLED** are already owned and are
 excluded from the total.
 
@@ -104,7 +105,7 @@ core build is roughly **€ 555–625 + shipping**, excluding keyboard, solar pa
 | **Sensirion SEN66 + Adafruit SEN6x breakout** | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=SEN66) · [Robotshop search](https://eu.robotshop.com/nl/search?q=SEN66) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=SEN66%20Sensirion) | ≈ € 60–80 | Optional PM/CO₂/VOC sensor; build the CAD with `-D SEN66=true` for the larger pocket. |
 | **Solder Party BBQ20KBD** | 1 | [Solder Party](https://www.solder.party/) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=BBQ20KBD) | ≈ € 50–70 | USB HID, Q20 keys + trackpad. Sold out at times; check availability. |
 | **Custom 137 × 72 keyboard kit** | 1 | [Kiwi Pico](https://www.kiwi-electronics.com/en/raspberry-pi-pico-10494) · [Tinytronics Choc switches](https://www.tinytronics.nl/en/search?search=Kailh%20Choc) · [Bol keycaps](https://www.bol.com/nl/nl/s/?searchtext=Kailh%20Choc%20keycaps) | ≈ € 60–100 | RP2040/Pico + Choc switches + keycaps + diodes + USB-C + PCB. Fits the existing `KB_PCB` 137 × 72 footprint. |
-| **Reuse the r1 Phistone Mini Keyboard** | 1 | — (already owned / original r1 source) | € 0 | 2.4 GHz + Bluetooth 5.0, 134 × 74 × 12.7 mm, USB-C, 100 h, RGB/air mouse. Fits the r2 137 × 72 keyboard support/window like the r1; use the 2.4 GHz dongle in the spare Pi USB-A or pair via Bluetooth. Awkward Ctrl/punctuation layout; set its 2.4G/BT switch before closing and charge it before assembly. |
+| **r3: Phistone Mini Keyboard** | 1 | — (already owned / original r1 source) | € 0 | 2.4 GHz + Bluetooth 5.0, 134 × 74 × 12.7 mm, USB-C, 100 h, RGB/air mouse. Fits the r2/r3 137 × 72 keyboard support/window like the r1; use the 2.4 GHz dongle in the spare Pi USB-A or pair via Bluetooth. Awkward Ctrl/punctuation layout; set its 2.4G/BT switch before closing and charge it before assembly. |
 | **PLA/PETG filament for the case** | ≈ 400 g | local | ≈ € 15 | Bottom, face, keyboard support. PETG is tougher; PLA is fine indoors. |
 | **TPU filament for the charge plug** | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=TPU%20filament) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=TPU%20filament%201.75mm) | ≈ € 20 | Only if you do not already print TPU. |
 | **Thin thermal pad / copper shim** | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=thermal%20pad) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=thermisch%20pad%200.5mm) | ≈ € 5 | No active cooler in r2; only if it fits the 6.5 mm gap. |
