@@ -5,8 +5,9 @@ netlist-style CSV. The block diagrams are generated from [`wiring_power.dot`](wi
 [`wiring_data.dot`](wiring_data.dot); the PNG versions are next to the SVGs.
 
 > The single I²C master is the **FireBeetle 2 ESP32-UE**. The Pi 5 has **no I²C connection** in this build
-> (no 40-pin header); the trackball, BME688, DS3231, OLED and UPS fuel gauge all sit on the FireBeetle bus.
-> The trackball is optional and its firmware forwarding is still to be added.
+> (no 40-pin header); the BME688, DS3231, OLED and UPS fuel gauge sit on the FireBeetle bus. The Pimoroni
+> trackball is an **r2-only optional** device (0x0A, firmware forwarding pending); **r3 does not use it** —
+> the Phistone keyboard's air mouse and the touchscreen provide pointer input.
 
 ---
 
@@ -46,7 +47,7 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 | FireBeetle → OLED | I²C: SDA GPIO21 / SCL GPIO22, 3V3, GND | 0x3C; 1.3" 128×64, SH1106 default. |
 | FireBeetle → BME688 | I²C, 3V3, GND | 0x76 or 0x77. |
 | FireBeetle → DS3231 | I²C, 3V3, GND | 0x68; CR1220 backup cell. |
-| FireBeetle → trackball | I²C, 3V3, GND | 0x0A; optional, firmware forwarding pending. |
+| FireBeetle → trackball | I²C, 3V3, GND | **r2 only, optional**; 0x0A, firmware forwarding pending. Not fitted in r3. |
 | FireBeetle → UPS HAT | I²C, GND | 0x2D fuel gauge; UPS I²C logic is 3.3 V. Do **not** also connect to the Pi. |
 | Button → FireBeetle | GPIO4 → GND | PBS-33B momentary NO; firmware uses `INPUT_PULLUP`. |
 
@@ -60,10 +61,10 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 
 | FireBeetle | Net | Goes to |
 |---|---|---|
-| `3V3` | `3V3` | OLED VCC, BME688 VCC, DS3231 VCC, trackball VCC |
-| `GND` | `GND` | Common ground: OLED, BME688, DS3231, trackball, UPS I²C GND, button, UPS USB-A GND |
-| `GPIO21` / `SDA` | `I2C_SDA` | OLED SDA, BME688 SDA, DS3231 SDA, trackball SDA, UPS I²C SDA |
-| `GPIO22` / `SCL` | `I2C_SCL` | OLED SCL, BME688 SCL, DS3231 SCL, trackball SCL, UPS I²C SCL |
+| `3V3` | `3V3` | OLED VCC, BME688 VCC, DS3231 VCC, trackball VCC (r2 optional) |
+| `GND` | `GND` | Common ground: OLED, BME688, DS3231, trackball (r2 optional), UPS I²C GND, button, UPS USB-A GND |
+| `GPIO21` / `SDA` | `I2C_SDA` | OLED SDA, BME688 SDA, DS3231 SDA, trackball SDA (r2 optional), UPS I²C SDA |
+| `GPIO22` / `SCL` | `I2C_SCL` | OLED SCL, BME688 SCL, DS3231 SCL, trackball SCL (r2 optional), UPS I²C SCL |
 | `GPIO4` | `BTN` | PBS-33B terminal 1; terminal 2 to GND |
 | `5V` / `VCC` | `UPS_USBA_5V` | UPS HAT USB-A 5 V output |
 | `USB-C` | `USB_FB_SERIAL` | Pi 5 USB-A (serial data; data-only preferred) |
@@ -75,7 +76,7 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 | 1.3" OLED | 3V3 | GND | GPIO21 | GPIO22 | 0x3C (0x3D fallback) |
 | BME688 | 3V3 | GND | GPIO21 | GPIO22 | 0x76 / 0x77 |
 | DS3231 | 3V3 | GND | GPIO21 | GPIO22 | 0x68 |
-| Pimoroni Trackball (optional) | 3V3 | GND | GPIO21 | GPIO22 | 0x0A |
+| Pimoroni Trackball (r2 optional) | 3V3 | GND | GPIO21 | GPIO22 | 0x0A |
 | UPS HAT (E) fuel gauge | — (from UPS) | GND | GPIO21 | GPIO22 | 0x2D |
 
 ### Raspberry Pi 5

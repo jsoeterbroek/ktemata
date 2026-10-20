@@ -18,8 +18,8 @@ Based on project nomad
 | Build | Mechanics | Keyboard / radios |
 |---|---|---|
 | **r1** | Original reverse-engineered Waveshare 5" DSI + INIU power bank case; r1-only pull switch and battery button | Original r1 keyboard; no r2 electronics |
-| **r2** | Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700; current CAD default | Wired USB keyboard; Wi-Fi/Bluetooth off |
-| **r3** | **Same mechanical build and STLs as r2** | **Phistone Mini Keyboard** (2.4 GHz USB dongle or Bluetooth 5.0); Wi-Fi off; Pi Bluetooth optional, FireBeetle radios off |
+| **r2** | Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700; current CAD default | Wired USB keyboard; optional Pimoroni trackball; Wi-Fi/Bluetooth off |
+| **r3** | **Same mechanical build and STLs as r2** | **Phistone Mini Keyboard** (2.4 GHz USB dongle or Bluetooth 5.0); **no Pimoroni trackball**; Wi-Fi off; Pi Bluetooth optional, FireBeetle radios off |
 
 The default CAD is **r2** (Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700). The original r1 parts are still
 in the repository and compile with `-D R2=false` / `export.py --r1`. **r3 uses the same STLs as r2**; only
@@ -155,7 +155,7 @@ button are not used in r2.
 | Status button | **TinyTronics PBS-33B** 12 mm panel-mount momentary NO pushbutton ([black](https://www.tinytronics.nl/en/switches/manual-switches/push-buttons-and-switches/black-push-button-12mm-reset-pbs-33b)) | Fits the modelled 12.2 mm `OLED_BTN_D` hole. One terminal to GPIO4, the other to GND (`INPUT_PULLUP`). Not IP-rated; add a rubber boot for the sealed build, or use a 16 mm IP67 metal button and enlarge the top-wall hole. Short press = next screen, long press = acknowledge. |
 | Radios off | **r2 default:** `dtoverlay=disable-wifi` and `dtoverlay=disable-bt`; Wi-Fi/Bluetooth off in the FireBeetle firmware. **r3:** either use the Phistone 2.4 GHz dongle in the spare Pi USB-A, or enable the Pi's Bluetooth only (leave Wi-Fi off); FireBeetle radios stay off. | r2 matches "no networking, no Bluetooth". r3 treats the keyboard radio as an explicit input-device exception. No hardware radio switch needed. |
 
-Check I2C address collisions before wiring: BME688 0x76/0x77, trackball 0x0A, SEN66 0x6B, plus the UPS fuel gauge. With the FireBeetle option the sensors, trackball and UPS battery monitor (0x2D) move to its I2C bus (its OLED is at 0x3C, SDA GPIO21, SCL GPIO22). Don't connect them to both the Pi and the FireBeetle; two I2C masters on one bus cause trouble. Trackball forwarding to the Pi is still to be added in the firmware.
+Check I2C address collisions before wiring: BME688 0x76/0x77, SEN66 0x6B, plus the UPS fuel gauge. The Pimoroni trackball (0x0A) is an **r2-only optional** part; **r3 drops it** because the Phistone keyboard's air mouse and the touchscreen provide pointer input. With the FireBeetle option the sensors and UPS battery monitor (0x2D) move to its I2C bus (its OLED is at 0x3C, SDA GPIO21, SCL GPIO22). Don't connect them to both the Pi and the FireBeetle; two I2C masters on one bus cause trouble.
 
 ### Considered and rejected (r2/r3)
 
