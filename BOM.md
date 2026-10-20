@@ -1,7 +1,9 @@
-# Pi Fluks r2 — shopping list / BOM
+# Pi Fluks r3 — shopping list / BOM
 
-Scope: the hardware in `README.md` ("Target hardware") for the **r2** build. The **r3** build uses the same
-parts, with the Phistone Mini Keyboard instead of a wired USB keyboard; see [`docs/R3.md`](docs/R3.md).
+Scope: the hardware in `README.md` ("Target hardware") for the **r3** build. r3 is the current target and
+reuses the r2 mechanics and STLs; it differs only in the keyboard (Phistone Mini Keyboard, 2.4 GHz dongle or
+Pi Bluetooth) and drops the optional Pimoroni trackball. The r2 build uses the same parts with a wired USB
+keyboard; the keyboard alternatives in section C cover that variant. See [`docs/R3.md`](docs/R3.md).
 The **DFRobot FireBeetle 2 ESP32-UE** and the **1.3" 128×64 I²C OLED** are already owned and are
 excluded from the total.
 
@@ -27,10 +29,10 @@ PocketTerm35 donor feasibility: [`docs/POCKETTERM35-FEASIBILITY.md`](docs/POCKET
    display/Pi standoffs; DFRobot supplies 8 mm standoffs, so use 5 mm spacers or set `DISP_POST=8` in
    `cad/common.scad` (this adds 3 mm to the case depth).
 2. **UPS HAT (E):** it is a **4S 21700** board (cells in series) with pogo-pin power and a USB-C PD input.
-   The r2 CAD removes the stock acrylic base and 46 mm standoffs and puts the cells in a single-row printed
-   tray, so the cells must be wired to **V1–V4** with 20–22 AWG wire. Use **flat-top, unprotected, matched**
-   21700 cells. Add a fuse in the pack positive lead.
-3. **No active cooler / no 40-pin header** in the r2 stack: the UPS board occupies the Pi component side.
+   The r3/r2 CAD removes the stock acrylic base and 46 mm standoffs and puts the cells in a single-row
+   printed tray, so the cells must be wired to **V1–V4** with 20–22 AWG wire. Use **flat-top, unprotected,
+   matched** 21700 cells. Add a fuse in the pack positive lead.
+3. **No active cooler / no 40-pin header** in the r3/r2 stack: the UPS board occupies the Pi component side.
    The 6.5 mm gap is for the pogo pins and UPS components.
 4. **NVMe stacking:** the official Raspberry Pi M.2 HAT+ stacks on the GPIO side and **conflicts with the
    UPS HAT (E)**. Use the **Seeed PCIe to M.2 BASE** (back-mounted under the Pi) or a USB-C NVMe enclosure.
@@ -40,9 +42,11 @@ PocketTerm35 donor feasibility: [`docs/POCKETTERM35-FEASIBILITY.md`](docs/POCKET
    is **not IP-rated**. Add a 12 mm rubber boot for the sealed build, or use a 16 mm IP67 metal button and
    enlarge the CAD hole. The Kiwi 12 mm metal button is 21.3 mm long and can hit the cell row in the current
    CAD, so it is not the default.
-6. **Keyboard:** there is no verified off-the-shelf 137 × 72 mm wired USB keyboard. Reuse the r1 keyboard
-   PCB if you have it, use a BBQ20KBD (if available), or build a custom 137 × 72 PCB. This is the only
-   major item not fully specified here.
+6. **Keyboard:** r3 uses the **Phistone Mini Keyboard** from the r1 build — already owned, so it adds
+   nothing to the BOM. Set its 2.4G/BT switch and charge it before closing, because the face has no side
+   cutout. For the **r2** wired variant there is no verified off-the-shelf 137 × 72 mm USB keyboard: reuse
+   the r1 keyboard PCB if you have it, use a BBQ20KBD (if available), or build a custom 137 × 72 PCB. That
+   is the only major item not fully specified here.
 
 ---
 
@@ -55,7 +59,7 @@ PocketTerm35 donor feasibility: [`docs/POCKETTERM35-FEASIBILITY.md`](docs/POCKET
 | 3 | **Raspberry Pi 5 display cable – Standard–Mini, 300 mm** | 1 | [Kiwi 11592](https://www.kiwi-electronics.com/en/raspberry-pi-display-cable-standard-mini-300mm-11592) | € 2.29 | 22-pin Pi 5 → 15-pin display. Buy a spare if you can. |
 | 4 | **Waveshare UPS HAT (E)** | 1 | [Kiwi 20623](https://www.kiwi-electronics.com/en/ups-hat-e-for-raspberry-pi-with-4x-21700-battery-support-and-5v-6a-output-20623) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=UPS%20HAT%20E) · [Robotshop search](https://eu.robotshop.com/nl/search?q=UPS%20HAT%20E) | € 37.92 | Kiwi out of stock, new stock expected 01-11-2026. Check Tinytronics/Robotshop. |
 | 5 | **21700 Li-ion cells – 5000 mAh, flat-top, unprotected** | 4 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=21700%205000mAh) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=21700%205000mAh%20Samsung%2050E) · [Robotshop search](https://eu.robotshop.com/nl/search?q=21700%205000mAh) | ≈ € 8 each | Samsung INR21700-50E or similar. Matched set, same batch. **No button-top/protected cells.** |
-| 6 | **21700 single-cell holders with solder tabs** | 4 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=21700%20battery%20holder) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=21700%20batterijhouder%20soldeerlip) | ≈ € 2 each | For the single-row r2 tray. Reuse the holders supplied with the UPS HAT if your batch includes them. |
+| 6 | **21700 single-cell holders with solder tabs** | 4 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=21700%20battery%20holder) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=21700%20batterijhouder%20soldeerlip) | ≈ € 2 each | For the single-row r3/r2 tray. Reuse the holders supplied with the UPS HAT if your batch includes them. |
 | 7 | **Battery wiring kit** – 20–22 AWG silicone wire, 5 A fuse + holder, heat-shrink, insulation rings | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=silicone%20wire%2022AWG) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=silicone%20draad%2022AWG%20rood%20zwart) | ≈ € 12 | 4S pack; fuse in the positive lead. Keep the series wiring short and insulated. |
 | 8 | **Pimoroni BME688 breakout** | 1 | [Kiwi 10899](https://www.kiwi-electronics.com/en/bme688-4-in-1-air-quality-breakout-gas-temperature-pressure-humidity-10899) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=Pimoroni%20BME688) | € 25.40 | PIM575, Qw/ST connector, 3.3 V. Fits the vented side pocket. |
 | 9 | **DS3231 RTC breakout** | 1 | [Kiwi 2252](https://www.kiwi-electronics.com/en/adafruit-ds3231-precision-rtc-breakout-2252) | € 19.35 | Adafruit 23 × 17.6 mm; CR1220 backup. Keeps the FireBeetle clock when the Pi is off. |
@@ -71,7 +75,7 @@ PocketTerm35 donor feasibility: [`docs/POCKETTERM35-FEASIBILITY.md`](docs/POCKET
 | 19 | **M2.5 screw/standoff set** | 1 | [Kiwi 10252](https://www.kiwi-electronics.com/en/m2-5-screw-and-stand-off-set-black-nylon-380-pieces-10252) · [Kiwi brass set](https://www.kiwi-electronics.com/en/brass-male-female-spacer-set-m2-5-120pcs-9965) | € 12.09 / € 13.30 | Needs 6× M2.5×10 case screws. DFRobot supplies 8× M2.5×6 screws + 8× M2.5×8 standoffs for the display/Pi. |
 | 20 | **STEMMA QT / Qwiic JST-SH 4-pin cable, 200 mm** | 2 | [Kiwi 10389](https://www.kiwi-electronics.com/en/stemma-qt-qwiic-jst-sh-4-pin-cable-200mm-long-10389) | € 1.44 each | BME688 and DS3231; add one for the r2-only trackball if used. |
 | 21 | **STEMMA QT to male-header cable, 150 mm** | 1 | [Kiwi 10386](https://www.kiwi-electronics.com/en/stemma-qt-qwiic-jst-sh-4-pin-to-premium-male-headers-cable-150mm-long-10386) | € 1.15 | FireBeetle header → Qw/ST bus. |
-| 22 | **USB-A to USB-C short cable, 20–30 cm** | 2 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=USB-A%20USB-C%20kabel%2030cm) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=USB-A%20naar%20USB-C%20kabel%2030cm) | ≈ € 5 each | FireBeetle ↔ Pi and keyboard ↔ Pi. |
+| 22 | **USB-A to USB-C short cable, 20–30 cm** | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=USB-A%20USB-C%20kabel%2030cm) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=USB-A%20naar%20USB-C%20kabel%2030cm) | ≈ € 5 | FireBeetle ↔ Pi. The r3 Phistone needs no cable (2.4 GHz dongle or Bluetooth); buy a second one only for the r2 wired keyboard. |
 | 23 | **Dupont jumper wires, female–female, 20 cm** | 1 set | [Kiwi search](https://www.kiwi-electronics.com/en/search?search=dupont%20female) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=dupont%20kabels) | ≈ € 5 | UPS HAT I²C (0x2D) / 5 V to the FireBeetle or Pi. |
 | 24 | **Raspberry Pi 27 W USB-C PSU – EU** | 1 | [Kiwi 11582](https://www.kiwi-electronics.com/en/raspberry-pi-27w-usb-c-power-supply-black-eu-11582) | € 12.09 | Bench/initial charging via the UPS USB-C input. Not needed in the field. |
 | 25 | **USB-C to USB-C cable, 1 m** | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=USB-C%20naar%20USB-C%20kabel) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=USB-C%20naar%20USB-C%20kabel%201m) | ≈ € 8 | PSU ↔ UPS. |
@@ -79,7 +83,8 @@ PocketTerm35 donor feasibility: [`docs/POCKETTERM35-FEASIBILITY.md`](docs/POCKET
 
 **Known-price Kiwi subtotal (items 1–4, 8–12, 14, 16, 19–21, 24): ≈ € 353.**
 With the estimated items (cells, holders, wiring, SSD, button, panel port, vent, USB cables, jumpers) the
-core build is roughly **€ 535–605 + shipping**, excluding keyboard, solar panel and crank.
+core build is roughly **€ 530–600 + shipping**, excluding the keyboard (already owned for r3), solar panel
+and crank.
 
 ---
 
@@ -101,14 +106,14 @@ core build is roughly **€ 535–605 + shipping**, excluding keyboard, solar pa
 
 | Item | Qty | Recommended source | Price | Notes |
 |---|---|---|---|---|
-| **Pimoroni Trackball Breakout (r2 optional)** | 1 | [Kiwi 20243](https://www.kiwi-electronics.com/en/trackball-breakout-20243) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=Pimoroni%20trackball) | € 18.74 | I²C 0x0A; **r2 only**. Not used in r3 — the Phistone keyboard's air mouse and the touchscreen provide pointer input. |
+| **Phistone Mini Keyboard (r3 standard, already owned)** | 1 | — (already owned / original r1 source) | € 0 | 2.4 GHz + Bluetooth 5.0, 134 × 74 × 12.7 mm, USB-C, 100 h, RGB/air mouse. Sits on the shared r2/r3 137 × 72 keyboard support and behind the 130 × 67 face window, as on the r1; use the 2.4 GHz dongle in the spare Pi USB-A or pair via Bluetooth. Awkward Ctrl/punctuation layout; set its 2.4G/BT switch before closing and charge it before assembly. |
+| **Pimoroni Trackball Breakout (r2 only, not in r3)** | 1 | [Kiwi 20243](https://www.kiwi-electronics.com/en/trackball-breakout-20243) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=Pimoroni%20trackball) | € 18.74 | I²C 0x0A; **r2 only**. Not used in r3 — the Phistone keyboard's air mouse and the touchscreen provide pointer input. |
 | **Sensirion SEN66 + Adafruit SEN6x breakout** | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=SEN66) · [Robotshop search](https://eu.robotshop.com/nl/search?q=SEN66) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=SEN66%20Sensirion) | ≈ € 60–80 | Optional PM/CO₂/VOC sensor; build the CAD with `-D SEN66=true` for the larger pocket. |
-| **Solder Party BBQ20KBD** | 1 | [Solder Party](https://www.solder.party/) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=BBQ20KBD) | ≈ € 50–70 | USB HID, Q20 keys + trackpad. Sold out at times; check availability. |
-| **Custom 137 × 72 keyboard kit** | 1 | [Kiwi Pico](https://www.kiwi-electronics.com/en/raspberry-pi-pico-10494) · [Tinytronics Choc switches](https://www.tinytronics.nl/en/search?search=Kailh%20Choc) · [Bol keycaps](https://www.bol.com/nl/nl/s/?searchtext=Kailh%20Choc%20keycaps) | ≈ € 60–100 | RP2040/Pico + Choc switches + keycaps + diodes + USB-C + PCB. Fits the existing `KB_PCB` 137 × 72 footprint. |
-| **r3: Phistone Mini Keyboard** | 1 | — (already owned / original r1 source) | € 0 | 2.4 GHz + Bluetooth 5.0, 134 × 74 × 12.7 mm, USB-C, 100 h, RGB/air mouse. Fits the r2/r3 137 × 72 keyboard support/window like the r1; use the 2.4 GHz dongle in the spare Pi USB-A or pair via Bluetooth. Awkward Ctrl/punctuation layout; set its 2.4G/BT switch before closing and charge it before assembly. |
+| **Solder Party BBQ20KBD (r2 wired alternative)** | 1 | [Solder Party](https://www.solder.party/) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=BBQ20KBD) | ≈ € 50–70 | USB HID, Q20 keys + trackpad. Sold out at times; check availability. |
+| **Custom 137 × 72 keyboard kit (r2 wired alternative)** | 1 | [Kiwi Pico](https://www.kiwi-electronics.com/en/raspberry-pi-pico-10494) · [Tinytronics Choc switches](https://www.tinytronics.nl/en/search?search=Kailh%20Choc) · [Bol keycaps](https://www.bol.com/nl/nl/s/?searchtext=Kailh%20Choc%20keycaps) | ≈ € 60–100 | RP2040/Pico + Choc switches + keycaps + diodes + USB-C + PCB. Fits the existing `KB_PCB` 137 × 72 footprint. |
 | **PLA/PETG filament for the case** | ≈ 400 g | local | ≈ € 15 | Bottom, face, keyboard support. PETG is tougher; PLA is fine indoors. |
 | **TPU filament for the charge plug** | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=TPU%20filament) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=TPU%20filament%201.75mm) | ≈ € 20 | Only if you do not already print TPU. |
-| **Thin thermal pad / copper shim** | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=thermal%20pad) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=thermisch%20pad%200.5mm) | ≈ € 5 | No active cooler in r2; only if it fits the 6.5 mm gap. |
+| **Thin thermal pad / copper shim** | 1 | [Tinytronics search](https://www.tinytronics.nl/en/search?search=thermal%20pad) · [Bol search](https://www.bol.com/nl/nl/s/?searchtext=thermisch%20pad%200.5mm) | ≈ € 5 | No active cooler in r3/r2; only if it fits the 6.5 mm gap. |
 | **M2.5 heat-set inserts** | 1 set | [Kiwi brass spacer set](https://www.kiwi-electronics.com/en/brass-male-female-spacer-set-m2-5-120pcs-9965) · [Tinytronics search](https://www.tinytronics.nl/en/search?search=heat%20set%20insert%20M2.5) | ≈ € 13 | Optional; CAD `BRASS_INSERT=true`. |
 
 ---

@@ -44,9 +44,10 @@ To refresh the images in `renders/` afterwards: `python3 cad/tools/render.py` (a
 
 ## Shopping list / BOM
 
-See [`BOM.md`](BOM.md) for the r2/r3 shopping list (Kiwi Electronics primary, with Tinytronics / Robotshop /
-Bol alternates). It excludes the FireBeetle 2 ESP32-UE and 1.3" OLED, which are already owned, and flags
-the current display / UPS / NVMe / button fit caveats.
+See [`BOM.md`](BOM.md) for the r3 shopping list (Kiwi Electronics primary, with Tinytronics / Robotshop /
+Bol alternates). It excludes the FireBeetle 2 ESP32-UE, the 1.3" OLED and the already-owned r3 Phistone
+keyboard, and flags the current display / UPS / NVMe / button fit caveats. The r2 wired-keyboard variant
+uses the same list with the keyboard alternatives in its section C.
 
 ## Hardware alternatives
 
