@@ -1,13 +1,15 @@
-# Pi Fluks r2 — wiring / connection diagram
+# Pi Fluks r3 — wiring / connection diagram
 
 Two block diagrams: **power** and **data/I²C/USB**, plus an editable **KiCad 10 schematic** and a
 netlist-style CSV. The block diagrams are generated from [`wiring_power.dot`](wiring_power.dot) and
-[`wiring_data.dot`](wiring_data.dot); the PNG versions are next to the SVGs.
+[`wiring_data.dot`](wiring_data.dot) with `dot -Tsvg …` + `rsvg-convert`; the PNG versions are next to the
+SVGs. The schematic, PDF, PNG and CSV are named `pi_flux_r3_*`; r3 uses the same mechanics and wiring as r2
+and differs only in the keyboard.
 
 > The single I²C master is the **FireBeetle 2 ESP32-UE**. The Pi 5 has **no I²C connection** in this build
 > (no 40-pin header); the BME688, DS3231, OLED and UPS fuel gauge sit on the FireBeetle bus. The Pimoroni
-> trackball is an **r2-only optional** device (0x0A, firmware forwarding pending); **r3 does not use it** —
-> the Phistone keyboard's air mouse and the touchscreen provide pointer input.
+> trackball is **r2 only** (0x0A, firmware forwarding pending) and is marked DNP in the r3 schematic;
+> **r3 does not use it** — the Phistone keyboard's air mouse and the touchscreen provide pointer input.
 
 ---
 
@@ -25,6 +27,7 @@ netlist-style CSV. The block diagrams are generated from [`wiring_power.dot`](wi
 | UPS → Pi | Pogo pins: 5 V + GND | No cable; the UPS HAT sits on the Pi component side. |
 | UPS → FireBeetle | USB-A 5 V + GND → FireBeetle 5 V/GND | Keeps the status OLED alive when the Pi is off. |
 | Pi → RTC cell | ML-2020 2-pin JST → Pi J5 | Enable `dtparam=rtc_bbat_vchg=3000000`. |
+| Keyboard power | None | The r3 Phistone runs from its own 100 h battery and charges over its USB-C; it has no wire to the case. Charge and set its 2.4G/BT switch before closing (no side cutout). |
 
 **Bench charging:** a 27 W USB-C PD PSU gives the UPS its full fast-charge input only if it reaches the
 UPS USB-C input directly. The sealed charge port is intended for solar/crank through the internal
@@ -42,16 +45,16 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 |---|---|---|
 | Pi ↔ display | 15-pin DSI FFC (Pi 5 22-pin → 15-pin adapter) | DFR0550-V2; capacitive touch is carried on the DSI FFC on the standard version — verify your batch. |
 | Pi ↔ NVMe | PCIe FPC → Seeed M.2 BASE → 1 TB 2230 NVMe | BASE is back-mounted under the Pi; check the 5 mm display/Pi gap. |
-| Keyboard → Pi | USB-A | Wired USB keyboard only. |
+| Keyboard → Pi | 2.4 GHz USB-A dongle **or** Pi Bluetooth | r3: Phistone Mini Keyboard. The dongle goes in the second Pi USB-A port; the Bluetooth option needs no wire and the Pi's BT enabled (Wi-Fi stays off). No internal keyboard cable. |
 | FireBeetle ↔ Pi | USB-C → Pi USB-A, **serial** | Telemetry/commands. Prefer a **data-only** cable (VBUS disconnected) because the FireBeetle is separately powered from the UPS. |
 | FireBeetle → OLED | I²C: SDA GPIO21 / SCL GPIO22, 3V3, GND | 0x3C; 1.3" 128×64, SH1106 default. |
 | FireBeetle → BME688 | I²C, 3V3, GND | 0x76 or 0x77. |
 | FireBeetle → DS3231 | I²C, 3V3, GND | 0x68; CR1220 backup cell. |
-| FireBeetle → trackball | I²C, 3V3, GND | **r2 only, optional**; 0x0A, firmware forwarding pending. Not fitted in r3. |
+| FireBeetle → trackball | I²C, 3V3, GND | **r2 only**; 0x0A, firmware forwarding pending. Marked DNP in the r3 schematic; not fitted in r3. |
 | FireBeetle → UPS HAT | I²C, GND | 0x2D fuel gauge; UPS I²C logic is 3.3 V. Do **not** also connect to the Pi. |
 | Button → FireBeetle | GPIO4 → GND | PBS-33B momentary NO; firmware uses `INPUT_PULLUP`. |
 
-> **r3 keyboard option:** the **Phistone Mini Keyboard** can use its 2.4 GHz USB-A dongle (same `USB_KEYBOARD` link) or Bluetooth (no cable; enable the Pi's Bluetooth and pair). The wiring above is the r2 wired USB keyboard. The FireBeetle radios stay off either way.
+> **r3 keyboard:** the **Phistone Mini Keyboard** uses its 2.4 GHz USB-A dongle on the `USB_KEYBOARD` net or Bluetooth (no cable; enable the Pi's Bluetooth and pair). Both options are wireless — there is no keyboard cable in the case. The FireBeetle radios stay off either way, and the keyboard's own radio is the project's single radio exception (see [`R3.md`](R3.md)).
 
 ---
 
@@ -61,10 +64,10 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 
 | FireBeetle | Net | Goes to |
 |---|---|---|
-| `3V3` | `3V3` | OLED VCC, BME688 VCC, DS3231 VCC, trackball VCC (r2 optional) |
-| `GND` | `GND` | Common ground: OLED, BME688, DS3231, trackball (r2 optional), UPS I²C GND, button, UPS USB-A GND |
-| `GPIO21` / `SDA` | `I2C_SDA` | OLED SDA, BME688 SDA, DS3231 SDA, trackball SDA (r2 optional), UPS I²C SDA |
-| `GPIO22` / `SCL` | `I2C_SCL` | OLED SCL, BME688 SCL, DS3231 SCL, trackball SCL (r2 optional), UPS I²C SCL |
+| `3V3` | `3V3` | OLED VCC, BME688 VCC, DS3231 VCC, trackball VCC (r2 only, DNP) |
+| `GND` | `GND` | Common ground: OLED, BME688, DS3231, trackball (r2 only, DNP), UPS I²C GND, button, UPS USB-A GND |
+| `GPIO21` / `SDA` | `I2C_SDA` | OLED SDA, BME688 SDA, DS3231 SDA, trackball SDA (r2 only, DNP), UPS I²C SDA |
+| `GPIO22` / `SCL` | `I2C_SCL` | OLED SCL, BME688 SCL, DS3231 SCL, trackball SCL (r2 only, DNP), UPS I²C SCL |
 | `GPIO4` | `BTN` | PBS-33B terminal 1; terminal 2 to GND |
 | `5V` / `VCC` | `UPS_USBA_5V` | UPS HAT USB-A 5 V output |
 | `USB-C` | `USB_FB_SERIAL` | Pi 5 USB-A (serial data; data-only preferred) |
@@ -76,7 +79,7 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 | 1.3" OLED | 3V3 | GND | GPIO21 | GPIO22 | 0x3C (0x3D fallback) |
 | BME688 | 3V3 | GND | GPIO21 | GPIO22 | 0x76 / 0x77 |
 | DS3231 | 3V3 | GND | GPIO21 | GPIO22 | 0x68 |
-| Pimoroni Trackball (r2 optional) | 3V3 | GND | GPIO21 | GPIO22 | 0x0A |
+| Pimoroni Trackball (r2 only, DNP in r3) | 3V3 | GND | GPIO21 | GPIO22 | 0x0A |
 | UPS HAT (E) fuel gauge | — (from UPS) | GND | GPIO21 | GPIO22 | 0x2D |
 
 ### Raspberry Pi 5
@@ -85,7 +88,7 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 |---|---|---|
 | DSI | `DSI_FPC` | DFR0550-V2 15-pin DSI FFC |
 | PCIe | `PCIE_FPC` | Seeed M.2 BASE |
-| USB-A 1 | `USB_KEYBOARD` | Wired USB keyboard |
+| USB-A 1 | `USB_KEYBOARD` | Phistone 2.4 GHz dongle (r3); wired USB keyboard in r2. Bluetooth alternative uses no port |
 | USB-A 2 | `USB_FB_SERIAL` | FireBeetle USB-C (serial) |
 | USB-C | — | Service/flashing only, not used in the case |
 | J5 RTC | `VBAT_PI` | Panasonic ML-2020 2-pin JST |
@@ -117,8 +120,10 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 
 ## 4. Wiring rules / checks
 
-1. **Common ground everywhere.** The UPS, Pi, FireBeetle, sensors, OLED, keyboard and charge port must share
-   GND. Use one star point at the UPS HAT and keep the 4S pack wiring short.
+1. **Common ground everywhere.** The UPS, Pi, FireBeetle, sensors, OLED and charge port must share GND. Use
+   one star point at the UPS HAT and keep the 4S pack wiring short. The r3 keyboard is the exception: it is
+   wireless and has no electrical connection to the case, so it also does not share this ground (its USB-C
+   is for charging only, with the keyboard outside the case).
 2. **Only one I²C master.** The FireBeetle owns the bus. Do not also connect the UPS, BME688, DS3231 or OLED
    to the Pi. Two masters on one bus will corrupt traffic.
 3. **Pull-ups:** BME688, DS3231, OLED and UPS breakouts often each fit 4.7–10 kΩ pull-ups. In parallel they
@@ -140,21 +145,27 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
    display/Pi standoff before final assembly.
 10. **First power-up:** leave the Pi disconnected, connect the UPS with a current-limited/bench supply,
     check 5 V rails and I²C addresses, then connect the Pi and display.
+11. **r3 keyboard link:** put the Phistone's 2.4 GHz dongle in the second Pi USB-A port, or enable the Pi's
+    Bluetooth only (`dtoverlay=disable-bt` removed) and pair. Wi-Fi stays off and the FireBeetle radios stay
+    off; the keyboard radio is the single allowed radio exception. Keep a wired USB keyboard for first boot
+    and recovery, because Bluetooth is not available before the OS starts.
 
 ---
 
 ## 5. KiCad schematic
 
-A KiCad 10 schematic is included: [`pi_flux_r2_wiring.kicad_sch`](pi_flux_r2_wiring.kicad_sch)
-([PDF](pi_flux_r2_wiring.pdf), [SVG](kicad_wiring/pi_flux_r2_wiring.svg), [PNG](pi_flux_r2_wiring.png)).
+A KiCad 10 schematic is included: [`pi_flux_r3_wiring.kicad_sch`](pi_flux_r3_wiring.kicad_sch)
+([PDF](pi_flux_r3_wiring.pdf), [SVG](kicad_wiring/pi_flux_r3_wiring.svg), [PNG](pi_flux_r3_wiring.png)).
 
-![KiCad wiring schematic](pi_flux_r2_wiring.png)
+![KiCad wiring schematic](pi_flux_r3_wiring.png)
 
 It is a **net-label schematic**: every module is a connector-shaped block with named pins, and a short wire
 plus a net label carries each signal. **Same net label = connected** — there are no routed harness lines.
 This keeps the connection list readable and editable; use the two block diagrams above for the physical
-topology. `pi_flux_r2_wiring.kicad_sch` opens directly in KiCad 10. ERC reports only `lib_symbol_issues`
-for the embedded `PiFlux` symbols (they are not in an external library); there are no electrical errors.
+topology. `pi_flux_r3_wiring.kicad_sch` opens directly in KiCad 10. ERC reports only `lib_symbol_issues`
+for the embedded `PiFlux` symbols (they are not in an external library); there are **no electrical errors or
+warnings**. The r3 keyboard block is `J10`, the Phistone 2.4 GHz dongle on the Pi's `USB_KEYBOARD` net; the
+r2-only trackball `J16` is marked DNP (crossed out).
 
-The CSV [`pi_flux_r2_connections.csv`](pi_flux_r2_connections.csv) lists every net with `From`, `From pin`,
+The CSV [`pi_flux_r3_connections.csv`](pi_flux_r3_connections.csv) lists every net with `From`, `From pin`,
 `To`, `To pin`, and cable/notes for a spreadsheet or for re-drawing the schematic by hand.

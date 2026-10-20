@@ -11,6 +11,7 @@ digraph power {
   pi    [label=<<b>Raspberry Pi 5</b><br/>pogo-pin 5 V + GND<br/>RTC ML-2020 on J5>, fillcolor="#e8ffe8"];
   fb    [label=<<b>FireBeetle 2 ESP32-UE</b><br/>5 V in from UPS USB-A<br/>3V3 · GND · SDA21 · SCL22>, fillcolor="#e8ffe8"];
   rtc   [label=<<b>Pi RTC cell</b><br/>Panasonic ML-2020<br/>2-pin JST → J5>, fillcolor="#f0e8ff"];
+  kbdnote [shape=note, label=<<b>r3 keyboard power</b><br/>Phistone Mini Keyboard: own 100 h battery,<br/>no power wire to the case. Set its 2.4G/BT<br/>switch and charge it over USB-C before closing<br/>(the face has no side cutout)>, fillcolor="#f7f7f7"];
 
   solar -> port [label="USB-C"];
   crank -> port [label="USB-C"];
@@ -22,4 +23,5 @@ digraph power {
 
   { rank=same; solar; crank; }
   { rank=same; pi; fb; }
+  { rank=same; rtc; kbdnote; }
 }

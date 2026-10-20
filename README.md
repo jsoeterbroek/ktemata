@@ -58,8 +58,8 @@ the 5" r2 design, but the RP2040 USB keyboard is the one part worth prototyping 
 ## Wiring
 
 See [`docs/WIRING.md`](docs/WIRING.md) for the power and data/I²C block diagrams, pin-level tables and wiring
-rules. It also links the editable KiCad 10 schematic (`docs/pi_flux_r2_wiring.kicad_sch`, PDF/SVG/PNG) and
-the netlist-style [`docs/pi_flux_r2_connections.csv`](docs/pi_flux_r2_connections.csv).
+rules. It also links the editable KiCad 10 schematic (`docs/pi_flux_r3_wiring.kicad_sch`, PDF/SVG/PNG) and
+the netlist-style [`docs/pi_flux_r3_connections.csv`](docs/pi_flux_r3_connections.csv).
 
 ## Python environment
 

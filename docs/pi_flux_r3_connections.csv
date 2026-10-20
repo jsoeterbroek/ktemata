@@ -16,7 +16,7 @@ UPS HAT (E),4S battery +,BATT_4S_P,UPS HAT (E),V1/V4 pack positive,4x21700 in se
 UPS HAT (E),4S battery -,BATT_4S_N,UPS HAT (E),V4/V1 pack negative,4x21700 in series; insulated
 Raspberry Pi 5,DSI,DSI_FPC,DFR0550-V2 display,DSI,Pi 5 Standard-Mini 22-pin to 15-pin FFC; touch I2C over FFC
 Raspberry Pi 5,PCIe,PCIE_FPC,Seeed M.2 BASE,PCIe FPC,PCIe FPC; 1 TB 2230 NVMe on BASE
-Raspberry Pi 5,USB-A 1,USB_KEYBOARD,Wired USB keyboard,USB,Short USB-A cable
+"Raspberry Pi 5","USB-A 1",USB_KEYBOARD,"Phistone Mini Keyboard","2.4 GHz dongle","2.4G mode: no cable to the Pi. Bluetooth alternative: no wire, enable Pi BT (Wi-Fi stays off)"
 Raspberry Pi 5,USB-A 2,USB_FB_SERIAL,FireBeetle 2,USB-C,Data-only USB cable preferred (VBUS disconnected)
 Raspberry Pi 5,RTC J5,VBAT_PI_P,Panasonic ML-2020,+,2-pin JST; enable rtc_bbat_vchg
 Raspberry Pi 5,RTC J5,VBAT_PI_N,Panasonic ML-2020,-,2-pin JST
@@ -32,10 +32,10 @@ FireBeetle 2,3V3,3V3,DS3231 RTC,VCC,3.3 V only
 FireBeetle 2,GND,GND,DS3231 RTC,GND,Common ground
 FireBeetle 2,GPIO21 / SDA,I2C_SDA,DS3231 RTC,SDA,Address 0x68; CR1220 fitted
 FireBeetle 2,GPIO22 / SCL,I2C_SCL,DS3231 RTC,SCL,
-FireBeetle 2,3V3,3V3,Pimoroni Trackball,VCC,3.3 V only; optional
-FireBeetle 2,GND,GND,Pimoroni Trackball,GND,Common ground; optional
-FireBeetle 2,GPIO21 / SDA,I2C_SDA,Pimoroni Trackball,SDA,Address 0x0A; firmware forwarding pending
-FireBeetle 2,GPIO22 / SCL,I2C_SCL,Pimoroni Trackball,SCL,Firmware forwarding pending
+FireBeetle 2,3V3,3V3,Pimoroni Trackball,VCC,"3.3 V only; r2 only, not fitted in r3"
+FireBeetle 2,GND,GND,Pimoroni Trackball,GND,"Common ground; r2 only, not fitted in r3"
+FireBeetle 2,GPIO21 / SDA,I2C_SDA,Pimoroni Trackball,SDA,"Address 0x0A; r2 only, not fitted in r3"
+FireBeetle 2,GPIO22 / SCL,I2C_SCL,Pimoroni Trackball,SCL,"r2 only, not fitted in r3"
 FireBeetle 2,GPIO4,BTN,Status button,PBS-33B terminal 1,INPUT_PULLUP
 FireBeetle 2,GND,GND,Status button,PBS-33B terminal 2,Other terminal to GND
 Raspberry Pi 5,5 V pogo,UPS_POGO_5V,UPS HAT (E),POGO 5V,See power diagram
