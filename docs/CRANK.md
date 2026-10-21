@@ -47,6 +47,7 @@ no supports.
 | `crank_tray` | 1 | Electronics tray under the plate, gland for the output cable |
 | `crank_lid` | 1 | Screw-on lid with a vent slot |
 | `crank_foot` | 4 | Screw-on feet with M3 nut traps; set the 20 mm bench clearance |
+| `crank_spacer` | 4 | Spacer tube Ø14 × 12.4 mm between a stator lug and the top plate |
 
 ## Bought parts
 
@@ -56,7 +57,7 @@ no supports.
 | 608-2RS bearings | 2 | 8 × 22 × 7 mm |
 | Silver-steel shaft | 2 | Ø8 mm, one ground flat; rotor 55 mm, crank 32 mm |
 | M3 socket screws | 4 × 30 | Stack screws: top plate → spacer tube → stator lug → base post insert |
-| M3 × 12 | 8 | Rotor discs to clamp hubs |
+| M3 × 16 | 8 | Rotor discs to clamp hubs (7 mm disc + 4.3 mm hub body = 11.3 mm, so 16 mm is the shortest screw that still engages) |
 | M3 × 8 + nuts | 8 | Tray lid and feet |
 | M6 × 40 bolt + nut | 1 | Knob through the crank arm |
 | M3 heat-set inserts | 8 | 4 in the base posts, 4 in the plate underside for the tray |
@@ -65,33 +66,64 @@ no supports.
 | Capacitors | 2–3 | 1000 µF 25 V (buffer) |
 | 5 V USB buck module | 1 | MP1584 / LM2596 set to 5.1 V, 1 A |
 | USB-A pigtail | 1 | To the case charge port or a USB-C adapter |
-| Spacer tubes | 4 | Ø14 × 11.9 mm (printed or aluminium, cut to `CR_TPOST_H`) |
+| Spacer tubes | 4 | Printed (`crank_spacer`), or aluminium cut to `CR_TPOST_H` = 11.9 mm of clear height |
 
 ## Assembly
 
-1. **Rotor discs.** Press the 16 magnets in with alternating polarity (mark the north faces first; a
-   stack test with two magnets tells you the poles). Glue them flush.
-2. **Bottom bearing.** Press a 608 into the base plate pocket until it is flush with the plate top.
-3. **Bottom rotor.** Slide the hub onto the shaft (flat to flat), sit it on the bearing inner race,
-   drop the first disc over the hub (magnets facing **up**, away from the plate) and screw it to the hub.
-4. **Stator.** Heat-set the four M3 inserts into the base-plate posts, then lower the stator onto them,
-   coil windows up. The wire exit notch sits at −x.
-5. **Coils.** Wind 8 coils of ≈300–350 turns each, tape them, and lay them into the windows. Join them
-   2-in-series/4-in-parallel, run the ends through the channel and out the −x hole.
-6. **Top rotor.** Fit the second hub above the second disc (magnets facing **down**, toward the stator),
-   then lower it onto the shaft. Keep the two magnet rings aligned: the top rotor's magnets must sit
-   opposite the bottom rotor's poles.
-7. **Top plate.** Add the four spacer tubes and the top plate; the four M3×30 screws clamp the stack.
-   Press the second 608 into the crank boss and fit the crank shaft.
-8. **Gears.** Clamp the 66T gear to the rotor shaft above the top plate, and the 22T gear to the crank
-   shaft. They mesh with ≈0.4 mm backlash at the modelled 66.4 mm centre distance. Check for free
-   rotation before fitting the arm.
-9. **Crank.** Bolt the arm to the crank shaft and the knob through the arm end.
-10. **Electronics.** Fix the rectifier, capacitors and 5 V module in the tray, wire them, run the output
-    through the gland, and screw the tray and lid under the plate. Fit the four feet.
-11. **Test.** With a multimeter on the output: slow turning should give ≥5 V open circuit at the module
-    input; the module output must hold 5 V under a phone load. Check that nothing rubs: the rotor should
-    spin freely with the magnets cogging slightly.
+Read the whole sequence first: the two rotors and their clamp hubs are built as sub-assemblies
+**before** the stator goes in, because the M3 hub screws are inserted from the magnet face and that
+face ends up 0.6 mm from the stator.
+
+### A. Rotor sub-assemblies (×2, mirror images)
+
+1. **Magnets.** Press the 16 N52 discs into the rotor pockets, alternating polarity around the circle.
+   Find the poles with a stack test (two magnets attract on one side, repel on the other) and keep all
+   the north faces on the same side of each disc. Glue them flush; the pockets are 3.3 mm deep for a
+   3 mm magnet.
+2. **Hub to disc.** Lay a rotor with its **magnet face up**. Drop a clamp hub into the recess so its
+   body sits against the disc, and fit 4 × M3×16 through the counterbored holes in the magnet face into
+   the hub's self-tapping holes. Snug them: the counterbore is 6.2 mm, so the heads end up flush with
+   the magnet face. This is the only chance to fit these screws.
+3. **Shaft.** Slide the hub onto the rotor shaft (flat to flat) and tighten the pinch screw through the
+   hub's side slit.
+4. **Repeat** for the second rotor, but with its **magnet face down** (mirror image). The two discs are
+   identical parts; the second one is simply flipped.
+
+### B. Frame and alternator
+
+5. **Base bearing.** Press a 608 into the base plate's top pocket, flush with the plate top.
+6. **Bottom rotor.** Slide the shaft through the bearing from above. The hub's 10 mm boss sits on the
+   bearing inner race, so the disc turns 5.8 mm above the plate.
+7. **Posts.** Heat-set four M3 inserts into the base-plate posts. Lower the **stator** onto them, coil
+   windows up, with the wire exit notch at the −x side. Do not screw it down yet.
+8. **Coils.** Wind 8 coils of ≈300–350 turns of 0.3–0.4 mm enamelled wire and lay them into the
+   windows. Join them 2 in series × 4 in parallel (see *Electrical notes*), then run the two output
+   leads through the channel on the stator's top face and out of the −x hole.
+9. **Top rotor.** Lower the second rotor onto the shaft, magnet face **down**, so its magnets face the
+   stator. Align it with the bottom rotor (its magnets sit opposite the lower ones) and tighten its hub
+   pinch screw.
+10. **Top plate.** Fit the four **spacer tubes** on the stator lugs, then the top plate, and run the
+    four M3×30 screws down through the plate, the spacers, the stator lugs and into the base-post
+    inserts. Do not fully tighten yet.
+11. **Crank bearing.** Press the second 608 into the crank boss, flush with the boss top, and slide the
+    crank shaft down through it.
+
+### C. Drive and electronics
+
+12. **Gears.** Clamp the **66T** gear to the rotor shaft above the top plate and the **22T** gear to the
+    crank shaft, both with their pinch screws. The centres are 66.4 mm apart, giving ≈0.4 mm backlash:
+    turn the crank by hand and check for a smooth mesh with no binding before going further.
+13. **Arm and knob.** Bolt the arm to the crank shaft and tighten its pinch screw. Push the M6 bolt
+    through the knob, then through the arm's end, and fit the M6 nut in the trap under the arm; tighten
+    from above.
+14. **Electronics.** Solder the coils to the bridge rectifier and the capacitor bank, then to the 5 V
+    module's input, and the module's output to the USB pigtail. Fix the boards in the tray, run the
+    pigtail out through the −x gland, and screw the tray and its lid under the base plate. Fit the four
+    feet.
+15. **Test.** Spin the crank slowly: the rotor should run free with a light cogging from the magnets,
+    and the multimeter should show ≥5 V DC at the module output. Load it with a phone and confirm the
+    output holds 5 V. Check that no screw head or magnet touches the stator (the gap is 0.6 mm per
+    side).
 
 ## Electrical notes
 

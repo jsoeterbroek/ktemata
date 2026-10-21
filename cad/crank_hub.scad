@@ -17,7 +17,7 @@ module cr_hub(boss=true) {
         translate([-CR_HUB_D/2 - 1, CR_FLAT + 5.5, CR_SPACER_H/2 + 0.6]) rotate([0, 90, 0])
             cylinder(d = 3.4, h = CR_HUB_D + 2);
         for (i = [0:3]) rotate([0, 0, 45 + i*90])
-            translate([CR_HUB_SCREW_R, 0, -1]) cylinder(d = 2.7, h = CR_SPACER_H + 3);  // M3 self-tap
+            translate([CR_HUB_SCREW_R, 0, -1]) cylinder(d = 2.7, h = CR_SPACER_H + 3);  // M3 self-tap, 4.3 mm deep
     }
 }
 

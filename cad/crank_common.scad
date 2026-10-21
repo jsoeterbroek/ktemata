@@ -31,6 +31,7 @@ CR_HUB_BOSS_H = 1.5;
 CR_SPACER_H   = 4.3;        // clamp hub body height
 CR_HUB_TOP    = CR_SPACER_H;
 CR_HUB_SCREW_R = 10.5;      // disc-to-hub screw circle
+CR_HUB_CB_D   = 6.2;        // M3 socket-head counterbore in the rotor, both sides
 CR_BOSS_H     = CR_HUB_TOP + 6.0;   // crank bearing boss above the plate
 CR_BOSS_D     = 30.0;       // crank bearing boss OD (608 needs 22.2; 30 clears the
                             // 66T gear addendum circle: 66.4 - 15 = 51.4 > 51.0)

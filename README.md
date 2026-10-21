@@ -61,8 +61,10 @@ a 3:1 geared axial-flux alternator, 180 × 126 mm footprint, 68 mm tall.
 | `crank_tray.stl` – electronics tray | `crank_tray.scad` | opening up |
 | `crank_lid.stl` – tray lid | `crank_tray.scad` | flat |
 | `crank_foot.stl` – screw-on foot, **print 4** | `crank_tray.scad` | flange down |
+| `crank_spacer.stl` – stator→plate spacer, **print 4** | `crank_tray.scad` | standing up |
 
-`python3 cad/tools/export_crank.py` exports the set (all parts, or name some: `… base stator`).
+`python3 cad/tools/export_crank.py` exports the set (all parts, or name some: `… base stator`). Step-by-step
+assembly, winding scheme and the bought-parts list: [`docs/CRANK.md`](docs/CRANK.md).
 `cad/crank_assembly.scad` shows the unit assembled; add `-D 'CHECK="rotor:stator"'` for a clearance
 check or `-D 'SECTION=true'` for a half-section. Previews go to `renders/crank_*.png`.
 

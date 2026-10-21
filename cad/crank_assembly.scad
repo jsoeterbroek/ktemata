@@ -35,6 +35,8 @@ module cr_unit() {
     color("#3a6ea5") translate([0, 0, EXPLODE*0.35]) cr_stator();
     color("#2c5282") translate([0, 0, EXPLODE]) cr_top_plate();
     color("#4682b4") cr_tray();
+    // spacer tubes between the stator lugs and the top plate
+    for (p = CR_POSTS) color("#7f8c8d") translate([p[0], p[1], CR_Z_ST1]) cr_spacer();
     color("#5b7fa5") cr_lid_asm();
     for (f = CR_FEET) c_foot(f);
     // rotating group

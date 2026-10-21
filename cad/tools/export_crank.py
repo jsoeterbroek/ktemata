@@ -26,9 +26,10 @@ PARTS = {
     'tray':           'crank_tray',
     'lid':            'crank_lid',
     'foot':           'crank_foot',
+    'spacer':         'crank_spacer',
 }
 DEFAULT = ['base', 'stator', 'top', 'rotor', 'hub', 'gear_big', 'gear_small',
-           'arm', 'knob', 'tray', 'lid', 'foot']
+           'arm', 'knob', 'tray', 'lid', 'foot', 'spacer']
 
 
 def read_ascii(path):

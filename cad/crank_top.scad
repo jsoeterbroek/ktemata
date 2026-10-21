@@ -8,8 +8,8 @@ module cr_top_plate() {
     difference() {
         union() {
             translate([0, 0, CR_Z_TPL0]) linear_extrude(CR_PLATE_T) cr_plate2d();
-            // seats for the spacer tubes above the stator lugs
-            for (p = CR_POSTS) translate([p[0], p[1], CR_Z_TPL0 - 0.1]) cylinder(d = CR_TPOST_D, h = 0.2);
+            // (no seats: the spacer tubes bear directly on the plate underside, which also
+            // avoids a 0.2 mm thin pad that would print badly)
             // crank bearing boss
             translate([CR_CRANK_X, 0, CR_Z_TPL1]) cylinder(d = CR_BOSS_D, h = CR_BOSS_H);
         }

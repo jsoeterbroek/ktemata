@@ -38,3 +38,5 @@ if (PART == "tray") cr_tray();
 if (PART == "lid") cr_lid();
 // foot: flange down, nut trap up
 if (PART == "foot") translate([0, 0, 0]) cr_foot();
+// spacer tube: standing up (x4)
+if (PART == "spacer") cr_spacer();

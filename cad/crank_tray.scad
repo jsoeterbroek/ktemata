@@ -70,3 +70,10 @@ module cr_foot() difference() {
 }
 
 if (is_undef(ASSEMBLY)) cr_tray();
+
+// ---------------- stator-to-top-plate spacer tubes (x4) ----------------
+// Height CR_TPOST_H; the M3 stack screws pass through. Print standing up.
+module cr_spacer() difference() {
+    cylinder(d = CR_TPOST_D, h = CR_TPOST_H);
+    translate([0, 0, -1]) cylinder(d = CR_SCREW_D, h = CR_TPOST_H + 2);
+}
