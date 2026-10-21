@@ -54,3 +54,7 @@ list of *my* zim files (Kiwix) saved on external disk:
 - zimgit-medicine_en_2024-08.zim
 - zimgit-post-disaster_en_2024-05.zim
 - zimgit-water_en_2024-08.zim
+- ready.gov_en_all_2026-10.zim
+- wwwnc.cdc.gov_en_all_2024-11.zim
+- survivorlibrary.com_en_all_2026-09.zim
+- joosts.zim
