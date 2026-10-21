@@ -12,3 +12,4 @@
 platformio>=6.1
 intelhex>=2.3
 ruff>=0.6
+nautiluszim==1.2.1
