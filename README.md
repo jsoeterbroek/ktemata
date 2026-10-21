@@ -87,6 +87,21 @@ See [`docs/WIRING.md`](docs/WIRING.md) for the power and data/I²C block diagram
 rules. It also links the editable KiCad 10 schematic (`docs/pi_flux_r3_wiring.kicad_sch`, PDF/SVG/PNG) and
 the netlist-style [`docs/pi_flux_r3_connections.csv`](docs/pi_flux_r3_connections.csv).
 
+## ZIM library (Kiwix)
+
+The offline content lives on the external disk (`/run/media/joost/data/zim`), listed in
+[`zim/zim.md`](zim/zim.md). Check what is actually there, verify it, and keep the list in sync:
+
+```bash
+.venv/bin/python work/scripts/zim.py              # table: title, date, languages, entries, size
+.venv/bin/python work/scripts/zim.py --check      # verify every checksum (slow)
+.venv/bin/python work/scripts/zim.py --missing    # listed, not on disk
+.venv/bin/python work/scripts/zim.py --update-list  # rewrite zim/zim.md from the disk
+```
+
+It reads the archives with **libzim** (prebuilt wheel, no compiler) and never writes to a
+`.zim`. ZIM files themselves are git-ignored.
+
 ## Python environment
 
 ```bash

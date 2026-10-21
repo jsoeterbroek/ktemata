@@ -22,4 +22,4 @@ work/*
 
 # content from Kiwix library
 # should show a txt file with my choices
-zim/
+zim/*.zim

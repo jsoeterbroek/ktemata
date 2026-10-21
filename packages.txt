@@ -2,8 +2,14 @@
 #
 #   cad/tools/export.py, cad/tools/render.py   stdlib only (drive the openscad CLI)
 #   work/scripts/crop.py                       Pillow (PDF page crops with a measurement grid)
+#   work/scripts/zim.py                        libzim (inspect/verify the Kiwix ZIM library)
+#
+# libzim ships prebuilt wheels, so this never compiles anything. Do NOT substitute an
+# older lxml-based ZIM reader: lxml <= 5.2.2 fails to build against libxml2 >= 2.15
+# (xmlChar** vs const xmlChar**).
 #
 # Install into the local venv:
 #   uv venv .venv && uv pip install -r packages.txt
 
 Pillow>=12.0
+libzim>=3.13

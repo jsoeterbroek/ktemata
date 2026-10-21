@@ -50,6 +50,7 @@ list of *my* zim files (Kiwix) saved on external disk:
 - wikiciv_en_all_maxi_2025-11.zim
 - wikipedia_en_all_maxi_2026-08.zim
 - wikiversity_en_all_maxi_2026-05.zim
+- wwwnc.cdc.gov_en_all_2024-11.zim
 - zimgit-medicine_en_2024-08.zim
 - zimgit-post-disaster_en_2024-05.zim
 - zimgit-water_en_2024-08.zim
