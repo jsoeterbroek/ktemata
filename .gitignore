@@ -19,3 +19,7 @@ __pycache__/
 # Scratch / working files (keep the helper scripts)
 work/*
 !work/scripts/
+
+# content from Kiwix library
+# should show a txt file with my choices
+zim/

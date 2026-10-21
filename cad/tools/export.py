@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Export parts to ../stl as binary STL, dropped onto z=0 and centred on x/y.
 
-  python3 cad/tools/export.py                 # r2 parts (default)
+  python3 cad/tools/export.py                 # r3/r2 parts (default; r3 reuses the r2 STLs)
   python3 cad/tools/export.py --r1            # original r1 set instead
   python3 cad/tools/export.py face bottom     # only some parts
 """
