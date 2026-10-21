@@ -42,6 +42,30 @@ To re-export the STLs: `python3 cad/tools/export.py` (use `--r1` for the origina
 To refresh the images in `renders/` afterwards: `python3 cad/tools/render.py` (add `--r1` to include the r1-only views).
 `R1=1 bash work/scripts/check.sh` runs the old interference set; the default is the r3/r2 set.
 
+### Hand crank generator (`stl/crank/`)
+
+The backup charger is a **separate unit**, not part of the case (see [`docs/CRANK.md`](docs/CRANK.md)):
+a 3:1 geared axial-flux alternator, 180 × 126 mm footprint, 68 mm tall.
+
+| STL (`stl/crank/`) | Source (`cad/`) | Print orientation |
+|---|---|---|
+| `crank_base.stl` – base plate + four stator posts | `crank_base.scad` | plate down, posts up |
+| `crank_stator.stl` – 8-coil stator with mounting lugs | `crank_stator.scad` | flat, coil windows up |
+| `crank_top.stl` – top plate + crank bearing boss | `crank_top.scad` | plate down, boss up |
+| `crank_rotor.stl` – magnet rotor, **print 2** | `crank_rotor.scad` | flat, magnet pockets up |
+| `crank_hub.stl` – shaft clamp hub, **print 2** (one per rotor) | `crank_hub.scad` | boss down |
+| `crank_gear_big.stl` – 66T rotor gear | `crank_gears.scad` | flat |
+| `crank_gear_small.stl` – 22T crank gear | `crank_gears.scad` | flat |
+| `crank_arm.stl` – crank arm | `crank_arm.scad` | flat |
+| `crank_knob.stl` – crank knob | `crank_tray.scad` | washer down |
+| `crank_tray.stl` – electronics tray | `crank_tray.scad` | opening up |
+| `crank_lid.stl` – tray lid | `crank_tray.scad` | flat |
+| `crank_foot.stl` – screw-on foot, **print 4** | `crank_tray.scad` | flange down |
+
+`python3 cad/tools/export_crank.py` exports the set (all parts, or name some: `… base stator`).
+`cad/crank_assembly.scad` shows the unit assembled; add `-D 'CHECK="rotor:stator"'` for a clearance
+check or `-D 'SECTION=true'` for a half-section. Previews go to `renders/crank_*.png`.
+
 ## Shopping list / BOM
 
 See [`BOM.md`](BOM.md) for the r3 shopping list (Kiwi Electronics primary, with Tinytronics / Robotshop /

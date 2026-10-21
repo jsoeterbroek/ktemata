@@ -28,6 +28,16 @@ VIEWS = {
     'pi_fluks_charge_plug':      ('stl:charge_plug', (900, 700), ISO, [], True),
     'pi_fluks_power_button':     ('stl:power_button', (1200, 950), ISO, [], True),
     'pi_fluks_pull_switch':      ('stl:pull_switch', (1200, 950), ISO, [], True),
+    # hand crank generator (separate unit, see docs/CRANK.md)
+    'crank_assembly':   ('crank_assembly.scad', (1400, 1100), '0,0,18,62,0,32,560', ['-D', 'EXPLODE=45'], False),
+    'crank_stack_sec':  ('crank_assembly.scad', (1200, 900), '0,0,10,72,0,20,470', ['-D', 'SECTION=true'], False),
+    'crank_base':       ('crank_base.scad', (1100, 850), ISO, [], False),
+    'crank_stator':     ('crank_stator.scad', (1100, 850), ISO, [], False),
+    'crank_top':        ('crank_top.scad', (1100, 850), ISO, [], False),
+    'crank_rotor':      ('crank_rotor.scad', (1100, 850), ISO, [], False),
+    'crank_gear_big':   ('crank_gears.scad', (1100, 850), ISO, [], False),
+    'crank_arm':        ('crank_arm.scad', (1100, 850), ISO, [], False),
+    'crank_tray':       ('crank_tray.scad', (1100, 850), ISO, [], False),
 }
 
 R1_ONLY = {'power_button', 'pull_switch', 'pi_fluks_power_button', 'pi_fluks_pull_switch'}

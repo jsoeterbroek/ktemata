@@ -23,6 +23,7 @@ For development phase use:
 
 ```bash
 python3 cad/tools/export.py              # export all r2 parts to stl/ (binary, centred, on z=0), prints size + open-edge count
+python3 cad/tools/export_crank.py        # export the hand crank generator parts to stl/crank/
 python3 cad/tools/export.py --r1         # export the original r1 set instead (pull_switch, power_button)
 python3 cad/tools/export.py face bottom  # export only some parts (names: bottom face keyboard_support charge_plug)
 python3 cad/tools/render.py              # regenerate renders/*.png (after export; pi_fluks_* views use the STLs); args filter by name, e.g. asm_iso
@@ -42,6 +43,7 @@ openscad -o out.png --render --imgsize=1400,1100 --camera=75,90,17,60,0,35,430 c
   - `outer_body()` is the full closed exterior z=0..T: chamfered body + grip ribs (`RIB_ZONES`) + corner bumpers (`BUMP*`). `bottom.scad` and `face.scad` each intersect it with their own z range (split at `H_BOT`), then subtract `inner_outline()`. Exterior styling changes belong here, not in the parts.
 - Each part file (`bottom.scad`, `face.scad`, `keyboard_support.scad`, `charge_plug.scad`, and the r1-only `pull_switch.scad`/`power_button.scad`) models its part **in assembly position** (the plug is modelled print-ready) and only renders itself when `ASSEMBLY` is undefined. Pattern: `difference() { union() { solids } cuts }`.
 - `assembly.scad` combines all parts with stand-in components (`EXPLODE`, `SECTION`, `CHECK` variables). It defines `part(name)` used for interference checks; r1 components return empty when `R2` is true and vice versa.
+- **Hand crank generator** (separate unit, not in the case): `crank_common.scad` holds its parameters and helpers (involute gear profile, D-bore, rotor/stator modules); parts are `crank_base`, `crank_stator`, `crank_top`, `crank_rotor`, `crank_hub`, `crank_gears`, `crank_arm`, `crank_tray` (tray, lid, knob, foot). `crank_assembly.scad` shows it and answers `CHECK`/`SECTION`; `export_crank.scad` + `tools/export_crank.py` export to `stl/crank/`. Docs: `docs/CRANK.md`.
 - `export.scad` rotates parts into print orientation (face flipped, pull switch flipped). `tools/export.py` drives it and normalises placement; it skips the r1-only parts unless `--r1` is given.
 
 ## Design constraints
