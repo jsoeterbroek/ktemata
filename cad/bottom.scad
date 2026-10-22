@@ -83,6 +83,8 @@ module btn_guide() {
 // =====================================================================
 // Cells lie in one row across the width, axes along y, under the UPS board.
 // The UPS HAT (E) itself hangs from the Pi; the printed tray only locates the cells.
+// r4 (R4) has no printed tray: the UPS HAT (B) carries its own holders, so the cells are
+// held by the board and only need clearance in the bottom shell.
 CELL_CRADLE_TOP = CELL_Z0 + CELL_D*0.52;
 
 module cell_cradle(x, yc) {
@@ -167,15 +169,23 @@ module sensor_chamber_cut() {
 
 module charge_port_solid() {
     // boss around the panel connector, fused into the top wall
-    at(CHG_X-10, WALL, CHG_Z-7) translate([0,-8,0]) cube([20, 8, 14]);
+    h = CHG_H + 7;
+    at(CHG_X-10, WALL, CHG_Z-h/2) translate([0,-8,0]) cube([20, 8, h]);
 }
 module charge_port_cut() {
-    // USB-C panel connector through the top wall
-    at(CHG_X-CHG_W/2, -1, CHG_Z-CHG_H/2) translate([0,-(WALL+2),0]) cube([CHG_W, WALL+2, CHG_H]);
-    // rubber plug / O-ring seat on the outside
-    at(CHG_X-CHG_REC_W/2, -1.2, CHG_Z-CHG_REC_H/2) translate([0,-1.2,0]) cube([CHG_REC_W, 1.2, CHG_REC_H]);
-    // connector body pocket inside
-    at(CHG_X-7, WALL, CHG_Z-4) translate([0,-9,0]) cube([14, 9, 8]);
+    // r2: USB-C panel connector. r4: 5.5 x 2.1 mm DC barrel socket (round, so the panel
+    // nut seats on a round hole).
+    if (R4) {
+        at(CHG_X, -1, CHG_Z) rotate([90,0,0]) cylinder(d=CHG_W, h=WALL+2);
+        at(CHG_X, -1.2, CHG_Z) rotate([90,0,0]) cylinder(d=CHG_REC_W, h=1.2);   // O-ring seat
+        at(CHG_X-7, WALL, CHG_Z-4) translate([0,-13,0]) cube([14, 13, 8]);      // socket body
+    } else {
+        at(CHG_X-CHG_W/2, -1, CHG_Z-CHG_H/2) translate([0,-(WALL+2),0]) cube([CHG_W, WALL+2, CHG_H]);
+        // rubber plug / O-ring seat on the outside
+        at(CHG_X-CHG_REC_W/2, -1.2, CHG_Z-CHG_REC_H/2) translate([0,-1.2,0]) cube([CHG_REC_W, 1.2, CHG_REC_H]);
+        // connector body pocket inside
+        at(CHG_X-7, WALL, CHG_Z-4) translate([0,-9,0]) cube([14, 9, 8]);
+    }
 }
 
 module oled_btn_solid() {
@@ -211,14 +221,16 @@ module sd_cut() at(-1, 48, FLOOR) translate([0,-14,0]) cube([WALL+2, 14, 3.5]);
 // r2: the cell row ends at y=88, so the vents move towards the keyboard end
 // (still under the cooler) instead of opening behind the cells.
 module vent_cut() {
-    if (R2) for (i=[0:5]) at(67, 92 + i*2.8, -1) translate([0,-1.6,0]) linear_extrude(FLOOR+2) rrect(25, 1.6, 0.79);
-    else    for (i=[0:5]) at(61, 57 + i*2.8, -1) translate([0,-1.6,0]) linear_extrude(FLOOR+2) rrect(25, 1.6, 0.79);
+    if (R4)        for (i=[0:5]) at(70, 150 + i*2.8, -1) translate([0,-1.6,0]) linear_extrude(FLOOR+2) rrect(25, 1.6, 0.79);
+    else if (R2)   for (i=[0:5]) at(67, 92 + i*2.8, -1) translate([0,-1.6,0]) linear_extrude(FLOOR+2) rrect(25, 1.6, 0.79);
+    else           for (i=[0:5]) at(61, 57 + i*2.8, -1) translate([0,-1.6,0]) linear_extrude(FLOOR+2) rrect(25, 1.6, 0.79);
 }
 
 // ---- inside text
 module floor_text() {
-    at(W/2, R2 ? 196 : 140, FLOOR - 0.5) linear_extrude(1)
-        text(R2 ? "π·FLUKS/AI  r2" : "π·FLUKS/AI", size=R2 ? 6 : 7, halign="center", valign="center", font="Liberation Sans:style=Bold");
+    at(W/2, pick(228, 196, 140), FLOOR - 0.5) linear_extrude(1)
+        text(pick("π·FLUKS/AI  r4", "π·FLUKS/AI  r2", "π·FLUKS/AI"), size=R2 ? 6 : 7,
+             halign="center", valign="center", font="Liberation Sans:style=Bold");
 }
 
 module bottom_part() {
@@ -228,7 +240,7 @@ module bottom_part() {
             for (p=CASE_SCREWS) case_boss_solid(p);
             for (p=DISP_HOLES) disp_post_solid(p);
             if (R2) {
-                cell_tray();
+                if (!R4) cell_tray();
                 rtc_tray();
                 mppt_tray();
                 firebeetle_tray();

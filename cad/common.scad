@@ -3,58 +3,81 @@
 // (top edge = charge-port / pull-switch side), z = 0 at the back surface, up towards the screen.
 // Use at(x,y) to place things in these "drawing" coordinates.
 //
-// R2 selects the current target hardware (Pi 5 + DFR0550-V2 + UPS HAT (E) + 4x21700).
-// r3 is a build variant of r2 with the same geometry: only the keyboard/radio changes
-// (Phistone Mini Keyboard, 2.4 GHz dongle or Bluetooth). See docs/R3.md.
+// R4 selects the current target hardware: Raspberry Pi Touch Display 2 (5", landscape,
+// 143.4 x 91.46), Waveshare UPS HAT (B) with 2x18650 in 2S, and the Rii K06 155 x 89
+// keyboard with touchpad. See docs/R4.md.
+// R2 (still available with -D R2=true -D R4=false) is the previous target:
+// Pi 5 + DFRobot DFR0550-V2 + UPS HAT (E) + 4x21700 + Phistone keyboard (r2/r3).
 // The original r1 case (Waveshare display + INIU power bank) is still available:
-//   openscad -D 'R2=false' ...
+//   openscad -D 'R2=false' ...            (R4 follows R2 off)
 //   python3 cad/tools/export.py --r1
+//   python3 cad/tools/export.py --r2
 
 $fn = 40;
 
-R2    = is_undef(R2)    ? true  : R2;
+R2    = is_undef(R2)    ? true  : R2;      // r2/r3 mechanics; false = r1
+R4    = is_undef(R4)    ? R2    : R4;      // r4 retarget; automatically off in r1 mode
 SEN66 = is_undef(SEN66) ? false : SEN66;   // true = larger SEN66 sensor pocket instead of BME688
 
+// r4 -> a, r2/r3 -> b, r1 -> c
+function pick(a, b, c) = R4 ? a : (R2 ? b : c);
+
 // ---------------- overall ----------------
-W        = 150;     // outer width
-L        = R2 ? 205 : 183;     // outer height (r2 is 22 mm taller for the status OLED band)
+W        = pick(172, 150, 150);   // outer width (r4: 155 mm keyboard + window border)
+L        = pick(237, 205, 183);   // outer height (r2 +22, r4 +54 mm over r1 for OLED band + K06)
 CH       = 9;       // corner chamfer
 WALL     = 3;       // side wall thickness
 FLOOR    = 2;       // back plate thickness
-H_FACE   = 10.5;    // face part height
+// r4's display is 14.92 mm deep (6.42 panel + 8.5 standoffs), so the face part has to be
+// tall enough to hold the whole screen below the split plane (r2: the display sits
+// entirely in a 10.5 mm face).
 PLATE    = 2;       // face plate thickness
 TOL      = 0.25;
-DISP_POST = 5;      // display's own standoffs (Pi and case posts)
+DISP_POST = pick(8.5, 5, 5);   // display's own standoffs (TD2 drawing: 8.5)
 
 // ---------------- r2 vertical stack ----------------
 // The UPS HAT (E) hangs under the Pi; four 21700 cells lie in one row below it.
 // This sets the case depth. All values are derived, so changing a component moves the shell.
-CELL_D   = 21;      // 21700 diameter
-CELL_L   = 70;      // 21700 length
+CELL_D   = pick(18.4, 21, 21);      // 18650 (r4) / 21700 (r2) diameter
+CELL_L   = pick(65, 70, 70);        // cell length
 CELL_GAP = 3.0;     // gap between cells in the tray
-CELL_COUNT = 4;
+CELL_COUNT = pick(2, 4, 4);
 CELL_Z0  = FLOOR + 1;
 CELL_Z1  = CELL_Z0 + CELL_D;
 
-UPS_W    = 88;      // Waveshare UPS HAT (E)
-UPS_H    = 56;
+// r4: the HAT (B) is the same 85 x 56 outline as the Pi, so it is mounted ROTATED (56 x 85).
+// That makes it 29 mm narrower than the Pi along x, which keeps the Pi's USB/Ethernet port
+// bodies (13.6-16 mm tall on the component side, at the +x edge) clear of its board, and it
+// lets the +y end with the 8.4 V jack / USB-A / switch overhang past the Pi instead of
+// colliding with it. Cells then run along y.
+UPS_W    = pick(56, 88, 88);        // Waveshare UPS HAT (B) rotated / HAT (E)
+UPS_H    = pick(85, 56, 56);
 UPS_T    = 1.6;     // pcb
-UPS_COMP = 6.0;     // components/pogo pins between pcb and Pi
-UPS_CELL_GAP = 0.9; // pcb underside -> cell top
+UPS_COMP = pick(6.0, 6.0, 6.0);     // components/pogo pins between pcb and Pi
+UPS_CELL_GAP = 0.9; // pcb underside -> cell top (r2 tray)
 UPS_PI_GAP   = 0.5; // components -> Pi pcb
 
-UPS_PCB_BOT_R2   = CELL_Z1 + UPS_CELL_GAP;
+// r4 uses the HAT (B) with its own soldered 18650 holders. In Waveshare's 3D drawing the PCB
+// spans z 0..1.6, the cells sit on the +z side (z 2.56..20.96) and the holder runs to z 23.35,
+// so the cell side extends 23.35 mm from the PCB bottom. The holder's other lip reaches 3.3 mm
+// back past the PCB (towards the Pi) and stays inside the 6 mm pogo gap. Cells hang below the
+// board; the pogo pins reach the Pi on top. 2S, 2x18650, NO printed tray. Measure yours.
+HAT_B_BELOW_R4   = 23.35;
+UPS_PCB_BOT_R2   = R4 ? CELL_Z0 + HAT_B_BELOW_R4 : CELL_Z1 + UPS_CELL_GAP;
 UPS_PCB_TOP_R2   = UPS_PCB_BOT_R2 + UPS_T;
 PI_PCB_BOT_R2    = UPS_PCB_TOP_R2 + UPS_COMP + UPS_PI_GAP;
 PI_PCB_TOP_R2    = PI_PCB_BOT_R2 + 1.6;
-DISP_POST_END_R2 = PI_PCB_TOP_R2;
-DISP_Z_BACK_R2   = DISP_POST_END_R2 + DISP_POST; // display/Pi standoffs
-DISP_T_R2        = 4.9;                       // DFR0550-V2
+DISP_T_R2        = pick(6.42, 4.9, 0);   // panel body behind the glass (TD2: 6.42 + 8.5 standoffs = 14.92)
+DISP_Z_BACK_R2   = PI_PCB_TOP_R2 + DISP_POST;   // display bracket back = top of the case posts
 DISP_Z_FRONT_R2  = DISP_Z_BACK_R2 + DISP_T_R2;
 T_R2             = DISP_Z_FRONT_R2 + PLATE;
+DISP_POST_END_R2 = PI_PCB_TOP_R2;   // case posts end at the Pi pcb; the display's own standoffs continue
 
 T     = R2 ? T_R2 : 34.5;             // overall thickness
-H_BOT = T - H_FACE;                   // bottom shell height (split plane)
+// r4 keeps the split plane clear of the Pi board (it must not be cut) and leaves the whole
+// screen body in the face part; the display's standoffs span the split.
+H_BOT  = R4 ? PI_PCB_TOP_R2 + 2.5 : T - 10.5;   // bottom shell height (split plane)
+H_FACE = T - H_BOT;                             // face part height
 
 // ---------------- screws ----------------
 M25_CLR  = 2.8;     // clearance hole
@@ -68,21 +91,27 @@ CASE_SCREWS = [[8.5,8.5],[W-8.5,8.5],[6,90],[W-6,90],[8.5,L-8.5],[W-8.5,L-8.5]];
 // ---------------- display ----------------
 // r1: Waveshare 5-DSI-TOUCH-A. r2: DFRobot DFR0550-V2 (120.7 x 75.8 x 4.9,
 // outer holes 113 x 68, Pi holes 58 x 49).
-DISP_W = R2 ? 120.7 : 129;
-DISP_H = R2 ? 75.8  : 72.8;
+// r4: Raspberry Pi Touch Display 2, 5" (143.4 x 91.46 x 14.92, outline R5). Outer hole
+// pattern 72.96 x 92.87; its Pi pattern is 51 x 49 (drawing: 49 and 51 across, 58 between
+// the top pair), i.e. the Pi's 58 x 49 pattern only lines up on the 49 mm axis.
+DISP_W = pick(143.4, 120.7, 129);
+DISP_H = pick(91.46, 75.8, 72.8);
 DISP_T = R2 ? DISP_T_R2 : 7.8;
-DISP_R = 4;
-DISP_X = (W-DISP_W)/2;                // left edge of glass
-DISP_Y = R2 ? 10 : 13;                // top edge of glass
+DISP_R = pick(5, 4, 4);
+DISP_X = (W-DISP_W)/2;                        // left edge of glass
+DISP_Y = pick(6, 10, 13);                     // top edge of glass
 DISP_Z_FRONT = T - PLATE;
 DISP_Z_BACK  = DISP_Z_FRONT - DISP_T;
 DISP_POST_END = DISP_Z_BACK - DISP_POST;   // where the display's own standoffs end
 
-// case posts use the display's OUTER mounting pattern
-DISP_HOLE_W  = R2 ? 113 : 117;
-DISP_HOLE_H  = R2 ? 68  : 61;
-DISP_HOLE_IX = R2 ? (DISP_W-DISP_HOLE_W)/2 : 6;
-DISP_HOLE_IY = R2 ? (DISP_H-DISP_HOLE_H)/2 : 5.9;
+// case posts use the display's OUTER standoff pattern.
+// r4 (TD2, landscape): outer standoffs are 122.74 apart along the 143.4 mm axis and 72.96
+// across the 91.46 mm axis (drawing insets 10.33 / 9.25). Its inner Pi pattern is 51 x 49,
+// so only the 49 mm axis matches the Pi's 58 x 49 - see docs/R4.md.
+DISP_HOLE_W  = pick(122.74, 113, 117);   // along x
+DISP_HOLE_H  = pick(72.96, 68, 61);      // along y
+DISP_HOLE_IX = pick((DISP_W-DISP_HOLE_W)/2, (DISP_W-113)/2, 6);
+DISP_HOLE_IY = pick((DISP_H-DISP_HOLE_H)/2, (DISP_H-68)/2, 5.9);
 DISP_HOLES = [for (dx=[DISP_HOLE_IX, DISP_HOLE_IX+DISP_HOLE_W])
               for (dy=[DISP_HOLE_IY, DISP_HOLE_IY+DISP_HOLE_H]) [DISP_X+dx, DISP_Y+dy]];
 
@@ -90,8 +119,10 @@ DISP_HOLES = [for (dx=[DISP_HOLE_IX, DISP_HOLE_IX+DISP_HOLE_W])
 // inner 58 x 49 pattern; ports point to the RIGHT wall, USB-C edge to the TOP.
 // The Pi board is 85 x 56 with the hole pattern 3.5 mm from the GPIO edge and
 // 23.5 mm from the port edge, hence the -3.5 offset.
-PI_HOLE_X0 = R2 ? DISP_X + (DISP_W-58)/2 : DISP_X + 45.5;
-PI_HOLE_Y0 = R2 ? DISP_Y + (DISP_H-49)/2 : DISP_Y + 11.9;
+// r4: the TD2's Pi pattern is 51 x 49, so the Pi keeps its 58 x 49 board holes on the case
+// posts and the display is fixed through the 49 mm axis only (see docs/R4.md).
+PI_HOLE_X0 = pick(DISP_X + (DISP_W-58)/2 + 3.5, DISP_X + (DISP_W-58)/2, DISP_X + 45.5);
+PI_HOLE_Y0 = pick(DISP_Y + (DISP_H-49)/2, DISP_Y + (DISP_H-49)/2, DISP_Y + 11.9);
 PI_HOLES_X = [PI_HOLE_X0, PI_HOLE_X0+58];
 PI_HOLES_Y = [PI_HOLE_Y0, PI_HOLE_Y0+49];
 PI_X0 = PI_HOLES_X[0]-3.5;          // non-port end of the board
@@ -107,17 +138,30 @@ PI_PORTS = [[10.2, 16.0, 13.6], [29.1, 13.4, 16.0], [47.0, 13.4, 16.0]];
 // The UPS HAT (E) is left-aligned under the Pi: its Pi mounting holes are 26.5 mm
 // from the left edge, so the 88 mm board overhangs 23 mm to the left and ends
 // ~20 mm short of the Pi's port edge (no collision with the USB/Ethernet ports).
-UPS_X = PI_HOLES_X[0] - 26.5;
-UPS_Y = PI_HOLES_Y[0] - 3.5;
+// r4: the UPS HAT (B) is the same 85 x 56 board size as the Pi with its holes 3.5 mm
+// from the corner, so it sits directly under the Pi. Pogo pins up, 2S 18650 down.
+UPS_X = pick(PI_HOLES_X[0] - 3.5, PI_HOLES_X[0] - 26.5, 0);
+UPS_Y = pick(PI_HOLES_Y[0] - 3.5, PI_HOLES_Y[0] - 3.5, 0);   // r4: +y end overhangs the Pi
 UPS_PCB_BOT = UPS_PCB_BOT_R2;
 UPS_PCB_TOP = UPS_PCB_TOP_R2;
 UPS_COMP_TOP = UPS_PCB_TOP + UPS_COMP;
 
-// shift the row 5 mm left of centre so the rightmost cell clears the Pi port bodies
-CELL_X0 = (W - (CELL_COUNT*CELL_D + (CELL_COUNT-1)*CELL_GAP))/2 - 5;
-CELL_XS = [for (i=[0:CELL_COUNT-1]) CELL_X0 + CELL_D/2 + i*(CELL_D+CELL_GAP)];
-CELL_Y0 = 18;                       // under the display, clear of keyboard
-CELL_Y1 = CELL_Y0 + CELL_L;
+// r2: one row of 4 cells across the width, axes along y, under the UPS board.
+// r4: the HAT (B) holds 2 cells side by side, axes along the board's 85 mm axis,
+// 19.3 mm apart across the 56 mm axis (measured on Waveshare's 3D drawing).
+CELL_PITCH_R4 = 19.3;
+UPS_CX = UPS_X + UPS_W/2;
+UPS_CY = UPS_Y + UPS_H/2;
+CELL_AXIS = R4 ? "y" : "y";                       // cell long axis (both run along y)
+CELL_POS = R4
+    ? [[UPS_CX + CELL_PITCH_R4/2, UPS_CY], [UPS_CX - CELL_PITCH_R4/2, UPS_CY]]  // 2 cells, axes along y
+    : [for (i=[0:CELL_COUNT-1]) [(W - (CELL_COUNT*CELL_D + (CELL_COUNT-1)*CELL_GAP))/2 - 5
+                                 + CELL_D/2 + i*(CELL_D+CELL_GAP), 18 + CELL_L/2]];
+CELL_XS = [for (p=CELL_POS) p[0]];
+CELL_YS = [for (p=CELL_POS) p[1]];
+CELL_X0 = R4 ? min(CELL_XS) - CELL_D/2 : (W - (CELL_COUNT*CELL_D + (CELL_COUNT-1)*CELL_GAP))/2 - 5;
+CELL_Y0 = min(CELL_YS) - CELL_D/2;                // r2 tray reference (r4 has no printed tray)
+CELL_Y1 = max(CELL_YS) + CELL_D/2;
 CELL_ZC = CELL_Z0 + CELL_D/2;
 
 // ---------------- r1 battery (INIU 10000 mAh) ----------------
@@ -137,13 +181,20 @@ UADP_PLUG = 6.5;                            // male plug length
 PULL_TRAVEL = 7;
 
 // ---------------- keyboard ----------------
-// r2: keep the existing 137 x 72 PCB footprint, wired USB (no Bluetooth, no side cutout).
-KB_WIN = R2 ? [10, 123, 140, 190] : [10, 97, 140, 164];
-KB_PCB = [137, 72];                         // keyboard PCB outline
+// r2/r3: 137 x 72 PCB pocket (Phistone 134 x 74 body or a wired PCB), wired or 2.4 GHz.
+// r4: Rii K06 with touchpad, 155 x 89 x 16.5 (Rii spec). It is a complete body, not a PCB,
+// so the pocket is 155 x 89 and the face window opens the keys + touchpad.
+KB_BODY = pick([155, 89, 16.5], [137, 72, 12.7], [137, 72, 12.7]);
+// r4 window: inside the 155 x 89 body (leaves a 3.5 mm rim all round to retain it)
+KB_WIN  = pick([13, 137, 159, 218], [10, 123, 140, 190], [10, 97, 140, 164]);
+KB_PCB  = pick([155, 89], [137, 72], [137, 72]);   // pocket outline
 KB_PCB_X = (W-KB_PCB[0])/2;
-KB_PCB_Y = R2 ? 120.5 : 94.5;
-KB_PCB_FRONT = T - 5;                       // z of the PCB front face
-KB_PCB_BACK  = KB_PCB_FRONT - 1.2;
+KB_PCB_Y = pick(133, 120.5, 94.5);
+// r4: the keys must sit just under the face plate, and the body is 16.5 mm thick, so the
+// pocket crosses the split plane; both parts cut it (see kb_pocket_cut()).
+KB_PCB_FRONT = pick(T - PLATE, T - 5, T - 5);
+KB_PCB_BACK  = KB_PCB_FRONT - (R4 ? KB_BODY[2] : 1.2);   // r2/r1: 1.2 mm PCB; r4: 16.5 mm body
+KB_H = KB_BODY[2];                           // body thickness (r4: 16.5)
 
 // ---------------- r2 status OLED (FireBeetle 2 ESP32-UE + 1.3" I2C OLED) ----------------
 // The OLED is a separate 4-pin I2C module (1.3" 128x64, ~35 x 34 mm PCB,
@@ -151,7 +202,9 @@ KB_PCB_BACK  = KB_PCB_FRONT - 1.2;
 // (25.4 x 60 mm) sits in the bottom shell and connects with a short 4-wire cable.
 OLED_W = 35; OLED_H = 34; OLED_T = 1.6;     // 1.3" OLED module PCB
 OLED_CX = W/2;
-OLED_CY = 104.4;                            // in the 37 mm band between display and keyboard
+// r4: display ends at DISP_Y+DISP_H (97.46); the K06 pocket starts at KB_PCB_Y (133), so the
+// only free band is ~34.3 mm - the OLED module is 34 mm, i.e. it just fits, centred.
+OLED_CY = pick((DISP_Y+DISP_H + KB_PCB_Y)/2, 104.4, 104.4);
 OLED_X0 = OLED_CX - OLED_W/2;
 OLED_Y0 = OLED_CY - OLED_H/2;
 OLED_X1 = OLED_X0 + OLED_W;
@@ -161,17 +214,21 @@ OLED_Z1 = OLED_Z0 + OLED_T;
 OLED_WIN = [OLED_CX-13, OLED_CY-7.5, OLED_CX+13, OLED_CY+7.5];  // 26 x 15 window
 
 FB_W = 25.4; FB_H = 60; FB_T = 1.6;         // DFRobot FireBeetle 2 ESP32-UE (DFR1140)
-FB_X = 30; FB_Y = 127.5; FB_Z = FLOOR;      // bottom shell, under the keyboard
+FB_X = pick(34, 30, 30);
+// r4: floor under the keyboard, left of the RTC/MPPT (2 cells leave this end free).
+FB_Y = pick(150, 127.5, 127.5);
+FB_Z = FLOOR;
 
 // push button in the top wall (cycles the OLED screens; TinyTronics PBS-33B, 12 mm)
-OLED_BTN_X = 35;
+OLED_BTN_X = pick(35, 35, 35);
 OLED_BTN_D = 12.2;                          // 12 mm PBS-33B panel button
 OLED_BTN_Z = 14;
 
 // ---------------- r2 vented sensor pocket (left wall) ----------------
 // BME688 breakout 19 x 19 x 5; SEN66 option is 55.5 x 25.6 x 21.5.
-SENSOR_Y0 = SEN66 ? 112 : 130;
-SENSOR_Y1 = SEN66 ? 168 : 158;
+// r4 keeps it in the left wall beside the free keyboard end (the 2-cell build leaves room).
+SENSOR_Y0 = pick(SEN66 ? 176 : 196, SEN66 ? 112 : 130, 130);
+SENSOR_Y1 = pick(SEN66 ? 226 : 224, SEN66 ? 168 : 158, 158);
 SENSOR_X1 = SEN66 ? 30 : 22;
 SENSOR_Z0 = FLOOR;
 SENSOR_Z1 = SEN66 ? 24 : 24;
@@ -179,25 +236,41 @@ SENSOR_CY = (SENSOR_Y0 + SENSOR_Y1)/2;
 SENSOR_CZ = (SENSOR_Z0 + SENSOR_Z1)/2;
 SENSOR_MEM_D = 12;                          // membrane vent
 
-// ---------------- r2 charge input, MPPT and RTC ----------------
-// One sealed USB-C port, shared by solar and the hand-crank generator through
-// an internal MPPT/charge module which feeds the UPS HAT USB-C input.
-CHG_X = 108; CHG_W = 9.2; CHG_H = 3.5; CHG_Z = 14;
-CHG_REC_W = 16; CHG_REC_H = 8;              // rubber plug seat
+// ---------------- charge input, MPPT and RTC ----------------
+// r2/r3: one sealed USB-C port, shared by solar and the hand-crank generator through an
+// internal MPPT/charge module which feeds the UPS HAT (E) USB-C input.
+// r4: the HAT (B) has no USB-C input - it charges from an 8.4 V / 2 A DC barrel jack. The
+// sealed case port becomes a DC socket (5.5 x 2.1 mm), fed by the same internal
+// MPPT/solar module (which must now output 8.4 V, not 5 V) or a 2S charger.
+CHG_X = 108;
+CHG_W = pick(9.5, 9.2, 9.2);                // barrel jack barrel diameter (5.5 mm) + tolerance
+CHG_H = pick(9.5, 3.5, 3.5);
+CHG_Z = 14;
+CHG_REC_W = pick(14, 16, 16); CHG_REC_H = pick(14, 8, 8);   // rubber plug seat
 
 MPPT_W = 26; MPPT_H = 20;                   // printed tray (module is 22 x 16)
 MPPT_MOD_W = 22; MPPT_MOD_H = 16;
-MPPT_X = 100; MPPT_Y = 100; MPPT_Z = 6;
+// r4: under the keyboard, right of the sensor chamber (x 0..22) and clear of the KBS posts.
+MPPT_X = pick(70, 100, 100); MPPT_Y = pick(190, 100, 100); MPPT_Z = 6;
 
 RTC_W = 38; RTC_H = 22; RTC_T = 14;         // DS3231 module
-RTC_X = 100; RTC_Y = 145; RTC_Z0 = FLOOR;
+RTC_X = pick(70, 100, 100); RTC_Y = pick(150, 145, 145); RTC_Z0 = FLOOR;
+
+// r4: the DS3231, MPPT module and FireBeetle sit on the free floor under the keyboard
+// (2 cells instead of 4 leave the whole keyboard end free); the support frame stands on
+// four columns between them.
 
 // ---------------- keyboard support ----------------
-KBS_Z0 = R2 ? 25.2 : FLOOR + BAT_T + 0.5;   // underside (on cell-tray supports in r2)
-KBS = R2 ? [12, 123, 138, 192] : [12, 97, 138, 166];
+// r2/r3: 4 columns onto the r2 cell tray, frame just under the PCB.
+// r4: the K06 body is 16.5 thick, so the frame is taller; it stands on columns between
+// the DS3231, MPPT and FireBeetle.
+KBS_Z0 = pick(21.5, 25.2, FLOOR + BAT_T + 0.5);   // underside (r4: just above the cells)
+KBS = pick([26, 131, 146, 224], [12, 123, 138, 192], [12, 97, 138, 166]);
 KBS_WALL = 3;
-KBS_DIV  = 68.5;                            // divider x (right window clears the keyboard LiPo)
-KBS_POSTS = [[40,123], [110,123], [40,192], [110,192]];
+KBS_DIV  = pick(88, 68.5, 68.5);                  // divider x
+KBS_POSTS = pick([[32, 136], [140, 136], [32, 220], [140, 220]],
+                 [[40, 123], [110, 123], [40, 192], [110, 192]],
+                 [[40, 123], [110, 123], [40, 192], [110, 192]]);
 
 // ---------------- helpers ----------------
 module at(x, y, z=0) translate([x, L-y, z]) children();

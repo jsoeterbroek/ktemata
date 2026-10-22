@@ -53,9 +53,14 @@ module display_ribs() {
 }
 
 // keyboard PCB pocket ribs
+// r2: 1.2 mm ribs around a 137 x 72 PCB, standing on the face plate.
+// r4: the K06 is a 16.5 mm thick body that crosses the split plane, so the "ribs" are the
+// pocket walls and they reach down to KB_PCB_BACK - 1 (the bottom part clears the rest).
 module kb_ribs() {
-    rh = T - PLATE - KB_PCB_FRONT + 1.2;   // reaches the back of the pcb edge
-    t = 1.2; c = 0.4;
+    // r2: 1.2 mm past the PCB. r4: the 16.5 mm body crosses the split plane, so the pocket
+    // walls run from the plate down to the split plane only (the face part is clipped there).
+    rh = R4 ? (T - PLATE - H_BOT + 0.4) : (T - PLATE - KB_PCB_FRONT + 1.2);
+    t = 1.2; c = pick(0.6, 0.4, 0.4);
     x0 = KB_PCB_X - c - t; x1 = KB_PCB_X + KB_PCB[0] + c;
     y0 = KB_PCB_Y - c - t; y1 = KB_PCB_Y + KB_PCB[1] + c;
     z0 = T - PLATE - rh;
@@ -68,7 +73,13 @@ module kb_ribs() {
         at(x0 + 12, y0 + t, z0) cube([KB_PCB[0] - 24, t, rh]);        // top
     }
     at(x0 + 12, y1 + t, z0) cube([KB_PCB[0] - 24, t, rh]);            // bottom
-    at(x0, y0 + 14 + 30, z0) cube([t, 30, rh]);                       // left
+    if (R4) {
+        // the K06 pocket also needs side walls, and no long divider (touchpad + keys are one body)
+        at(x0, y0 + t, z0) cube([t, KB_PCB[1], rh]);
+        at(x1, y0 + t, z0) cube([t, KB_PCB[1], rh]);
+    } else {
+        at(x0, y0 + 14 + 30, z0) cube([t, 30, rh]);                   // left
+    }
 }
 
 // status OLED module pocket: the 1.3" I2C OLED module sits just behind the face
@@ -88,6 +99,8 @@ module oled_mount() {
     }
 }
 
+// r4: the K06 keys sit right behind the face plate, so the plate is opened over the whole
+// key/touchpad area (KB_WIN), with the same 45 deg outer bevel as the other windows.
 // screen / key / OLED windows with a 45 deg bevel on the outside (prints face-down without supports)
 BEVEL = 1.2;
 module windows_cut() {
@@ -110,16 +123,21 @@ module screw_heads() {
 }
 
 module logo() {
-    at(W/2, R2 ? 5.0 : DISP_Y/2 + 0.3, T - 0.6) linear_extrude(1)
+    // r4: the 143.4 x 91.46 display leaves only 6 mm above it, so the wordmark moves to the
+    // free band below the keyboard window (y 218..237) instead of the top edge.
+    at(W/2, R4 ? 227 : (R2 ? 5.0 : DISP_Y/2 + 0.3), T - 0.6) linear_extrude(1)
         text("π·FLUKS/AI", size=6, halign="center", valign="center", font="Liberation Sans:style=Bold Italic");
 }
 
 module motto() {
-    if (R2) at(W/2, 197, T - 0.6) linear_extrude(1)
-        text("scientia potentia est", size=4.2, halign="center", valign="center", font="Liberation Sans:style=Italic");
+    // r4: y=197 sits inside the 137..218 keyboard window, so it moves into the 10 mm strip
+    // between the display window and the OLED window.
+    if (R2) at(W/2, R4 ? 102.6 : 197, T - 0.6) linear_extrude(1)
+        text("scientia potentia est", size=R4 ? 3.6 : 4.2, halign="center", valign="center", font="Liberation Sans:style=Italic");
 }
 
 module face_part() {
+  intersection() {
     difference() {
         union() {
             face_shell();
@@ -132,10 +150,14 @@ module face_part() {
         windows_cut();
         screw_heads();
         // keyboard side cutout (r1 USB-C + power switch of the keyboard pcb)
-        if (SIDE_CUTOUT) at(W - WALL - 1, 124, H_BOT - 3) translate([0,-22,0]) cube([WALL + 2 + RIB_H + 1, 22, KB_PCB_BACK - H_BOT + 3 + 2.5]);
+        if (SIDE_CUTOUT && !R4) at(W - WALL - 1, 124, H_BOT - 3) translate([0,-22,0]) cube([WALL + 2 + RIB_H + 1, 22, KB_PCB_BACK - H_BOT + 3 + 2.5]);
         logo();
         motto();
     }
+    // a printed part must never cross the split plane: everything below it belongs to the
+    // bottom shell (r4's keyboard body is the only feature that would)
+    translate([-10,-10,H_BOT]) cube([W+20, L+20, 100]);
+  }
 }
 
 if (is_undef(ASSEMBLY)) face_part();

@@ -1,10 +1,17 @@
 # Pi Fluks r3 — wiring / connection diagram
 
+> **r4 changes the power side.** The r4 build (Touch Display 2 + **UPS HAT (B)** + Rii K06) replaces the
+> HAT (E)'s USB-C PD input with an **8.4 V / 2 A DC barrel input**, uses a **2S 18650** pack and an
+> **INA219 gauge at 0x42** instead of the BQ4050 at 0x2D, and takes display power from the **GPIO header**
+> (3-pin J1 cable) rather than only DSI. The r4-specific tables are in section 5; sections 1–4 describe the
+> r2/r3 build and the parts of the wiring that did **not** change (I²C bus, FireBeetle, sensors, OLED).
+
 Two block diagrams: **power** and **data/I²C/USB**, plus an editable **KiCad 10 schematic** and a
 netlist-style CSV. The block diagrams are generated from [`wiring_power.dot`](wiring_power.dot) and
 [`wiring_data.dot`](wiring_data.dot) with `dot -Tsvg …` + `rsvg-convert`; the PNG versions are next to the
 SVGs. The schematic, PDF, PNG and CSV are named `pi_flux_r3_*`; r3 uses the same mechanics and wiring as r2
-and differs only in the keyboard.
+and differs only in the keyboard. The r4 power/data deltas are listed in section 5 so the r2/r3 diagrams
+stay valid for that build.
 
 > The single I²C master is the **FireBeetle 2 ESP32-UE**. The Pi 5 has **no I²C connection** in this build
 > (no 40-pin header); the BME688, DS3231, OLED and UPS fuel gauge sit on the FireBeetle bus. The Pimoroni
@@ -43,15 +50,15 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 
 | Link | Cable / interface | Notes |
 |---|---|---|
-| Pi ↔ display | 15-pin DSI FFC (Pi 5 22-pin → 15-pin adapter) | DFR0550-V2; capacitive touch is carried on the DSI FFC on the standard version — verify your batch. |
+| Pi ↔ display | 15-pin DSI FFC (Pi 5 22-pin → 15-pin adapter) | r2/r3: DFR0550-V2 (touch on the FFC — verify your batch). r4: Touch Display 2, auto-detected, **plus** the 3-pin GPIO power cable. |
 | Pi ↔ NVMe | PCIe FPC → Seeed M.2 BASE → 1 TB 2230 NVMe | BASE is back-mounted under the Pi; check the 5 mm display/Pi gap. |
-| Keyboard → Pi | 2.4 GHz USB-A dongle **or** Pi Bluetooth | r3: Phistone Mini Keyboard. The dongle goes in the second Pi USB-A port; the Bluetooth option needs no wire and the Pi's BT enabled (Wi-Fi stays off). No internal keyboard cable. |
+| Keyboard → Pi | 2.4 GHz USB-A dongle **or** Pi Bluetooth | r3: Phistone; r4: Rii K06. The dongle goes in the second Pi USB-A port; Bluetooth needs no wire and the Pi's BT enabled (Wi-Fi stays off). No internal keyboard cable. |
 | FireBeetle ↔ Pi | USB-C → Pi USB-A, **serial** | Telemetry/commands. Prefer a **data-only** cable (VBUS disconnected) because the FireBeetle is separately powered from the UPS. |
 | FireBeetle → OLED | I²C: SDA GPIO21 / SCL GPIO22, 3V3, GND | 0x3C; 1.3" 128×64, SH1106 default. |
 | FireBeetle → BME688 | I²C, 3V3, GND | 0x76 or 0x77. |
 | FireBeetle → DS3231 | I²C, 3V3, GND | 0x68; CR1220 backup cell. |
 | FireBeetle → trackball | I²C, 3V3, GND | **r2 only**; 0x0A, firmware forwarding pending. Marked DNP in the r3 schematic; not fitted in r3. |
-| FireBeetle → UPS HAT | I²C, GND | 0x2D fuel gauge; UPS I²C logic is 3.3 V. Do **not** also connect to the Pi. |
+| FireBeetle → UPS HAT | I²C, GND | 0x2D fuel gauge on r2/r3, **0x42** (INA219) on r4; UPS I²C logic is 3.3 V. Do **not** also connect to the Pi. |
 | Button → FireBeetle | GPIO4 → GND | PBS-33B momentary NO; firmware uses `INPUT_PULLUP`. |
 
 > **r3 keyboard:** the **Phistone Mini Keyboard** uses its 2.4 GHz USB-A dongle on the `USB_KEYBOARD` net or Bluetooth (no cable; enable the Pi's Bluetooth and pair). Both options are wireless — there is no keyboard cable in the case. The FireBeetle radios stay off either way, and the keyboard's own radio is the project's single radio exception (see [`R3.md`](R3.md)).
@@ -135,7 +142,8 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
    backfeeding the Pi USB port when the Pi is off.
 6. **Display FFC:** the Pi 5 DSI connector is 22-pin; the DFR0550 is 15-pin. Use the Pi 5 Standard–Mini
    adapter cable. The DFR0550 listing currently warns about Pi 5 compatibility — verify the driver before
-   closing the case.
+   closing the case. **r4:** the Touch Display 2 is auto-detected from the DSI and additionally needs its
+   **3-pin GPIO power cable** on J1 → pins 2 (5 V) and 6 (GND); the 22→15 pin FFC is the same kind.
 7. **Battery pack:** 4S = 14.4 V nominal / 16.8 V full. Use matched cells, insulation rings, a fuse in the
    positive lead, and verify the V1–V4 order before connecting. Never assemble the pack with the UPS
    switched on.
@@ -169,3 +177,34 @@ r2-only trackball `J16` is marked DNP (crossed out).
 
 The CSV [`pi_flux_r3_connections.csv`](pi_flux_r3_connections.csv) lists every net with `From`, `From pin`,
 `To`, `To pin`, and cable/notes for a spreadsheet or for re-drawing the schematic by hand.
+
+---
+
+## 5. r4 deltas (Touch Display 2 + UPS HAT (B) + Rii K06)
+
+Everything in sections 2–4 that concerns the **I²C bus, FireBeetle, BME688, DS3231, OLED and the button**
+carries over unchanged. These are the differences:
+
+### Power
+
+| Path | r4 connection | Notes |
+|---|---|---|
+| Sealed port outside | **5.5 × 2.1 mm DC socket** (Ø9.5 mm case hole + O-ring seat) | Was a USB-C panel port. One port, shared by solar and crank. |
+| Sealed port → charger | **8.4 V**, 2 A max | The HAT (B) input. A USB-C PD panel cannot feed it; use a 2S MPPT/CC-CV module with an 8.4 V output. |
+| Charger → UPS | 8.4 V + GND → HAT (B) barrel jack | The HAT charges the 2S pack and powers the Pi simultaneously. |
+| UPS → Pi | Pogo pins 5 V + GND | Same pogo arrangement as the HAT (E). |
+| UPS → FireBeetle | USB-A 5 V + GND | Unchanged. |
+| Cells | **2× 18650, 2S** in the HAT's own holders | No printed tray. Matched pair, fuse the positive lead. |
+| Pi RTC | ML-2020 → Pi J5 | Unchanged (`dtparam=rtc_bbat_vchg=3000000`). |
+
+### Data
+
+| Link | r4 connection | Notes |
+|---|---|---|
+| Pi ↔ display | 22→15 pin DSI FFC **+ 3-pin GPIO power cable (J1)** | Auto-detected on Pi 5; no overlay needed. |
+| FireBeetle → UPS HAT | I²C SDA/SCL + GND | **0x42** (INA219), not 0x2D. Pack V/I/W; no per-cell or capacity register. |
+| Keyboard → Pi | 2.4 GHz dongle in the spare Pi USB-A, **or** Pi Bluetooth | The K06 has no cable. Charge/switch before closing (no side cutout). |
+| Everything else | — | Pi↔NVMe, Pi↔FireBeetle USB serial, OLED/BME688/DS3231 I²C, button GPIO4: unchanged. |
+
+> The r4 firmware (`firmware/`) reads the gauge at 0x42 and derives the percentage from the 2S pack voltage;
+> see `docs/R4.md` for the register choices and the derived-value caveats.

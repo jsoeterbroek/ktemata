@@ -9,7 +9,7 @@ use <power_button.scad>
 
 EXPLODE = 0;     // e.g. 30
 SECTION = false; // cut along x = SECTION_X to look inside
-SECTION_X = 64;
+SECTION_X = W/2;   // mid-width slice
 
 module c_display() {
     at(DISP_X, DISP_Y + DISP_H, DISP_Z_BACK) linear_extrude(DISP_T) rrect(DISP_W, DISP_H, DISP_R);
@@ -27,7 +27,9 @@ module c_pi() {
 }
 module c_battery() at(BAT_X, BAT_Y + BAT_H, FLOOR) linear_extrude(BAT_T) rrect(BAT_W, BAT_H, 6);
 module c_keyboard() {
-    at(KB_PCB_X, KB_PCB_Y + KB_PCB[1], KB_PCB_BACK) cube([KB_PCB[0], KB_PCB[1], 1.2]);
+    // r4: the K06 is a 16.5 mm complete body (keys + touchpad), not a 1.2 mm PCB
+    if (R4) at(KB_PCB_X, KB_PCB_Y + KB_PCB[1], KB_PCB_BACK) cube(KB_BODY);
+    else    at(KB_PCB_X, KB_PCB_Y + KB_PCB[1], KB_PCB_BACK) cube([KB_PCB[0], KB_PCB[1], 1.2]);
     if (!R2) at(KB_PCB_X + 66, KB_PCB_Y + 50, KB_PCB_BACK - 5) cube([45, 32, 5]);   // r1 keyboard lipo
 }
 module c_uadapter() {
@@ -37,17 +39,27 @@ module c_uadapter() {
 
 // ---- r2 components -------------------------------------------------
 module c_ups() {
-    // Waveshare UPS HAT (E), hanging under the Pi
+    // Waveshare UPS HAT (E) (r2/r3) or HAT (B) (r4), hanging under the Pi
     at(UPS_X, UPS_Y + UPS_H, UPS_PCB_BOT) linear_extrude(UPS_T) rrect(UPS_W, UPS_H, 3);
     // components/pogo pins between pcb and Pi
     at(UPS_X + 8, UPS_Y + 32, UPS_PCB_TOP) translate([0,-12,0]) cube([20, 12, UPS_COMP]);
     at(UPS_X + 52, UPS_Y + 56, UPS_PCB_TOP) translate([0,-16,0]) cube([22, 16, UPS_COMP-1]);
-    // USB-C / USB-A / switch on the connector edge
-    at(UPS_X + 20, UPS_Y + UPS_H, UPS_PCB_TOP) translate([0,-8,0]) cube([30, 8, 5]);
+    if (R4) {
+        // HAT (B): the USB-A output and the 8.4 V DC jack are on the board's long edge and
+        // protrude past the 85 x 56 outline, i.e. beside the Pi rather than against it
+        // (8.7 x 12.5 x 8 and 18 x 11.75 x 11 mm, measured on Waveshare's 3D drawing).
+        // the jack/USB-A bodies overhang the board's +y end, i.e. past the Pi (clear of the cells)
+        at(UPS_X + 34, UPS_Y + UPS_H, UPS_PCB_BOT - 8.4) translate([0,-12.5,0]) cube([8, 12.5, 8.4]);
+        at(UPS_X + 20, UPS_Y + UPS_H, UPS_PCB_BOT - 9.8) translate([0,-11.75,0]) cube([18, 11.75, 9.8]);
+    } else {
+        // USB-C / USB-A / switch on the connector edge
+        at(UPS_X + 20, UPS_Y + UPS_H, UPS_PCB_TOP) translate([0,-8,0]) cube([30, 8, 5]);
+    }
 }
 module c_cells() {
-    // four 21700 cells in one row, axes along y
-    for (x=CELL_XS) at(x, CELL_Y0, CELL_ZC) rotate([90,0,0]) cylinder(d=CELL_D, h=CELL_L);
+    // r2: four 21700 cells in one row, axes along y. r4: two 18650 side by side, axes along x.
+    if (R4) for (p=CELL_POS) at(p[0], p[1]-CELL_L/2, CELL_ZC) rotate([90,0,0]) cylinder(d=CELL_D, h=CELL_L);
+    else    for (x=CELL_XS) at(x, CELL_Y0, CELL_ZC) rotate([90,0,0]) cylinder(d=CELL_D, h=CELL_L);
 }
 module c_oled() {
     // 1.3" 4-pin I2C OLED module behind the face window
@@ -64,8 +76,9 @@ module c_sensor() {
 module c_rtc() at(RTC_X, RTC_Y + RTC_H, RTC_Z0+2.2) cube([RTC_W, RTC_H, RTC_T]);
 module c_mppt() at(MPPT_X+2, MPPT_Y+2+MPPT_MOD_H, MPPT_Z+2.3) cube([MPPT_MOD_W, MPPT_MOD_H, 8]);
 module c_charge() {
-    // sealed USB-C panel connector in the top wall
-    at(CHG_X-4.5, 0, CHG_Z-1.5) translate([0,-10,0]) cube([9, 10, 3]);
+    // sealed USB-C panel connector in the top wall (r4: 8.4 V barrel jack into the HAT (B))
+    if (R4) at(CHG_X-6, 0, CHG_Z-3) translate([0,-14,0]) cube([12, 14, 6]);
+    else    at(CHG_X-4.5, 0, CHG_Z-1.5) translate([0,-10,0]) cube([9, 10, 3]);
 }
 module c_oledbtn() {
     at(OLED_BTN_X, 0, OLED_BTN_Z) rotate([90,0,0]) cylinder(d=OLED_BTN_D-0.4, h=11);

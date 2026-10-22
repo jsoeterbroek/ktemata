@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Export parts to ../stl as binary STL, dropped onto z=0 and centred on x/y.
 
-  python3 cad/tools/export.py                 # r3/r2 parts (default; r3 reuses the r2 STLs)
+  python3 cad/tools/export.py                 # r4 parts (default: TD2 + UPS HAT (B) + K06)
+  python3 cad/tools/export.py --r2            # previous r2/r3 set (DFR0550 + HAT (E) + Phistone)
   python3 cad/tools/export.py --r1            # original r1 set instead
   python3 cad/tools/export.py face bottom     # only some parts
 """
@@ -42,8 +43,12 @@ def check_manifold(tris):
 
 args = sys.argv[1:]
 r1 = '--r1' in args
-args = [a for a in args if a != '--r1']
-extra = ['-D', 'R2=false'] if r1 else []
+r2 = '--r2' in args
+if r1 and r2:
+    sys.exit('choose either --r1 or --r2')
+args = [a for a in args if a not in ('--r1', '--r2')]
+# r4 is the default; --r2 selects the previous r2/r3 mechanics, --r1 the original case
+extra = ['-D', 'R2=false'] if r1 else (['-D', 'R4=false'] if r2 else [])
 
 os.makedirs(OUT, exist_ok=True)
 for part, fname in PARTS.items():

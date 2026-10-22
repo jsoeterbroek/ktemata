@@ -28,7 +28,8 @@
 #define I2C_ADDR_BME688_A 0x76
 #define I2C_ADDR_BME688_B 0x77
 #define I2C_ADDR_DS3231 0x68
-#define I2C_ADDR_UPS_HAT_E 0x2D
+// r4: Waveshare UPS HAT (B) - INA219 gauge. 0x2D was the old HAT (E) address.
+#define I2C_ADDR_UPS 0x42
 
 #define I2C_CLOCK_HZ 100000
 
@@ -99,6 +100,6 @@ constexpr float ALERT_STORAGE_WARN = 90.0f;  // % used
 constexpr float ALERT_STORAGE_CRIT = 97.0f;  // % used
 constexpr float ALERT_STORAGE_HYST = 2.0f;   // %
 
-// Rough runtime estimate for the 4x21700 pack. Tune after measuring the
-// actual idle/load draw of the Pi 5 setup.
-constexpr float BATTERY_NOMINAL_WH = 4 * 3.6f * 5.0f;  // 4 x 5000 mAh 21700
+// Rough runtime estimate for the r4 pack: 2x 18650 in 2S (7.2 V nominal, 3200 mAh).
+// The r2/r3 HAT (E) was 4x 21700 (4S, 70 Wh). Tune after measuring the actual draw.
+constexpr float BATTERY_NOMINAL_WH = 2 * 3.6f * 3.2f;  // 2 x 3200 mAh 18650, 2S

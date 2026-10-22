@@ -1,10 +1,11 @@
-# Pi Fluks – reverse-engineered printable parts (r1 + r2 + r3)
+# Pi Fluks – reverse-engineered printable parts (r1 + r2/r3 + r4)
 
 The r1 geometry was rebuilt from the photos in `Pi_Flux_r1_-_Build_Guide.pdf`. The guide has no CAD
-drawings, so this is a **functional re-creation**, not a copy of the original files. The r3 build is the
-current target and is modelled by default: it uses the r2 mechanics unchanged, with the Phistone Mini
-Keyboard (2.4 GHz dongle or Bluetooth) instead of the wired USB keyboard. Everything is parametric OpenSCAD,
-and r3 shares the r2 STLs — no CAD change. Measure your own parts, edit `cad/common.scad`, then re-export.
+drawings, so this is a **functional re-creation**, not a copy of the original files. The **r4** build is the
+current target and the default CAD: Raspberry Pi Touch Display 2 (5"), Waveshare UPS HAT (B) with 2× 18650,
+and the Rii K06 keyboard with touchpad. r2/r3 (DFR0550-V2 + UPS HAT (E) + 4× 21700 + Phistone) and r1 remain
+selectable. Everything is parametric OpenSCAD: measure your own parts, edit `cad/common.scad`, then
+re-export.
 
 ## Project Nomad
 Based on project nomad
@@ -19,28 +20,40 @@ Based on project nomad
 |---|---|---|
 | **r1** | Original reverse-engineered Waveshare 5" DSI + INIU power bank case; r1-only pull switch and battery button | Original r1 keyboard; no r2 electronics |
 | **r2** | Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700; same geometry and STLs as r3 | Wired USB keyboard; optional Pimoroni trackball; Wi-Fi/Bluetooth off |
-| **r3** | **Same mechanical build and STLs as r2; current target, the default CAD geometry** | **Phistone Mini Keyboard** (2.4 GHz USB dongle or Bluetooth 5.0); **no Pimoroni trackball**; Wi-Fi off; Pi Bluetooth optional, FireBeetle radios off |
+| **r3** | Same mechanical build and STLs as r2 | Phistone Mini Keyboard (2.4 GHz USB dongle or Bluetooth 5.0); no Pimoroni trackball; Wi-Fi off |
+| **r4** | **Current target and default CAD:** Pi 5 + Touch Display 2 (5", landscape) + UPS HAT (B) with 2× 18650 (2S); 172 × 237 × 53 mm | **Rii K06** 155 × 89 mm, 2.4 GHz dongle or Bluetooth; touchpad replaces the trackball; no Wi-Fi |
 
-The default CAD is the **r3 / r2 build** (Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700). r3 is the current
-target and reuses the r2 mechanics, so there is no `R3` switch: the `R2` switch selects this geometry
-(`true`, the default) or the original r1 case (`-D R2=false`). The r1 parts are still in the repository and
-export with `export.py --r1`. **r3 uses the same STLs as r2**; only the keyboard/radio configuration
-changes. See [`docs/R3.md`](docs/R3.md).
+The default CAD is the **r4 build**. Two switches in `cad/common.scad` select the others: `R4` (`true`,
+the default) turns the r4 retarget off, and `R2` (`false`) selects the original r1 case.
 
-| STL (`stl/`) | Source (`cad/`) | Print orientation | r2 / r3 |
+```bash
+python3 cad/tools/export.py           # r4 parts (default)
+python3 cad/tools/export.py --r2      # r2/r3 parts (DFR0550 + HAT (E) + Phistone)
+python3 cad/tools/export.py --r1      # original r1 set
+openscad -D R4=false -o out.png cad/assembly.scad      # r2/r3 assembly preview
+openscad -D R2=false -o out.png cad/assembly.scad      # r1 assembly preview
+```
+
+The r1 parts are still in the repository and export with `export.py --r1`. r3 is a keyboard/radio variant of
+r2 and shares its STLs (see [`docs/R3.md`](docs/R3.md)); r4 has its own geometry because the display, the
+power board, the cells and the keyboard all changed (see [`docs/R4.md`](docs/R4.md)).
+
+| STL (`stl/`) | Source (`cad/`) | Print orientation | r4 |
 |---|---|---|---|
 | `pi_fluks_bottom.stl` – back shell | `bottom.scad` | back plate down, no supports | yes |
 | `pi_fluks_face.stl` – front face | `face.scad` | face plate down | yes |
 | `pi_fluks_keyboard_support.stl` | `keyboard_support.scad` | flat | yes |
-| `pi_fluks_charge_plug.stl` – sealed USB-C plug | `charge_plug.scad` | flange down (TPU) | yes |
+| `pi_fluks_charge_plug.stl` – sealed charge plug | `charge_plug.scad` | flange down (TPU) | yes |
 | `pi_fluks_pull_switch.stl` – USB-C U-adapter pull switch | `pull_switch.scad` | top face (ring tab) down | r1 only |
 | `pi_fluks_power_button.stl` – battery button plunger | `power_button.scad` | cap end down | r1 only |
 
 `cad/assembly.scad` shows everything with stand-in components (`-D EXPLODE=40`).
 `-D 'CHECK="bottom:pi"'` intersects one part with another, which is handy for clearance checks.
-To re-export the STLs: `python3 cad/tools/export.py` (use `--r1` for the original r1 set).
-To refresh the images in `renders/` afterwards: `python3 cad/tools/render.py` (add `--r1` to include the r1-only views).
-`R1=1 bash work/scripts/check.sh` runs the old interference set; the default is the r3/r2 set.
+To re-export the STLs: `python3 cad/tools/export.py` (use `--r2` or `--r1` for the older sets).
+To refresh the images in `renders/` afterwards: `python3 cad/tools/render.py` (add `--r1` to include the r1-only views;
+the previews follow whatever is in `stl/`, so export the set you want rendered).
+`R1=1 bash work/scripts/check.sh` runs the old interference set; the default is the r4 set
+(`R4=0` for the r2/r3 pairs).
 
 ### Hand crank generator (`stl/crank/`)
 
@@ -156,12 +169,14 @@ The corner bumpers stand 3 mm proud. The body edges have a 3 mm 45° chamfer on 
 left and right grip zones carry vertical ribs. The face has bevelled windows and faux screw heads over the
 case screws. Everything prints without supports. To tune it, edit `BUMP*`, `EDGE_CZ`, `RIB_*` and `RIB_ZONES`
 in `common.scad`. Imprinted text: "π·FLUKS/AI" (top) and "scientia potentia est" (bottom). The bottom also
-carries "r2" next to the logo; r3 reuses that STL unchanged, so the imprint is still r2.
+carries the variant next to the logo (`r4`, or `r2` in that build); r3 reuses the r2 STL, so its imprint
+reads r2.
 
-r3 (and r2) is 150 × 205 × 46.5 mm: 22 mm taller than r1 to fit the status-OLED band and 12 mm deeper for
-the 21700 cells. The left ribs leave a gap for the sensor pocket; the sealed charge port and the 12 mm
-PBS-33B OLED button (add a rubber boot for sealing) are in the top wall. The r1 pull-switch slot, side cutout
-and battery button are not used in r2/r3.
+**r4 is 172 × 237 × 53 mm**; the previous r2/r3 case is 150 × 205 × 46.5 mm (22 mm taller than r1 for the
+status-OLED band, 12 mm deeper for the 21700 cells). The left ribs leave a gap for the sensor pocket; the
+sealed charge port and the 12 mm PBS-33B OLED button (add a rubber boot for sealing) are in the top wall. The
+r1 pull-switch slot, side cutout and battery button are not used in r2/r3/r4; the r4 charge port is a
+**Ø9.5 mm DC socket** rather than the r2 USB-C opening.
 
 
 ## project briefing
@@ -181,18 +196,18 @@ and battery button are not used in r2/r3.
 - clock important (correct date and time RTC)
 - preferred hardware shops: [tinytronics.nl](https://www.tinytronics.nl), [bol.com](https://www.bol.com) (no Amazon)
 
-## Target hardware (r3/r2, Pi 5 route)
+## Target hardware (r4, Pi 5 route)
 
 
 | Function | Choice | Notes |
 |---|---|---|
 | Board | Raspberry Pi 5, 4 GB | Pi 4 was considered for lower power and rejected: idle draw is about the same (Pi 4 ≈ 2.9 W, Pi 5 ≈ 2.7–3.0 W), and the Pi 4 lacks PCIe (NVMe) and the built-in RTC. RAM size barely affects power. 4 GB covers the expected 2–4 GB use (desktop, NOMAD without AI under 1 GB, Chromium with Wikipedia + maps); keep browser tabs modest. 16 GB only pays off for local AI, which is out of scope. Project NOMAD is officially x86-64 only for now. ARM64 support is being built by the maintainers (no date). Until then, run Kiwix (Wikipedia, medical, prepper) and ProtoMaps directly, or use a community ARM build. |
-| Display | **DFRobot DFR0550-V2** 5" IPS DSI, 800×480, optically bonded, 550 cd/m², anti-glare, capacitive touch | 120.7 × 75.8 × 4.9 mm, frame holes 113 × 68, Pi holes 58 × 49 (same Pi pattern as now). About 2.3 W. Brighter and less reflective outdoors than the r1 Waveshare 5" DSI (about 1.2 W, glossy, no brightness rating). Fallback: keep the Waveshare. |
-| Power | **Waveshare UPS HAT (E)**: 4× 21700, 5 V 6 A out, USB-C PD 3.0 in (5–20 V, up to 40 W), I2C fuel gauge | Charges and powers the Pi at the same time, so plugging in solar or a charger does not reboot it. Most power banks drop their output for a moment when a charger is connected, which resets the Pi. 88 × 56 mm board, but the 21700 cells (Ø21 × 70 mm) set the case depth. Alternatives: SunFounder PiPower 5 (5–15 V PD in, 5 V 5 A), Geekworm X1200 (2× 18650) / X1202 (4× 18650; not compatible with the X1002 bottom NVMe board). |
-| Solar | Foldable 20–30 W panel with a regulated **USB-C PD** output, into the UPS USB-C port | The UPS boards don't document raw solar input. Don't connect a bare panel; use one with a PD/regulator output or a small solar charge controller in between. |
-| Hand crank (backup, nice to have) | **Separate** crank generator with rectifier + buffer capacitor, feeding the **same MPPT charge input** as solar, into the one sealed USB-C charge port | Emergency top-up for night and clouds, not a main source. Rough estimate: 10–20 W of arm effort gives about 5–10 W into the battery after losses, so 1 minute of cranking ≈ 1 minute of use, and a full charge (about 70 Wh) would take about 7–14 h. Sellers' "20 W" ratings are peaks. Kept outside the case: there's no room next to the 21700 cells, you can't hold the device steady against the crank torque, a shaft would break the seal, and it would add weight all the time. Build options: the 3D-printed axial-flux design in `reference/yt/Building a Generator [tb3iN4m9Bik].txt` (N52 magnets, 8 coils × 350 turns, gearbox, full-bridge rectifier), or a commercial USB-C crank generator. The MPPT/input-voltage regulation matters: without it the input collapses whenever cranking slows (in the video the phone kept showing "USB disconnected"). Later option: a clip-on module on the (not yet modelled) back attachment. A pedal generator gives several times more power. |
-| Solar on case back (nice to have) | Thin ETFE panel (about 5–6 V) through a small solar power manager (MPPT) | The r1 back is 150 × 183 mm; the r2 back is 150 × 205 mm, so expect at most about 5–6 W peak and 2–3 W in practice. That only stretches idle time; it can't power the device while in use. Solar power banks with built-in cells charge just as slowly. |
-| Keyboard | **r2:** wired USB, RP2040/Pico-based keyboard running KMK/QMK (USB HID). **r3:** **Phistone Mini Keyboard** from the r1 build (2.4 GHz + Bluetooth 5.0, 134 × 74 × 12.7 mm, USB-C, 100 h, RGB/air mouse) | Best fit: a custom PCB on the existing `KB_PCB` footprint (137 × 72), the open-source Solder Party **BBQ20KBD** (BlackBerry Q20 keys + trackpad, USB HID; sold out since Jan 2026), or the Phistone r1 keyboard. The Phistone body (134 × 74 mm) is close to the 137 × 72 `KB_PCB` footprint, and its keys sit behind the same 130 × 67 r2/r3 face window as on the r1 face, which was built around it; use its 2.4 GHz dongle in the spare Pi USB-A port, or pair it over Bluetooth (enable BT). Its layout is cramped and the Ctrl/punctuation positions are non-standard — test before committing. mini PiQWERTY (Pico, 107 × 65 mm) has no Ctrl/Alt, so it's poor for a Linux terminal. With the r3 Phistone keyboard the side cutout can stay off; set its 2.4G/BT switch before closing and charge it before assembly, or add a small sealed access. |
+| Display | **Raspberry Pi Touch Display 2, 5"**: 720 × 1280 IPS DSI, 5-point capacitive touch, 500 cd/m², anti-glare | 143.4 × 91.46 × 14.92 mm (6.42 mm panel + 8.5 mm standoffs), 1.4 W, powers straight from the GPIO header (3-pin J1 cable). Native **portrait**, so the r4 case is 237 mm long and the panel runs in landscape. Auto-detected by Pi OS; for a Compute Module add `dtoverlay=vc4-kms-dsi-ili9881-5inch`. Outer standoffs 122.74 × 72.96 mm; its Pi pattern is 51 × 49 mm, so the Pi is held by the case posts rather than the display (see [`docs/R4.md`](docs/R4.md)). Previous target: DFRobot DFR0550-V2 (120.7 × 75.8 × 4.9, 800 × 480), still selectable with `-D R4=false`. |
+| Power | **Waveshare UPS HAT (B)**: 2× 18650 in **2S** (7.4 V nominal), 5 V 5 A out, **8.4 V / 2 A barrel-jack charge input**, INA219 gauge at I²C **0x42** | Charges and powers the Pi at the same time, so connecting a charger does not reboot it. 85 × 56 mm board with pogo pins to the Pi; the cells hang below the board in its own holders (23.35 mm holder/cell side, measured on Waveshare's 3D drawing; mounted rotated 90° to clear the Pi's ports). **Two consequences versus r2:** about **2–2.5 h** Pi 5 runtime instead of ~6–7 h (23 Wh vs 70 Wh), and **no USB-C PD input** — the sealed case port is a 5.5 × 2.1 mm DC socket and solar/crank must deliver **8.4 V** (through the internal MPPT/charger module) instead of PD. Alternative if runtime matters more: the HAT (E) with 4× 21700 (r2/r3). |
+| Solar | Foldable 20–30 W panel **plus** a 2S/8.4 V regulator or MPPT module into the internal charger | r4 has no PD input: the HAT (B) charges from 8.4 V at up to 2 A, so a PD panel cannot feed it directly. The internal module (`MPPT_*`) must output 8.4 V; a bare panel still needs a charge controller in between. Budget for a 2S MPPT module, not a USB-C PD trigger. |
+| Hand crank (backup, nice to have) | **Separate** crank generator with rectifier + buffer capacitor, feeding the **same charger input** as solar, into the one sealed charge port | Emergency top-up for night and clouds, not a main source. Rough estimate: 10–20 W of arm effort gives about 5–10 W into the battery after losses, so 1 minute of cranking ≈ 1 minute of use, and a full charge (about 23 Wh on r4, 70 Wh on r2) would take roughly 3–5 h (r4) or 7–14 h (r2). Sellers' "20 W" ratings are peaks. Kept outside the case: there's no room next to the 21700 cells, you can't hold the device steady against the crank torque, a shaft would break the seal, and it would add weight all the time. Build options: the 3D-printed axial-flux design in `reference/yt/Building a Generator [tb3iN4m9Bik].txt` (N52 magnets, 8 coils × 350 turns, gearbox, full-bridge rectifier), or a commercial USB-C crank generator. The MPPT/input-voltage regulation matters: without it the input collapses whenever cranking slows (in the video the phone kept showing "USB disconnected"). Later option: a clip-on module on the (not yet modelled) back attachment. A pedal generator gives several times more power. |
+| Solar on case back (nice to have) | Thin ETFE panel (about 5–6 V) through a small solar power manager (MPPT) | The r1 back is 150 × 183 mm, the r2 back 150 × 205 mm, the r4 back 172 × 237 mm, so expect at most about 6–8 W peak (r4) and 2–3 W in practice. That only stretches idle time; it can't power the device while in use. Solar power banks with built-in cells charge just as slowly. |
+| Keyboard | **Rii K06** (ordered): 155 × 89 × 16.5 mm, 124.5 g, 2.4 GHz dongle **and** Bluetooth 4.0, backlit, multi-touch touchpad + IR learning, 700 mAh BL-5B | Its touchpad replaces the r2 Pimoroni trackball (r3 used the Phistone's air mouse). The r4 case opens a 146 × 81 mm window over the keys/touchpad and holds the body in a 155 × 89 pocket that crosses the split plane. **No side cutout**, so set its 2.4G/BT switch and charge it before closing the case. **r2** remains a wired USB/Pico keyboard; **r3** the Phistone Mini Keyboard (134 × 74 × 12.7). The K06 is a complete body rather than a PCB, so r4 adds `KB_BODY` (155 × 89 × 16.5) beside the old 137 × 72 `KB_PCB` footprint, and its 146 × 81 window includes the touchpad. r2/r3 alternatives (a custom PCB on the 137 × 72 footprint, the Solder Party **BBQ20KBD** — sold out since Jan 2026 — or the Phistone) still apply to that build; on r4 the K06's cramped Ctrl/punctuation layout is the same trade-off as the Phistone's and should be tested before committing. |
 | Environment sensor | **Pimoroni BME688** (temp, RH, pressure, VOC/gas index; I2C) | No CO2 or particulates. For those, use Sensirion **SEN66** (PM1–10, CO2, VOC, NOx, T, RH; 55.5 × 25.6 × 21.5 mm, about 90 mA, I2C 0x6B; Adafruit SEN6x breakout). Mount it in a vented pocket on the outer wall with a membrane vent, away from Pi heat, or temperature/RH read high. The SEN66 needs real airflow (inlet + outlet). |
 | Storage | 1 TB NVMe 2230/2242 on an M.2 board | Small and fast. A 1 TB 2.5" SATA SSD also works through the Waveshare PCIe-to-SATA HAT+, but needs a noticeably thicker case. M.2 **SATA** drives don't work on Pi 5 NVMe boards. Check stacking against the UPS board. |
 | Clock | Pi 5 built-in RTC + **Panasonic ML-2020** rechargeable cell on the J5 battery connector | Needed with no networking (no NTP). Enable trickle charging: `dtparam=rtc_bbat_vchg=3000000` in `/boot/firmware/config.txt`. |
@@ -200,12 +215,13 @@ and battery button are not used in r2/r3.
 | Status button | **TinyTronics PBS-33B** 12 mm panel-mount momentary NO pushbutton ([black](https://www.tinytronics.nl/en/switches/manual-switches/push-buttons-and-switches/black-push-button-12mm-reset-pbs-33b)) | Fits the modelled 12.2 mm `OLED_BTN_D` hole. One terminal to GPIO4, the other to GND (`INPUT_PULLUP`). Not IP-rated; add a rubber boot for the sealed build, or use a 16 mm IP67 metal button and enlarge the top-wall hole. Short press = next screen, long press = acknowledge. |
 | Radios off | **r2 default:** `dtoverlay=disable-wifi` and `dtoverlay=disable-bt`; Wi-Fi/Bluetooth off in the FireBeetle firmware. **r3:** either use the Phistone 2.4 GHz dongle in the spare Pi USB-A, or enable the Pi's Bluetooth only (leave Wi-Fi off); FireBeetle radios stay off. | r2 matches "no networking, no Bluetooth". r3 treats the keyboard radio as an explicit input-device exception. No hardware radio switch needed. |
 
-Check I2C address collisions before wiring: BME688 0x76/0x77, SEN66 0x6B, plus the UPS fuel gauge. The Pimoroni trackball (0x0A) is an **r2-only optional** part; **r3 drops it** because the Phistone keyboard's air mouse and the touchscreen provide pointer input. With the FireBeetle option the sensors and UPS battery monitor (0x2D) move to its I2C bus (its OLED is at 0x3C, SDA GPIO21, SCL GPIO22). Don't connect them to both the Pi and the FireBeetle; two I2C masters on one bus cause trouble.
+Check I2C address collisions before wiring: BME688 0x76/0x77, SEN66 0x6B, plus the UPS fuel gauge. The Pimoroni trackball (0x0A) is an **r2-only optional** part; **r3 drops it** because the Phistone keyboard's air mouse and the touchscreen provide pointer input. With the FireBeetle option the sensors and the UPS gauge (**0x42** on r4, 0x2D on r2/r3) move to its I2C bus (its OLED is at 0x3C, SDA GPIO21, SCL GPIO22). Don't connect them to both the Pi and the FireBeetle; two I2C masters on one bus cause trouble.
 
-### Considered and rejected (r2/r3)
+### Considered and rejected (r2/r3/r4)
 
 - **MH-Real-Time Clock Modules - 2 (DS1302) for the OLED clock:** rejected. It is a 3-wire DS1302 (CE/SCLK/I/O), not I2C, so it needs three GPIOs and a separate driver (RTClib does not support it). It also has no TCXO and drifts far more than the DS3231. The DS3231 stays on the ESP32 I2C bus at 0x68; the Pi 5's own RTC + ML-2020 remains the Pi's clock. Keep a DS1302 only as a bench spare.
-- **Adafruit MAX17048 QT for battery monitoring:** rejected. The UPS HAT (E) uses four 21700 cells **in series (4S)**, while the MAX17048 is a 1S gauge (2.5–4.5 V). It cannot measure the 12.0–16.8 V pack, and tapping one cell gives only that cell's voltage/SoC, not the pack's. The HAT's BQ4050-based gauge at 0x2D already reports pack voltage/current/power, charge %, remaining mAh, per-cell voltages and USB-C input state to the ESP32 while the Pi is off. A second gauge would only duplicate less accurate data and create conflicting battery alerts. The MAX17048 is useful only for a separate 1S cell (for example an ESP32 backup LiPo), which this build does not have.
+- **Adafruit MAX17048 QT for battery monitoring:** rejected. Both UPS boards use **series** packs (4S on the HAT (E), 2S on the r4 HAT (B)), while the MAX17048 is a 1S gauge (2.5–4.5 V). It cannot measure a 12.0–16.8 V or 6.0–8.4 V pack, and tapping one cell gives only that cell's voltage/SoC, not the pack's. The HAT (E)'s BQ4050 gauge at 0x2D and the HAT (B)'s INA219 at 0x42 already report pack voltage/current/power to the ESP32 while the Pi is off. A second gauge would only duplicate less accurate data and create conflicting battery alerts. The MAX17048 is useful only for a separate 1S cell (for example an ESP32 backup LiPo), which this build does not have.
+- **Raspberry Pi Active Cooler (ordered with the 22 Oct 2026 parts):** rejected for the case. It is 63.5 × 42.5 × 13.7 mm and clips to the Pi's component side, which in every variant is occupied by the UPS board and its pogo pins (6 mm gap). It cannot be fitted, in r2/r3 or r4; keep it as a bench spare. Expect the Pi 5 to throttle under sustained load.
 
 ### Status OLED: screens and alerts
 
@@ -237,70 +253,70 @@ Starting thresholds (tune them in use):
 
 **Power and OLED care:** the ESP32 runs all the time from the UPS. Awake with the screen on, it draws roughly 0.3–0.5 W, which is about 10 % of the battery per day. So it sleeps between readings (light sleep, sensor reads about once a minute) and turns the OLED off after about 1 min idle; a button press or an alert wakes it. Small pixel shifts on the time screen reduce OLED burn-in.
 
-### r3 CAD implementation (r2 mechanics)
+### r4 CAD implementation
 
-r3 reuses the r2 mechanics, so `cad/` holds one geometry set: the default parts are the shared r2/r3 build
-and the same `stl/` files serve both. There is no `R3` switch; the r1 geometry is kept behind `R2=false`
-(`export.py --r1`). Only the keyboard/radio configuration changes, as described in [`docs/R3.md`](docs/R3.md).
+r4 has its own geometry because the display, the power board, the cells and the keyboard all changed from
+r2/r3. `cad/common.scad` holds one parameter set with two switches: **`R4`** (`true` by default) selects the
+r4 stack, **`R2`** selects the r2/r3 or (`false`) the r1 case. `pick(a, b, c)` returns the r4, r2/r3 or r1
+value, so a parameter is written once in each variant's terms. `export.py` defaults to r4 and takes `--r2` or
+`--r1`.
 
-**Vertical stack and case depth (identical for r2 and r3).** The UPS HAT (E) sits on the Pi's component
-side (towards the back), and the four 21700 cells lie in one row below it, axes along y. This keeps the
-depth at 46.5 mm for r2 and r3 instead of using the stock 2×2 cell holder (which would make the case about
-73 mm deep). All z positions are derived from `CELL_*`, `UPS_*`, `DISP_*` and `DISP_POST` in `common.scad`,
-so changing a component moves the shell.
+**r4 envelope: 172 × 237 × 53 mm** (r2/r3: 150 × 205 × 46.5). Width comes from the 155 mm K06 keyboard plus
+a 3 mm wall and window border; length from the 143.4 mm portrait display plus a 9.5 mm status-OLED band and
+the 89 mm keyboard; depth from the HAT (B) holder stack.
 
-- **Display:** `DISP_*` and `DISP_HOLES` now use the DFR0550-V2 (120.7 × 75.8 × 4.9 mm, outer holes 113 × 68,
-  Pi holes 58 × 49). The Pi pattern is assumed centred on the display; check the inner-hole offsets on your
-  unit before printing (the V3 drawing shows a slightly different pattern). The outer case posts still use
-  the display's own 5 mm standoffs.
-- **Battery/UPS:** `CELL_*` place four 21700 cells (Ø21 × 70) in printed U-cradles with zip-tie tunnels and
-  end stops. The row is shifted 5 mm left of centre so the rightmost cell clears the Pi's USB/Ethernet port
-  bodies. The Waveshare UPS HAT (E) is mounted on the Pi's component side (left-aligned, so its 88 mm board
-  overhangs 23 mm to the left and ends short of the port edge); remove its 46 mm standoffs and acrylic base
-  and wire the cells to V1–V4. The r1 battery bay, power-button plunger and USB-C U-adapter pull switch are
-  not used in r2/r3. The r2/r3 stack has no room for the r1 active cooler or a fitted 40-pin header: the
-  6.5 mm gap between the Pi and the UPS board is for the pogo pins/components. Use a thin thermal pad only if
-  it fits, and expect the Pi 5 to throttle under sustained load.
-- **Keyboard (the only r2 → r3 difference):** the 137 × 72 `KB_*` PCB footprint is kept, moved down to make
-  the OLED band. r3 uses the r1 **Phistone Mini Keyboard** (134 × 74 × 12.7 mm, 2.4 GHz + Bluetooth, USB-C,
-  100 h). Its keys sit behind the 130 × 67 face window — the same window size as on the r1 face — and its
-  134 × 74 body sits in the 137 × 72 `KB_*` PCB pocket (1.5 mm narrower per side in x, 1 mm wider per side in
-  y) and rests on the 126 × 69 `KBS` frame, as it did on the r1 face. No geometry changes; check the case
-  edges, the 2.4G/BT switch and the USB-C port before closing. It is linked by its 2.4 GHz dongle in the
-  spare Pi USB-A or over the Pi's Bluetooth, so there is no keyboard cable; r3 also drops the optional r2
-  Pimoroni trackball (the air mouse and touchscreen replace it). Set the switch and charge it before final
-  assembly, or add a small sealed side access, because the face has no side cutout (`SIDE_CUTOUT=false` by
-  default). Its Ctrl/punctuation layout is non-standard; try it before relying on it for terminal work. An
-  r2 wired USB keyboard or a custom Pico/BBQ20KBD PCB on the same footprint drops into the same support
-  unchanged. The support's cable-relief notches and under-board windows are simply unused with a wireless
-  keyboard. The keyboard support frame rests on four printed columns above the cells; it no longer sits on a
-  power bank.
-- **Status OLED:** a 1.3" 128×64 4-pin I2C OLED module (≈35 × 34 mm PCB, active area ≈23.7 × 13.2 mm)
-  sits just behind a 26 × 15 window in the band between the display and the keyboard (`OLED_*`). The
-  FireBeetle 2 ESP32-UE (25.4 × 60 mm) sits in a low tray in the bottom shell under the keyboard
-  (`FB_*`) and connects to the OLED with a short 4-wire I2C cable; its USB cable goes to the Pi. A
-  12 mm PBS-33B panel button in the top wall cycles the screens; add a rubber boot for sealing. The OLED
-  window is centred on the module; move
-  `OLED_CY`/`OLED_WIN` if your 1.3" module has the panel offset on its PCB.
-- **Sensor pocket:** a vented chamber in the left wall with a Ø12 membrane-vent seat, vented to the outside
-  and open to the interior for the cable. `-D SEN66=true` enlarges it for the Sensirion SEN66. Keep the
-  BME688 away from Pi heat as described in the hardware table.
-- **Charge input:** one sealed USB-C panel port in the top wall (16 × 8 × 1.2 mm rubber-plug recess) feeds a
-  small internal MPPT/charge module (`MPPT_*`), which then feeds the UPS HAT USB-C input. Solar and the hand
-  crank share this port. Print `charge_plug.stl` in TPU.
-- **RTC:** a shallow DS3231 tray is under the keyboard (`RTC_*`). It is deliberately open at the top for
-  double-sided tape or a zip tie; no retaining bridge is printed.
-- **Pi ports:** the display is narrower than the r1 unit, so the Pi's right-edge ports are no longer at the
-  case wall. r2/r3 have no Pi port windows. In r3 the Phistone needs no internal USB cable (2.4 GHz dongle or
-  Bluetooth); only the FireBeetle USB link and the OLED's 4-wire I2C cable run inside. An r2 wired keyboard
-  connects with an internal USB cable to a Pi port. The charge port is the only sealed external connector.
+**Vertical stack.** All z positions derive from `CELL_*`, `UPS_*`, `DISP_*`, `DISP_POST` and `H_FACE`:
 
-**Check before printing (r3).** Measure your own DFR0550-V2 inner-hole offset, UPS HAT (E) stack height,
-21700 length, the 1.3" OLED module outline, the PBS-33B button body/nut clearance and the Phistone Mini
-Keyboard outline (134 × 74 mm) against the 130 × 67 mm face window and the 126 × 69 mm support; these are the
-parameters most likely to need a tweak. Also confirm whether your Pi 5 has a 40-pin header fitted: the
-r2/r3 stack assumes it is removed (or low-profile) so the UPS HAT can sit on the component side. There is no
-active cooler in the r2/r3 stack. The r2/r3 assembly is dimensioned for a 1.6 mm UPS PCB, 6 mm of
-pogo-pin/component space, a 5 mm display/Pi standoff and 4.9 mm display thickness. A ±1 mm error moves the
-outer depth by the same amount. The case is intentionally deeper and taller than r1; if you keep the stock
-2×2 UPS holder instead, set `CELL_*`/`UPS_*` for that stack (and expect a much thicker case).
+```
+z=0   back plate (FLOOR 2 mm)
+3.00  cell bottom (2× 18650 on the HAT (B) holder side)
+26.35 HAT (B) pcb bottom  (23.35 mm holder/cell side)
+27.95 HAT (B) pcb top     + 6.0 pogo/component space
+34.45 Pi pcb bottom       + 1.6
+36.05 Pi pcb top          + 8.5 TD2 standoffs
+44.55 display bracket back (6.42 mm panel body)
+50.97 display glass front + 2.0 mm face plate  =  T
+38.55 split plane (bottom shell 0..38.55, face 38.55..52.97)
+```
+
+- **Split plane:** r4 puts it just above the Pi pcb (`PI_PCB_TOP + 2.5`) instead of at `T - H_FACE`, because
+  the 14.92 mm display would otherwise be cut. The face part is clipped at `H_BOT`, so no printed feature
+  crosses it; the TD2's own 8.5 mm standoffs span the split and the case posts end at the Pi pcb.
+- **Display:** the TD2's **outer** standoffs (122.74 × 72.96 mm) carry the case posts. Its **inner** Pi
+  pattern is 51 × 49 mm, while the Pi's is 58 × 49 mm, so the Pi cannot use the display's inner holes; the
+  Pi is fixed to the case posts and the display stands on its own outer standoffs. Verify against your unit
+  (`docs/R4.md` has the drawing numbers). The DSI (22→15 pin) and GPIO J1 power cable run in the face cavity
+  below the display. The Pi 5 auto-detects the panel.
+- **Battery/UPS:** the HAT (B) uses its own soldered 18650 holders, so **there is no printed cell tray** in
+  r4 (r2's `cell_tray()` is skipped). The board pogo-pins to the Pi's component side. The stock acrylic base
+  and standoffs are not used. 2S means 7.4 V nominal, 5 V/5 A out, ≈2–2.5 h Pi 5 runtime.
+  The HAT (B) is **rotated 90°** (`UPS_W` 56 × `UPS_H` 85): it has the same 85 × 56 outline as the Pi, so
+  aligned it would put its board under the Pi's USB/Ethernet port bodies (13.6–16 mm tall) — exactly the
+  collision r2 avoided by ending the 88 mm HAT (E) short of the ports. Rotated, it is 29 mm narrower than the
+  Pi along x, and its jack/USB-A/switch overhang sits past the Pi's +y end. The cells run along y.
+- **Keyboard:** a 155 × 89 × 16.5 pocket around the K06 body, 146 × 81 mm face window, and a shelf frame
+  (`kb_support()`) that backs the body. The body is thicker than the face part, so the pocket is split
+  between the two printed parts: the face carries the walls down to the split, the bottom shell has the
+  clearance below it. The K06 has no side cutout, so its 2.4G/BT switch and charging port are only reachable
+  before the face goes on — set and charge it first.
+- **Status OLED, sensor, RTC, FireBeetle, charge port:** unchanged parts, re-placed for the new floor. The
+  OLED band is only 35.5 mm tall, so the 34 mm module just fits between the display and the keyboard; the
+  DS3231, MPPT module and FireBeetle share the free floor under the keyboard with the frame's four columns
+  between them. The **charge port is a 5.5 × 2.1 mm DC socket**, not USB-C, because the HAT (B) charges from
+  8.4 V; the internal module must output 8.4 V. Print `charge_plug.stl` in TPU.
+- **No active cooler, no 40-pin header:** unchanged from r2 — the UPS board occupies the Pi's component side.
+  The Active Cooler ordered with this build does not fit any variant and is a bench spare.
+- **Pi ports:** no port windows. The K06 is wireless (2.4 GHz dongle in the spare Pi USB-A, or Bluetooth), so
+  only the FireBeetle USB link and the OLED cable run inside.
+
+**Check before printing (r4).** The measured inputs most likely to need a tweak:
+1. **HAT (B) holder/cell side:** 23.35 mm taken from Waveshare's 3D drawing. Measure your board with cells
+   fitted; 1 mm error moves the whole case depth.
+2. **TD2 standoffs and hole pattern:** 8.5 mm standoffs, 122.74 × 72.96 outer / 51 × 49 inner.
+3. **K06 outline:** 155 × 89 × 16.5 per Rii. If yours differs, edit `KB_BODY`, `KB_PCB`, `KB_WIN` and `KBS`.
+4. **1.3" OLED module** outline (the band has ~0.7 mm of slack) and the PBS-33B nut clearance.
+5. **18650 length** (65 mm nominal) and whether your Pi 5 has a 40-pin header fitted (it must be removed or
+   low-profile).
+
+r2/r3 remain fully modelled: `python3 cad/tools/export.py --r2` reproduces the 150 × 205 × 46.5 mm set with
+`bad edges: 0`, and the r2/r3 assembly still passes the interference checks.

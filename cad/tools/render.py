@@ -11,10 +11,13 @@ ISO, BACK = '0,0,0,55,0,25,0', '0,0,0,125,0,205,0'   # gimbal camera rotations u
 # name: (source, size, camera, extra args, full CGAL render?)
 #   source = .scad file in cad/, or 'stl:<part>' for an exported STL (print orientation)
 VIEWS = {
-    'asm_iso':     ('assembly.scad', (1400, 1100), '75,90,17,60,0,35,430', [], True),
-    'asm_corner':  ('assembly.scad', (1200, 900), '140,10,25,60,0,40,150', [], True),
-    'asm_back':    ('assembly.scad', (1200, 900), '75,90,17,125,0,215,430', [], True),
-    'asm_sec':     ('assembly.scad', (1400, 1000), '64,90,17,75,0,90,330', ['-D', 'SECTION=true'], False),
+    # viewall/autocenter: the assemblies are 183-237 mm long depending on the variant, so a
+    # fixed camera distance would crop one of them (r4 is 32 mm longer than r2/r3).
+    'asm_iso':     ('assembly.scad', (1400, 1100), '0,0,0,55,0,25,0', [], True),
+    'asm_corner':  ('assembly.scad', (1200, 900), '0,0,0,55,0,25,0', ['-D', 'EXPLODE=0'], True),
+    'asm_back':    ('assembly.scad', (1200, 900), '0,0,0,125,0,205,0', [], True),
+    # looking along +x into the cut face; --viewall would include the sectioning cube
+    'asm_sec':     ('assembly.scad', (1400, 1000), '-260,118,26,86,118,26', ['-D', 'SECTION=true'], False),
     'bottom_iso':  ('bottom.scad', (1400, 1100), ISO, [], True),
     'face_iso':    ('face.scad', (1400, 1100), ISO, [], True),
     'keyboard_support': ('keyboard_support.scad', (900, 700), ISO, [], False),
@@ -47,6 +50,8 @@ def render(name, td):
     extra = list(extra)
     if name in R1_ONLY and not src.startswith('stl:'):
         extra += ['-D', 'R2=false']
+    if '--r2' in sys.argv[1:]:
+        extra += ['-D', 'R4=false']
     if src.startswith('stl:'):
         src = os.path.join(td, name + '.scad')
         open(src, 'w').write(f'color("#4a72b0") import("{os.path.join(STL, "pi_fluks_" + VIEWS[name][0][4:] + ".stl")}");\n')

@@ -1,6 +1,7 @@
 #!/bin/bash
 # Interference check of every printed part vs. every component/part.
-#   bash work/scripts/check.sh        # r2 (default)
+#   bash work/scripts/check.sh        # r4 (default)
+#   R4=0 bash work/scripts/check.sh   # previous r2/r3 hardware
 #   R1=1 bash work/scripts/check.sh   # original r1 hardware
 # A "HIT" whose bbox is flat in one axis (zero volume) is a tangent contact and expected.
 cd "$(dirname "$0")/../../cad"
@@ -10,6 +11,7 @@ if [ "$R1" = "1" ]; then
   parts="bottom face kbs pull button"
   comps="display pi battery keyboard uadp"
 else
+  [ "$R4" = "0" ] && extra='-D R4=false'
   parts="bottom face kbs"
   comps="display pi keyboard ups cells oled firebeetle sensor rtc mppt charge oledbtn"
 fi

@@ -1,18 +1,31 @@
 // Pi Flux - Internal keyboard support frame
 // r1: sits on the power bank. r2: rests on four printed columns above the cells and
-// backs up the wired keyboard PCB (two windows for components). Print flat, as modelled.
+// backs up the wired keyboard PCB (two windows for components).
+// r4: the Rii K06 is a complete 16.5 mm body held in the face pocket, so this frame is a
+// shelf under it: it carries the body's weight and leaves the whole top open.
+// r4: print flat, as modelled. r2/r1: print flat too.
 include <common.scad>
 
-KBS_H  = KB_PCB_BACK - 0.2 - KBS_Z0; // stop 0.2 mm short of the keyboard pcb
+// Stop 0.2 mm short of the keyboard PCB/body back in every mode: the frame is the backstop
+// that keeps the keys just under the face plate.
+KBS_H  = KB_PCB_BACK - 0.2 - KBS_Z0;
 KBS_WALL = 3;
 
 module kb_support() {
     translate([0,0,KBS_Z0]) difference() {
         linear_extrude(KBS_H) translate([KBS[0], L-KBS[3]]) rrect(KBS[2]-KBS[0], KBS[3]-KBS[1], 2);
-        // windows
-        translate([0,0,-1]) linear_extrude(KBS_H+2) {
-            translate([KBS[0]+KBS_WALL, L-KBS[3]+KBS_WALL]) rrect(KBS_DIV-1.5-KBS[0]-KBS_WALL, KBS[3]-KBS[1]-2*KBS_WALL, 1.5);
-            translate([KBS_DIV+1.5, L-KBS[3]+KBS_WALL]) rrect(KBS[2]-KBS_WALL-KBS_DIV-1.5, KBS[3]-KBS[1]-2*KBS_WALL, 1.5);
+        if (!R4) {
+            // windows under the keyboard PCB (r2 wired/custom keyboard)
+            translate([0,0,-1]) linear_extrude(KBS_H+2) {
+                translate([KBS[0]+KBS_WALL, L-KBS[3]+KBS_WALL]) rrect(KBS_DIV-1.5-KBS[0]-KBS_WALL, KBS[3]-KBS[1]-2*KBS_WALL, 1.5);
+                translate([KBS_DIV+1.5, L-KBS[3]+KBS_WALL]) rrect(KBS[2]-KBS_WALL-KBS_DIV-1.5, KBS[3]-KBS[1]-2*KBS_WALL, 1.5);
+            }
+        } else {
+            // r4: one large opening behind the K06 (its battery/PCB needs the volume, and the
+            // touchpad cable leaves through it)
+            translate([0,0,-1]) linear_extrude(KBS_H+2) {
+                translate([KBS[0]+KBS_WALL, L-KBS[3]+KBS_WALL]) rrect(KBS[2]-KBS[0]-2*KBS_WALL, KBS[3]-KBS[1]-2*KBS_WALL, 2);
+            }
         }
         // wire relief notches on the top edge (cable routing in r2)
         for (x=[KBS_DIV-10, KBS[2]-20]) at(x, KBS[1]-1, KBS_H-2) translate([0,-KBS_WALL-2,0]) cube([8, KBS_WALL+2, 3]);

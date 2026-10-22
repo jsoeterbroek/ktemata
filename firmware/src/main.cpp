@@ -9,7 +9,7 @@
  *     time, battery, environment, storage
  *   - one sealed push button: short press = next screen, long press = ack alert
  *   - BME688 and DS3231 on the internal I2C bus
- *   - Waveshare UPS HAT (E) fuel gauge at 0x2D
+ *   - Waveshare UPS HAT (B) INA219 gauge at 0x42 (2S 18650)
  *   - newline-delimited JSON over USB CDC to/from the Raspberry Pi
  *
  * The firmware deliberately keeps Wi-Fi and Bluetooth off. Do not add radio
@@ -27,7 +27,7 @@
 #include <time.h>
 
 #include "config.h"
-#include "ups_hat_e.h"
+#include "ups_hat_b.h"
 
 // ---------------------------------------------------------------------------
 // Hardware
@@ -62,7 +62,7 @@ void oledPower(bool on) {
 
 RTC_DS3231 rtc;
 Bme68x bme;
-UpsHatE ups(Wire, I2C_ADDR_UPS_HAT_E);
+UpsHatB ups(Wire, I2C_ADDR_UPS);
 
 bool oledOk = false;
 bool rtcOk = false;
@@ -495,7 +495,9 @@ void applyAlert(AlertId id, AlertLevel next) {
 }
 
 void updateAlerts() {
-  const bool batteryPlausible = upsOk && upsData.batteryMv > 5000;
+  // 2S 18650 pack: anything above ~5.5 V means cells are actually connected. (The old
+  // 4S HAT (E) threshold of 5 V would treat one connected cell as a plausible pack.)
+  const bool batteryPlausible = upsOk && upsData.batteryMv > 5500;
   const AlertLevel batteryLevel =
       batteryPlausible
           ? levelLow(static_cast<float>(upsData.percent), ALERT_BATT_WARN,
@@ -627,9 +629,9 @@ void renderBatteryScreen() {
 
   if (!upsOk) {
     display.setCursor(0, 20);
-    display.print("UPS HAT (E) not found");
+    display.print("UPS HAT (B) not found");
     display.setCursor(0, 34);
-    display.print("check 0x2D on I2C");
+    display.print("check 0x42 on I2C");
     return;
   }
 
@@ -652,7 +654,7 @@ void renderBatteryScreen() {
   } else {
     display.print("idle");
   }
-  snprintf(buf, sizeof(buf), "  %s", UpsHatE::chargeStateName(upsData.chargeState));
+  snprintf(buf, sizeof(buf), "  %s", UpsHatB::chargeStateName(upsData.chargeState));
   display.print(buf);
 
   display.setCursor(0, 42);
@@ -1002,11 +1004,11 @@ void setup() {
   }
 
   initBme688();
-  if (i2cPresent(I2C_ADDR_UPS_HAT_E)) {
+  if (i2cPresent(I2C_ADDR_UPS)) {
     upsOk = ups.begin();
   }
   if (upsOk) {
-    Serial.println("{\"type\":\"log\",\"msg\":\"UPS HAT (E) found\"}");
+    Serial.println("{\"type\":\"log\",\"msg\":\"UPS HAT (B) found\"}");
   }
 
   // Build time is local to the build machine. Convert it to a UTC epoch so

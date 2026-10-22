@@ -41,7 +41,7 @@ time/date screen renders correctly. The clock uses the `TIMEZONE` setting
 | 1.3" 4-pin OLED | **working** at 0x3C, default SH1106 build; time/date renders in `TIMEZONE` |
 | DS3231 RTC | not fitted; the clock starts from the build timestamp |
 | BME688 | not fitted; the environment screen reports it missing |
-| UPS HAT (E) | not fitted; the battery line shows `BAT --` |
+| UPS HAT (B) | not fitted; the battery line shows `BAT --` |
 | Panel button (PBS-33B) | selected/ordered, not fitted; screens can still be changed with `{"cmd":"screen","index":N}` |
 | OLED idle blanking | disabled in the current build (`-DSCREEN_OFF_MS=0UL`); enable `60000UL` once the button is wired |
 | Pi → ESP storage data | firmware ready; the Pi-side sender is not implemented yet |
@@ -51,7 +51,7 @@ Suggested bring-up order:
 1. Wire the PBS-33B from GPIO4 to GND, check short/long press, then set `-DSCREEN_OFF_MS=60000UL` and reflash to re-enable idle blanking.
 2. Fit the DS3231 and set the time once from the Pi.
 3. Fit the BME688 and check the environment screen.
-4. Connect the UPS HAT (E) and check voltage/current/percent.
+4. Connect the UPS HAT (B) and check pack voltage/current/percent (derived from the 2S pack voltage).
 5. Add the Pi-side serial sender for time and storage.
 
 ## Why a custom board definition
@@ -99,7 +99,7 @@ All devices are on the default I2C bus, 3.3 V logic, 100 kHz.
 | 1.3" 128x64 4-pin I2C OLED | 0x3C (0x3D fallback) | SDA GPIO21, SCL GPIO22, 3V3, GND | SH1106 default, SSD1306 optional |
 | BME688 | 0x76 or 0x77 | same bus, 3V3, GND | Bosch BME68x library |
 | DS3231 RTC | 0x68 | same bus, 3V3, GND | CR2032 backup |
-| Waveshare UPS HAT (E) | 0x2D | same bus, GND common | Fuel gauge; logic is 3.3 V |
+| Waveshare UPS HAT (B) | **0x42** | same bus, GND common | INA219 gauge (pack V/I/W); logic is 3.3 V. The old HAT (E) used 0x2D. |
 | Panel push button (PBS-33B) | - | GPIO4 (D12 / A6 / T0) to GND | `INPUT_PULLUP`; short = next screen, long = ack |
 | UPS 5 V output | - | VCC / USB 5 V, GND | Powers the ESP32 |
 
@@ -143,7 +143,7 @@ The module is the **4-pin version**: VCC, GND, SCL, SDA only. Wire VCC to
 3V3, not 5V, so the I2C levels match the ESP32. There are no CS/DC/RES pins to
 configure, and the module's onboard pull-ups are sufficient.
 
-The UPS HAT (E) is an I2C slave at 0x2D; the ESP32 is the only master on
+The UPS HAT (B) is an INA219 I2C slave at 0x42; the ESP32 is the only master on
 this bus. Do not also connect the same sensors to the Pi.
 
 **Physical fit:** the CAD models the 1.3" module (about 35 × 34 mm PCB, active
@@ -200,10 +200,10 @@ ESP32 → Pi every 10 s (and after `status`):
 
 ```json
 {"type":"telemetry","ms":123456,"time":1780000000,
- "battery":{"present":true,"percent":78,"mv":13200,"ma":-420,
+ "battery":{"present":true,"percent":78,"mv":7660,"ma":-420,
             "charging":false,"fast":false,"vbus":false,
-            "vbus_mv":0,"remaining_mah":3900,
-            "discharge_min":210,"charge_min":0},
+            "vbus_mv":7660,"remaining_mah":2500,
+            "discharge_min":350,"charge_min":0},
  "environment":{"present":true,"temperature_c":24.3,"humidity_pct":45.1,
                 "pressure_hpa":1013.2,"gas_kohm":123.4,"gas_index":145},
  "storage":{"present":true,"used_pct":42.5,"free_gb":580.2,"age_s":12},
