@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Important
+Be direct, ultra-concise, and straight to the point. Skip all pleasantries, introductory remarks, meta-commentary, and unnecessary explanations. Answer using bullet points where applicable.
+
 ## What this is
 
 Parametric OpenSCAD re-creation of the 3D-printed case for the "Pi Flux" handheld. The r1 geometry (Pi 5 + 5" Waveshare DSI display + mini keyboard + INIU power bank) is reverse-engineered from the photos in `Pi_Flux_r1_-_Build_Guide.pdf` (text in `build_guide.txt`, page images in `work/pages/`); no original CAD exists. r2 retargets the same exterior to the DFR0550-V2 display, UPS HAT (E) + 4× 21700 and FireBeetle status OLED, and is the default. Many dimensions are estimates; see the "r3 CAD implementation" section in `README.md`. The device has a rugged/military styling (corner bumpers, chamfered edges, grip ribs). Imprinted branding is "π·FLUKS/AI".
