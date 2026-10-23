@@ -311,3 +311,7 @@ z=0   back plate (FLOOR 2 mm)
 
 r2/r3 remain fully modelled: `python3 cad/tools/export.py --r2` reproduces the 150 × 205 × 46.5 mm set with
 `bad edges: 0`, and the r2/r3 assembly still passes the interference checks.
+
+## Use at your own risk
+
+This is a hobby project, published as-is, with no warranty of any kind. The case and the wiring information are design proposals, not certified hardware. You are responsible for your own build: check the fit of your parts, verify polarity and fusing before connecting lithium cells, and never leave a charging pack unattended. Anything you print, assemble or power up is at your own risk; the author accepts no liability for damage, injury, data loss or fire.
