@@ -123,12 +123,12 @@ module screw_heads() {
 }
 
 module logo() {
-    // Wordmark in Greek capitals. Liberation Sans carries the Greek glyphs, so the same font
-    // works on any machine without adding a font dependency.
+    // Wordmark in Latin capitals, matching the README logo. Liberation Sans is on every
+    // machine, so no font dependency is added.
     // r4: the 143.4 x 91.46 display leaves only 6 mm above it, so the wordmark moves to the
     // free band below the keyboard window (y 218..237) instead of the top edge.
     at(W/2, R4 ? 227 : (R2 ? 5.0 : DISP_Y/2 + 0.3), T - 0.6) linear_extrude(1)
-        text("ΚΤΗΜΑΤΑ", size=6, halign="center", valign="center", font="Liberation Sans:style=Bold");
+        text("KTEMATA", size=6, halign="center", valign="center", font="Liberation Sans:style=Bold");
 }
 
 module motto() {

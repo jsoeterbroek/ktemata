@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/ktemata-logo.svg" alt="Ktemata — κτήματα, a possession for all time" width="640">
+</p>
+
 # Ktemata
 
 A rugged offline-library handheld (Pi 5, Touch Display 2, 2S 18650 UPS). Parametric OpenSCAD case; keeps Wikipedia, maps and Gutenberg when power and networking are gone.
@@ -9,7 +13,7 @@ Thucydides opens his *History of the Peloponnesian War* by calling his work **κ
 for all time": written down not to win a prize for one hearing, but so that what happened stays available to
 whoever comes later. That is this device's job. When the grid, the network and the servers are gone, it still
 holds a library — Wikipedia, maps, the Gutenberg books, the medical and prepper references — in a rugged case
-you can carry. The phrase is engraved on the face, and `ΚΤΗΜΑΤΑ` is the wordmark.
+you can carry. The phrase is engraved on the face, and `KTEMATA` is the wordmark.
 
 The r1 geometry was rebuilt from the photos in `Pi_Flux_r1_-_Build_Guide.pdf`. The guide has no CAD
 drawings, so this is a **functional re-creation**, not a copy of the original files. The **r4** build is the
@@ -155,7 +159,7 @@ The example sends a **UTC** epoch (`date +%s`); the FireBeetle converts it to
 The corner bumpers stand 3 mm proud. The body edges have a 3 mm 45° chamfer on the front and back, and the
 left and right grip zones carry vertical ribs. The face has bevelled windows and faux screw heads over the
 case screws. Everything prints without supports. To tune it, edit `BUMP*`, `EDGE_CZ`, `RIB_*` and `RIB_ZONES`
-in `common.scad`. Imprinted text: `ΚΤΗΜΑΤΑ` (the wordmark) and `κτῆμα ἐς ἀεί` (Thucydides' phrase, see the
+in `common.scad`. Imprinted text: `KTEMATA` (the wordmark) and `κτῆμα ἐς ἀεί` (Thucydides' phrase, see the
 top of this file). The bottom carries the variant next to the wordmark (`r4`, or `r2` in that build); r3
 reuses the r2 STL, so its imprint reads r2.
 

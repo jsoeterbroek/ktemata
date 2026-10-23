@@ -230,7 +230,7 @@ module vent_cut() {
 // ---- inside text
 module floor_text() {
     at(W/2, pick(228, 196, 140), FLOOR - 0.5) linear_extrude(1)
-        text(pick("ΚΤΗΜΑΤΑ  r4", "ΚΤΗΜΑΤΑ  r2", "ΚΤΗΜΑΤΑ"), size=R2 ? 6 : 7,
+        text(pick("KTEMATA  r4", "KTEMATA  r2", "KTEMATA"), size=R2 ? 6 : 7,
              halign="center", valign="center", font="Liberation Sans:style=Bold");
 }
 
