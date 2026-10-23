@@ -1,4 +1,4 @@
-# Pi Fluks r4 — shopping list / BOM
+# Ktemata r4 — shopping list / BOM
 
 Scope: the **r4** build in `README.md` ("Target hardware"): Pi 5 + **Raspberry Pi Touch Display 2 (5")** +
 **Waveshare UPS HAT (B)** with 2× 18650 (2S) + **Rii K06** keyboard. This list is reconciled against the

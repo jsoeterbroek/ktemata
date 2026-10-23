@@ -1,4 +1,11 @@
-# Pi Fluks – reverse-engineered printable parts (r1 + r2/r3 + r4)
+# Ktemata – reverse-engineered printable parts (r1 + r2/r3 + r4)
+
+**About the name.** *Ktemata* (κτήματα) is Greek for "possessions, things owned" — the plural of *ktema*.
+Thucydides opens his *History of the Peloponnesian War* by calling his work **κτῆμα ἐς ἀεί**, "a possession
+for all time": written down not to win a prize for one hearing, but so that what happened stays available to
+whoever comes later. That is this device's job. When the grid, the network and the servers are gone, it still
+holds a library — Wikipedia, maps, the Gutenberg books, the medical and prepper references — in a rugged case
+you can carry. The phrase is engraved on the face, and `ΚΤΗΜΑΤΑ` is the wordmark.
 
 The r1 geometry was rebuilt from the photos in `Pi_Flux_r1_-_Build_Guide.pdf`. The guide has no CAD
 drawings, so this is a **functional re-creation**, not a copy of the original files. The **r4** build is the
@@ -40,12 +47,12 @@ power board, the cells and the keyboard all changed (see [`docs/R4.md`](docs/R4.
 
 | STL (`stl/`) | Source (`cad/`) | Print orientation | r4 |
 |---|---|---|---|
-| `pi_fluks_bottom.stl` – back shell | `bottom.scad` | back plate down, no supports | yes |
-| `pi_fluks_face.stl` – front face | `face.scad` | face plate down | yes |
-| `pi_fluks_keyboard_support.stl` | `keyboard_support.scad` | flat | yes |
-| `pi_fluks_charge_plug.stl` – sealed charge plug | `charge_plug.scad` | flange down (TPU) | yes |
-| `pi_fluks_pull_switch.stl` – USB-C U-adapter pull switch | `pull_switch.scad` | top face (ring tab) down | r1 only |
-| `pi_fluks_power_button.stl` – battery button plunger | `power_button.scad` | cap end down | r1 only |
+| `ktemata_bottom.stl` – back shell | `bottom.scad` | back plate down, no supports | yes |
+| `ktemata_face.stl` – front face | `face.scad` | face plate down | yes |
+| `ktemata_keyboard_support.stl` | `keyboard_support.scad` | flat | yes |
+| `ktemata_charge_plug.stl` – sealed charge plug | `charge_plug.scad` | flange down (TPU) | yes |
+| `ktemata_pull_switch.stl` – USB-C U-adapter pull switch | `pull_switch.scad` | top face (ring tab) down | r1 only |
+| `ktemata_power_button.stl` – battery button plunger | `power_button.scad` | cap end down | r1 only |
 
 `cad/assembly.scad` shows everything with stand-in components (`-D EXPLODE=40`).
 `-D 'CHECK="bottom:pi"'` intersects one part with another, which is handy for clearance checks.
@@ -78,8 +85,8 @@ the 5" r2 design, but the RP2040 USB keyboard is the one part worth prototyping 
 ## Wiring
 
 See [`docs/WIRING.md`](docs/WIRING.md) for the power and data/I²C block diagrams, pin-level tables and wiring
-rules. It also links the editable KiCad 10 schematic (`docs/pi_flux_r3_wiring.kicad_sch`, PDF/SVG/PNG) and
-the netlist-style [`docs/pi_flux_r3_connections.csv`](docs/pi_flux_r3_connections.csv).
+rules. It also links the editable KiCad 10 schematic (`docs/ktemata_r3_wiring.kicad_sch`, PDF/SVG/PNG) and
+the netlist-style [`docs/ktemata_r3_connections.csv`](docs/ktemata_r3_connections.csv).
 
 ## ZIM library (Kiwix)
 
@@ -149,9 +156,9 @@ The example sends a **UTC** epoch (`date +%s`); the FireBeetle converts it to
 The corner bumpers stand 3 mm proud. The body edges have a 3 mm 45° chamfer on the front and back, and the
 left and right grip zones carry vertical ribs. The face has bevelled windows and faux screw heads over the
 case screws. Everything prints without supports. To tune it, edit `BUMP*`, `EDGE_CZ`, `RIB_*` and `RIB_ZONES`
-in `common.scad`. Imprinted text: "π·FLUKS/AI" (top) and "scientia potentia est" (bottom). The bottom also
-carries the variant next to the logo (`r4`, or `r2` in that build); r3 reuses the r2 STL, so its imprint
-reads r2.
+in `common.scad`. Imprinted text: `ΚΤΗΜΑΤΑ` (the wordmark) and `κτῆμα ἐς ἀεί` (Thucydides' phrase, see the
+top of this file). The bottom carries the variant next to the wordmark (`r4`, or `r2` in that build); r3
+reuses the r2 STL, so its imprint reads r2.
 
 **r4 is 172 × 237 × 53 mm**; the previous r2/r3 case is 150 × 205 × 46.5 mm (22 mm taller than r1 for the
 status-OLED band, 12 mm deeper for the 21700 cells). The left ribs leave a gap for the sensor pocket; the

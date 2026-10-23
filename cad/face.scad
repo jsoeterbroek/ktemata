@@ -1,4 +1,4 @@
-// Pi Flux - Top part (front face)
+// Ktemata - Top part (front face)
 // Modelled in assembly position; the STL export flips it so the face plate is on the bed.
 include <common.scad>
 
@@ -123,17 +123,20 @@ module screw_heads() {
 }
 
 module logo() {
+    // Wordmark in Greek capitals. Liberation Sans carries the Greek glyphs, so the same font
+    // works on any machine without adding a font dependency.
     // r4: the 143.4 x 91.46 display leaves only 6 mm above it, so the wordmark moves to the
     // free band below the keyboard window (y 218..237) instead of the top edge.
     at(W/2, R4 ? 227 : (R2 ? 5.0 : DISP_Y/2 + 0.3), T - 0.6) linear_extrude(1)
-        text("π·FLUKS/AI", size=6, halign="center", valign="center", font="Liberation Sans:style=Bold Italic");
+        text("ΚΤΗΜΑΤΑ", size=6, halign="center", valign="center", font="Liberation Sans:style=Bold");
 }
 
 module motto() {
+    // Thucydides, History 1.22: a possession for all time.
     // r4: y=197 sits inside the 137..218 keyboard window, so it moves into the 10 mm strip
     // between the display window and the OLED window.
     if (R2) at(W/2, R4 ? 102.6 : 197, T - 0.6) linear_extrude(1)
-        text("scientia potentia est", size=R4 ? 3.6 : 4.2, halign="center", valign="center", font="Liberation Sans:style=Italic");
+        text("κτῆμα ἐς ἀεί", size=R4 ? 3.6 : 4.2, halign="center", valign="center", font="Liberation Sans:style=Italic");
 }
 
 module face_part() {

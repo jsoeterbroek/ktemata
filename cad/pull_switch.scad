@@ -1,4 +1,4 @@
-// Pi Flux r1 - Internal top pull switch (Pi power)
+// Ktemata r1 - Internal top pull switch (Pi power)
 // Holds a USB-C 180deg "U" adapter upright: the male plug goes into the Pi 5 USB-C,
 // the battery cable plugs into the female socket below it. Pull the key ring to
 // unplug the adapter (= Pi off), push back in to power on.

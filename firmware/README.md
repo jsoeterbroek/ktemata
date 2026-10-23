@@ -1,7 +1,7 @@
 # Status OLED firmware (ESP32)
 
 PlatformIO project for the **DFRobot FireBeetle 2 ESP32-UE (N16R2)**, SKU
-**DFR1140**, used as the always-on status display in the Pi Fluks r2 case.
+**DFR1140**, used as the always-on status display in the Ktemata r2 case.
 The display is a **1.3" 128x64 4-pin I2C OLED** (SH1106 verified,
 SSD1306 selectable).
 

@@ -1,4 +1,4 @@
-// Pi Flux - assembly check with dummy components (not for printing)
+// Ktemata - assembly check with dummy components (not for printing)
 ASSEMBLY = true;
 include <common.scad>
 use <bottom.scad>

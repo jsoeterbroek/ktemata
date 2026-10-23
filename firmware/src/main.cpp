@@ -1,5 +1,5 @@
 /*
- * Pi Fluks r2 - status OLED firmware
+ * Ktemata r2 - status OLED firmware
  *
  * Board: DFRobot FireBeetle 2 ESP32-UE (N16R2)
  *        ESP32-WROOM-32UE-N16R2 (ESP32-D0WDR2-V3, 2 MB PSRAM)
@@ -952,7 +952,7 @@ void setup() {
   }
 
   Serial.println();
-  Serial.println("{\"type\":\"log\",\"msg\":\"Pi Fluks r2 status OLED\"}");
+  Serial.println("{\"type\":\"log\",\"msg\":\"Ktemata r2 status OLED\"}");
 
   // POSIX timezone rules (including DST) for the OLED clock.
   setenv("TZ", TIMEZONE, 1);

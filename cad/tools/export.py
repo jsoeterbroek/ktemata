@@ -9,9 +9,9 @@
 import subprocess, struct, sys, os, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__)); CAD = os.path.dirname(HERE)
 OUT = os.path.join(os.path.dirname(CAD), 'stl')
-PARTS = {'bottom':'pi_fluks_bottom', 'face':'pi_fluks_face', 'keyboard_support':'pi_fluks_keyboard_support',
-         'charge_plug':'pi_fluks_charge_plug',
-         'pull_switch':'pi_fluks_pull_switch', 'power_button':'pi_fluks_power_button'}
+PARTS = {'bottom':'ktemata_bottom', 'face':'ktemata_face', 'keyboard_support':'ktemata_keyboard_support',
+         'charge_plug':'ktemata_charge_plug',
+         'pull_switch':'ktemata_pull_switch', 'power_button':'ktemata_power_button'}
 LEGACY = {'pull_switch', 'power_button'}
 
 def read_ascii(path):

@@ -1,4 +1,4 @@
-// Pi Flux - shared parameters
+// Ktemata - shared parameters
 // Coordinates: x = left->right as seen from the FRONT, y = top->bottom
 // (top edge = charge-port / pull-switch side), z = 0 at the back surface, up towards the screen.
 // Use at(x,y) to place things in these "drawing" coordinates.

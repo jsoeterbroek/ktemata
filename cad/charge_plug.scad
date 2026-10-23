@@ -1,4 +1,4 @@
-// Pi Flux - TPU plug for the sealed charge port
+// Ktemata - TPU plug for the sealed charge port
 // r2/r3: round-nosed plug for the USB-C rectangular opening.
 // r4: round plug for the Ø9.5 mm DC socket hole (the HAT (B) charges from 8.4 V DC).
 // Print in TPU, flange on the bed. The flange seats in the outside O-ring recess

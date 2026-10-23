@@ -1,4 +1,4 @@
-// Pi Flux - Internal keyboard support frame
+// Ktemata - Internal keyboard support frame
 // r1: sits on the power bank. r2: rests on four printed columns above the cells and
 // backs up the wired keyboard PCB (two windows for components).
 // r4: the Rii K06 is a complete 16.5 mm body held in the face pocket, so this frame is a

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the case preview images to ../renders. Run export.py first (the pi_fluks_* views use the STLs).
+"""Render the case preview images to ../renders. Run export.py first (the ktemata_* views use the STLs).
    python3 cad/tools/render.py            # everything
    python3 cad/tools/render.py asm_iso    # only images whose name contains one of the arguments
 
@@ -26,17 +26,17 @@ VIEWS = {
     'keyboard_support': ('keyboard_support.scad', (900, 700), ISO, [], False),
     'power_button':     ('power_button.scad', (900, 700), ISO, [], False),
     'pull_switch':      ('pull_switch.scad', (900, 700), ISO, [], False),
-    'pi_fluks_bottom':           ('stl:bottom', (1200, 950), ISO, [], True),
-    'pi_fluks_bottom_back':      ('stl:bottom', (1200, 950), BACK, [], True),
-    'pi_fluks_face':             ('stl:face', (1200, 950), ISO, [], True),
-    'pi_fluks_face_front':       ('stl:face', (1200, 950), BACK, [], True),
-    'pi_fluks_keyboard_support': ('stl:keyboard_support', (1200, 950), ISO, [], True),
-    'pi_fluks_charge_plug':      ('stl:charge_plug', (900, 700), ISO, [], True),
-    'pi_fluks_power_button':     ('stl:power_button', (1200, 950), ISO, [], True),
-    'pi_fluks_pull_switch':      ('stl:pull_switch', (1200, 950), ISO, [], True),
+    'ktemata_bottom':           ('stl:bottom', (1200, 950), ISO, [], True),
+    'ktemata_bottom_back':      ('stl:bottom', (1200, 950), BACK, [], True),
+    'ktemata_face':             ('stl:face', (1200, 950), ISO, [], True),
+    'ktemata_face_front':       ('stl:face', (1200, 950), BACK, [], True),
+    'ktemata_keyboard_support': ('stl:keyboard_support', (1200, 950), ISO, [], True),
+    'ktemata_charge_plug':      ('stl:charge_plug', (900, 700), ISO, [], True),
+    'ktemata_power_button':     ('stl:power_button', (1200, 950), ISO, [], True),
+    'ktemata_pull_switch':      ('stl:pull_switch', (1200, 950), ISO, [], True),
 }
 
-R1_ONLY = {'power_button', 'pull_switch', 'pi_fluks_power_button', 'pi_fluks_pull_switch'}
+R1_ONLY = {'power_button', 'pull_switch', 'ktemata_power_button', 'ktemata_pull_switch'}
 
 def render(name, td):
     src, (w, h), cam, extra, full = VIEWS[name]
@@ -47,7 +47,7 @@ def render(name, td):
         extra += ['-D', 'R4=false']
     if src.startswith('stl:'):
         src = os.path.join(td, name + '.scad')
-        open(src, 'w').write(f'color("#4a72b0") import("{os.path.join(STL, "pi_fluks_" + VIEWS[name][0][4:] + ".stl")}");\n')
+        open(src, 'w').write(f'color("#4a72b0") import("{os.path.join(STL, "ktemata_" + VIEWS[name][0][4:] + ".stl")}");\n')
     else:
         src = os.path.join(CAD, src)
     view = ['--camera=' + cam] + (['--viewall', '--autocenter'] if cam.count(',') == 6 and cam.startswith('0,0,0,') else [])

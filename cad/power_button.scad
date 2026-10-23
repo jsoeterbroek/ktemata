@@ -1,4 +1,4 @@
-// Pi Flux r1 - Internal bottom power button (presses the power bank button)
+// Ktemata r1 - Internal bottom power button (presses the power bank button)
 // Insert from the inside before fitting the battery. Modelled in assembly position.
 include <common.scad>
 

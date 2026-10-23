@@ -1,4 +1,4 @@
-# PocketTerm35 as a parts donor for Pi Fluks r2 — feasibility
+# PocketTerm35 as a parts donor for Ktemata r2 — feasibility
 
 **Bottom line: not recommended as a donor for the current 5" r2 design.** The PocketTerm35 is a complete
 3.5" HDMI terminal with a 1S 5000 mAh UPS; its screen is much smaller and HDMI-based, its display/glass is
@@ -100,7 +100,7 @@ the bare chip.
 
 ## Fit against the r2 requirements
 
-| Requirement | Pi Fluks r2 | PocketTerm35 | Compatible? |
+| Requirement | Ktemata r2 | PocketTerm35 | Compatible? |
 |---|---|---|---|
 | Screen | 5" 800×480 DSI, 550 cd/m² target | 3.5" 640×480 HDMI, unknown nits | **No** — new face/case, different interface |
 | Keyboard | 137 × 72 wired USB PCB | 67-key + gamepad, ~93.5 mm wide, USB HID | **Partial** — new bezel/mount |
@@ -128,7 +128,7 @@ screws. That looks cheap compared with the r2 screen + UPS + cells + keyboard, b
 - The screen is smaller and HDMI; the battery is ~4× smaller; there is no room for 4×21700 or a proper NVMe
   stack.
 - If you actually want the PocketTerm form factor, buying the **complete PocketTerm35-Pi5 kit** and using it
-  as-is is the sensible cost-saving route — but it is a different product from the Pi Fluks r2.
+  as-is is the sensible cost-saving route — but it is a different product from the Ktemata r2.
 
 ---
 

@@ -5,14 +5,14 @@
   (paper "A3")
 
   (title_block
-    (title "Pi Fluks r3 - wiring / connections")
+    (title "Ktemata r3 - wiring / connections")
     (date "2026-10-20")
     (rev "2")
-    (company "Pi Fluks")
+    (company "Ktemata")
   )
 
   (lib_symbols
-    (symbol "PiFlux:BATT" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:BATT" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -50,7 +50,7 @@
       )
     )
 
-    (symbol "PiFlux:SOLAR" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:SOLAR" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -88,7 +88,7 @@
       )
     )
 
-    (symbol "PiFlux:CRANK" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:CRANK" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -126,7 +126,7 @@
       )
     )
 
-    (symbol "PiFlux:CHG_PORT" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:CHG_PORT" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -164,7 +164,7 @@
       )
     )
 
-    (symbol "PiFlux:MPPT" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:MPPT" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 5.08 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -210,7 +210,7 @@
       )
     )
 
-    (symbol "PiFlux:UPS" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:UPS" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 10.16 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -272,7 +272,7 @@
       )
     )
 
-    (symbol "PiFlux:PI5" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:PI5" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 10.16 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -334,7 +334,7 @@
       )
     )
 
-    (symbol "PiFlux:DISPLAY" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:DISPLAY" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -372,7 +372,7 @@
       )
     )
 
-    (symbol "PiFlux:NVME" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:NVME" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -410,7 +410,7 @@
       )
     )
 
-    (symbol "PiFlux:KEYBOARD" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:KEYBOARD" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -448,7 +448,7 @@
       )
     )
 
-    (symbol "PiFlux:PI_RTC" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:PI_RTC" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -486,7 +486,7 @@
       )
     )
 
-    (symbol "PiFlux:FB" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:FB" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 10.16 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -548,7 +548,7 @@
       )
     )
 
-    (symbol "PiFlux:OLED" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:OLED" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 5.08 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -594,7 +594,7 @@
       )
     )
 
-    (symbol "PiFlux:BME" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:BME" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 5.08 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -640,7 +640,7 @@
       )
     )
 
-    (symbol "PiFlux:DS3231" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:DS3231" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 5.08 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -686,7 +686,7 @@
       )
     )
 
-    (symbol "PiFlux:TRACK" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:TRACK" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 5.08 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -732,7 +732,7 @@
       )
     )
 
-    (symbol "PiFlux:BUTTON" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:BUTTON" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
@@ -772,7 +772,7 @@
   )
 
   (symbol
-    (lib_id "PiFlux:BATT")
+    (lib_id "Ktemata:BATT")
     (at 59.69 55.88 0)
     (unit 1)
     (body_style 1)
@@ -800,7 +800,7 @@
     (pin "1" (uuid "e75db5f2-faa9-47cf-942d-2334c883ae62"))
     (pin "2" (uuid "2c88084e-acc0-4386-a8ad-57700fc6d548"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J1")
           (unit 1)
@@ -813,7 +813,7 @@
   (wire (pts (xy 54.61 58.42) (xy 44.45 58.42)) (stroke (width 0) (type solid)) (uuid "cb7363b1-543f-47fe-a96c-409d94ee6db9"))
   (label "BATT_4S_N" (at 44.45 58.42 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "cc8e445b-3128-4d42-b4bf-ad1c2f376300"))
   (symbol
-    (lib_id "PiFlux:SOLAR")
+    (lib_id "Ktemata:SOLAR")
     (at 59.69 85.09 0)
     (unit 1)
     (body_style 1)
@@ -841,7 +841,7 @@
     (pin "1" (uuid "fd4e2262-b9d0-4351-9f7d-3e5650019b62"))
     (pin "2" (uuid "b777ce0e-ad0f-4cd7-bc97-f8bc28f12eaa"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J2")
           (unit 1)
@@ -854,7 +854,7 @@
   (wire (pts (xy 54.61 87.63000000000001) (xy 44.45 87.63000000000001)) (stroke (width 0) (type solid)) (uuid "063eb2f4-fe44-47a1-9869-85c7f7c516f8"))
   (label "GND" (at 44.45 87.63000000000001 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "38b22659-fcc1-4aa2-bc48-ffc9b6afe217"))
   (symbol
-    (lib_id "PiFlux:CRANK")
+    (lib_id "Ktemata:CRANK")
     (at 59.69 110.49 0)
     (unit 1)
     (body_style 1)
@@ -882,7 +882,7 @@
     (pin "1" (uuid "914844ff-7a8e-4bb5-8cd1-4ee54e2fd0f3"))
     (pin "2" (uuid "b1a85eab-b5fa-4098-9dab-9caeb76a8a7b"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J3")
           (unit 1)
@@ -895,7 +895,7 @@
   (wire (pts (xy 54.61 113.03) (xy 44.45 113.03)) (stroke (width 0) (type solid)) (uuid "a48be016-6595-40d7-8439-a1c03ed72209"))
   (label "GND" (at 44.45 113.03 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "9f680364-709a-4f86-bb70-8dd56d703102"))
   (symbol
-    (lib_id "PiFlux:CHG_PORT")
+    (lib_id "Ktemata:CHG_PORT")
     (at 59.69 135.89 0)
     (unit 1)
     (body_style 1)
@@ -923,7 +923,7 @@
     (pin "1" (uuid "9eaaccb4-d8d1-4ff8-9114-5d228c09054c"))
     (pin "2" (uuid "f8caf420-5b72-4356-a41a-f58e193c7c37"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J4")
           (unit 1)
@@ -936,7 +936,7 @@
   (wire (pts (xy 54.61 138.42999999999998) (xy 44.45 138.42999999999998)) (stroke (width 0) (type solid)) (uuid "8443fa1b-6726-4b3e-87c5-1305d6c6d801"))
   (label "GND" (at 44.45 138.42999999999998 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "144d0e8e-d83c-41ab-8f81-d4d5a6ea7891"))
   (symbol
-    (lib_id "PiFlux:MPPT")
+    (lib_id "Ktemata:MPPT")
     (at 59.69 170.18 0)
     (unit 1)
     (body_style 1)
@@ -966,7 +966,7 @@
     (pin "3" (uuid "c3f8d26a-2d9b-4975-ab27-b45e78d7ee28"))
     (pin "4" (uuid "5e13e3aa-ef02-4b8b-b3ca-df7511b97cee"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J5")
           (unit 1)
@@ -983,7 +983,7 @@
   (wire (pts (xy 54.61 175.26000000000002) (xy 44.45 175.26000000000002)) (stroke (width 0) (type solid)) (uuid "aa85aa8a-eeb9-44e2-bc3d-1e1ea1b841c8"))
   (label "GND" (at 44.45 175.26000000000002 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "f688f75f-01f2-4f79-9dae-3bb43036c417"))
   (symbol
-    (lib_id "PiFlux:UPS")
+    (lib_id "Ktemata:UPS")
     (at 59.69 215.9 0)
     (unit 1)
     (body_style 1)
@@ -1017,7 +1017,7 @@
     (pin "7" (uuid "37ea7c3f-a03e-4cc8-be0e-d73aa080c2bd"))
     (pin "8" (uuid "5ae2724b-b3ab-433c-9c8a-545956fc6a66"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J6")
           (unit 1)
@@ -1042,7 +1042,7 @@
   (wire (pts (xy 54.61 226.06) (xy 44.45 226.06)) (stroke (width 0) (type solid)) (uuid "2ec09321-4b38-4c8f-9a1e-80eed601e10d"))
   (label "BATT_4S_N" (at 44.45 226.06 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "bd7d807f-e3e1-4ce4-aef5-da04b5c06efe"))
   (symbol
-    (lib_id "PiFlux:PI5")
+    (lib_id "Ktemata:PI5")
     (at 170.18 55.88 0)
     (unit 1)
     (body_style 1)
@@ -1076,7 +1076,7 @@
     (pin "7" (uuid "e7bc0a46-f457-4193-9f19-309350e84f5c"))
     (pin "8" (uuid "7e5339d3-b008-4231-9b64-fd719f33d6e3"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J7")
           (unit 1)
@@ -1100,7 +1100,7 @@
   (label "GND" (at 154.94 63.5 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "d4cd31d6-e962-41f5-bd28-c7e4235b830f"))
   (no_connect (at 165.1 66.04) (uuid "79cea4c5-9f59-4353-a49f-e12bc294f4b0"))
   (symbol
-    (lib_id "PiFlux:DISPLAY")
+    (lib_id "Ktemata:DISPLAY")
     (at 170.18 100.33 0)
     (unit 1)
     (body_style 1)
@@ -1128,7 +1128,7 @@
     (pin "1" (uuid "e79998cc-cadf-4f49-b816-ae5c251cdea2"))
     (pin "2" (uuid "2abed9b2-3c97-49e4-8212-1d00718dd4e8"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J8")
           (unit 1)
@@ -1141,7 +1141,7 @@
   (wire (pts (xy 165.1 102.87) (xy 154.94 102.87)) (stroke (width 0) (type solid)) (uuid "082dbb0d-a346-425d-9b45-df0e584ee880"))
   (label "GND" (at 154.94 102.87 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "43bcc6fc-cf51-4921-b279-a21a78363379"))
   (symbol
-    (lib_id "PiFlux:NVME")
+    (lib_id "Ktemata:NVME")
     (at 170.18 125.73 0)
     (unit 1)
     (body_style 1)
@@ -1169,7 +1169,7 @@
     (pin "1" (uuid "c75f6146-1238-438e-a116-b901184e49e3"))
     (pin "2" (uuid "62e07f20-41ef-4174-9726-badb369ed5b4"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J9")
           (unit 1)
@@ -1182,7 +1182,7 @@
   (wire (pts (xy 165.1 128.27) (xy 154.94 128.27)) (stroke (width 0) (type solid)) (uuid "01190937-c959-4a8f-88bf-a755b4730c93"))
   (label "GND" (at 154.94 128.27 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "58c7e865-945f-431c-beed-1ea542566cbc"))
   (symbol
-    (lib_id "PiFlux:KEYBOARD")
+    (lib_id "Ktemata:KEYBOARD")
     (at 170.18 151.13 0)
     (unit 1)
     (body_style 1)
@@ -1210,7 +1210,7 @@
     (pin "1" (uuid "a841b23d-7548-4e2d-921e-38adeec1e481"))
     (pin "2" (uuid "e10bab1e-4b94-485d-b944-92f599d40e63"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J10")
           (unit 1)
@@ -1223,7 +1223,7 @@
   (wire (pts (xy 165.1 153.67) (xy 154.94 153.67)) (stroke (width 0) (type solid)) (uuid "cb3fbe25-710a-46cb-afca-2e71f3e9829d"))
   (label "GND" (at 154.94 153.67 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "fcf4bef4-074b-4866-918c-eb0b9aa13aeb"))
   (symbol
-    (lib_id "PiFlux:PI_RTC")
+    (lib_id "Ktemata:PI_RTC")
     (at 170.18 176.53 0)
     (unit 1)
     (body_style 1)
@@ -1251,7 +1251,7 @@
     (pin "1" (uuid "d5682571-8bd0-4017-8154-f2f1502225bf"))
     (pin "2" (uuid "f2ca3576-236a-4c79-94bc-6c631441c7e6"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J11")
           (unit 1)
@@ -1264,7 +1264,7 @@
   (wire (pts (xy 165.1 179.07) (xy 154.94 179.07)) (stroke (width 0) (type solid)) (uuid "759c2a3d-04b9-48cc-a195-afbc1121ddc6"))
   (label "GND" (at 154.94 179.07 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "4586eba0-a9d7-4d5e-9bbe-1b2f5caa7311"))
   (symbol
-    (lib_id "PiFlux:FB")
+    (lib_id "Ktemata:FB")
     (at 300.99 55.88 0)
     (unit 1)
     (body_style 1)
@@ -1298,7 +1298,7 @@
     (pin "7" (uuid "a78a343e-39a1-497e-ae68-4df0754afaa5"))
     (pin "8" (uuid "29bc2b6b-972d-4982-8882-55fb7efadd33"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J12")
           (unit 1)
@@ -1323,7 +1323,7 @@
   (wire (pts (xy 295.91 66.04) (xy 285.75 66.04)) (stroke (width 0) (type solid)) (uuid "12c73a1b-4c67-48c4-9c2c-8b00a1745aed"))
   (label "GND" (at 285.75 66.04 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "d6acc7da-22ec-4a99-958e-2af74fc4a9f6"))
   (symbol
-    (lib_id "PiFlux:OLED")
+    (lib_id "Ktemata:OLED")
     (at 300.99 105.41 0)
     (unit 1)
     (body_style 1)
@@ -1353,7 +1353,7 @@
     (pin "3" (uuid "1fab08fa-3881-4941-8694-9f53d0e525bc"))
     (pin "4" (uuid "2500e449-2f57-4fca-bd5f-cf70babd594f"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J13")
           (unit 1)
@@ -1370,7 +1370,7 @@
   (wire (pts (xy 295.91 110.49) (xy 285.75 110.49)) (stroke (width 0) (type solid)) (uuid "e07780cf-b5a3-4978-98f9-13e04fe3a1f7"))
   (label "I2C_SCL" (at 285.75 110.49 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "53b62001-c351-48a7-b76d-7e805274c02e"))
   (symbol
-    (lib_id "PiFlux:BME")
+    (lib_id "Ktemata:BME")
     (at 300.99 135.89 0)
     (unit 1)
     (body_style 1)
@@ -1400,7 +1400,7 @@
     (pin "3" (uuid "52266669-e1b0-4348-b6ce-b3aa62223036"))
     (pin "4" (uuid "ac6188d0-3f30-4244-a68d-ad030d20594e"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J14")
           (unit 1)
@@ -1417,7 +1417,7 @@
   (wire (pts (xy 295.91 140.97) (xy 285.75 140.97)) (stroke (width 0) (type solid)) (uuid "49097e14-b1c0-4ba4-93b2-dcdbf1b1037e"))
   (label "I2C_SCL" (at 285.75 140.97 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "ee205131-b95c-4aef-9b50-d979de2d9fb8"))
   (symbol
-    (lib_id "PiFlux:DS3231")
+    (lib_id "Ktemata:DS3231")
     (at 300.99 166.37 0)
     (unit 1)
     (body_style 1)
@@ -1447,7 +1447,7 @@
     (pin "3" (uuid "f25170b0-831d-4f70-ba9c-c9956a3dc3d8"))
     (pin "4" (uuid "11b379fc-019e-45f0-be82-b31a8418e9d3"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J15")
           (unit 1)
@@ -1464,7 +1464,7 @@
   (wire (pts (xy 295.91 171.45000000000002) (xy 285.75 171.45000000000002)) (stroke (width 0) (type solid)) (uuid "74ff657b-f583-4f27-a362-6c850ff3951f"))
   (label "I2C_SCL" (at 285.75 171.45000000000002 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "afe0a4a2-aaf5-45d7-86f8-914d0a8e66b6"))
   (symbol
-    (lib_id "PiFlux:TRACK")
+    (lib_id "Ktemata:TRACK")
     (at 300.99 196.85 0)
     (unit 1)
     (body_style 1)
@@ -1494,7 +1494,7 @@
     (pin "3" (uuid "93185043-552e-4580-a775-10cb62a7a735"))
     (pin "4" (uuid "12a88cf5-3ce9-4183-8a15-3807ec6f9139"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J16")
           (unit 1)
@@ -1511,7 +1511,7 @@
   (wire (pts (xy 295.91 201.93) (xy 285.75 201.93)) (stroke (width 0) (type solid)) (uuid "9fd39bd1-cb09-431e-ae06-872cb6582295"))
   (label "I2C_SCL" (at 285.75 201.93 180) (effects (font (size 2 2)) (justify right bottom)) (uuid "66b49f6f-dbaf-4873-bdf5-556e6a05bed3"))
   (symbol
-    (lib_id "PiFlux:BUTTON")
+    (lib_id "Ktemata:BUTTON")
     (at 300.99 227.33 0)
     (unit 1)
     (body_style 1)
@@ -1539,7 +1539,7 @@
     (pin "1" (uuid "9fc797c7-ee3a-44b7-9551-dddada8f09b9"))
     (pin "2" (uuid "97e19731-07d1-4d7e-95d3-5147093add2b"))
     (instances
-      (project "pi_flux_r3_wiring"
+      (project "ktemata_r3_wiring"
         (path "/9545ffa8-4da6-4e23-961a-0f1b69dedae2"
           (reference "J17")
           (unit 1)

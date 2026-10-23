@@ -1,4 +1,4 @@
-# Pi Fluks r3 — wiring / connection diagram
+# Ktemata r3 — wiring / connection diagram
 
 > **r4 changes the power side.** The r4 build (Touch Display 2 + **UPS HAT (B)** + Rii K06) replaces the
 > HAT (E)'s USB-C PD input with an **8.4 V / 2 A DC barrel input**, uses a **2S 18650** pack and an
@@ -9,7 +9,7 @@
 Two block diagrams: **power** and **data/I²C/USB**, plus an editable **KiCad 10 schematic** and a
 netlist-style CSV. The block diagrams are generated from [`wiring_power.dot`](wiring_power.dot) and
 [`wiring_data.dot`](wiring_data.dot) with `dot -Tsvg …` + `rsvg-convert`; the PNG versions are next to the
-SVGs. The schematic, PDF, PNG and CSV are named `pi_flux_r3_*`; r3 uses the same mechanics and wiring as r2
+SVGs. The schematic, PDF, PNG and CSV are named `ktemata_r3_*`; r3 uses the same mechanics and wiring as r2
 and differs only in the keyboard. The r4 power/data deltas are listed in section 5 so the r2/r3 diagrams
 stay valid for that build.
 
@@ -162,20 +162,20 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 
 ## 5. KiCad schematic
 
-A KiCad 10 schematic is included: [`pi_flux_r3_wiring.kicad_sch`](pi_flux_r3_wiring.kicad_sch)
-([PDF](pi_flux_r3_wiring.pdf), [SVG](kicad_wiring/pi_flux_r3_wiring.svg), [PNG](pi_flux_r3_wiring.png)).
+A KiCad 10 schematic is included: [`ktemata_r3_wiring.kicad_sch`](ktemata_r3_wiring.kicad_sch)
+([PDF](ktemata_r3_wiring.pdf), [SVG](kicad_wiring/ktemata_r3_wiring.svg), [PNG](ktemata_r3_wiring.png)).
 
-![KiCad wiring schematic](pi_flux_r3_wiring.png)
+![KiCad wiring schematic](ktemata_r3_wiring.png)
 
 It is a **net-label schematic**: every module is a connector-shaped block with named pins, and a short wire
 plus a net label carries each signal. **Same net label = connected** — there are no routed harness lines.
 This keeps the connection list readable and editable; use the two block diagrams above for the physical
-topology. `pi_flux_r3_wiring.kicad_sch` opens directly in KiCad 10. ERC reports only `lib_symbol_issues`
-for the embedded `PiFlux` symbols (they are not in an external library); there are **no electrical errors or
+topology. `ktemata_r3_wiring.kicad_sch` opens directly in KiCad 10. ERC reports only `lib_symbol_issues`
+for the embedded `Ktemata` symbols (they are not in an external library); there are **no electrical errors or
 warnings**. The r3 keyboard block is `J10`, the Phistone 2.4 GHz dongle on the Pi's `USB_KEYBOARD` net; the
 r2-only trackball `J16` is marked DNP (crossed out).
 
-The CSV [`pi_flux_r3_connections.csv`](pi_flux_r3_connections.csv) lists every net with `From`, `From pin`,
+The CSV [`ktemata_r3_connections.csv`](ktemata_r3_connections.csv) lists every net with `From`, `From pin`,
 `To`, `To pin`, and cable/notes for a spreadsheet or for re-drawing the schematic by hand.
 
 ---

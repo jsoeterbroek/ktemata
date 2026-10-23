@@ -1,4 +1,4 @@
-// Pi Flux - Bottom part (back shell)
+// Ktemata - Bottom part (back shell)
 // R2 default: UPS HAT (E) + 4x21700 tray, sealed charge port, sensor pocket, RTC.
 // R1 option (-D R2=false): original INIU battery bay + pull switch + power button.
 // Print back-plate down. All internal features are vertical or 45 deg; no supports.
@@ -230,7 +230,7 @@ module vent_cut() {
 // ---- inside text
 module floor_text() {
     at(W/2, pick(228, 196, 140), FLOOR - 0.5) linear_extrude(1)
-        text(pick("π·FLUKS/AI  r4", "π·FLUKS/AI  r2", "π·FLUKS/AI"), size=R2 ? 6 : 7,
+        text(pick("ΚΤΗΜΑΤΑ  r4", "ΚΤΗΜΑΤΑ  r2", "ΚΤΗΜΑΤΑ"), size=R2 ? 6 : 7,
              halign="center", valign="center", font="Liberation Sans:style=Bold");
 }
 

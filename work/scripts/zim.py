@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect and validate the Kiwix ZIM library used by the Pi Fluks / Project Nomad build.
+"""Inspect and validate the Kiwix ZIM library used by the Ktemata / Project Nomad build.
 
 The ZIM files live on the external disk (default /run/media/joost/data/zim) and are
 listed in zim/zim.md. This tool reads each archive with libzim (no compiler needed; the
