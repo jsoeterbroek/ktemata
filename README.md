@@ -1,6 +1,8 @@
 # Ktemata
 
-**Ktemata** 
+A rugged offline-library handheld (Pi 5, Touch Display 2, 2S 18650 UPS). Parametric OpenSCAD case; keeps Wikipedia, maps and Gutenberg when power and networking are gone.
+
+## Ktemata
 
 *Ktemata* (κτήματα) is Greek for "possessions, things owned" — the plural of *ktema*.
 Thucydides opens his *History of the Peloponnesian War* by calling his work **κτῆμα ἐς ἀεί**, "a possession
