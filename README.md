@@ -14,11 +14,6 @@ and the Rii K06 keyboard with touchpad. r2/r3 (DFR0550-V2 + UPS HAT (E) + 4× 21
 selectable. Everything is parametric OpenSCAD: measure your own parts, edit `cad/common.scad`, then
 re-export.
 
-## Project Nomad
-Based on project nomad
-
-### See: https://youtu.be/o4Bd-bleNDU?is=Fc3EMUCg8lrdhqlE
-
 ## Files
 
 ### Build variants
