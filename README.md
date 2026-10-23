@@ -1,6 +1,8 @@
-# Ktemata – reverse-engineered printable parts (r1 + r2/r3 + r4)
+# Ktemata
 
-**About the name.** *Ktemata* (κτήματα) is Greek for "possessions, things owned" — the plural of *ktema*.
+**Ktemata** 
+
+*Ktemata* (κτήματα) is Greek for "possessions, things owned" — the plural of *ktema*.
 Thucydides opens his *History of the Peloponnesian War* by calling his work **κτῆμα ἐς ἀεί**, "a possession
 for all time": written down not to win a prize for one hearing, but so that what happened stays available to
 whoever comes later. That is this device's job. When the grid, the network and the servers are gone, it still
