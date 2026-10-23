@@ -1,0 +1,85 @@
+:root {
+  color-scheme: dark light;
+  --bg: #151b21;
+  --panel: #1f2830;
+  --fg: #f2ebe0;
+  --muted: #a9b2bb;
+  --accent: #c99a63;
+  --line: #2f3a45;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  padding: 2.5rem 1.25rem 4rem;
+  background: var(--bg);
+  color: var(--fg);
+  font: 1.0625rem/1.65 "Liberation Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+main { max-width: 44rem; margin: 0 auto; }
+
+.logo {
+  display: block;
+  width: min(100%, 34rem);
+  height: auto;
+  margin: 0 auto 2.25rem;
+}
+
+.lede { font-size: 1.1875rem; }
+
+h1, h2 {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  margin: 2.5rem 0 0.75rem;
+}
+
+h2 {
+  font-size: 0.8125rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+p { margin: 0 0 1rem; }
+
+a { color: var(--accent); text-underline-offset: 0.2em; }
+a:hover { color: var(--fg); }
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.45rem 1.25rem;
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.15rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+}
+
+dt { color: var(--muted); }
+dd { margin: 0; }
+
+.warn {
+  padding: 1rem 1.15rem;
+  border-left: 3px solid var(--accent);
+  background: var(--panel);
+  border-radius: 0 0.6rem 0.6rem 0;
+}
+
+footer {
+  margin-top: 3.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 30rem) {
+  dl { grid-template-columns: 1fr; }
+  dt { margin-top: 0.4rem; }
+}
