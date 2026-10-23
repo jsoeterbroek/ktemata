@@ -2,8 +2,8 @@
 
 Scope: the **r4** build in `README.md` ("Target hardware"): Pi 5 + **Raspberry Pi Touch Display 2 (5")** +
 **Waveshare UPS HAT (B)** with 2× 18650 (2S) + **Rii K06** keyboard. This list is reconciled against the
-**order placed on 22 Oct 2026** (`.shopping.md`): the Kiwi and Bol lines below are what was actually ordered,
-and the **gaps** section lists what that order still needs before the case can be assembled and used.
+orders of **22 Oct 2026** and **23 Oct 2026**: the Kiwi and Bol lines below are what was actually ordered,
+and the **gaps** section lists what those orders still leave before the case can be assembled and used.
 
 r2/r3 (DFR0550-V2 + UPS HAT (E) + 4× 21700 + Phistone) remain selectable in the CAD
 (`export.py --r2`, `-D R4=false`); the r2 part list is kept at the end for reference.
@@ -44,8 +44,18 @@ Wiring: [`docs/WIRING.md`](docs/WIRING.md). r4 design notes: [`docs/R4.md`](docs
 4. **Active Cooler — does not fit.** The ordered Raspberry Pi Active Cooler (KW-3228) is 63.5 × 42.5 ×
    13.7 mm and clips onto the Pi's **component side**, which is exactly where the UPS board and its pogo pins
    sit (6 mm gap). It cannot be fitted in r4 (nor in r2/r3). Keep it as a bench spare, or return it.
-5. **No coin cell, no NVMe, no RTC cell.** The DS3231 board ships **without** a CR1220; the Pi 5's ML-2020
-   RTC cell and the M.2 BASE + 1 TB SSD are not in the order either. See "Gaps" below.
+5. **Storage and clocks — now ordered.** The **Seeed M.2 BASE + WD SN740 512 GB** arrived with the 23 Oct
+   order, as did the Pi's **ML-2020 RTC cell** (KW-3229). What is still missing is the **CR1220** backup cell
+   for the DS3231 breakout. The 512 GB drive is a deliberate stopgap: it holds the OS, Wikipedia, the maps and
+   the small references, **not** the whole 833 GiB library (note 7).
+6. **The HAT (B) includes its 8.4 V / 2 A supply.** Kiwi's package contents list it explicitly, so the gap
+   list no longer needs a bench charger for the pack — only the **sealed panel socket** for the case wall, and
+   the solar/crank module if you build that path. The 5 V 3 A OTRONIC adapter ordered on 23 Oct does **not**
+   substitute: wrong voltage, wrong barrel, and the Pi 5 takes USB-C only.
+7. **The NVMe board has no home in the CAD yet.** `cad/` contains no NVMe geometry: the UPS HAT (B) owns the
+   Pi's underside (6.5 mm pogo gap) and the bottom floor is taken by the DS3231, charger module and
+   FireBeetle. The BASE plus a 2.38 mm card is ≈10 mm tall, so it cannot simply be stacked under the Pi.
+   Resolve that before printing the bottom shell — the drive and board are bought, not fitted.
 
 ---
 
@@ -58,8 +68,18 @@ Wiring: [`docs/WIRING.md`](docs/WIRING.md). r4 design notes: [`docs/R4.md`](docs
 | 3 | Adafruit DS3231 Precision RTC Breakout | ADA-3013 | 1 | € 19.35 | € 19.35 | FireBeetle clock (0x68), keeps time with the Pi off. **CR1220 not included.** |
 | 4 | BME688 4-in-1 Air Quality Breakout | PIM-575 | 1 | € 25.40 | € 25.40 | Environment screen; vented side pocket (`SENSOR_*`). |
 | 5 | Raspberry Pi Active Cooler | KW-3228 | 1 | € 5.43 | € 5.43 | **Not usable** — see note 4. Bench spare. |
-| 6 | UPS HAT voor RPi – 5V 5A output (Waveshare UPS HAT (B), WS-20568) | WS-20568 | 1 | € 27.82 | € 27.82 | r4 power board, 2S 18650, 8.4 V charge input, INA219 0x42. **Cells not included.** |
-| | **Kiwi total** | | | | **€ 124.44** | |
+| 6 | UPS HAT voor RPi – 5V 5A output (Waveshare UPS HAT (B), WS-20568) | WS-20568 | 1 | € 27.82 | € 27.82 | r4 power board, 2S 18650, 8.4 V charge input, INA219 0x42. **Cells not included**, but the **8.4 V / 2 A supply is** (see note 6). |
+| | **Kiwi total (22 Oct)** | | | | **€ 124.44** | |
+
+### A2. Ordered — Kiwi Electronics (23 Oct 2026)
+
+| # | Item | Code | Qty | Price | Role in r4 |
+|---|---|---|---|---|---|
+| 7 | PCIe to M.2 BASE for Raspberry Pi 5 (Seeed 103110063) | SS-103110063 | 1 | € 6.40 | NVMe carrier. Back-mounted under the Pi; accepts 2230/2242/2260/2280. **No bay in the r4 CAD yet** — see note 7. |
+| 8 | RTC Battery for Raspberry Pi 5 (Panasonic ML-2020, JST plug) | KW-3229 | 1 | € 5.43 | Pi clock backup on J5. Enable trickle charge with `dtparam=rtc_bbat_vchg=3000000`. |
+| 9 | STEMMA QT / Qwiic JST-SH 4-pin cable, 200 mm | ADA-4401 | 1 | € 1.44 | One Qw/ST lead. The I²C chain needs **three** (BME688, DS3231, OLED) — two short. |
+| 10 | STEMMA QT / Qwiic JST-SH → male headers, 150 mm | ADA-4209 | 1 | € 1.15 | FireBeetle header → Qw/ST bus. |
+| | **Kiwi total (23 Oct)** | | | | **€ 14.42** | |
 
 ## B. Ordered — Bol.com
 
@@ -70,34 +90,40 @@ Wiring: [`docs/WIRING.md`](docs/WIRING.md). r4 design notes: [`docs/R4.md`](docs
 | SanDisk Extreme microSDHC 32 GB (A1/V30/U3, with adapter) | 1 | ≈ € 13 | Boot card. Too small for the ZIM library; that stays on the external disk. |
 | Rii K06 mini keyboard (2.4 GHz + Bluetooth, backlit, touchpad) | 1 | ≈ € 40 | r4 keyboard. Set its 2.4G/BT switch and charge it **before** closing the case. |
 
-Ordered subtotal: **≈ € 310**.
+Ordered subtotal (22 Oct): **≈ € 310**.
+
+### B2. Ordered — Bol.com (23 Oct 2026)
+
+| Item | Qty | ≈ Price | Role / note |
+|---|---|---|---|
+| Western Digital **PC SN740 512 GB** M.2 **2242** NVMe (PCIe 4.0 ×4, `SDDPMQD-512G`, sold with a 2280 bracket) | 1 | ≈ € 40–60 | The r4 boot/data drive. 4.7 W max, single-sided 2.38 mm, 300 TBW. Mount at the **42 mm** hole and leave the bracket unused. Proven on Pi 5 (pibenchmarks #134469 runs an SN740; 394 MB/s at Gen2). See note 7 for capacity. |
+| OTRONIC 5 V 3 A adapter, **5.5 × 2.5 mm** jack | 1 | ≈ € 7 | **Not usable in this build.** Wrong voltage for the HAT (B) (8.4 V needed), wrong barrel for the case socket (5.5 × 2.1), and the Pi 5 has **no barrel input** — it needs USB-C. Keep as a bench 5 V supply or return it; the HAT's own 8.4 V supply is in the box (note 6). |
+
+Ordered subtotal (23 Oct): **≈ € 52**.
 
 ## C. Gaps — needed before the build is usable
 
-These are not in the 22 Oct order. Ordered by how hard they block assembly.
+Still unordered after the 22 and 23 Oct orders. Ordered by how hard they block assembly.
 
 | # | Item | Qty | Where | ≈ Price | Why it blocks |
 |---|---|---|---|---|---|
-| 1 | **2× 18650 Li-ion cells**, flat-top, unprotected, matched (e.g. Samsung 30Q / 35E) | 2 | [Tinytronics](https://www.tinytronics.nl/en/search?search=18650%203000mAh) · [Bol](https://www.bol.com/nl/nl/s/?searchtext=18650%20flat%20top%203000mAh) | ≈ € 5 each | The HAT (B) ships without cells. 2S pack; use a matched pair from one batch. |
-| 2 | **8.4 V / 2 A DC power supply** with 5.5 × 2.1 mm plug | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=8.4V%202A%20adapter) · [Bol](https://www.bol.com/nl/nl/s/?searchtext=8.4V%202A%20voeding%205.5mm) | ≈ € 12 | The only way to charge the pack and to bench-test the UPS. The ordered 27 W USB-C PSU cannot do it. |
-| 3 | **Sealed DC panel socket / pigtail**, 5.5 × 2.1 mm, panel-mount with gasket | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=DC%20paneel%20connector) · [Bol](https://www.bol.com/nl/nl/s/?searchtext=DC%20paneelconnector%205.5%202.1%20waterdicht) | ≈ € 6 | Replaces the r2 USB-C panel port; the CAD hole is now **Ø9.5 mm round** (`CHG_W`). |
-| 4 | **CR1220 coin cell** | 1 | [Kiwi 750](https://www.kiwi-electronics.com/en/cr1220-battery-750) | ≈ € 2.77 | DS3231 backup; without it the OLED clock resets on power loss. |
-| 5 | **2S solar/charger module with 8.4 V output** (MPPT or CC/CV) | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=MPPT%202S%20lader) · [Robotshop](https://eu.robotshop.com/nl/search?q=2S%20MPPT%20charger) | ≈ € 20–35 | Solar/crank path. **Must be 8.4 V out**, not USB-C PD. The r2 choice (bq25185, 5 V out) no longer applies. |
-| 6 | **Pi 5 RTC cell – Panasonic ML-2020 with JST plug** | 1 | [Kiwi 11586](https://www.kiwi-electronics.com/en/rtc-battery-for-raspberry-pi-5-11586) | € 5.43 | Without it the Pi's clock resets on every power-off (no NTP in this build). |
-| 7 | **Storage:** Seeed PCIe-to-M.2 BASE + 1 TB M.2 2230 NVMe **or** a USB-C NVMe enclosure | 1 + 1 | [Kiwi 20204](https://www.kiwi-electronics.com/en/pcie-to-m-2-base-for-raspberry-pi-5-20204) · [Tinytronics 1 TB 2230](https://www.tinytronics.nl/en/search?search=1TB%20NVMe%202230) | € 6.40 + ≈ € 95 | 32 GB SD is not enough for ZIM. Check the BASE height against the 8.5 mm display standoff / 6 mm UPS gap. |
-| 8 | **M2.5 screw set** (the case needs 6× M2.5×10) | 1 | [Kiwi 10252](https://www.kiwi-electronics.com/en/m2-5-screw-and-stand-off-set-black-nylon-380-pieces-10252) | ≈ € 12 | Display/Pi screws are included; the case screws are not. |
-| 9 | **STEMMA QT / Qwiic 4-pin cables, 200 mm** | 3 | [Kiwi 10389](https://www.kiwi-electronics.com/en/stemma-qt-qwiic-jst-sh-4-pin-cable-200mm-long-10389) | ≈ € 1.44 ea | BME688, DS3231, OLED. |
-| 10 | **STEMMA QT → male header cable, 150 mm** | 1 | [Kiwi 10386](https://www.kiwi-electronics.com/en/stemma-qt-qwiic-jst-sh-4-pin-to-premium-male-headers-cable-150mm-long-10386) | ≈ € 1.15 | FireBeetle header → Qw/ST bus. |
-| 11 | **Dupont jumpers, female–female, 20 cm** | 1 set | [Tinytronics](https://www.tinytronics.nl/en/search?search=dupont%20kabels) | ≈ € 5 | UPS INA219 I²C (0x42) + 5 V to the FireBeetle. |
-| 12 | **USB-A → USB-C data cable, 20–30 cm** | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=USB-A%20USB-C%20kabel%2030cm) | ≈ € 5 | FireBeetle ↔ Pi serial. Use a **data-only** cable (VBUS disconnected) — the FireBeetle is powered from the UPS. |
-| 13 | **USB-A → 2-pin 5 V lead (JST-XH/dupont)** | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=USB-A%20JST%20kabel) | ≈ € 5 | UPS USB-A 5 V → FireBeetle 5 V/GND (keeps the OLED alive with the Pi off). |
-| 14 | **Status button – PBS-33B 12 mm momentary NO** + 12 mm rubber boot | 1 + 1 | [Tinytronics PBS-33B](https://www.tinytronics.nl/en/switches/manual-switches/push-buttons-and-switches/black-push-button-12mm-reset-pbs-33b) | ≈ € 1.50 + € 3 | Fits `OLED_BTN_D` (12.2 mm); the boot seals it. |
-| 15 | **Ø12 mm ePTFE membrane vent** | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=membraan%20ventiel) | ≈ € 5 | Over the sensor pocket's Ø12 seat. |
-| 16 | **Filament:** ≈ 400 g PETG/PLA + TPU for the charge plug | — | local | ≈ € 15 + € 20 | r4 parts are larger than r2: budget ≈ 500 g. |
-| 17 | **Silicone O-ring / gasket assortment** | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=O-ring%20assortiment) | ≈ € 10 | Case seam, DC socket, button. |
-| 18 | **Fuse + holder** (2S pack lead, 3–5 A) | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=zekeringhouder) | ≈ € 4 | The HAT (B) has protection, but fuse the pack lead anyway when you wire the cells. |
+| 1 | **2× 18650 Li-ion cells**, flat-top, unprotected, matched (e.g. Samsung 30Q / 35E) | 2 | [Tinytronics](https://www.tinytronics.nl/en/search?search=18650%203000mAh) · [Bol](https://www.bol.com/nl/nl/s/?searchtext=18650%20flat%20top%203000mAh) | ≈ € 5 each | The HAT (B) ships without cells. 2S pack; use a matched pair from one batch, ≤ 67 mm long. |
+| 2 | **Sealed DC panel socket / pigtail**, 5.5 × 2.1 mm, panel-mount with gasket | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=DC%20paneel%20connector) · [Bol](https://www.bol.com/nl/nl/s/?searchtext=DC%20paneelconnector%205.5%202.1%20waterdicht) | ≈ € 6 | Replaces the r2 USB-C panel port; the CAD hole is now **Ø9.5 mm round** (`CHG_W`). The HAT's bundled 8.4 V supply has a plug, not a panel socket. |
+| 3 | **CR1220 coin cell** | 1 | [Kiwi 750](https://www.kiwi-electronics.com/en/cr1220-battery-750) | ≈ € 2.77 | DS3231 backup; without it the OLED clock resets on power loss. |
+| 4 | **2S solar/charger module with 8.4 V output** (MPPT or CC/CV) | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=MPPT%202S%20lader) · [Robotshop](https://eu.robotshop.com/nl/search?q=2S%20MPPT%20charger) | ≈ € 20–35 | Solar/crank path. **Must be 8.4 V out**, not USB-C PD. The r2 choice (bq25185, 5 V out) no longer applies. |
+| 5 | **M2.5 screw set** (the case needs 6× M2.5×10) | 1 | [Kiwi 10252](https://www.kiwi-electronics.com/en/m2-5-screw-and-stand-off-set-black-nylon-380-pieces-10252) | ≈ € 12 | Display/Pi screws are included; the case screws are not. |
+| 6 | **STEMMA QT / Qwiic 4-pin cable, 200 mm** — **two more** | 2 | [Kiwi 10389](https://www.kiwi-electronics.com/en/stemma-qt-qwiic-jst-sh-4-pin-cable-200mm-long-10389) | ≈ € 1.44 ea | The chain needs three (BME688, DS3231, OLED); one was ordered on 23 Oct, the FireBeetle side is covered by the header cable. |
+| 7 | **Dupont jumpers, female–female, 20 cm** | 1 set | [Tinytronics](https://www.tinytronics.nl/en/search?search=dupont%20kabels) | ≈ € 5 | UPS INA219 I²C (0x42) + 5 V to the FireBeetle. |
+| 8 | **USB-A → USB-C data cable, 20–30 cm** | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=USB-A%20USB-C%20kabel%2030cm) | ≈ € 5 | FireBeetle ↔ Pi serial. Use a **data-only** cable (VBUS disconnected) — the FireBeetle is powered from the UPS. |
+| 9 | **USB-A → 2-pin 5 V lead (JST-XH/dupont)** | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=USB-A%20JST%20kabel) | ≈ € 5 | UPS USB-A 5 V → FireBeetle 5 V/GND (keeps the OLED alive with the Pi off). |
+| 10 | **Status button – PBS-33B 12 mm momentary NO** + 12 mm rubber boot | 1 + 1 | [Tinytronics PBS-33B](https://www.tinytronics.nl/en/switches/manual-switches/push-buttons-and-switches/black-push-button-12mm-reset-pbs-33b) | ≈ € 1.50 + € 3 | Fits `OLED_BTN_D` (12.2 mm); the boot seals it. |
+| 11 | **Ø12 mm ePTFE membrane vent** | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=membraan%20ventiel) | ≈ € 5 | Over the sensor pocket's Ø12 seat. |
+| 12 | **Filament:** ≈ 400 g PETG/PLA + TPU for the charge plug | — | local | ≈ € 15 + € 20 | r4 parts are larger than r2: budget ≈ 500 g. |
+| 13 | **Silicone O-ring / gasket assortment** | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=O-ring%20assortiment) | ≈ € 10 | Case seam, DC socket, button. |
+| 14 | **Fuse + holder** (2S pack lead, 3–5 A) | 1 | [Tinytronics](https://www.tinytronics.nl/en/search?search=zekeringhouder) | ≈ € 4 | The HAT (B) has protection, but fuse the pack lead anyway when you wire the cells. |
 
-Gaps subtotal: **≈ € 250–280** (dominated by the SSD). With the ordered parts the build is **≈ € 560–590**
+Gaps subtotal: **≈ € 130–140** — the SSD and the 8.4 V supply are now in hand, so the SSD no longer
+dominates. Both orders together are **≈ € 500**; with the gaps the complete build is **≈ € 630–640**,
 excluding the solar panel and the crank.
 
 ## D. Optional / later

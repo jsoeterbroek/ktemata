@@ -51,7 +51,7 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 | Link | Cable / interface | Notes |
 |---|---|---|
 | Pi ↔ display | 15-pin DSI FFC (Pi 5 22-pin → 15-pin adapter) | r2/r3: DFR0550-V2 (touch on the FFC — verify your batch). r4: Touch Display 2, auto-detected, **plus** the 3-pin GPIO power cable. |
-| Pi ↔ NVMe | PCIe FPC → Seeed M.2 BASE → 1 TB 2230 NVMe | BASE is back-mounted under the Pi; check the 5 mm display/Pi gap. |
+| Pi ↔ NVMe | PCIe FPC → Seeed M.2 BASE → WD SN740 512 GB (M.2 **2242**) | BASE is back-mounted under the Pi; it needs ≈10 mm with the card, which the current r4 stack does not have (the UPS HAT (B) is in that space). Mount the SSD at the 42 mm hole. |
 | Keyboard → Pi | 2.4 GHz USB-A dongle **or** Pi Bluetooth | r3: Phistone; r4: Rii K06. The dongle goes in the second Pi USB-A port; Bluetooth needs no wire and the Pi's BT enabled (Wi-Fi stays off). No internal keyboard cable. |
 | FireBeetle ↔ Pi | USB-C → Pi USB-A, **serial** | Telemetry/commands. Prefer a **data-only** cable (VBUS disconnected) because the FireBeetle is separately powered from the UPS. |
 | FireBeetle → OLED | I²C: SDA GPIO21 / SCL GPIO22, 3V3, GND | 0x3C; 1.3" 128×64, SH1106 default. |
@@ -149,8 +149,9 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
    switched on.
 8. **Buttons/switches:** the PBS-33B is not IP-rated; fit a 12 mm rubber boot. The UPS power switch stays on;
    the Pi is shut down via software. The status button is GPIO4 to GND.
-9. **NVMe:** the Seeed M.2 BASE is back-mounted; check its height plus the 2230 SSD against the 5 mm
-   display/Pi standoff before final assembly.
+9. **NVMe:** the Seeed M.2 BASE is back-mounted; its ≈10 mm with the SN740 does not fit the 6.5 mm
+   gap between the Pi and the UPS HAT (B). Resolve the mounting before final assembly — see `BOM.md`
+   note 7.
 10. **First power-up:** leave the Pi disconnected, connect the UPS with a current-limited/bench supply,
     check 5 V rails and I²C addresses, then connect the Pi and display.
 11. **r3 keyboard link:** put the Phistone's 2.4 GHz dongle in the second Pi USB-A port, or enable the Pi's
