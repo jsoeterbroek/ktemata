@@ -76,8 +76,12 @@ module c_sensor() {
 module c_rtc() at(RTC_X, RTC_Y + RTC_H, RTC_Z0+2.2) cube([RTC_W, RTC_H, RTC_T]);
 module c_mppt() at(MPPT_X+2, MPPT_Y+2+MPPT_MOD_H, MPPT_Z+2.3) cube([MPPT_MOD_W, MPPT_MOD_H, 8]);
 module c_charge() {
-    // sealed USB-C panel connector in the top wall (r4: 8.4 V barrel jack into the HAT (B))
-    if (R4) at(CHG_X-6, 0, CHG_Z-3) translate([0,-14,0]) cube([12, 14, 6]);
+    // Sealed panel connector in the top wall.
+    // r2/r3: USB-C, a 9 x 3.5 rectangular body that fits the rectangular hole.
+    // r4: 5.5 x 2.1 mm DC socket - ROUND, so the stand-in must be a cylinder. A box would
+    // poke through the round wall hole at its corners and report a false collision.
+    if (R4) translate([CHG_X, L - (WALL - 2) - 3, CHG_Z]) rotate([90, 0, 0])
+                cylinder(d=CHG_W - 1.0, h=12);            // body through the wall + pocket
     else    at(CHG_X-4.5, 0, CHG_Z-1.5) translate([0,-10,0]) cube([9, 10, 3]);
 }
 module c_oledbtn() {

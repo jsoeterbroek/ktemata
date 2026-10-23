@@ -105,7 +105,7 @@ excluding the solar panel and the crank.
 | Item | ≈ Price | Note |
 |---|---|---|
 | Foldable 20–30 W solar panel | € 50–80 | Must reach **8.4 V** through the module in C5; a PD-only panel is useless here. |
-| Hand crank generator (commercial or the printed one in `stl/crank/`) | € 30–70 | Feeds the same charger input. A 23 Wh pack needs roughly 3–5 h of cranking for a full charge. |
+| Hand crank generator (commercial, or the printed one in the separate [handcrank](https://github.com/jsoeterbroek/handcrank) project) | € 30–70 | Feeds the same charger input. A 23 Wh pack needs roughly 3–5 h of cranking for a full charge. Not part of this repo. |
 | 5 W ETFE panel for the case back | € 42.34 | [Kiwi 10923](https://www.kiwi-electronics.com/en/5-watt-6-volt-solar-panel-etfe-10923); the r4 back is 172 × 237 mm. |
 | Sensirion SEN66 + Adafruit SEN6x breakout | € 60–80 | Build with `-D SEN66=true`. |
 | M2.5 heat-set inserts | ≈ € 13 | `BRASS_INSERT=true`. |

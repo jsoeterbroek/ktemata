@@ -5,7 +5,8 @@ extracted/
 *.jpg
 MilDef-*.png
 
-# Downloaded reference videos (transcripts are tracked)
+# Downloaded reference videos (transcripts are tracked; the generator videos and their
+# transcripts moved to the separate handcrank repo)
 reference/yt/*.webm
 reference/yt/*.mp4
 reference/yt/*.mkv

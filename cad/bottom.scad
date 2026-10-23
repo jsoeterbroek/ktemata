@@ -178,7 +178,8 @@ module charge_port_cut() {
     if (R4) {
         at(CHG_X, -1, CHG_Z) rotate([90,0,0]) cylinder(d=CHG_W, h=WALL+2);
         at(CHG_X, -1.2, CHG_Z) rotate([90,0,0]) cylinder(d=CHG_REC_W, h=1.2);   // O-ring seat
-        at(CHG_X-7, WALL, CHG_Z-4) translate([0,-13,0]) cube([14, 13, 8]);      // socket body
+        // socket body pocket: a Ø9.5 barrel socket has a ~9 mm body, so 10 mm of height
+        at(CHG_X-7, WALL, CHG_Z-5) translate([0,-13,0]) cube([14, 13, 10]);     // socket body
     } else {
         at(CHG_X-CHG_W/2, -1, CHG_Z-CHG_H/2) translate([0,-(WALL+2),0]) cube([CHG_W, WALL+2, CHG_H]);
         // rubber plug / O-ring seat on the outside

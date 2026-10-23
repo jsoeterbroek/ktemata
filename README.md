@@ -55,31 +55,12 @@ the previews follow whatever is in `stl/`, so export the set you want rendered).
 `R1=1 bash work/scripts/check.sh` runs the old interference set; the default is the r4 set
 (`R4=0` for the r2/r3 pairs).
 
-### Hand crank generator (`stl/crank/`)
+### Hand crank generator (separate project)
 
-The backup charger is a **separate unit**, not part of the case (see [`docs/CRANK.md`](docs/CRANK.md)):
-a 3:1 geared axial-flux alternator, 180 × 126 mm footprint, 68 mm tall.
-
-| STL (`stl/crank/`) | Source (`cad/`) | Print orientation |
-|---|---|---|
-| `crank_base.stl` – base plate + four stator posts | `crank_base.scad` | plate down, posts up |
-| `crank_stator.stl` – 8-coil stator with mounting lugs | `crank_stator.scad` | flat, coil windows up |
-| `crank_top.stl` – top plate + crank bearing boss | `crank_top.scad` | plate down, boss up |
-| `crank_rotor.stl` – magnet rotor, **print 2** | `crank_rotor.scad` | flat, magnet pockets up |
-| `crank_hub.stl` – shaft clamp hub, **print 2** (one per rotor) | `crank_hub.scad` | boss down |
-| `crank_gear_big.stl` – 66T rotor gear | `crank_gears.scad` | flat |
-| `crank_gear_small.stl` – 22T crank gear | `crank_gears.scad` | flat |
-| `crank_arm.stl` – crank arm | `crank_arm.scad` | flat |
-| `crank_knob.stl` – crank knob | `crank_tray.scad` | washer down |
-| `crank_tray.stl` – electronics tray | `crank_tray.scad` | opening up |
-| `crank_lid.stl` – tray lid | `crank_tray.scad` | flat |
-| `crank_foot.stl` – screw-on foot, **print 4** | `crank_tray.scad` | flange down |
-| `crank_spacer.stl` – stator→plate spacer, **print 4** | `crank_tray.scad` | standing up |
-
-`python3 cad/tools/export_crank.py` exports the set (all parts, or name some: `… base stator`). Step-by-step
-assembly, winding scheme and the bought-parts list: [`docs/CRANK.md`](docs/CRANK.md).
-`cad/crank_assembly.scad` shows the unit assembled; add `-D 'CHECK="rotor:stator"'` for a clearance
-check or `-D 'SECTION=true'` for a half-section. Previews go to `renders/crank_*.png`.
+The backup charger is a **separate unit**, not part of the case: a 3:1 geared axial-flux alternator,
+180 x 126 mm footprint, 68 mm tall. It was developed in this repository but now lives in its own
+project, **<https://github.com/jsoeterbroek/handcrank>** — CAD, docs, STLs, renders and history.
+Its output feeds the same sealed charge port as the solar panel (see `WIRING.md`).
 
 ## Shopping list / BOM
 
@@ -205,7 +186,7 @@ r1 pull-switch slot, side cutout and battery button are not used in r2/r3/r4; th
 | Display | **Raspberry Pi Touch Display 2, 5"**: 720 × 1280 IPS DSI, 5-point capacitive touch, 500 cd/m², anti-glare | 143.4 × 91.46 × 14.92 mm (6.42 mm panel + 8.5 mm standoffs), 1.4 W, powers straight from the GPIO header (3-pin J1 cable). Native **portrait**, so the r4 case is 237 mm long and the panel runs in landscape. Auto-detected by Pi OS; for a Compute Module add `dtoverlay=vc4-kms-dsi-ili9881-5inch`. Outer standoffs 122.74 × 72.96 mm; its Pi pattern is 51 × 49 mm, so the Pi is held by the case posts rather than the display (see [`docs/R4.md`](docs/R4.md)). Previous target: DFRobot DFR0550-V2 (120.7 × 75.8 × 4.9, 800 × 480), still selectable with `-D R4=false`. |
 | Power | **Waveshare UPS HAT (B)**: 2× 18650 in **2S** (7.4 V nominal), 5 V 5 A out, **8.4 V / 2 A barrel-jack charge input**, INA219 gauge at I²C **0x42** | Charges and powers the Pi at the same time, so connecting a charger does not reboot it. 85 × 56 mm board with pogo pins to the Pi; the cells hang below the board in its own holders (23.35 mm holder/cell side, measured on Waveshare's 3D drawing; mounted rotated 90° to clear the Pi's ports). **Two consequences versus r2:** about **2–2.5 h** Pi 5 runtime instead of ~6–7 h (23 Wh vs 70 Wh), and **no USB-C PD input** — the sealed case port is a 5.5 × 2.1 mm DC socket and solar/crank must deliver **8.4 V** (through the internal MPPT/charger module) instead of PD. Alternative if runtime matters more: the HAT (E) with 4× 21700 (r2/r3). |
 | Solar | Foldable 20–30 W panel **plus** a 2S/8.4 V regulator or MPPT module into the internal charger | r4 has no PD input: the HAT (B) charges from 8.4 V at up to 2 A, so a PD panel cannot feed it directly. The internal module (`MPPT_*`) must output 8.4 V; a bare panel still needs a charge controller in between. Budget for a 2S MPPT module, not a USB-C PD trigger. |
-| Hand crank (backup, nice to have) | **Separate** crank generator with rectifier + buffer capacitor, feeding the **same charger input** as solar, into the one sealed charge port | Emergency top-up for night and clouds, not a main source. Rough estimate: 10–20 W of arm effort gives about 5–10 W into the battery after losses, so 1 minute of cranking ≈ 1 minute of use, and a full charge (about 23 Wh on r4, 70 Wh on r2) would take roughly 3–5 h (r4) or 7–14 h (r2). Sellers' "20 W" ratings are peaks. Kept outside the case: there's no room next to the 21700 cells, you can't hold the device steady against the crank torque, a shaft would break the seal, and it would add weight all the time. Build options: the 3D-printed axial-flux design in `reference/yt/Building a Generator [tb3iN4m9Bik].txt` (N52 magnets, 8 coils × 350 turns, gearbox, full-bridge rectifier), or a commercial USB-C crank generator. The MPPT/input-voltage regulation matters: without it the input collapses whenever cranking slows (in the video the phone kept showing "USB disconnected"). Later option: a clip-on module on the (not yet modelled) back attachment. A pedal generator gives several times more power. |
+| Hand crank (backup, nice to have) | **Separate** crank generator with rectifier + buffer capacitor, feeding the **same charger input** as solar, into the one sealed charge port | Emergency top-up for night and clouds, not a main source. Rough estimate: 10–20 W of arm effort gives about 5–10 W into the battery after losses, so 1 minute of cranking ≈ 1 minute of use, and a full charge (about 23 Wh on r4, 70 Wh on r2) would take roughly 3–5 h (r4) or 7–14 h (r2). Sellers' "20 W" ratings are peaks. Kept outside the case: there's no room next to the 21700 cells, you can't hold the device steady against the crank torque, a shaft would break the seal, and it would add weight all the time. Build options: the 3D-printed axial-flux design in the separate [handcrank](https://github.com/jsoeterbroek/handcrank) project (N52 magnets, 8 coils × 350 turns, gearbox, full-bridge rectifier), or a commercial USB-C crank generator. The MPPT/input-voltage regulation matters: without it the input collapses whenever cranking slows (in the video the phone kept showing "USB disconnected"). Later option: a clip-on module on the (not yet modelled) back attachment. A pedal generator gives several times more power. |
 | Solar on case back (nice to have) | Thin ETFE panel (about 5–6 V) through a small solar power manager (MPPT) | The r1 back is 150 × 183 mm, the r2 back 150 × 205 mm, the r4 back 172 × 237 mm, so expect at most about 6–8 W peak (r4) and 2–3 W in practice. That only stretches idle time; it can't power the device while in use. Solar power banks with built-in cells charge just as slowly. |
 | Keyboard | **Rii K06** (ordered): 155 × 89 × 16.5 mm, 124.5 g, 2.4 GHz dongle **and** Bluetooth 4.0, backlit, multi-touch touchpad + IR learning, 700 mAh BL-5B | Its touchpad replaces the r2 Pimoroni trackball (r3 used the Phistone's air mouse). The r4 case opens a 146 × 81 mm window over the keys/touchpad and holds the body in a 155 × 89 pocket that crosses the split plane. **No side cutout**, so set its 2.4G/BT switch and charge it before closing the case. **r2** remains a wired USB/Pico keyboard; **r3** the Phistone Mini Keyboard (134 × 74 × 12.7). The K06 is a complete body rather than a PCB, so r4 adds `KB_BODY` (155 × 89 × 16.5) beside the old 137 × 72 `KB_PCB` footprint, and its 146 × 81 window includes the touchpad. r2/r3 alternatives (a custom PCB on the 137 × 72 footprint, the Solder Party **BBQ20KBD** — sold out since Jan 2026 — or the Phistone) still apply to that build; on r4 the K06's cramped Ctrl/punctuation layout is the same trade-off as the Phistone's and should be tested before committing. |
 | Environment sensor | **Pimoroni BME688** (temp, RH, pressure, VOC/gas index; I2C) | No CO2 or particulates. For those, use Sensirion **SEN66** (PM1–10, CO2, VOC, NOx, T, RH; 55.5 × 25.6 × 21.5 mm, about 90 mA, I2C 0x6B; Adafruit SEN6x breakout). Mount it in a vented pocket on the outer wall with a membrane vent, away from Pi heat, or temperature/RH read high. The SEN66 needs real airflow (inlet + outlet). |
@@ -230,7 +211,7 @@ At least four screens, cycled with a button. The **time** screen is the default.
 | # | Screen | Content | Source |
 |---|---|---|---|
 | 1 | **Time** (default) | HH:MM, date, weekday; small battery % and alert icons | ESP32 clock, set from the Pi over USB when it runs; the Pi sends UTC and the firmware applies `TIMEZONE` (default **Europe/Amsterdam**, including DST); a **DS3231 RTC** (I2C 0x68) on the FireBeetle keeps UTC after a full power loss with the Pi off |
-| 2 | **Battery power** | charge %, voltage, current (charging/discharging), input present (solar/crank), estimated time left | UPS HAT (E) battery monitor (0x2D) |
+| 2 | **Battery power** | charge %, voltage, current (charging/discharging), input present (solar/crank), estimated time left | UPS gauge: INA219 0x42 (r4), BQ4050 0x2D (r2/r3) |
 | 3 | **Environment** | temperature, humidity, pressure + 3 h trend (falling fast = weather warning), VOC/air-quality index; CO2 and PM2.5 if the SEN66 is fitted | BME688 / SEN66 |
 | 4 | **Storage** | % used and free GB of the 1 TB SSD | Pi over USB; with the Pi off, shows the last value and its age |
 
