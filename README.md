@@ -46,7 +46,8 @@ openscad -D R2=false -o out.png cad/assembly.scad      # r1 assembly preview
 
 The r1 parts are still in the repository and export with `export.py --r1`. r3 is a keyboard/radio variant of
 r2 and shares its STLs (see [`docs/R3.md`](docs/R3.md)); r4 has its own geometry because the display, the
-power board, the cells and the keyboard all changed (see [`docs/R4.md`](docs/R4.md)).
+power board, the cells and the keyboard all changed (see [`docs/R4.md`](docs/R4.md)). Making r4 flatter is
+analysed — and deliberately not done — in [`docs/SLIMMING.md`](docs/SLIMMING.md).
 
 | STL (`stl/`) | Source (`cad/`) | Print orientation | r4 |
 |---|---|---|---|
