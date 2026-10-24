@@ -53,6 +53,10 @@ HW_WARNS=0          # expected-or-degraded conditions (heat without a cooler): -
 HW_CHECKS=0
 HW_WARNS_NOTE=false
 KIOSK_USER=${KIOSK_USER:-${SUDO_USER:-}}   # whose session autostarts the kiosk
+# The account the kiosk runs as, and the one GDM logs in automatically. "ktemata" keeps the
+# desktop session separate from the admin user you ssh in as.
+AUTOLOGIN_USER=${AUTOLOGIN_USER:-ktemata}
+WITH_AUTOLOGIN=true
 
 # ---------------- output ----------------
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -94,6 +98,8 @@ ${C_BOLD}OPTIONS${C_OFF}
       --hwtest-only      Run the hardware checks and exit (implies --dry-run).
       --strict           Exit non-zero if a hardware check fails.
       --power usbc|hat   How the Pi is powered, for the diagnostic hints (default: usbc).
+      --no-autologin     Do not enable GDM automatic login.
+      --autologin-user N Account to log in automatically (default: ktemata).
   -h, --help             This message.
   -V, --version          Print the version.
 
@@ -109,7 +115,8 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)
   7. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
   8. optionally installs the kiosk autostart (--kiosk)
-  9. verifies the server answers
+  9. enables GDM automatic login (unless --no-autologin)
+ 10. verifies the server answers
 EOF
 }
 
@@ -724,10 +731,92 @@ setup_library() {
 }
 
 # Install the kiosk launcher and an autostart entry for the desktop session.
+# Ensure the account exists, then enable GDM automatic login for it.
+#
+# GDM reads /etc/gdm3/custom.conf on Ubuntu and /etc/gdm3/daemon.conf on Debian; the same
+# [daemon] keys work in both. Only touch the two keys we own: the file carries a lot of
+# commented defaults and users may have set others.
+install_autologin() {
+    $WITH_AUTOLOGIN || { log_stage "Autologin"; log_info "skipped (--no-autologin)"; return 0; }
+    log_stage "Autologin"
+
+    # 1. the account. A locked, password-less system account is enough: GDM starts the
+    # session without a password, and nothing can log in as it over the network.
+    if id -u "$AUTOLOGIN_USER" >/dev/null 2>&1; then
+        log_ok "user $AUTOLOGIN_USER exists"
+    else
+        run useradd --create-home --shell /bin/bash "$AUTOLOGIN_USER"
+        run passwd -l "$AUTOLOGIN_USER"
+        $DRY_RUN || log_ok "created $AUTOLOGIN_USER (password locked)"
+    fi
+
+    # 2. pick the config GDM actually reads
+    local conf=""
+    for c in /etc/gdm3/custom.conf /etc/gdm3/daemon.conf; do
+        [ -f "$c" ] && { conf=$c; break; }
+    done
+    if [ -z "$conf" ]; then
+        if has_command gdm3 || has_command gdm; then
+            # installed but unpurged config: GDM's own default is custom.conf
+            conf=/etc/gdm3/custom.conf
+            $DRY_RUN || { install -d -m 0755 /etc/gdm3; : >"$conf"; }
+            $DRY_RUN || log_ok "created $conf"
+        else
+            log_warn "GDM is not installed; skipping autologin (install gdm3 or use --no-autologin)"
+            return 0
+        fi
+    fi
+    log_info "config: $conf"
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s set [daemon] AutomaticLoginEnable=true, AutomaticLogin=%s\n' \
+            "$C_YELLOW" "$C_OFF" "$AUTOLOGIN_USER"
+        return 0
+    fi
+
+    # 3. edit in place. Back up once, keep the file's other keys untouched.
+    [ -f "$conf.ktemata.bak" ] || cp -a "$conf" "$conf.ktemata.bak"
+
+    if ! grep -q '^\[daemon\]' "$conf"; then
+        printf '\n[daemon]\n' >>"$conf"
+    fi
+
+    # set-or-replace a key inside [daemon]; the key must not exist elsewhere
+    set_daemon_key() {
+        local key=$1 value=$2
+        # allow "Key=value", "Key = value" and the commented "#  Key = value" default
+        if grep -qE "^[#;]?[[:space:]]*${key}[[:space:]]*=" "$conf"; then
+            sed -i -E "s|^[#;]?[[:space:]]*${key}[[:space:]]*=.*|${key}=${value}|" "$conf"
+        else
+            # insert after the [daemon] header
+            sed -i -E "/^\[daemon\]/a ${key}=${value}" "$conf"
+        fi
+    }
+    set_daemon_key AutomaticLoginEnable true
+    set_daemon_key AutomaticLogin "$AUTOLOGIN_USER"
+
+    # 4. verify by reading it back, not by trusting sed
+    local readback
+    readback=$(awk -F= '/^\[daemon\]/{d=1;next} /^\[/{d=0} d && /^(AutomaticLoginEnable|AutomaticLogin)=/{print}' "$conf" | tr '\n' ' ')
+    case $readback in
+        *AutomaticLoginEnable=true*AutomaticLogin="$AUTOLOGIN_USER"*|*AutomaticLogin="$AUTOLOGIN_USER"*AutomaticLoginEnable=true*)
+            log_ok "[daemon] $readback" ;;
+        *)  log_error "could not set autologin; $conf reads: $readback" ;;
+    esac
+
+    # 5. the session only appears on the seat GDM starts; warn if there is no desktop
+    if ! dpkg -l 2>/dev/null | awk '$1=="ii"{print $2}' | grep -qE 'task-.*-desktop|ubuntu-desktop|gnome-shell|labwc|lxde'; then
+        log_warn "no desktop environment found: autologin will start a text session"
+        log_warn "install one (e.g. apt install raspberrypi-ui-mods, or gnome-shell)"
+    fi
+}
+
 install_kiosk() {
     $WITH_KIOSK || { log_stage "Kiosk"; log_info "skipped (pass --kiosk to enable)"; return 0; }
     log_stage "Kiosk"
 
+    # default to the autologin account: the kiosk belongs in the session GDM opens
+    [ -n "$KIOSK_USER" ] || KIOSK_USER=$AUTOLOGIN_USER
     [ -n "$KIOSK_USER" ] || die "--kiosk needs a desktop user; run it via sudo, or pass --kiosk-user NAME"
     id -u "$KIOSK_USER" >/dev/null 2>&1 || die "no such user: $KIOSK_USER"
     local home
@@ -920,6 +1009,9 @@ summary() {
     if [ -n "$ROTATE" ]; then
         printf '  display   rotated (%s); reboot to apply console rotation\n' "$ROTATE"
     fi
+    if $WITH_AUTOLOGIN; then
+        printf '  autologin %s (GDM)\n' "$AUTOLOGIN_USER"
+    fi
     if $WITH_KIOSK; then
         printf '  kiosk     %s autostarts kiwix-kiosk on login\n' "$KIOSK_USER"
     fi
@@ -945,6 +1037,8 @@ main() {
             --hwtest-only)   HWTEST_ONLY=true; DRY_RUN=true; WITH_HWTEST=true ;;
             --strict)        STRICT=true ;;
             --power)         POWER_SOURCE=${2:?--power takes usbc or hat}; shift ;;
+            --no-autologin)  WITH_AUTOLOGIN=false ;;
+            --autologin-user) AUTOLOGIN_USER=${2:?--autologin-user needs a name}; shift ;;
             --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
             --rotate)        ROTATE=${2:?--rotate needs normal|left|right|inverted}; shift ;;
             --zim-dir)       ZIM_DIR=${2:?--zim-dir needs a path}; shift ;;
@@ -983,6 +1077,7 @@ main() {
     setup_library
     install_service
     setup_rotation
+    install_autologin
     install_kiosk
     $WITH_SAMPLE && download_sample
     verify

@@ -26,7 +26,8 @@ file, no YAML config, no whiptail menu. Idempotent — safe to re-run.
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service` |
 | 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
 | 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
-| 9 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
+| 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
+| 10 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
 not get a Kiwix build that is already superseded.
@@ -131,6 +132,38 @@ It only changes the wording of an undervoltage hint — USB-C points at the 27 W
 at the pogo pins and the 8.4 V input. On the 27 W supply an undervoltage flag should never appear; if it does,
 suspect the cable or the connector rather than the PSU.
 
+## Autologin
+
+The device is a single-purpose appliance: it should come up in the library without a password prompt.
+The script creates a **`ktemata`** account and turns on GDM automatic login for it:
+
+```ini
+[daemon]
+AutomaticLoginEnable=true
+AutomaticLogin=ktemata
+```
+
+Details:
+
+- **The file name differs by distro** — GDM reads `/etc/gdm3/custom.conf` on Ubuntu and
+  `/etc/gdm3/daemon.conf` on Debian. The script uses whichever exists and only creates one if GDM is
+  installed but has no config.
+- **Only the two keys it owns are touched.** Everything else in the file, including the commented
+  `#AutomaticLogin = user1` example, is left alone; a `.ktemata.bak` copy is kept once.
+- The account is created with `useradd --create-home` and then **locked** (`passwd -l`): GDM starts the
+  session without a password, and nothing can log in as it remotely.
+- The **kiosk autostart follows this account** — `--kiosk` defaults `KIOSK_USER` to the autologin user, so
+  the two cannot drift apart.
+- A missing desktop environment is called out, since autologin without one just opens a text console.
+
+```bash
+sudo ./work/scripts/post-install.sh --autologin-user ktemata   # default
+sudo ./work/scripts/post-install.sh --no-autologin             # leave the login screen
+```
+
+If you already log in as another user and want the kiosk there instead, pass `--kiosk-user` and
+`--autologin-user` the same name.
+
 ## Kiosk
 
 `--kiosk` installs [`kiwix-kiosk.sh`](../work/scripts/kiwix-kiosk.sh) as `/usr/local/bin/kiwix-kiosk` and
@@ -211,6 +244,8 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --hwtest-only      run the hardware checks and exit
     --strict           non-zero exit when a hardware check fails (not on warnings)
     --power usbc|hat   supply in use, for the diagnostic hints (default usbc)
+    --no-autologin     leave the GDM login screen
+    --autologin-user N account to log in automatically (default ktemata)
 -h, --help / -V, --version
 ```
 
@@ -233,6 +268,12 @@ Pi-only branches forced in a harness: a fake Pi model PASSes, a missing `vcgencm
 ("cell flat or unset"), a sane `/dev/rtc0` PASSes, an empty ZIM library FAILs and a populated one reports
 `1 archive(s), 4.5M`. Step order was confirmed from the `==>` lines: Platform → Hardware → System update →
 Packages → Library → Service → Rotation → Kiosk.
+
+Autologin was tested against real-shaped GDM configs in a container: **insert** into a stock
+`custom.conf`, **replace** an existing `AutomaticLoginEnable=false` / `AutomaticLogin=pi`, **append** a
+missing `[daemon]` section to a config that only had `[security]`, and the Debian layout where only
+`daemon.conf` exists (the script must not create a stray `custom.conf`). Each case leaves the other sections
+intact and writes a backup identical to the original.
 
 The kiosk path was tested the same way: `/usr/local/bin/kiwix-kiosk` installed, the autostart entry written
 with `Exec=/usr/local/bin/kiwix-kiosk --transform 270`, and the launcher's `--selftest` returning 0 against a
