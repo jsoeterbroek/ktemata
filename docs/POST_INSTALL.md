@@ -23,7 +23,8 @@ file, no YAML config, no whiptail menu. Idempotent — safe to re-run.
 | 4 | Create `/srv/kiwix/zim` and the `kiwix` system user | — |
 | 5 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service` |
 | 6 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
-| 7 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
+| 7 | Optionally install the kiosk launcher + autostart | `--kiosk` |
+| 8 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
 not get a Kiwix build that is already superseded.
@@ -64,6 +65,36 @@ Notes:
 * With **multiple displays**, `cmdline.txt` rotates all of them — use the desktop tool instead.
 * On a non-Pi Ubuntu box there is no `/boot/firmware/cmdline.txt`; the step logs and moves on.
 * Rotation is per display, not per case: if you print a different face the display sits in, change it.
+
+## Kiosk
+
+`--kiosk` installs [`kiwix-kiosk.sh`](../work/scripts/kiwix-kiosk.sh) as `/usr/local/bin/kiwix-kiosk` and
+adds `~/.config/autostart/kiwix-kiosk.desktop` for the desktop user (`--kiosk-user`, or the user who ran
+`sudo`). On login the device comes up straight in the library.
+
+```bash
+kiwix-kiosk                 # start now
+kiwix-kiosk --selftest      # what will it use? exit 0 = ready, 1 = not
+kiwix-kiosk --app kiwix     # native kiwix-desktop instead of a browser
+kiwix-kiosk --url URL       # show something else
+kiwix-kiosk --stop
+```
+
+What it does on start:
+
+1. refuses to run without `DISPLAY`/`WAYLAND_DISPLAY` (a browser with no session is a black screen)
+2. turns off blanking — `xset s off`, `-dpms`, `s noblank` on X11; `wlopm --on` on Wayland, noting that
+   the reliable Wayland switch is the compositor's own idle setting
+3. optionally rotates the output with `wlr-randr --transform DEG` (post-install passes the same angle as
+   `--rotate`)
+4. waits up to `KIOSK_WAIT` s for `kiwix-serve`, then starts the browser:
+   `chromium --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --no-first-run
+   --start-fullscreen --app=URL`, falling back to `chromium-browser`, `firefox --kiosk`, or
+   `epiphany-browser --application-mode`
+5. logs to `${XDG_STATE_HOME:-~/.local/state}/ktemata/kiosk.log`, so a black screen has a paper trail
+
+A missing server is **not** fatal: the browser shows an error page and the log says why, which beats a
+window that never appears.
 
 ## kiwix-serve
 
@@ -109,6 +140,8 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --no-gui           skip the desktop app
     --no-update        skip the system upgrade
     --rotate WHAT      normal | left | right | inverted (or 0|90|180|270 clockwise)
+    --kiosk            install the kiosk launcher + autostart
+    --kiosk-user NAME  desktop user to autostart it for (default: the sudo user)
 -h, --help / -V, --version
 ```
 
@@ -125,6 +158,10 @@ version"), the generated unit was inspected, and the service user was confirmed 
 
 Rotation was exercised against synthetic `cmdline.txt` copies: append to a file without a trailing newline,
 replace an existing `rotate=0`, and a repeat run reporting "already set".
+
+The kiosk path was tested the same way: `/usr/local/bin/kiwix-kiosk` installed, the autostart entry written
+with `Exec=/usr/local/bin/kiwix-kiosk --transform 270`, and the launcher's `--selftest` returning 0 against a
+live server and 1 without one.
 
 Not covered: arm64 was checked only at the package level (Ubuntu publishes `kiwix`, `kiwix-tools` and
 `zim-tools` for arm64 in noble), and the desktop `wlr-randr` path has not been run on real Wayland hardware.

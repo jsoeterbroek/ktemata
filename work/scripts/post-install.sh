@@ -8,6 +8,7 @@
 #   sudo ./work/scripts/post-install.sh                 # update, install, enable the service
 #   sudo ./work/scripts/post-install.sh --sample        # also fetch one small ZIM to test with
 #   sudo ./work/scripts/post-install.sh --rotate left   # + turn the Touch Display 2 90 deg left
+#   sudo ./work/scripts/post-install.sh --kiosk         # + boot straight into the library
 #   ./work/scripts/post-install.sh --dry-run            # show what would happen (no root)
 #   sudo ./work/scripts/post-install.sh --no-service    # packages only
 #   sudo ./work/scripts/post-install.sh --no-update     # skip the system upgrade
@@ -42,6 +43,8 @@ WITH_SAMPLE=false
 WITH_SERVICE=true
 WITH_GUI=true
 WITH_UPDATE=true
+WITH_KIOSK=false
+KIOSK_USER=${KIOSK_USER:-${SUDO_USER:-}}   # whose session autostarts the kiosk
 
 # ---------------- output ----------------
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -77,6 +80,8 @@ ${C_BOLD}OPTIONS${C_OFF}
       --rotate WHAT      Rotate the display: normal | left | right | inverted,
                          or 0|90|180|270 (degrees clockwise, as the kernel takes them).
                          'left' = 90 deg counter-clockwise.
+      --kiosk            Install the kiosk launcher and autostart it in the desktop session.
+      --kiosk-user NAME  Whose session autostarts it (default: the user running sudo).
   -h, --help             This message.
   -V, --version          Print the version.
 
@@ -90,7 +95,8 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   4. creates the ZIM library directory
   5. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)
   6. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
-  7. verifies the server answers
+  7. optionally installs the kiosk autostart (--kiosk)
+  8. verifies the server answers
 EOF
 }
 
@@ -225,9 +231,13 @@ setup_rotation() {
             printf '%s  [dry-run]%s append %s\n' "$C_YELLOW" "$C_OFF" "$want"
         else
             cp -a "$cmdline" "$cmdline.ktemata.bak"
-            # cmdline.txt must stay a single line: append, do not add a newline before it
-            if [ -n "$(tail -c1 "$cmdline")" ]; then printf ' ' >>"$cmdline"; fi
-            printf '%s\n' "$want" >>"$cmdline"
+            # cmdline.txt MUST stay a single line: the firmware reads one line and ignores the
+            # rest, so join onto the existing line and keep exactly one trailing newline.
+            if [ -n "$(tail -c1 "$cmdline")" ]; then
+                printf ' %s\n' "$want" >>"$cmdline"      # no trailing newline to start with
+            else
+                sed -i -e '$ s/$/ '"$want"'/' "$cmdline"  # replace the final newline
+            fi
         fi
     fi
 
@@ -268,6 +278,9 @@ install_packages() {
     if [ -n "$ROTATE" ] && $WITH_GUI; then
         pkgs+=(wlr-randr)
     fi
+    # the kiosk needs a browser; chromium is the Pi OS default. On Ubuntu this package is a
+    # snap transition, so only warn rather than fail if it cannot be installed.
+    $WITH_KIOSK && pkgs+=(chromium-browser)
 
     log_info "installing: ${pkgs[*]}"
     # with --no-update the package lists were not refreshed yet
@@ -303,6 +316,69 @@ setup_library() {
     fi
     # the unit runs as this user, so it must be able to read the archives
     grant_library_access
+}
+
+# Install the kiosk launcher and an autostart entry for the desktop session.
+install_kiosk() {
+    $WITH_KIOSK || { log_stage "Kiosk"; log_info "skipped (pass --kiosk to enable)"; return 0; }
+    log_stage "Kiosk"
+
+    [ -n "$KIOSK_USER" ] || die "--kiosk needs a desktop user; run it via sudo, or pass --kiosk-user NAME"
+    id -u "$KIOSK_USER" >/dev/null 2>&1 || die "no such user: $KIOSK_USER"
+    local home
+    home=$(getent passwd "$KIOSK_USER" | cut -d: -f6)
+    [ -d "$home" ] || die "home directory not found for $KIOSK_USER"
+
+    # 1. the launcher itself
+    local src dir
+    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    src="$dir/kiwix-kiosk.sh"
+    [ -f "$src" ] || die "cannot find kiwix-kiosk.sh next to this script"
+    run install -m 0755 -o root -g root "$src" /usr/local/bin/kiwix-kiosk
+    log_ok "/usr/local/bin/kiwix-kiosk"
+
+    # 2. autostart inside the desktop session (XDG autostart: labwc, LXDE, GNOME all honour it)
+    local autostart="$home/.config/autostart"
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s write %s/kiwix-kiosk.desktop\n' "$C_YELLOW" "$C_OFF" "$autostart"
+    else
+        install -d -m 0755 -o "$KIOSK_USER" -g "$(id -gn "$KIOSK_USER")" "$autostart"
+        cat >"$autostart/kiwix-kiosk.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Ktemata kiosk
+Comment=Boot straight into the offline library
+Exec=/usr/local/bin/kiwix-kiosk
+Terminal=false
+X-GNOME-Autostart-enabled=true
+EOF
+        chown "$KIOSK_USER":"$(id -gn "$KIOSK_USER")" "$autostart/kiwix-kiosk.desktop"
+        chmod 0644 "$autostart/kiwix-kiosk.desktop"
+        log_ok "$autostart/kiwix-kiosk.desktop"
+    fi
+
+    # 3. rotation must reach the compositor, so hand it to the kiosk as well
+    if [ -n "$ROTATE" ] && deg=$(rotation_degrees "$ROTATE"); then
+        if $DRY_RUN; then
+            printf '%s  [dry-run]%s set KIOSK_DISPLAY_TRANSFORM=%s in the autostart entry\n' "$C_YELLOW" "$C_OFF" "$deg"
+        else
+            sed -i "s#^Exec=.*#Exec=/usr/local/bin/kiwix-kiosk --transform $deg#" \
+                "$autostart/kiwix-kiosk.desktop"
+            log_ok "kiosk rotates the output to $deg"
+        fi
+    fi
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s /usr/local/bin/kiwix-kiosk --selftest\n' "$C_YELLOW" "$C_OFF"
+    else
+        # selftest wants a session, so run it as the user in a clean environment
+        if sudo -u "$KIOSK_USER" -H env -u DISPLAY -u WAYLAND_DISPLAY \
+                /usr/local/bin/kiwix-kiosk --selftest >/dev/null 2>&1; then
+            log_ok "kiosk launcher selftest passed"
+        else
+            log_warn "kiosk launcher selftest reported not-ready (no session yet is normal)"
+        fi
+    fi
 }
 
 # The service runs as SERVICE_USER; every archive must be group-readable by it. Called again
@@ -439,6 +515,9 @@ summary() {
     if [ -n "$ROTATE" ]; then
         printf '  display   rotated (%s); reboot to apply console rotation\n' "$ROTATE"
     fi
+    if $WITH_KIOSK; then
+        printf '  kiosk     %s autostarts kiwix-kiosk on login\n' "$KIOSK_USER"
+    fi
     printf '  desktop   kiwix (or "kiwix-desktop" if your release names it that way)\n'
     printf '  list      %s\n' "${SAMPLE_URL%/*}/"
 }
@@ -453,6 +532,8 @@ main() {
             --no-service)    WITH_SERVICE=false ;;
             --no-gui)        WITH_GUI=false ;;
             --no-update)     WITH_UPDATE=false ;;
+            --kiosk)         WITH_KIOSK=true ;;
+            --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
             --rotate)        ROTATE=${2:?--rotate needs normal|left|right|inverted}; shift ;;
             --zim-dir)       ZIM_DIR=${2:?--zim-dir needs a path}; shift ;;
             --port)          SERVICE_PORT=${2:?--port needs a number}; shift ;;
@@ -481,6 +562,7 @@ main() {
     setup_library
     install_service
     setup_rotation
+    install_kiosk
     $WITH_SAMPLE && download_sample
     verify
     summary
