@@ -5,14 +5,21 @@
   python3 cad/tools/export.py --r2            # previous r2/r3 set (DFR0550 + HAT (E) + Phistone)
   python3 cad/tools/export.py --r1            # original r1 set instead
   python3 cad/tools/export.py face bottom     # only some parts
+  python3 cad/tools/export.py corner_cap corner_cup corner_plate corner_lid   # corner overmould tool
+
+The corner_* parts are an accessory (see docs/CORNER_MOULD.md); they are skipped unless named.
 """
 import subprocess, struct, sys, os, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__)); CAD = os.path.dirname(HERE)
 OUT = os.path.join(os.path.dirname(CAD), 'stl')
 PARTS = {'bottom':'ktemata_bottom', 'face':'ktemata_face', 'keyboard_support':'ktemata_keyboard_support',
          'charge_plug':'ktemata_charge_plug',
+         'corner_cap':'ktemata_corner_cap', 'corner_plate':'ktemata_corner_plate',
+         'corner_cup':'ktemata_corner_cup', 'corner_lid':'ktemata_corner_lid',
          'pull_switch':'ktemata_pull_switch', 'power_button':'ktemata_power_button'}
 LEGACY = {'pull_switch', 'power_button'}
+# the corner tool is a per-corner accessory, not part of the case; skip it unless asked for
+TOOLING = {'corner_cap', 'corner_plate', 'corner_cup', 'corner_lid'}
 
 def read_ascii(path):
     tris, cur = [], []
@@ -53,6 +60,7 @@ extra = ['-D', 'R2=false'] if r1 else (['-D', 'R4=false'] if r2 else [])
 os.makedirs(OUT, exist_ok=True)
 for part, fname in PARTS.items():
     if r1 is False and part in LEGACY: continue
+    if not args and part in TOOLING: continue
     if args and part not in args: continue
     with tempfile.TemporaryDirectory() as td:
         tmp = os.path.join(td, 'p.stl')

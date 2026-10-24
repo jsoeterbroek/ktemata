@@ -34,6 +34,10 @@ VIEWS = {
     'ktemata_charge_plug':      ('stl:charge_plug', (900, 700), ISO, [], True),
     'ktemata_power_button':     ('stl:power_button', (1200, 950), ISO, [], True),
     'ktemata_pull_switch':      ('stl:pull_switch', (1200, 950), ISO, [], True),
+    'ktemata_corner_cap':       ('stl:corner_cap',   (900, 700), ISO, [], True),
+    'ktemata_corner_cup':       ('stl:corner_cup',   (900, 700), ISO, [], True),
+    'ktemata_corner_plate':     ('stl:corner_plate', (900, 700), ISO, [], True),
+    'ktemata_corner_lid':       ('stl:corner_lid',   (900, 700), ISO, [], True),
 }
 
 R1_ONLY = {'power_button', 'pull_switch', 'ktemata_power_button', 'ktemata_pull_switch'}

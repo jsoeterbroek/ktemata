@@ -28,5 +28,30 @@ import sys,struct
 d=open('/tmp/chk_${pr/:/_}.stl').read().split()
 v=[float(x) for i,x in enumerate(d) if i>0 and d[i-1] in('vertex',) or (i>1 and d[i-2]=='vertex') or (i>2 and d[i-3]=='vertex')]
 xs=v[0::3];ys=v[1::3];zs=v[2::3]
-print('degenerate/tangent (no triangles)' if not xs else 'bbox x %.1f..%.1f  y %.1f..%.1f  z %.1f..%.1f'%(min(xs),max(xs),max(ys),min(ys),min(zs),max(zs)))" 2>&1)"; fi
+print('degenerate/tangent (no triangles)' if not xs else 'bbox x %.1f..%.1f  y %.1f..%.1f  z %.1f..%.1f'%(min(xs),max(xs),min(ys),max(ys),min(zs),max(zs)))" 2>&1)"; fi
 done
+
+# --- corner overmould tool ---------------------------------------------------------------
+# corner_mould.scad is not part of assembly.scad, so it has its own harness. Tangency is
+# normal here: the cavity surface IS the cap's outer surface, and the plate/lid meet the cup
+# face to face. So the same bbox rule applies - a flat bbox is contact, not a collision.
+if [ "$R1" != "1" ] && [ "$R4" != "0" ]; then
+  for pair in cap:case cup:case plate:case lid:case cup:cap plate:cap lid:cup; do
+    out=$(timeout 300 openscad -o "/tmp/chk_cm_${pair/:/_}.stl" -D "CHECK=\"$pair\"" corner_mould_check.scad 2>&1)
+    if echo "$out" | grep -q "top level object is empty"; then echo "OK    corner_$pair"; else
+      echo "HIT   corner_$pair  $(python3 -I -c "
+import sys
+try:
+    d = open('/tmp/chk_cm_${pair/:/_}.stl').read().split()
+except OSError:
+    print('empty'); sys.exit()
+v = [float(x) for i, x in enumerate(d) if i > 0 and d[i-1] == 'vertex']
+if not v:
+    print('degenerate/tangent'); sys.exit()
+xs, ys, zs = v[0::3], v[1::3], v[2::3]
+flat = min(max(xs)-min(xs), max(ys)-min(ys), max(zs)-min(zs)) < 0.01
+print('tangent (flat bbox)' if flat else
+      'bbox x %.1f..%.1f  y %.1f..%.1f  z %.1f..%.1f' % (min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)))" 2>&1)"
+    fi
+  done
+fi

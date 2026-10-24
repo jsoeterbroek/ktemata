@@ -47,7 +47,8 @@ openscad -D R2=false -o out.png cad/assembly.scad      # r1 assembly preview
 The r1 parts are still in the repository and export with `export.py --r1`. r3 is a keyboard/radio variant of
 r2 and shares its STLs (see [`docs/R3.md`](docs/R3.md)); r4 has its own geometry because the display, the
 power board, the cells and the keyboard all changed (see [`docs/R4.md`](docs/R4.md)). Making r4 flatter is
-analysed — and deliberately not done — in [`docs/SLIMMING.md`](docs/SLIMMING.md).
+analysed — and deliberately not done — in [`docs/SLIMMING.md`](docs/SLIMMING.md). Cast soft-rubber corner
+caps with [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md) (a retrofit accessory; the case STLs are unchanged).
 
 | STL (`stl/`) | Source (`cad/`) | Print orientation | r4 |
 |---|---|---|---|
@@ -55,6 +56,7 @@ analysed — and deliberately not done — in [`docs/SLIMMING.md`](docs/SLIMMING
 | `ktemata_face.stl` – front face | `face.scad` | face plate down | yes |
 | `ktemata_keyboard_support.stl` | `keyboard_support.scad` | flat | yes |
 | `ktemata_charge_plug.stl` – sealed charge plug | `charge_plug.scad` | flange down (TPU) | yes |
+| `ktemata_corner_{cap,cup,plate,lid}.stl` – silicone corner overmould | `corner_mould.scad` | as exported | accessory |
 | `ktemata_pull_switch.stl` – USB-C U-adapter pull switch | `pull_switch.scad` | top face (ring tab) down | r1 only |
 | `ktemata_power_button.stl` – battery button plunger | `power_button.scad` | cap end down | r1 only |
 
