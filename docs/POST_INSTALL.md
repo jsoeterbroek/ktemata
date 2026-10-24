@@ -27,7 +27,8 @@ file, no YAML config, no whiptail menu. Idempotent — safe to re-run.
 | 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
 | 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
 | 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
-| 10 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
+| 11 | Replaces the early boot splash with the logo | `--no-splash`, `--splash [FILE]` |
+| 12 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
 not get a Kiwix build that is already superseded.
@@ -131,6 +132,55 @@ sudo ./work/scripts/post-install.sh --hwtest-only --power hat    # in the case, 
 It only changes the wording of an undervoltage hint — USB-C points at the 27 W supply and cable, `hat` points
 at the pogo pins and the 8.4 V input. On the 27 W supply an undervoltage flag should never appear; if it does,
 suspect the cable or the connector rather than the PSU.
+
+## Desktop background
+
+The Ktemata mark on black, from [`docs/ktemata-wallpaper.svg`](../docs/ktemata-wallpaper.svg) — a plain
+1920×1080 black field, the open-book mark at 18 % opacity, the `KTEMATA` wordmark and `κτῆμα ἐς ἀεί`.
+
+It is installed to `/usr/local/share/ktemata/ktemata-wallpaper.png` and a per-user copy under
+`~/.local/share/ktemata/`, then applied through whichever stack the desktop uses:
+
+| Desktop | Mechanism |
+|---|---|
+| Raspberry Pi OS (labwc/pcmanfm) | `~/.config/pcmanfm/LXDE-pi/desktop-items-0.conf` (`wallpaper=`, `wallpaper_mode=crop`, `desktop_bg=#000000`) + `pcmanfm --set-wallpaper` for the live session |
+| GNOME | `gsettings org.gnome.desktop.background picture-uri` **and** `picture-uri-dark` (a dark theme otherwise keeps its own image), `picture-options=scaled` |
+| minimal X11 | `feh --bg-fill` from an autostart entry |
+
+```bash
+sudo ./work/scripts/post-install.sh --wallpaper            # default logo
+sudo ./work/scripts/post-install.sh --wallpaper mine.png   # your own image
+sudo ./work/scripts/post-install.sh --no-wallpaper
+```
+
+## Boot splash
+
+Raspberry Pi OS shows two splashes; this replaces the **early firmware one**. The supported mechanism is
+Raspberry Pi's [rpi-splash-screen-support](https://github.com/raspberrypi/rpi-splash-screen-support), and its
+constraints are strict: a **24-bit TGA**, at most **1920 × 1080**, at most **224 colours**.
+
+The script renders [`docs/ktemata-splash.svg`](../docs/ktemata-splash.svg) at install time — `rsvg-convert`
+then ImageMagick (7's `magick` on Debian, 6's `convert` on Ubuntu) — quantises to 224 colours, and writes a
+24-bit RGB TGA, so an updated logo propagates without committing a 6 MB bitmap. It then:
+
+1. copies the TGA to `/lib/firmware/logo.tga` and installs the initramfs hook, rebuilding the initramfs
+2. adds `fullscreen_logo=1 fullscreen_logo_name=logo.tga vt.global_cursor_default=0` to `cmdline.txt`
+   (idempotent, single line, `.ktemata.bak` kept once)
+3. uses `/usr/bin/configure-splash` directly when that package is installed
+
+```bash
+sudo ./work/scripts/post-install.sh --splash             # default logo
+sudo ./work/scripts/post-install.sh --splash logo.tga    # your own, must meet the constraints
+sudo ./work/scripts/post-install.sh --no-splash
+```
+
+Notes:
+
+- The **rainbow square** before the firmware logo is separate: add `disable_splash=1` to
+  `/boot/firmware/config.txt` to hide it (the script only hints at this).
+- **Plymouth** draws the second splash and keeps its own theme background.
+- Only the early splash is a static image; the console rotation from `--rotate` applies after it.
+- Nothing changes on a machine with no `/boot/firmware/cmdline.txt`.
 
 ## Autologin
 
@@ -267,6 +317,10 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --hwtest-only      run the hardware checks and exit
     --strict           non-zero exit when a hardware check fails (not on warnings)
     --power usbc|hat   supply in use, for the diagnostic hints (default usbc)
+    --no-wallpaper     leave the desktop background alone
+    --wallpaper [FILE] set it (default), optionally from FILE
+    --no-splash        leave the boot splash alone
+    --splash [FILE]    replace the boot splash, optionally from a 24-bit TGA
     --no-autologin     leave the GDM login screen
     --autologin-user N account to log in automatically (default ktemata)
 -h, --help / -V, --version
@@ -297,6 +351,11 @@ Autologin was tested against real-shaped GDM configs in a container: **insert** 
 missing `[daemon]` section to a config that only had `[security]`, and the Debian layout where only
 `daemon.conf` exists (the script must not create a stray `custom.conf`). Each case leaves the other sections
 intact and writes a backup identical to the original.
+
+The wallpaper and splash steps were run end-to-end on both **Debian 13** and **Ubuntu 24.04** containers: the
+pcmanfm config points at the per-user PNG with `desktop_bg=#000000`; the splash comes out as
+`Targa image data - RGB 1920 x 1080 x 24` with 102 colours; `cmdline.txt` stays one line and holds both the
+rotation and the splash parameters after two consecutive runs with no duplicates.
 
 The Chromium start was reproduced with `HOME` unset in a Debian container: after the fix the profile and
 crash directories are created and Chromium launches (the only remaining complaint there is the container's

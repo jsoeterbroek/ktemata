@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <rect width="1920" height="1080" fill="#000000"/>
+  <g transform="translate(960 430)" fill="none" stroke="#c98a45" stroke-width="6" stroke-linejoin="round">
+    <path d="M-150 -48 C -88 -74, -32 -74, 0 -44 C 32 -74, 88 -74, 150 -48 L150 76 C 88 51, 32 51, 0 80 C -32 51, -88 51, -150 76 Z"/>
+    <path d="M0 -44 V80"/>
+  </g>
+  <text x="960" y="690" text-anchor="middle" font-family="Liberation Sans, DejaVu Sans, sans-serif"
+        font-size="132" font-weight="700" letter-spacing="22" fill="#f2ebe0">KTEMATA</text>
+  <text x="960" y="770" text-anchor="middle" font-family="Liberation Sans, DejaVu Sans, sans-serif"
+        font-size="52" font-style="italic" fill="#c99a63">κτῆμα ἐς ἀεί</text>
+</svg>

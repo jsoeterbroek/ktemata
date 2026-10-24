@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080" role="img" aria-labelledby="t d">
+  <title id="t">Ktemata desktop background</title>
+  <desc id="d">Black wallpaper with the Ktemata wordmark, the phrase κτῆμα ἐς ἀεί and a faint book mark, centred.</desc>
+
+  <!-- black field; the desktop fills any aspect that is not 16:9 -->
+  <rect width="1920" height="1080" fill="#000000"/>
+
+  <!-- faint open-book watermark, well under the wordmark -->
+  <g transform="translate(960 470)" opacity="0.18">
+    <path d="M-190 -60 C -110 -92, -40 -92, 0 -55 C 40 -92, 110 -92, 190 -60
+             L190 96 C 110 64, 40 64, 0 101 C -40 64, -110 64, -190 96 Z"
+          fill="none" stroke="#c98a45" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M0 -55 V101" stroke="#c98a45" stroke-width="5"/>
+    <g stroke="#8f744f" stroke-width="3.5" opacity="0.75">
+      <path d="M-160 -25 H-40 M40 -25 H160"/>
+      <path d="M-160 5 H-40 M40 5 H160"/>
+      <path d="M-160 35 H-40 M40 35 H160"/>
+    </g>
+  </g>
+
+  <!-- wordmark -->
+  <text x="960" y="790" text-anchor="middle"
+        font-family="Liberation Sans, DejaVu Sans, Arial, Helvetica, sans-serif"
+        font-size="158" font-weight="700" letter-spacing="26" fill="#f2ebe0">KTEMATA</text>
+  <text x="960" y="880" text-anchor="middle"
+        font-family="Liberation Sans, DejaVu Sans, Arial, Helvetica, sans-serif"
+        font-size="62" font-style="italic" fill="#c99a63">κτῆμα ἐς ἀεί</text>
+</svg>
