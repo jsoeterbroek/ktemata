@@ -178,6 +178,29 @@ kiwix-kiosk --url URL       # show something else
 kiwix-kiosk --stop
 ```
 
+### Chromium needs a HOME and writable XDG dirs
+
+An autostart entry (or `su -c`, or a systemd user unit) can run the kiosk with **`HOME` unset**. Chromium then
+resolves every helper path to the empty string and dies before the first window:
+
+```
+chrome_crashpad_handler: --database is required
+... mkdir : No such file or directory (2)
+... FATAL:base/path_service.cc Failed to get the path for 1001
+```
+
+The launcher now:
+
+- recovers `HOME` from the account database (`getent passwd $(id -u)`) before anything else
+- exports and creates `XDG_CONFIG_HOME`, `XDG_CACHE_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`
+- gives Chromium a **private profile** (`--user-data-dir=$XDG_DATA_HOME/ktemata/kiosk-profile`) so it never
+  fights the default profile, and an explicit, pre-created **crash directory**
+  (`--crash-dumps-dir=$XDG_CACHE_HOME/ktemata/crash --disable-crash-reporter`)
+- the autostart entry runs it through a login shell (`/bin/sh -lc`) so the session environment is complete
+
+`--selftest` prints the user, `HOME`, and whether each XDG directory is writable, so this class of failure is
+visible before the screen goes black.
+
 What it does on start:
 
 1. refuses to run without `DISPLAY`/`WAYLAND_DISPLAY` (a browser with no session is a black screen)
@@ -274,6 +297,10 @@ Autologin was tested against real-shaped GDM configs in a container: **insert** 
 missing `[daemon]` section to a config that only had `[security]`, and the Debian layout where only
 `daemon.conf` exists (the script must not create a stray `custom.conf`). Each case leaves the other sections
 intact and writes a backup identical to the original.
+
+The Chromium start was reproduced with `HOME` unset in a Debian container: after the fix the profile and
+crash directories are created and Chromium launches (the only remaining complaint there is the container's
+missing `chromium-sandbox`, which is unrelated).
 
 The kiosk path was tested the same way: `/usr/local/bin/kiwix-kiosk` installed, the autostart entry written
 with `Exec=/usr/local/bin/kiwix-kiosk --transform 270`, and the launcher's `--selftest` returning 0 against a

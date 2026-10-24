@@ -842,7 +842,7 @@ install_kiosk() {
 Type=Application
 Name=Ktemata kiosk
 Comment=Boot straight into the offline library
-Exec=/usr/local/bin/kiwix-kiosk
+Exec=/bin/sh -lc /usr/local/bin/kiwix-kiosk
 Terminal=false
 X-GNOME-Autostart-enabled=true
 EOF
@@ -856,7 +856,7 @@ EOF
         if $DRY_RUN; then
             printf '%s  [dry-run]%s set KIOSK_DISPLAY_TRANSFORM=%s in the autostart entry\n' "$C_YELLOW" "$C_OFF" "$deg"
         else
-            sed -i "s#^Exec=.*#Exec=/usr/local/bin/kiwix-kiosk --transform $deg#" \
+            sed -i "s#^Exec=.*#Exec=/bin/sh -lc \"/usr/local/bin/kiwix-kiosk --transform $deg\"#" \
                 "$autostart/kiwix-kiosk.desktop"
             log_ok "kiosk rotates the output to $deg"
         fi

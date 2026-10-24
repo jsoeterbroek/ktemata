@@ -17,9 +17,23 @@ set -euo pipefail
 
 readonly SCRIPT=$(basename "$0")
 
+# Chromium and its helpers derive every path from HOME; with HOME unset they build an empty
+# path and die in chrome_crashpad_handler ("--database is required", "mkdir : No such file").
+# Recover it from the account database before anything else is computed.
+if [ -z "${HOME:-}" ] || [ ! -d "${HOME:-/nonexistent}" ]; then
+    HOME=$(getent passwd "$(id -u)" 2>/dev/null | cut -d: -f6)
+    [ -n "$HOME" ] || HOME="/tmp"
+    export HOME
+fi
+export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
+export XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
+export XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
+export XDG_STATE_HOME=${XDG_STATE_HOME:-$HOME/.local/state}
+mkdir -p "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_CONFIG_HOME" 2>/dev/null || true
+
 KIOSK_PORT=${KIOSK_PORT:-8080}
 KIOSK_URL=${KIOSK_URL:-http://127.0.0.1:$KIOSK_PORT/}
-KIOSK_LOG=${KIOSK_LOG:-${XDG_STATE_HOME:-$HOME/.local/state}/ktemata/kiosk.log}
+KIOSK_LOG=${KIOSK_LOG:-$XDG_STATE_HOME/ktemata/kiosk.log}
 KIOSK_WAIT=${KIOSK_WAIT:-60}          # seconds to wait for kiwix-serve
 KIOSK_APP=${KIOSK_APP:-browser}       # browser | kiwix
 KIOSK_DISPLAY_TRANSFORM=${KIOSK_DISPLAY_TRANSFORM:-}   # e.g. 270; empty = leave the output alone
@@ -120,11 +134,21 @@ wait_for_server() {
 # Pick the first browser that can actually run. `$1` is the URL.
 browser_cmd() {
     local url=$1
-    # Raspberry Pi OS ships chromium; some images only have the browser under another name.
+    # Chromium needs: a writable profile (a shared default profile locks when another
+    # instance is running), an existing crash-dump directory (else chrome_crashpad_handler
+    # dies with "--database is required"), and no first-run/restore prompts.
+    local profile=${KIOSK_PROFILE:-$XDG_DATA_HOME/ktemata/kiosk-profile}
+    local crashes=${KIOSK_CRASH_DIR:-$XDG_CACHE_HOME/ktemata/crash}
+    mkdir -p "$profile" "$crashes" 2>/dev/null || true
+    local flags="--kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble"
+    flags="$flags --no-first-run --start-fullscreen --disable-features=Translate"
+    flags="$flags --user-data-dir=$profile --crash-dumps-dir=$crashes --disable-crash-reporter"
+    flags="$flags --app=$url"
+    # Raspberry Pi OS ships chromium; Debian too. Ubuntu only has the (snap) -browser name.
     if have chromium; then
-        printf '%s\t%s\n' chromium "--kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --no-first-run --start-fullscreen --app=$url"
+        printf '%s\t%s\n' chromium "$flags"
     elif have chromium-browser; then
-        printf '%s\t%s\n' chromium-browser "--kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --no-first-run --start-fullscreen --app=$url"
+        printf '%s\t%s\n' chromium-browser "$flags"
     elif have firefox; then
         printf '%s\t%s\n' firefox "--kiosk $url"
     elif have epiphany-browser; then
@@ -153,8 +177,13 @@ start_kiwix_desktop() {
 
 selftest() {
     local rc=0
+    say "user:    $(id -un 2>/dev/null) (uid $(id -u))"
+    say "HOME:    $HOME"
     say "session: $(is_wayland && echo wayland || (is_x11 && echo x11 || echo none))"
     say "server:  http://127.0.0.1:$KIOSK_PORT/"
+    for d in "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME"; do
+        if [ -w "$d" ]; then say "  $d: writable"; else say "  $d: NOT writable"; rc=1; fi
+    done
     for c in xset wlopm wlr-randr curl nc; do
         if have "$c"; then say "  $c: $(command -v "$c")"; else say "  $c: missing (optional)"; fi
     done
