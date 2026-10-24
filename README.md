@@ -94,6 +94,10 @@ See [`docs/WIRING.md`](docs/WIRING.md) for the power and data/I²C block diagram
 rules. It also links the editable KiCad 10 schematic (`docs/ktemata_r3_wiring.kicad_sch`, PDF/SVG/PNG) and
 the netlist-style [`docs/ktemata_r3_connections.csv`](docs/ktemata_r3_connections.csv).
 
+To prepare a fresh Ubuntu / Raspberry Pi OS install — system update, Kiwix, the ZIM library and the display
+rotation — run [`work/scripts/post-install.sh`](work/scripts/post-install.sh); notes in
+[`docs/POST_INSTALL.md`](docs/POST_INSTALL.md).
+
 ## ZIM library (Kiwix)
 
 The offline content lives on the external disk (`/run/media/joost/data/zim`), listed in
