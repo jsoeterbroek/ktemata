@@ -359,7 +359,9 @@ hw_display() {
             if [ "$(cat "$dsi/status" 2>/dev/null)" = connected ]; then
                 local modes
                 modes=$(head -1 "$dsi/modes" 2>/dev/null || true)
-                hw_pass "display connected: ${dsi##*/card*-} (${modes:-no mode})"
+                local conn=${dsi##*/}
+                conn=${conn#card[0-9]*-}          # card1-DSI-1 -> DSI-1
+                hw_pass "display connected: $conn (${modes:-no mode})"
             else
                 hw_fail "DSI output present but status=$(cat "$dsi/status" 2>/dev/null)"
             fi
@@ -384,7 +386,7 @@ hw_i2c_bus() {
     # The FireBeetle, not the Pi, is the I2C master (the Pi has no 40-pin header in this build),
     # so a bare Pi normally shows no devices. Detect the bus and report what is on it.
     if ! i2c_tool i2cdetect -l >/dev/null 2>&1; then
-        hw_skip "I2C (i2c-tools not installed)"
+        hw_skip "I2C (i2c-tools not installed: sudo apt install i2c-tools)"
         return
     fi
     local buses
@@ -423,7 +425,7 @@ hw_ups() {
     # The HAT (B) reports through the INA219 at 0x42 on the FireBeetle bus. On the Pi itself
     # there is nothing to read, so this only reports whether the address was seen above.
     if ! i2c_tool i2cdetect -l >/dev/null 2>&1; then
-        hw_skip "UPS gauge (i2c-tools not installed)"
+        hw_skip "UPS gauge (i2c-tools not installed: sudo apt install i2c-tools)"
         return
     fi
     local hit=0 bus map
@@ -461,7 +463,7 @@ hw_rtc() {
     if grep -qs 'rtc_bbat_vchg' /boot/firmware/config.txt; then
         hw_pass "RTC trickle charging configured"
     else
-        hw_note "hint: add dtparam=rtc_bbat_vchg=3000000 to /boot/firmware/config.txt"
+        hw_note "without dtparam=rtc_bbat_vchg=3000000 the cell is not recharged by the Pi"
     fi
 }
 
@@ -670,9 +672,18 @@ install_packages() {
     if [ -n "$ROTATE" ] && $WITH_GUI; then
         pkgs+=(wlr-randr)
     fi
-    # the kiosk needs a browser; chromium is the Pi OS default. On Ubuntu this package is a
-    # snap transition, so only warn rather than fail if it cannot be installed.
-    $WITH_KIOSK && pkgs+=(chromium-browser)
+    # The kiosk needs a browser. Debian ships `chromium`; Ubuntu only has `chromium-browser`,
+    # which is a snap transition, and Raspberry Pi OS has `chromium`. Ask apt which exists
+    # instead of guessing, and never let this fail the install.
+    if $WITH_KIOSK; then
+        if apt-cache show chromium >/dev/null 2>&1; then
+            pkgs+=(chromium)
+        elif apt-cache show chromium-browser >/dev/null 2>&1; then
+            pkgs+=(chromium-browser)
+        else
+            log_warn "no chromium package in this archive; the kiosk will need another browser"
+        fi
+    fi
     # the hardware report uses i2cdetect/vcgencmd; harmless if a package is unavailable
     $WITH_HWTEST && pkgs+=(i2c-tools)
 

@@ -1,7 +1,8 @@
 # Post-install (Ubuntu / Raspberry Pi OS)
 
-[`work/scripts/post-install.sh`](../work/scripts/post-install.sh) prepares a fresh Ubuntu or Raspberry Pi OS
-install for the Ktemata build.
+[`work/scripts/post-install.sh`](../work/scripts/post-install.sh) prepares a fresh Ubuntu, Debian or
+Raspberry Pi OS install for the Ktemata build. Tested on **Ubuntu 24.04** and **Debian 13 (trixie)** — the
+latter is what Raspberry Pi OS is built on, and the one a real Pi 5 was verified against.
 
 ```bash
 sudo ./work/scripts/post-install.sh                  # update, install Kiwix, enable the service
@@ -82,7 +83,7 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | **Pi model** | model string from `/proc/device-tree/model` | SKIP on non-Pi hardware |
 | **SoC temperature** | 5 samples + actual CPU busy %; PASS < 80 °C | **WARN** ≥ 80/85 °C under load. **FAIL** if ≥ 85 °C while the CPU is idle — that is not the missing cooler |
 | **Throttle flags** | `vcgencmd get_throttled` = `0x0` | **FAIL only on undervoltage** (bits 0/16) — a supply fault. Thermal/clock bits are WARN |
-| **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the active mode (720×1280 for the TD2) |
+| **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the connector (`DSI-1`) and active mode (720×1280 for the TD2) |
 | **I2C buses** | lists what each bus answers | SKIP when no device replies — expected, the **FireBeetle** is the I2C master in this build |
 | **Expected addresses** | 0x42 UPS INA219, 0x3C/0x3D OLED, 0x68 DS3231, 0x76/0x77 BME688 | only PASS lines for addresses actually seen |
 | **UPS gauge** | INA219 at 0x42 visible | SKIP on the Pi itself; the gauge is read by the ESP32 |
@@ -236,6 +237,10 @@ Packages → Library → Service → Rotation → Kiosk.
 The kiosk path was tested the same way: `/usr/local/bin/kiwix-kiosk` installed, the autostart entry written
 with `Exec=/usr/local/bin/kiwix-kiosk --transform 270`, and the launcher's `--selftest` returning 0 against a
 live server and 1 without one.
+
+**On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
+holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no
+throttle flags.
 
 Not covered: arm64 was checked only at the package level (Ubuntu publishes `kiwix`, `kiwix-tools` and
 `zim-tools` for arm64 in noble), and the desktop `wlr-randr` path has not been run on real Wayland hardware.
