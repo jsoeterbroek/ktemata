@@ -32,26 +32,33 @@ print('degenerate/tangent (no triangles)' if not xs else 'bbox x %.1f..%.1f  y %
 done
 
 # --- corner overmould tool ---------------------------------------------------------------
-# corner_mould.scad is not part of assembly.scad, so it has its own harness. Tangency is
-# normal here: the cavity surface IS the cap's outer surface, and the plate/lid meet the cup
-# face to face. So the same bbox rule applies - a flat bbox is contact, not a collision.
+# corner_mould.scad is not part of assembly.scad, so it has its own harness. The plates and
+# the cavity touch the rubber over large faces, so a bbox test would always report a hit.
+# What matters here is the VOLUME of the intersection: exactly 0 is correct contact,
+# anything above zero means the pieces intrude on each other (and the mould would not close).
 if [ "$R1" != "1" ] && [ "$R4" != "0" ]; then
   for pair in cap:case cup:case plate:case lid:case cup:cap plate:cap lid:cup; do
-    out=$(timeout 300 openscad -o "/tmp/chk_cm_${pair/:/_}.stl" -D "CHECK=\"$pair\"" corner_mould_check.scad 2>&1)
+    f="/tmp/chk_cm_${pair/:/_}.stl"
+    out=$(timeout 300 openscad -o "$f" -D "CHECK=\"$pair\"" corner_mould_check.scad 2>&1)
     if echo "$out" | grep -q "top level object is empty"; then echo "OK    corner_$pair"; else
-      echo "HIT   corner_$pair  $(python3 -I -c "
-import sys
+      echo "$(F="$f" P="$pair" python3 -I -c "
+import os, sys
+f, pair = os.environ['F'], os.environ['P']
 try:
-    d = open('/tmp/chk_cm_${pair/:/_}.stl').read().split()
+    tok = open(f).read().split()
 except OSError:
-    print('empty'); sys.exit()
-v = [float(x) for i, x in enumerate(d) if i > 0 and d[i-1] == 'vertex']
-if not v:
-    print('degenerate/tangent'); sys.exit()
-xs, ys, zs = v[0::3], v[1::3], v[2::3]
-flat = min(max(xs)-min(xs), max(ys)-min(ys), max(zs)-min(zs)) < 0.01
-print('tangent (flat bbox)' if flat else
-      'bbox x %.1f..%.1f  y %.1f..%.1f  z %.1f..%.1f' % (min(xs), max(xs), min(ys), max(ys), min(zs), max(zs)))" 2>&1)"
+    print('OK    corner_%s' % pair); sys.exit()
+v = []
+for i in range(1, len(tok) - 3):
+    if tok[i-1] == 'vertex':
+        v += [float(tok[i]), float(tok[i+1]), float(tok[i+2])]
+vol = 0.0
+for i in range(0, len(v) - 8, 9):
+    ax, ay, az, bx, by, bz, cx, cy, cz = v[i:i+9]
+    vol += (ax*(by*cz-bz*cy) - ay*(bx*cz-bz*cx) + az*(bx*cy-by*cx)) / 6.0
+vol = abs(vol) / 1000.0
+print('OK    corner_%s (tangent, %.6f cm3)' % (pair, vol) if vol < 1e-6
+      else 'HIT   corner_%s  intrudes %.4f cm3' % (pair, vol))" 2>&1)"
     fi
   done
 fi
