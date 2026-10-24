@@ -80,8 +80,8 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | Check | PASS / FAIL / SKIP | Notes |
 |---|---|---|
 | **Pi model** | model string from `/proc/device-tree/model` | SKIP on non-Pi hardware |
-| **Throttling** | `vcgencmd get_throttled` = `0x0` | FAIL names undervoltage/thermal events; needs `libraspberrypi-bin` |
-| **SoC temperature** | `vcgencmd measure_temp` < 80 °C | FAIL above, which is where the Pi starts throttling |
+| **SoC temperature** | 5 samples; PASS < 80 °C | **WARN** at 80 °C (soft limit, clock reduced) and at 85 °C (hard limit). Not a FAIL: this build has no cooler by design |
+| **Throttle flags** | `vcgencmd get_throttled` = `0x0` | **FAIL only on undervoltage** (bits 0/16) — a supply fault. Thermal/clock bits are WARN |
 | **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the active mode (720×1280 for the TD2) |
 | **I2C buses** | lists what each bus answers | SKIP when no device replies — expected, the **FireBeetle** is the I2C master in this build |
 | **Expected addresses** | 0x42 UPS INA219, 0x3C/0x3D OLED, 0x68 DS3231, 0x76/0x77 BME688 | only PASS lines for addresses actually seen |
@@ -91,8 +91,32 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | **Network** | any interface `up` | SKIP when none — normal, Wi-Fi/LAN are off |
 | **Port** | 8080 listening | informational only |
 
-Checks never block the install: findings are counted and reported, and only `--strict` turns them into a
-non-zero exit. `--hwtest-only` prints the report and exits without touching the system.
+Checks never block the install: findings are counted and reported. `--strict` fails the run on a **fault**
+(undervoltage), not on a **warning** (heat). `--hwtest-only` prints the report and exits without touching the
+system.
+
+### Heat is expected here
+
+There is **no cooler in this build** — the UPS HAT (B) occupies the Pi's component side, so neither the Active
+Cooler nor a heatsink fits (see `R4.md`). The Pi 5's soft limit is 80 °C and its hard limit 85 °C, so a bare
+board under load sits at 85 °C and throttles. That is the design, not a defect: the check reports it as a
+warning with the load average, and only treats **undervoltage** as a fault.
+
+At idle (load ≈ 0.1) a Pi 5 should be well under 80 °C. Idle at 85 °C means something else is happening —
+check that no build job or browser tab is pinning the CPU, and that the case vents are clear.
+
+### Power path
+
+The Pi **cannot detect the UPS HAT (B)**: its INA219 gauge is on the FireBeetle's I²C bus, so nothing on the
+Pi side reports it. Tell the script which supply you are using:
+
+```bash
+sudo ./work/scripts/post-install.sh --hwtest-only --power usbc   # default: bench, USB-C only
+sudo ./work/scripts/post-install.sh --hwtest-only --power hat    # in the case, on the HAT
+```
+
+It only changes the wording of an undervoltage hint — USB-C points at the 27 W supply and cable, `hat` points
+at the pogo pins and the 8.4 V input.
 
 ## Kiosk
 
@@ -172,7 +196,8 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --kiosk-user NAME  desktop user to autostart it for (default: the sudo user)
     --no-hwtest        skip the hardware checks
     --hwtest-only      run the hardware checks and exit
-    --strict           non-zero exit when a hardware check fails
+    --strict           non-zero exit when a hardware check fails (not on warnings)
+    --power usbc|hat   supply in use, for the diagnostic hints (default usbc)
 -h, --help / -V, --version
 ```
 

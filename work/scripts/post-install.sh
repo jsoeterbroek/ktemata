@@ -48,8 +48,10 @@ WITH_KIOSK=false
 WITH_HWTEST=true
 HWTEST_ONLY=false
 STRICT=false
-HW_FAILS=0          # non-fatal hardware findings, reported in the summary
+HW_FAILS=0          # faults (e.g. undervoltage): --strict fails on these
+HW_WARNS=0          # expected-or-degraded conditions (heat without a cooler): --strict ignores
 HW_CHECKS=0
+HW_WARNS_NOTE=false
 KIOSK_USER=${KIOSK_USER:-${SUDO_USER:-}}   # whose session autostarts the kiosk
 
 # ---------------- output ----------------
@@ -91,6 +93,7 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-hwtest        Skip the hardware checks.
       --hwtest-only      Run the hardware checks and exit (implies --dry-run).
       --strict           Exit non-zero if a hardware check fails.
+      --power usbc|hat   How the Pi is powered, for the diagnostic hints (default: usbc).
   -h, --help             This message.
   -V, --version          Print the version.
 
@@ -186,6 +189,9 @@ check_platform() {
 hw_pass() { HW_CHECKS=$((HW_CHECKS + 1)); printf '  %sPASS%s %s\n' "$C_GREEN" "$C_OFF" "$*"; }
 hw_fail() { HW_CHECKS=$((HW_CHECKS + 1)); HW_FAILS=$((HW_FAILS + 1)); printf '  %sFAIL%s %s\n' "$C_RED" "$C_OFF" "$*"; }
 hw_skip() { HW_CHECKS=$((HW_CHECKS + 1)); printf '  %sSKIP%s %s\n' "$C_YELLOW" "$C_OFF" "$*"; }
+hw_warn() { HW_CHECKS=$((HW_CHECKS + 1)); HW_WARNS=$((HW_WARNS + 1)); printf '  %sWARN%s %s\n' "$C_YELLOW" "$C_OFF" "$*"; }
+# kept as an alias so thermal findings read naturally in this file
+hw_fail_soft() { hw_warn "$@"; }
 hw_note() { printf '        %s\n' "$*"; }
 
 is_pi() {
@@ -195,6 +201,97 @@ is_pi() {
 
 pi_model() { tr -d '\0' </proc/device-tree/model 2>/dev/null || echo "unknown"; }
 
+# How the board is powered. The Pi cannot detect the UPS HAT (B): its INA219 sits on the
+# FireBeetle's I2C bus, so there is nothing on the Pi side to query. Declare it instead, with
+# --power hat / POWER_SOURCE=hat, and default to the bench case (USB-C only).
+power_hint() {
+    if [ "${POWER_SOURCE:-usbc}" = hat ]; then
+        printf '%s\n' "on the UPS HAT: re-seat the pogo pins, then check the 8.4 V input"
+    else
+        printf '%s' "on USB-C: use the 27 W (5 V/5 A) supply - a 3 A charger gives exactly"
+        printf '%s\n' " this under load; check the cable too"
+    fi
+}
+
+# Pi 5 thermal limits (Raspberry Pi documentation): 80 C soft limit -> clock is reduced,
+# 85 C hard limit -> hard throttling. A reading above 85 is therefore "at the ceiling", not
+# necessarily a fault, and this build deliberately runs without a cooler (the UPS HAT (B)
+# occupies the Pi's component side, so neither the Active Cooler nor a heatsink fits).
+# So: FAIL only on undervoltage, which *is* a fault. Heat is reported as a warning with the
+# context needed to judge it.
+hw_thermal() {
+    if ! has_command vcgencmd; then
+        hw_skip "thermals (install libraspberrypi-bin for throttle/temperature)"
+        return
+    fi
+
+    # --- temperature: sample, because a single reading may catch a transient -------------
+    local t tmin="" tmax="" i
+    for i in 1 2 3 4 5; do
+        t=$(vcgencmd measure_temp 2>/dev/null | sed -n "s/^temp=\([0-9.]*\)'C$/\1/p")
+        if [ -n "$t" ]; then
+            awk -v a="$t" -v b="${tmin:-$t}" 'BEGIN {exit !(a < b)}' && tmin=$t
+            awk -v a="$t" -v b="${tmax:-$t}" 'BEGIN {exit !(a > b)}' && tmax=$t
+            [ -n "$tmin" ] || tmin=$t
+            [ -n "$tmax" ] || tmax=$t
+        fi
+        sleep 0.4
+    done
+
+    local load
+    load=$(awk '{print $1}' /proc/loadavg 2>/dev/null || echo 0)
+    local busy=false
+    awk -v l="$load" 'BEGIN {exit !(l >= 0.5)}' && busy=true
+
+    if [ -z "$tmax" ]; then
+        hw_skip "SoC temperature (vcgencmd gave no answer)"
+    else
+        local hot=${tmax%%.*}        # integer part for the comparison
+        local ctx="load 1m=$load"
+        $busy && ctx="$ctx, busy"
+        if [ "$hot" -ge 85 ]; then
+            hw_fail_soft "SoC ${tmax} C - at the 85 C hard limit (throttling); $ctx"
+            hw_note "this build has no cooler (the UPS HAT (B) occupies the component side),"
+            hw_note "so idle heat like this means the load was high or airflow was poor"
+        elif [ "$hot" -ge 80 ]; then
+            hw_fail_soft "SoC ${tmax} C - over the 80 C soft limit (clock reduced); $ctx"
+        else
+            hw_pass "SoC ${tmax} C (${tmin}-${tmax} C), $ctx"
+        fi
+    fi
+
+    # --- throttle flags: the authoritative signal -------------------------------------------
+    local thr
+    thr=$(vcgencmd get_throttled 2>/dev/null | sed -n 's/.*throttled=0x\([0-9a-fA-F]*\).*/\1/p')
+    if [ -z "$thr" ]; then
+        hw_skip "throttle flags (vcgencmd gave no answer)"
+        return
+    fi
+    local flags=$((16#$thr))
+    local now="" past=""
+    (( flags & 0x1 ))  && now="$now undervoltage"
+    (( flags & 0x2 ))  && now="$now arm-frequency-capped"
+    (( flags & 0x4 ))  && now="$now throttled"
+    (( flags & 0x8 ))  && now="$now soft-temp-limit"
+    (( flags & 0x10 )) && past="$past undervoltage"
+    (( flags & 0x20 )) && past="$past arm-frequency-capped"
+    (( flags & 0x40 )) && past="$past throttled"
+    (( flags & 0x80 )) && past="$past soft-temp-limit"
+
+    if [ "$flags" -eq 0 ]; then
+        hw_pass "no throttle flags since boot (0x0)"
+    else
+        # undervoltage is the one that means the hardware is being supplied badly
+        if (( flags & 0x1 )) || (( flags & 0x10 )); then
+            hw_fail "undervoltage flag set (0x$thr)${now:+ now:$now}${past:+ past:$past}"
+            hw_note "$(power_hint)"
+        else
+            hw_fail_soft "throttle flags 0x$thr${now:+ now:$now}${past:+ past:$past}"
+        fi
+    fi
+}
+
+
 hw_pi() {
     if ! is_pi; then
         hw_skip "Raspberry Pi model (not a Pi: $(uname -m), $(uname -r))"
@@ -202,29 +299,7 @@ hw_pi() {
     fi
     hw_pass "model: $(pi_model)"
 
-    # throttle flags catch a board that is overheating or under-powered right now
-    if has_command vcgencmd; then
-        local thr
-        thr=$(vcgencmd get_throttled 2>/dev/null || echo "")
-        case $thr in
-            *throttled=0x0) hw_pass "throttle flags clear" ;;
-            "") hw_skip "throttle flags (vcgencmd gave no answer)" ;;
-            *)  # bits: 0 undervoltage now, 16 undervoltage occurred, 1 freq capped now, ...
-                hw_fail "throttle flags: ${thr#throttled=} (undervoltage or thermal event)" ;;
-        esac
-        local temp
-        temp=$(vcgencmd measure_temp 2>/dev/null | tr -dc '0-9.') || temp=""
-        if [ -n "$temp" ]; then
-            # integer compare: busybox-free, no bc dependency
-            if [ "${temp%%.*}" -ge 80 ] 2>/dev/null; then
-                hw_fail "SoC temperature ${temp} C (throttling)"
-            else
-                hw_pass "SoC temperature ${temp} C"
-            fi
-        fi
-    else
-        hw_skip "vcgencmd (install libraspberrypi-bin for throttle/temperature)"
-    fi
+    hw_thermal
 
     if [ -r /proc/device-tree/serial-number ]; then
         hw_pass "serial: $(tr -d '\0' </proc/device-tree/serial-number)"
@@ -427,7 +502,11 @@ run_hw_tests() {
     hw_network
     hw_audio
 
-    printf '\n  %d checks, %d failed\n' "$HW_CHECKS" "$HW_FAILS"
+    printf '\n  %d checks, %d failed, %d warning(s)\n' "$HW_CHECKS" "$HW_FAILS" "$HW_WARNS"
+    if [ "$HW_WARNS" -gt 0 ] && ! $HW_WARNS_NOTE; then
+        log_warn "$HW_WARNS warning(s): this build runs without a cooler, so the SoC sits at"
+        log_warn "its thermal limit under load. That is expected, not a fault."
+    fi
     if [ "$HW_FAILS" -gt 0 ]; then
         log_warn "$HW_FAILS hardware check(s) failed; the software is installed regardless"
     fi
@@ -790,7 +869,7 @@ summary() {
         printf '  kiosk     %s autostarts kiwix-kiosk on login\n' "$KIOSK_USER"
     fi
     if $WITH_HWTEST; then
-        printf '  hardware  %d checks, %d failed\n' "$HW_CHECKS" "$HW_FAILS"
+        printf '  hardware  %d checks, %d failed, %d warning(s)\n' "$HW_CHECKS" "$HW_FAILS" "$HW_WARNS"
     fi
     printf '  desktop   kiwix (or "kiwix-desktop" if your release names it that way)\n'
     printf '  list      %s\n' "${SAMPLE_URL%/*}/"
@@ -810,6 +889,7 @@ main() {
             --no-hwtest)     WITH_HWTEST=false ;;
             --hwtest-only)   HWTEST_ONLY=true; DRY_RUN=true; WITH_HWTEST=true ;;
             --strict)        STRICT=true ;;
+            --power)         POWER_SOURCE=${2:?--power takes usbc or hat}; shift ;;
             --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
             --rotate)        ROTATE=${2:?--rotate needs normal|left|right|inverted}; shift ;;
             --zim-dir)       ZIM_DIR=${2:?--zim-dir needs a path}; shift ;;
@@ -825,6 +905,7 @@ main() {
     case $SERVICE_PORT in ''|*[!0-9]*) die "--port must be a number" ;; esac
     # fail fast on a bad --rotate instead of halfway through the install
     [ -z "$ROTATE" ] || rotation_degrees "$ROTATE" >/dev/null
+    case ${POWER_SOURCE:-usbc} in usbc|hat) ;; *) die "--power takes usbc or hat" ;; esac
 
     $DRY_RUN || require_root "$@"
 
