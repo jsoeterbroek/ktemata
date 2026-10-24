@@ -80,7 +80,7 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | Check | PASS / FAIL / SKIP | Notes |
 |---|---|---|
 | **Pi model** | model string from `/proc/device-tree/model` | SKIP on non-Pi hardware |
-| **SoC temperature** | 5 samples; PASS < 80 °C | **WARN** at 80 °C (soft limit, clock reduced) and at 85 °C (hard limit). Not a FAIL: this build has no cooler by design |
+| **SoC temperature** | 5 samples + actual CPU busy %; PASS < 80 °C | **WARN** ≥ 80/85 °C under load. **FAIL** if ≥ 85 °C while the CPU is idle — that is not the missing cooler |
 | **Throttle flags** | `vcgencmd get_throttled` = `0x0` | **FAIL only on undervoltage** (bits 0/16) — a supply fault. Thermal/clock bits are WARN |
 | **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the active mode (720×1280 for the TD2) |
 | **I2C buses** | lists what each bus answers | SKIP when no device replies — expected, the **FireBeetle** is the I2C master in this build |
@@ -102,8 +102,19 @@ Cooler nor a heatsink fits (see `R4.md`). The Pi 5's soft limit is 80 °C and it
 board under load sits at 85 °C and throttles. That is the design, not a defect: the check reports it as a
 warning with the load average, and only treats **undervoltage** as a fault.
 
-At idle (load ≈ 0.1) a Pi 5 should be well under 80 °C. Idle at 85 °C means something else is happening —
-check that no build job or browser tab is pinning the CPU, and that the case vents are clear.
+The check measures **actual CPU busy time** (two `/proc/stat` samples), not load average, so it can tell the
+two causes apart:
+
+| Reading | Verdict |
+|---|---|
+| ≥ 85 °C, CPU busy | **WARN** — expected: no cooler, it throttles instead of failing |
+| ≥ 85 °C, CPU idle | **FAIL** — a bare Pi 5 idles 55–70 °C, so the heat is not from load |
+| 80–85 °C, idle | **WARN** — warm for idle |
+| < 80 °C | **PASS** |
+
+On a FAIL or WARN it lists the processes using ≥ 10 % CPU, so "something is pegged" is visible rather than
+implied. If an idle board is hot with nothing running, look for clearance under the board, a heat trap
+(case, desk, insulation), or a process that is busy in short bursts the sample missed.
 
 ### Power path
 
@@ -116,7 +127,8 @@ sudo ./work/scripts/post-install.sh --hwtest-only --power hat    # in the case, 
 ```
 
 It only changes the wording of an undervoltage hint — USB-C points at the 27 W supply and cable, `hat` points
-at the pogo pins and the 8.4 V input.
+at the pogo pins and the 8.4 V input. On the 27 W supply an undervoltage flag should never appear; if it does,
+suspect the cable or the connector rather than the PSU.
 
 ## Kiosk
 

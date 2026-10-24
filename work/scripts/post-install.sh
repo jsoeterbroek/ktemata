@@ -213,6 +213,30 @@ power_hint() {
     fi
 }
 
+
+# CPU busy percentage over a short interval, from two /proc/stat samples.
+cpu_busy_percent() {
+    local a b
+    a=$(awk '/^cpu / {print $2+$3+$4, $5}' /proc/stat 2>/dev/null) || return 0
+    sleep 1
+    b=$(awk '/^cpu / {print $2+$3+$4, $5}' /proc/stat 2>/dev/null) || return 0
+    awk -v a="$a" -v b="$b" 'BEGIN {
+        split(a, x, " "); split(b, y, " ");
+        busy = y[1] - x[1]; idle = y[2] - x[2]; total = busy + idle;
+        print (total > 0) ? int(busy * 100 / total) : 0
+    }'
+}
+
+# The short list that usually explains a hot idle board.
+report_hot_processes() {
+    command -v ps >/dev/null 2>&1 || return 0
+    local top
+    top=$(ps -eo pcpu=,comm= --sort=-pcpu 2>/dev/null \
+          | awk '$1 >= 10 {printf "%s %s%%, ", $2, $1}' | cut -d, -f1-3 | sed 's/, $//')
+    [ -n "$top" ] && hw_note "top CPU: $top"
+    return 0
+}
+
 # Pi 5 thermal limits (Raspberry Pi documentation): 80 C soft limit -> clock is reduced,
 # 85 C hard limit -> hard throttling. A reading above 85 is therefore "at the ceiling", not
 # necessarily a fault, and this build deliberately runs without a cooler (the UPS HAT (B)
@@ -238,23 +262,43 @@ hw_thermal() {
         sleep 0.4
     done
 
-    local load
-    load=$(awk '{print $1}' /proc/loadavg 2>/dev/null || echo 0)
-    local busy=false
-    awk -v l="$load" 'BEGIN {exit !(l >= 0.5)}' && busy=true
+    # --- how busy is it, really? ------------------------------------------------------------
+    # Load average counts uninterruptible sleep too, so use actual CPU busy time. Without this
+    # a single hot reading cannot distinguish "working hard, no cooler, expected" from
+    # "idle and still 85 C", which means the heat is not coming from the CPU.
+    local busy_pct cores
+    busy_pct=$(cpu_busy_percent)
+    cores=$(nproc 2>/dev/null || echo 4)
+    local state=idle
+    [ "${busy_pct:-0}" -ge 20 ] 2>/dev/null && state=light
+    [ "${busy_pct:-0}" -ge 60 ] 2>/dev/null && state=busy
 
     if [ -z "$tmax" ]; then
         hw_skip "SoC temperature (vcgencmd gave no answer)"
     else
         local hot=${tmax%%.*}        # integer part for the comparison
-        local ctx="load 1m=$load"
-        $busy && ctx="$ctx, busy"
+        local ctx="cpu ${busy_pct:-?}% busy, ${cores} cores"
         if [ "$hot" -ge 85 ]; then
-            hw_fail_soft "SoC ${tmax} C - at the 85 C hard limit (throttling); $ctx"
-            hw_note "this build has no cooler (the UPS HAT (B) occupies the component side),"
-            hw_note "so idle heat like this means the load was high or airflow was poor"
+            if [ "$state" = idle ]; then
+                # 85 C while doing nothing is not the missing cooler: something else heats it
+                hw_fail "SoC ${tmax} C at idle ($ctx) - not load related"
+                hw_note "a bare Pi 5 idles around 55-70 C; at ${busy_pct:-?}% CPU this is a fault:"
+                hw_note "clearance under the board, a heat trap (case/desk/insulation), or a"
+                hw_note "process pegged in the background"
+                report_hot_processes
+            else
+                hw_warn "SoC ${tmax} C - at the 85 C hard limit (throttling); $ctx"
+                hw_note "expected without a cooler (the UPS HAT (B) takes the component side);"
+                hw_note "it throttles here under load rather than failing"
+                report_hot_processes
+            fi
         elif [ "$hot" -ge 80 ]; then
-            hw_fail_soft "SoC ${tmax} C - over the 80 C soft limit (clock reduced); $ctx"
+            if [ "$state" = idle ]; then
+                hw_warn "SoC ${tmax} C at idle ($ctx) - warm for idle"
+                report_hot_processes
+            else
+                hw_warn "SoC ${tmax} C - over the 80 C soft limit (clock reduced); $ctx"
+            fi
         else
             hw_pass "SoC ${tmax} C (${tmin}-${tmax} C), $ctx"
         fi
