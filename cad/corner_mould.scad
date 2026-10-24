@@ -52,7 +52,7 @@ CM_MX = false;  // true = mirror about x = W/2
 CM_MY = false;  // true = mirror about y = L/2
 
 // Hardware sits in the block's outboard margin (CM_WALL = 12), never inside the L of rubber.
-CM_SCREWS = [[-7, -7], [CM_LX + 6, -7]];  // M3 x 45, through lid -> cup -> plate
+CM_SCREWS = [[-7, -7], [CM_LX + 6, -7]];  // M3 x 40 (5 + 30 + 5), lid -> cup -> plate
 CM_PINS   = [[-7, CM_LY + 6], [CM_LX + 6, -5]];  // alignment pins, clear of the cavity
 
 // ---------------- 2D building blocks, local to the (0,0) corner ----------------

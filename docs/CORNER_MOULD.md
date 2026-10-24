@@ -53,13 +53,22 @@ One tool set does one corner. Print four sets for all four, or cast the corners 
 set (the plate and cup see the same geometry on all four corners; only the *sensor pocket* corner differs —
 see below).
 
+## Hardware
+
+| Item | Qty | Note |
+|---|---|---|
+| M3 × 40 socket/button-head screw | 2 | through the lid (5) and the cup (30) into the plate's pilot holes (5); the plate is 5 mm thick, so 40 bottoms out flush |
+| M3 washer | 2 | under the head, spread the load in the countersink |
+
+Nothing else is needed: the alignment pins are printed onto the plate.
+
 ## Casting
 
 1. **Test-fit first.** Print `ktemata_corner_cap.stl` in TPU and slide it onto the corner. It must go on
    with light pressure and sit flush. If it will not, raise `CM_FIT` to 0.25 and re-export.
 2. **Clean the case corner** with IPA. Any grease or dust becomes a mould line.
-3. Fit the **plate** on the case from below, then slide the **cup** down onto it over the corner. The two
-   M3 screws pull the cup onto the plate; the alignment pins set the register.
+3. Fit the **plate** on the case from below, then slide the **cup** down onto it over the corner. Two
+   **M3 × 40** screws pull the cup onto the plate; the alignment pins set the register.
 4. Mix the silicone (1:1 or 10:1 depending on the kit) and **de-air** it — 2 min in a vacuum chamber, or tap
    the cup for a minute. Bubbles are the main cosmetic failure.
 5. **Pour slowly into the fill port** in one continuous stream, letting the air escape through the vent. Fill
