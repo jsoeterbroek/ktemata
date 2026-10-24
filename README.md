@@ -31,7 +31,7 @@ re-export.
 | **r1** | Original reverse-engineered Waveshare 5" DSI + INIU power bank case; r1-only pull switch and battery button | Original r1 keyboard; no r2 electronics |
 | **r2** | Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700; same geometry and STLs as r3 | Wired USB keyboard; optional Pimoroni trackball; Wi-Fi/Bluetooth off |
 | **r3** | Same mechanical build and STLs as r2 | Phistone Mini Keyboard (2.4 GHz USB dongle or Bluetooth 5.0); no Pimoroni trackball; Wi-Fi off |
-| **r4** | **Current target and default CAD:** Pi 5 + Touch Display 2 (5", landscape) + UPS HAT (B) with 2× 18650 (2S); 172 × 237 × 53 mm | **Rii K06** 155 × 89 mm, 2.4 GHz dongle or Bluetooth; touchpad replaces the trackball; no Wi-Fi |
+| **r4** | **Current target and default CAD:** Pi 5 + Touch Display 2 (5", landscape) + UPS HAT (B) with 2× 18650 (2S); 172 × 237 × 53 mm | **Rii K06** 151 × 59 × 11 mm, 2.4 GHz dongle or Bluetooth; touchpad replaces the trackball; no Wi-Fi |
 
 The default CAD is the **r4 build**. Two switches in `cad/common.scad` select the others: `R4` (`true`,
 the default) turns the r4 retarget off, and `R2` (`false`) selects the original r1 case.
@@ -205,7 +205,7 @@ r1 pull-switch slot, side cutout and battery button are not used in r2/r3/r4; th
 | Solar | Foldable 20–30 W panel **plus** a 2S/8.4 V regulator or MPPT module into the internal charger | r4 has no PD input: the HAT (B) charges from 8.4 V at up to 2 A, so a PD panel cannot feed it directly. The internal module (`MPPT_*`) must output 8.4 V; a bare panel still needs a charge controller in between. Budget for a 2S MPPT module, not a USB-C PD trigger. |
 | Hand crank (backup, nice to have) | **Separate** crank generator with rectifier + buffer capacitor, feeding the **same charger input** as solar, into the one sealed charge port | Emergency top-up for night and clouds, not a main source. Rough estimate: 10–20 W of arm effort gives about 5–10 W into the battery after losses, so 1 minute of cranking ≈ 1 minute of use, and a full charge (about 23 Wh on r4, 70 Wh on r2) would take roughly 3–5 h (r4) or 7–14 h (r2). Sellers' "20 W" ratings are peaks. Kept outside the case: there's no room next to the 21700 cells, you can't hold the device steady against the crank torque, a shaft would break the seal, and it would add weight all the time. Build options: the 3D-printed axial-flux design in the separate [handcrank](https://github.com/jsoeterbroek/handcrank) project (N52 magnets, 8 coils × 350 turns, gearbox, full-bridge rectifier), or a commercial USB-C crank generator. The MPPT/input-voltage regulation matters: without it the input collapses whenever cranking slows (in the video the phone kept showing "USB disconnected"). Later option: a clip-on module on the (not yet modelled) back attachment. A pedal generator gives several times more power. |
 | Solar on case back (nice to have) | Thin ETFE panel (about 5–6 V) through a small solar power manager (MPPT) | The r1 back is 150 × 183 mm, the r2 back 150 × 205 mm, the r4 back 172 × 237 mm, so expect at most about 6–8 W peak (r4) and 2–3 W in practice. That only stretches idle time; it can't power the device while in use. Solar power banks with built-in cells charge just as slowly. |
-| Keyboard | **Rii K06** (ordered): 155 × 89 × 16.5 mm, 124.5 g, 2.4 GHz dongle **and** Bluetooth 4.0, backlit, multi-touch touchpad + IR learning, 700 mAh BL-5B | Its touchpad replaces the r2 Pimoroni trackball (r3 used the Phistone's air mouse). The r4 case opens a 146 × 81 mm window over the keys/touchpad and holds the body in a 155 × 89 pocket that crosses the split plane. **No side cutout**, so set its 2.4G/BT switch and charge it before closing the case. **r2** remains a wired USB/Pico keyboard; **r3** the Phistone Mini Keyboard (134 × 74 × 12.7). The K06 is a complete body rather than a PCB, so r4 adds `KB_BODY` (155 × 89 × 16.5) beside the old 137 × 72 `KB_PCB` footprint, and its 146 × 81 window includes the touchpad. r2/r3 alternatives (a custom PCB on the 137 × 72 footprint, the Solder Party **BBQ20KBD** — sold out since Jan 2026 — or the Phistone) still apply to that build; on r4 the K06's cramped Ctrl/punctuation layout is the same trade-off as the Phistone's and should be tested before committing. |
+| Keyboard | **Rii K06** (ordered): 151 × 59 × 11 mm, 98 g, 2.4 GHz dongle **and** Bluetooth 4.0, backlit, multi-touch touchpad + IR learning | Its touchpad replaces the r2 Pimoroni trackball (r3 used the Phistone's air mouse). The r4 case opens a 151 × 56.5 mm window over the keys/touchpad and holds the body in a 151 × 59 pocket that sits entirely in the face part (its 11 mm back is above the 38.55 mm split plane). **No side cutout**, so set its 2.4G/BT switch and charge it before closing the case. **r2** remains a wired USB/Pico keyboard; **r3** the Phistone Mini Keyboard (134 × 74 × 12.7). The K06 is a complete body rather than a PCB, so r4 adds `KB_BODY` (151 × 59 × 11) beside the old 137 × 72 `KB_PCB` footprint, and its window includes the touchpad. r2/r3 alternatives (a custom PCB on the 137 × 72 footprint, the Solder Party **BBQ20KBD** — sold out since Jan 2026 — or the Phistone) still apply to that build; on r4 the K06's cramped Ctrl/punctuation layout is the same trade-off as the Phistone's and should be tested before committing. |
 | Environment sensor | **Pimoroni BME688** (temp, RH, pressure, VOC/gas index; I2C) | No CO2 or particulates. For those, use Sensirion **SEN66** (PM1–10, CO2, VOC, NOx, T, RH; 55.5 × 25.6 × 21.5 mm, about 90 mA, I2C 0x6B; Adafruit SEN6x breakout). Mount it in a vented pocket on the outer wall with a membrane vent, away from Pi heat, or temperature/RH read high. The SEN66 needs real airflow (inlet + outlet). |
 | Storage | **WD SN740 512 GB, M.2 2242** (ordered) on the **Seeed PCIe-to-M.2 BASE** | 4.7 W max, 2.38 mm single-sided, 300 TBW; runs at the Pi's Gen2 link (≈390 MB/s measured against this drive family). Mount at the 42 mm hole, ignore the bundled 2280 bracket. Capacity is a stopgap: the drive formats to ≈477 GiB and the full library is 833 GiB, so Wikipedia + maps + the small references fit, Gutenberg and Khan Academy do not (see [`BOM.md`](BOM.md)). A 1 TB 2242 or 2.5" SATA SSD (via the Waveshare SATA HAT+) remains the upgrade path; M.2 **SATA** drives do not work on NVMe boards. **The BASE has no bay in the CAD yet** — the UPS HAT (B) owns the Pi's underside. |
 | Clock | Pi 5 built-in RTC + **Panasonic ML-2020** rechargeable cell on the J5 battery connector | Needed with no networking (no NTP). Enable trickle charging: `dtparam=rtc_bbat_vchg=3000000` in `/boot/firmware/config.txt`. |
@@ -259,9 +259,10 @@ r4 stack, **`R2`** selects the r2/r3 or (`false`) the r1 case. `pick(a, b, c)` r
 value, so a parameter is written once in each variant's terms. `export.py` defaults to r4 and takes `--r2` or
 `--r1`.
 
-**r4 envelope: 172 × 237 × 53 mm** (r2/r3: 150 × 205 × 46.5). Width comes from the 155 mm K06 keyboard plus
-a 3 mm wall and window border; length from the 143.4 mm portrait display plus a 9.5 mm status-OLED band and
-the 89 mm keyboard; depth from the HAT (B) holder stack.
+**r4 envelope: 172 × 237 × 53 mm** (r2/r3: 150 × 205 × 46.5). Width comes from the 143.4 mm display plus the
+3 mm walls and window border (the 151 mm K06 body fits inside that); length from the 143.4 mm portrait display,
+a 35.5 mm status-OLED band and the 59 mm K06; depth from the HAT (B) holder stack. Width and length are
+unchanged from the earlier (i4-sized) keyboard assumption, so an already printed bottom shell and lid still fit.
 
 **Vertical stack.** All z positions derive from `CELL_*`, `UPS_*`, `DISP_*`, `DISP_POST` and `H_FACE`:
 
@@ -292,11 +293,13 @@ z=0   back plate (FLOOR 2 mm)
   aligned it would put its board under the Pi's USB/Ethernet port bodies (13.6–16 mm tall) — exactly the
   collision r2 avoided by ending the 88 mm HAT (E) short of the ports. Rotated, it is 29 mm narrower than the
   Pi along x, and its jack/USB-A/switch overhang sits past the Pi's +y end. The cells run along y.
-- **Keyboard:** a 155 × 89 × 16.5 pocket around the K06 body, 146 × 81 mm face window, and a shelf frame
-  (`kb_support()`) that backs the body. The body is thicker than the face part, so the pocket is split
-  between the two printed parts: the face carries the walls down to the split, the bottom shell has the
-  clearance below it. The K06 has no side cutout, so its 2.4G/BT switch and charging port are only reachable
-  before the face goes on — set and charge it first.
+- **Keyboard:** a 151 × 59 pocket around the K06 body (11 mm thick), a 151 × 56.5 mm face window with a
+  2.5 mm lip on the top edge only (the key caps sit flush to the shell on the other three edges, so a rim there
+  would stop the Fn/Shift/Alt keys from being pressed), and a backstop frame (`kb_support()`) that carries
+  the body. The frame keeps its footprint and the four `KBS_POSTS` columns, so the bottom shell does not
+  change; only the frame grows to the body's height. At 11 mm the body is thinner than the 14.42 mm face part,
+  so the whole pocket is in the face; the plate below the window is the logo band. The K06 has no side cutout,
+  so its 2.4G/BT switch and charging port are only reachable before the face goes on — set and charge it first.
 - **Status OLED, sensor, RTC, FireBeetle, charge port:** unchanged parts, re-placed for the new floor. The
   OLED band is only 35.5 mm tall, so the 34 mm module just fits between the display and the keyboard; the
   DS3231, MPPT module and FireBeetle share the free floor under the keyboard with the frame's four columns
@@ -311,7 +314,7 @@ z=0   back plate (FLOOR 2 mm)
 1. **HAT (B) holder/cell side:** 23.35 mm taken from Waveshare's 3D drawing. Measure your board with cells
    fitted; 1 mm error moves the whole case depth.
 2. **TD2 standoffs and hole pattern:** 8.5 mm standoffs, 122.74 × 72.96 outer / 51 × 49 inner.
-3. **K06 outline:** 155 × 89 × 16.5 per Rii. If yours differs, edit `KB_BODY`, `KB_PCB`, `KB_WIN` and `KBS`.
+3. **K06 outline:** 151 × 59 × 11 per Rii's K06 manual (`K06BT.pdf`: "Productsize: 151*59*11mm"). The 155 × 89 × 16.5 in earlier notes is the Rii **i4**, a different keyboard. If yours differs, edit `KB_BODY`, `KB_PCB`, `KB_WIN` and `KBS`.
 4. **1.3" OLED module** outline (the band has ~0.7 mm of slack) and the PBS-33B nut clearance.
 5. **18650 length** (65 mm nominal) and whether your Pi 5 has a 40-pin header fitted (it must be removed or
    low-profile).

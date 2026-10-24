@@ -52,31 +52,30 @@ module display_ribs() {
     }
 }
 
-// keyboard PCB pocket ribs
+// keyboard pocket walls
 // r2: 1.2 mm ribs around a 137 x 72 PCB, standing on the face plate.
-// r4: the K06 is a 16.5 mm thick body that crosses the split plane, so the "ribs" are the
-// pocket walls and they reach down to KB_PCB_BACK - 1 (the bottom part clears the rest).
+// r4: the K06 is an 11 mm body that sits entirely in the face part (back at 39.97, split at
+// 38.55), so the "ribs" are the pocket walls and they run the body's full depth.
 module kb_ribs() {
-    // r2: 1.2 mm past the PCB. r4: the 16.5 mm body crosses the split plane, so the pocket
-    // walls run from the plate down to the split plane only (the face part is clipped there).
-    rh = R4 ? (T - PLATE - H_BOT + 0.4) : (T - PLATE - KB_PCB_FRONT + 1.2);
+    // r2 walls stop just past the PCB. r4 walls stop 0.3 mm short of the body's back, so the
+    // body seats on the support frame, not on the wall ends (elephant's foot there would bear
+    // on it). Lateral clearance is c (0.6 mm) per side.
+    rh = R4 ? (T - PLATE - KB_PCB_BACK - 0.3) : (T - PLATE - KB_PCB_FRONT + 1.2);
     t = 1.2; c = pick(0.6, 0.4, 0.4);
     x0 = KB_PCB_X - c - t; x1 = KB_PCB_X + KB_PCB[0] + c;
     y0 = KB_PCB_Y - c - t; y1 = KB_PCB_Y + KB_PCB[1] + c;
     z0 = T - PLATE - rh;
-    if (R2) {
-        // split the top rib around the status-OLED board (no long gap under the board)
-        xa = x0 + 12; xb = x0 + KB_PCB[0] - 12;
-        at(xa, y0 + t, z0) cube([max(0.01, OLED_X0 - 2 - xa), t, rh]);
-        at(OLED_X1 + 2, y0 + t, z0) cube([max(0.01, xb - OLED_X1 - 2), t, rh]);
-    } else {
-        at(x0 + 12, y0 + t, z0) cube([KB_PCB[0] - 24, t, rh]);        // top
-    }
+    // the top rib: r2 splits it around the status-OLED board, and so must r4 - the K06 band
+    // is only 1.5 mm taller than the 34 mm module, so a continuous rib would cut into it.
+    xa = x0 + 12; xb = x0 + KB_PCB[0] - 12;
+    at(xa, y0 + t, z0) cube([max(0.01, OLED_X0 - 2 - xa), t, rh]);
+    at(OLED_X1 + 2, y0 + t, z0) cube([max(0.01, xb - OLED_X1 - 2), t, rh]);
     at(x0 + 12, y1 + t, z0) cube([KB_PCB[0] - 24, t, rh]);            // bottom
     if (R4) {
-        // the K06 pocket also needs side walls, and no long divider (touchpad + keys are one body)
-        at(x0, y0 + t, z0) cube([t, KB_PCB[1], rh]);
-        at(x1, y0 + t, z0) cube([t, KB_PCB[1], rh]);
+        // both side walls. A cube after at() grows toward -y, so anchor each wall at the
+        // pocket's far (bottom) edge and span back up to y0 + t.
+        at(x0, y1, z0) cube([t, y1 - y0 - t, rh]);                    // left
+        at(x1, y1, z0) cube([t, y1 - y0 - t, rh]);                    // right
     } else {
         at(x0, y0 + 14 + 30, z0) cube([t, 30, rh]);                   // left
     }
@@ -100,7 +99,8 @@ module oled_mount() {
 }
 
 // r4: the K06 keys sit right behind the face plate, so the plate is opened over the whole
-// key/touchpad area (KB_WIN), with the same 45 deg outer bevel as the other windows.
+// key/touchpad area (KB_WIN). The 45 deg outer bevel widens the opening, so it never covers
+// a key; the rim that actually retains the body is on the inner face (see KB_WIN).
 // screen / key / OLED windows with a 45 deg bevel on the outside (prints face-down without supports)
 BEVEL = 1.2;
 module windows_cut() {

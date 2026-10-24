@@ -182,19 +182,28 @@ PULL_TRAVEL = 7;
 
 // ---------------- keyboard ----------------
 // r2/r3: 137 x 72 PCB pocket (Phistone 134 x 74 body or a wired PCB), wired or 2.4 GHz.
-// r4: Rii K06 with touchpad, 155 x 89 x 16.5 (Rii spec). It is a complete body, not a PCB,
-// so the pocket is 155 x 89 and the face window opens the keys + touchpad.
-KB_BODY = pick([155, 89, 16.5], [137, 72, 12.7], [137, 72, 12.7]);
-// r4 window: inside the 155 x 89 body (leaves a 3.5 mm rim all round to retain it)
-KB_WIN  = pick([13, 137, 159, 218], [10, 123, 140, 190], [10, 97, 140, 164]);
-KB_PCB  = pick([155, 89], [137, 72], [137, 72]);   // pocket outline
+// r4: Rii K06 with touchpad, 151 x 59 x 11 (K06 manual, ver 1.2: "Productsize: 151*59*11mm",
+// 98 g). The 155 x 89 x 16.5 figure in earlier notes is the Rii i4, a different keyboard.
+// It is a complete body, not a PCB, so the pocket is 151 x 59 and the face window opens it.
+KB_BODY = pick([151, 59, 11], [137, 72, 12.7], [137, 72, 12.7]);
+// r4 window: the K06's key caps are flush to the shell edge on the sides and the bottom
+// (~0.6-0.7 mm measured), so any rim there would stop those keys from being pressed. The
+// window therefore follows the body outline on those three edges (x 10.5 / 161.5, y 192) and
+// keeps a 2.5 mm lip on the top edge only, where the shell has a 3.6 mm bezel above the Esc
+// row. The body drops in from inside the face part, is held laterally by the pocket walls,
+// backed by the support frame and trapped from the front by that top lip. Keeping the window
+// edges on the pocket outline (not inside it) leaves the whole plate ledge supported by the
+// wall instead of cantilevered over the pocket.
+KB_WIN  = pick([10.5, 135.5, 161.5, 192], [10, 123, 140, 190], [10, 97, 140, 164]);
+KB_PCB  = pick([151, 59], [137, 72], [137, 72]);   // pocket outline
 KB_PCB_X = (W-KB_PCB[0])/2;
 KB_PCB_Y = pick(133, 120.5, 94.5);
-// r4: the keys must sit just under the face plate, and the body is 16.5 mm thick, so the
-// pocket crosses the split plane; both parts cut it (see kb_pocket_cut()).
+// r4: the keys must sit just under the face plate; the 11 mm body then ends at 39.97, above
+// the 38.55 split plane, so the whole body stays in the face part and the support frame
+// inside the pocket backs it up (it no longer reaches past the split).
 KB_PCB_FRONT = pick(T - PLATE, T - 5, T - 5);
-KB_PCB_BACK  = KB_PCB_FRONT - (R4 ? KB_BODY[2] : 1.2);   // r2/r1: 1.2 mm PCB; r4: 16.5 mm body
-KB_H = KB_BODY[2];                           // body thickness (r4: 16.5)
+KB_PCB_BACK  = KB_PCB_FRONT - (R4 ? KB_BODY[2] : 1.2);   // r2/r1: 1.2 mm PCB; r4: 11 mm body
+KB_H = KB_BODY[2];                           // body thickness (r4: 11)
 
 // ---------------- r2 status OLED (FireBeetle 2 ESP32-UE + 1.3" I2C OLED) ----------------
 // The OLED is a separate 4-pin I2C module (1.3" 128x64, ~35 x 34 mm PCB,
@@ -262,8 +271,10 @@ RTC_X = pick(70, 100, 100); RTC_Y = pick(150, 145, 145); RTC_Z0 = FLOOR;
 
 // ---------------- keyboard support ----------------
 // r2/r3: 4 columns onto the r2 cell tray, frame just under the PCB.
-// r4: the K06 body is 16.5 thick, so the frame is taller; it stands on columns between
-// the DS3231, MPPT and FireBeetle.
+// r4: the K06 sits entirely in the face part, so the frame is a backstop below the body, from
+// KBS_Z0 up to 0.2 mm behind it. The footprint stays the r4 one the bottom shell was printed
+// with (the four columns and the frame rectangle are unchanged), so only the frame grows in
+// height; the part of it beyond the 59 mm pocket is the free cavity under the logo band.
 KBS_Z0 = pick(21.5, 25.2, FLOOR + BAT_T + 0.5);   // underside (r4: just above the cells)
 KBS = pick([26, 131, 146, 224], [12, 123, 138, 192], [12, 97, 138, 166]);
 KBS_WALL = 3;

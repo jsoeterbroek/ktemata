@@ -38,9 +38,10 @@ Wiring: [`docs/WIRING.md`](docs/WIRING.md). r4 design notes: [`docs/R4.md`](docs
      capacity percentage** — the percentage is derived from the 2S pack voltage.
    - The board carries its **own 18650 holders**, so there is no printed cell tray and no 21700 cells in this
      build.
-3. **Keyboard.** The order uses the **Rii K06** (155 × 89 × 16.5 mm, touchpad, 2.4 GHz + Bluetooth), not the
-   Phistone. It is 18 mm wider and 3.8 mm thicker, which is why the r4 case is 172 mm wide and the keyboard
-   pocket crosses the split plane. Its touchpad replaces the r2 Pimoroni trackball.
+3. **Keyboard.** The order uses the **Rii K06** (151 × 59 × 11 mm, touchpad, 2.4 GHz + Bluetooth), not the
+   Phistone (134 × 74 × 12.7). The K06 fits inside the existing 172 mm width and, at 11 mm, entirely inside the
+   14.42 mm face part — the earlier 155 × 89 × 16.5 figure was the Rii **i4**, which is why the pocket used to be
+   described as crossing the split plane. Its touchpad replaces the r2 Pimoroni trackball.
 4. **Active Cooler — does not fit.** The ordered Raspberry Pi Active Cooler (KW-3228) is 63.5 × 42.5 ×
    13.7 mm and clips onto the Pi's **component side**, which is exactly where the UPS board and its pogo pins
    sit (6 mm gap). It cannot be fitted in r4 (nor in r2/r3). Keep it as a bench spare, or return it.
@@ -88,7 +89,7 @@ Wiring: [`docs/WIRING.md`](docs/WIRING.md). r4 design notes: [`docs/R4.md`](docs
 | Raspberry Pi 5 – 4 GB | 1 | ≈ € 121 | Same board as r2. **No 40-pin header must be fitted** (the UPS HAT sits on the component side). |
 | Raspberry Pi 5 27 W USB-C power supply – black | 1 | ≈ € 12 | Bench power for the Pi on its own. **It cannot charge the HAT (B)** — that needs an 8.4 V barrel supply (see gaps). |
 | SanDisk Extreme microSDHC 32 GB (A1/V30/U3, with adapter) | 1 | ≈ € 13 | Boot card. Too small for the ZIM library; that stays on the external disk. |
-| Rii K06 mini keyboard (2.4 GHz + Bluetooth, backlit, touchpad) | 1 | ≈ € 40 | r4 keyboard. Set its 2.4G/BT switch and charge it **before** closing the case. |
+| Rii K06 mini keyboard (2.4 GHz + Bluetooth, backlit, touchpad) | 1 | ≈ € 40 | r4 keyboard, 151 × 59 × 11 mm (K06 manual; the vendor product page quotes the i4 dimensions). Set its 2.4G/BT switch and charge it **before** closing the case. |
 
 Ordered subtotal (22 Oct): **≈ € 310**.
 

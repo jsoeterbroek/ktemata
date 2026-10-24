@@ -51,17 +51,18 @@ The cell block still has to exist, and there are only two places it can go:
 | Position | Why it fails / costs |
 |---|---|
 | Beside the Pi, in the display zone | Blocked by the four display posts (`DISP_HOLES`, Ø6.5). The clear rectangle between them is **116.24 × 66.46 mm**; the Pi takes 85 of the 116.24, leaving **31 mm**, and 66.46 across is shorter than the HAT's 85. Shifting the Pi is not free — it hangs on the display's standoff pattern. |
-| **Under the keyboard** (the only ~100 mm of free length) | Feasible. Cell block 0–26.35 + pcb to 27.95 must clear the K06 body, whose back then sits at `T − 2 − 16.5`. |
+| **Under the keyboard** (the only ~100 mm of free length) | Feasible. Cell block 0–26.35 + pcb to 27.95 must clear the K06 body, whose back then sits at `T − 2 − 11`. |
 
-The keyboard is what binds, not the display:
+With the correct 11 mm K06 the display is what binds; the keyboard used to (it was sized for the i4):
 
 ```
 HAT pcb top            27.95
-K06 back   = T − 18.50  must be ≥ 27.95   →   T ≥ 46.45
+K06 back   = T − 13.00  must be ≥ 27.95   →   T ≥ 40.95
 display    = T − 16.92  must be ≥ 27.95   →   T ≥ 44.87
 ```
 
-**Result: T ≈ 46.5 mm, i.e. ≈ 6.5 mm (12 %) saved** — not the "considerably thinner" the idea suggests.
+**Result: the display now binds at T ≈ 44.9 mm, i.e. ≈ 8 mm (15 %) saved** — not the "considerably
+thinner" the idea suggests. (With the correct 11 mm K06 the keyboard is no longer the constraint.)
 
 **What it costs**
 
@@ -82,10 +83,10 @@ The 25 mm block is 2× 18650 in Waveshare's own holders. A **2S LiPo pouch pack 
 
 ```
 2 + 1 + 12 + 1.6 = 16.6   HAT pcb top
-16.6 + 18.5      = 35.1   T (keyboard still binds)
+16.6 + 13.0      = 29.6   T (display still binds at 44.9)
 ```
 
-**Result: T ≈ 35–40 mm.** This is the only route to a genuinely flat handheld.
+**Result: T ≈ 35–40 mm** only if the display is also changed; with the Touch Display 2 the floor is 44.9 mm.
 
 **Caveats — why this is an experiment, not a plan**
 
