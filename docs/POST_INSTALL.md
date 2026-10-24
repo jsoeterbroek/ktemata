@@ -18,13 +18,14 @@ file, no YAML config, no whiptail menu. Idempotent — safe to re-run.
 | Step | Action | Flag |
 |---|---|---|
 | 1 | Platform check: Debian/Ubuntu derivative, warns on untested arch | — |
-| 2 | **System update**: `apt-get update` then a non-interactive `full-upgrade` (keeps existing conffiles) | `--no-update` |
-| 3 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app | `--no-gui` |
-| 4 | Create `/srv/kiwix/zim` and the `kiwix` system user | — |
-| 5 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service` |
-| 6 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
-| 7 | Optionally install the kiosk launcher + autostart | `--kiosk` |
-| 8 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
+| 2 | **Hardware checks** — see below; runs *before* anything is changed | `--no-hwtest`, `--hwtest-only`, `--strict` |
+| 3 | **System update**: `apt-get update` then a non-interactive `full-upgrade` (keeps existing conffiles) | `--no-update` |
+| 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app | `--no-gui` |
+| 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | — |
+| 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service` |
+| 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
+| 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
+| 9 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
 not get a Kiwix build that is already superseded.
@@ -65,6 +66,33 @@ Notes:
 * With **multiple displays**, `cmdline.txt` rotates all of them — use the desktop tool instead.
 * On a non-Pi Ubuntu box there is no `/boot/firmware/cmdline.txt`; the step logs and moves on.
 * Rotation is per display, not per case: if you print a different face the display sits in, change it.
+
+## Hardware checks
+
+They run **first**, so the report describes the machine as it arrived rather than after an upgrade.
+
+```bash
+sudo ./work/scripts/post-install.sh --hwtest-only   # report only, change nothing, no root needed
+sudo ./work/scripts/post-install.sh --no-hwtest     # skip them
+sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
+```
+
+| Check | PASS / FAIL / SKIP | Notes |
+|---|---|---|
+| **Pi model** | model string from `/proc/device-tree/model` | SKIP on non-Pi hardware |
+| **Throttling** | `vcgencmd get_throttled` = `0x0` | FAIL names undervoltage/thermal events; needs `libraspberrypi-bin` |
+| **SoC temperature** | `vcgencmd measure_temp` < 80 °C | FAIL above, which is where the Pi starts throttling |
+| **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the active mode (720×1280 for the TD2) |
+| **I2C buses** | lists what each bus answers | SKIP when no device replies — expected, the **FireBeetle** is the I2C master in this build |
+| **Expected addresses** | 0x42 UPS INA219, 0x3C/0x3D OLED, 0x68 DS3231, 0x76/0x77 BME688 | only PASS lines for addresses actually seen |
+| **UPS gauge** | INA219 at 0x42 visible | SKIP on the Pi itself; the gauge is read by the ESP32 |
+| **Pi RTC** | `/dev/rtc0` with a sane epoch | FAIL if the cell is flat/unset; hints at `dtparam=rtc_bbat_vchg=3000000` |
+| **Storage** | ≥ 2 GB free on `/`, and the ZIM library not empty | FAIL on an empty library, because `kiwix-serve` will not start |
+| **Network** | any interface `up` | SKIP when none — normal, Wi-Fi/LAN are off |
+| **Port** | 8080 listening | informational only |
+
+Checks never block the install: findings are counted and reported, and only `--strict` turns them into a
+non-zero exit. `--hwtest-only` prints the report and exits without touching the system.
 
 ## Kiosk
 
@@ -142,6 +170,9 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --rotate WHAT      normal | left | right | inverted (or 0|90|180|270 clockwise)
     --kiosk            install the kiosk launcher + autostart
     --kiosk-user NAME  desktop user to autostart it for (default: the sudo user)
+    --no-hwtest        skip the hardware checks
+    --hwtest-only      run the hardware checks and exit
+    --strict           non-zero exit when a hardware check fails
 -h, --help / -V, --version
 ```
 
@@ -158,6 +189,12 @@ version"), the generated unit was inspected, and the service user was confirmed 
 
 Rotation was exercised against synthetic `cmdline.txt` copies: append to a file without a trailing newline,
 replace an existing `rotate=0`, and a repeat run reporting "already set".
+
+The hardware report was tested inside the same container (correct SKIPs for a non-Pi machine) and with the
+Pi-only branches forced in a harness: a fake Pi model PASSes, a missing `vcgencmd` SKIPs, an unset RTC FAILs
+("cell flat or unset"), a sane `/dev/rtc0` PASSes, an empty ZIM library FAILs and a populated one reports
+`1 archive(s), 4.5M`. Step order was confirmed from the `==>` lines: Platform → Hardware → System update →
+Packages → Library → Service → Rotation → Kiosk.
 
 The kiosk path was tested the same way: `/usr/local/bin/kiwix-kiosk` installed, the autostart entry written
 with `Exec=/usr/local/bin/kiwix-kiosk --transform 270`, and the launcher's `--selftest` returning 0 against a

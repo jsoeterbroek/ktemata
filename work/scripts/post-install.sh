@@ -9,6 +9,7 @@
 #   sudo ./work/scripts/post-install.sh --sample        # also fetch one small ZIM to test with
 #   sudo ./work/scripts/post-install.sh --rotate left   # + turn the Touch Display 2 90 deg left
 #   sudo ./work/scripts/post-install.sh --kiosk         # + boot straight into the library
+#   sudo ./work/scripts/post-install.sh --hwtest-only   # just the hardware checks, change nothing
 #   ./work/scripts/post-install.sh --dry-run            # show what would happen (no root)
 #   sudo ./work/scripts/post-install.sh --no-service    # packages only
 #   sudo ./work/scripts/post-install.sh --no-update     # skip the system upgrade
@@ -44,6 +45,11 @@ WITH_SERVICE=true
 WITH_GUI=true
 WITH_UPDATE=true
 WITH_KIOSK=false
+WITH_HWTEST=true
+HWTEST_ONLY=false
+STRICT=false
+HW_FAILS=0          # non-fatal hardware findings, reported in the summary
+HW_CHECKS=0
 KIOSK_USER=${KIOSK_USER:-${SUDO_USER:-}}   # whose session autostarts the kiosk
 
 # ---------------- output ----------------
@@ -82,6 +88,9 @@ ${C_BOLD}OPTIONS${C_OFF}
                          'left' = 90 deg counter-clockwise.
       --kiosk            Install the kiosk launcher and autostart it in the desktop session.
       --kiosk-user NAME  Whose session autostarts it (default: the user running sudo).
+      --no-hwtest        Skip the hardware checks.
+      --hwtest-only      Run the hardware checks and exit (implies --dry-run).
+      --strict           Exit non-zero if a hardware check fails.
   -h, --help             This message.
   -V, --version          Print the version.
 
@@ -90,13 +99,14 @@ ${C_BOLD}ENVIRONMENT${C_OFF}
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
   1. checks it is running as root on a Debian derivative
-  2. updates the system (apt update + full-upgrade) unless --no-update
-  3. installs kiwix-tools (+ kiwix desktop app unless --no-gui)
-  4. creates the ZIM library directory
-  5. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)
-  6. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
-  7. optionally installs the kiosk autostart (--kiosk)
-  8. verifies the server answers
+  2. runs the hardware checks (Pi model, display, I2C, UPS gauge, RTC, storage, network)
+  3. updates the system (apt update + full-upgrade) unless --no-update
+  4. installs kiwix-tools (+ kiwix desktop app unless --no-gui)
+  5. creates the ZIM library directory
+  6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)
+  7. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
+  8. optionally installs the kiosk autostart (--kiosk)
+  9. verifies the server answers
 EOF
 }
 
@@ -164,6 +174,265 @@ check_platform() {
         log_warn "systemd not running (container?); the service will be written but not enabled"
     fi
 }
+
+# ============================ hardware checks ============================
+# Everything the software depends on but cannot test: the Pi itself, the I2C devices on the
+# FireBeetle bus, the UPS gauge, the RTCs, storage and the display. Each check prints PASS,
+# FAIL or SKIP (not applicable here), so the report is readable on a fresh box.
+#
+# These are diagnostics, not gates: a missing sensor does not stop Kiwix from working, so
+# failures are collected and only affect the exit status with --strict.
+
+hw_pass() { HW_CHECKS=$((HW_CHECKS + 1)); printf '  %sPASS%s %s\n' "$C_GREEN" "$C_OFF" "$*"; }
+hw_fail() { HW_CHECKS=$((HW_CHECKS + 1)); HW_FAILS=$((HW_FAILS + 1)); printf '  %sFAIL%s %s\n' "$C_RED" "$C_OFF" "$*"; }
+hw_skip() { HW_CHECKS=$((HW_CHECKS + 1)); printf '  %sSKIP%s %s\n' "$C_YELLOW" "$C_OFF" "$*"; }
+hw_note() { printf '        %s\n' "$*"; }
+
+is_pi() {
+    [ -r /proc/device-tree/model ] || return 1
+    grep -qi 'raspberry pi' /proc/device-tree/model 2>/dev/null
+}
+
+pi_model() { tr -d '\0' </proc/device-tree/model 2>/dev/null || echo "unknown"; }
+
+hw_pi() {
+    if ! is_pi; then
+        hw_skip "Raspberry Pi model (not a Pi: $(uname -m), $(uname -r))"
+        return
+    fi
+    hw_pass "model: $(pi_model)"
+
+    # throttle flags catch a board that is overheating or under-powered right now
+    if has_command vcgencmd; then
+        local thr
+        thr=$(vcgencmd get_throttled 2>/dev/null || echo "")
+        case $thr in
+            *throttled=0x0) hw_pass "throttle flags clear" ;;
+            "") hw_skip "throttle flags (vcgencmd gave no answer)" ;;
+            *)  # bits: 0 undervoltage now, 16 undervoltage occurred, 1 freq capped now, ...
+                hw_fail "throttle flags: ${thr#throttled=} (undervoltage or thermal event)" ;;
+        esac
+        local temp
+        temp=$(vcgencmd measure_temp 2>/dev/null | tr -dc '0-9.') || temp=""
+        if [ -n "$temp" ]; then
+            # integer compare: busybox-free, no bc dependency
+            if [ "${temp%%.*}" -ge 80 ] 2>/dev/null; then
+                hw_fail "SoC temperature ${temp} C (throttling)"
+            else
+                hw_pass "SoC temperature ${temp} C"
+            fi
+        fi
+    else
+        hw_skip "vcgencmd (install libraspberrypi-bin for throttle/temperature)"
+    fi
+
+    if [ -r /proc/device-tree/serial-number ]; then
+        hw_pass "serial: $(tr -d '\0' </proc/device-tree/serial-number)"
+    fi
+}
+
+hw_display() {
+    # DSI panel: the Touch Display 2 is autodetected, so it shows up as a DRM connector
+    if [ -d /sys/class/drm ]; then
+        local dsi
+        dsi=$(ls -d /sys/class/drm/card*-DSI-* 2>/dev/null | head -1 || true)
+        if [ -n "$dsi" ]; then
+            if [ "$(cat "$dsi/status" 2>/dev/null)" = connected ]; then
+                local modes
+                modes=$(head -1 "$dsi/modes" 2>/dev/null || true)
+                hw_pass "display connected: ${dsi##*/card*-} (${modes:-no mode})"
+            else
+                hw_fail "DSI output present but status=$(cat "$dsi/status" 2>/dev/null)"
+            fi
+        else
+            hw_skip "DSI display (no DSI connector in /sys/class/drm)"
+        fi
+    else
+        hw_skip "display (no DRM)"
+    fi
+}
+
+# i2cdetect is in /usr/sbin, which is not on a user PATH; always call it by path.
+i2c_tool() {
+    local tool=$1; shift
+    for t in "$(command -v "$tool" 2>/dev/null)" "/usr/sbin/$tool" "/usr/bin/$tool"; do
+        [ -n "$t" ] && [ -x "$t" ] && { "$t" "$@"; return $?; }
+    done
+    return 127
+}
+
+hw_i2c_bus() {
+    # The FireBeetle, not the Pi, is the I2C master (the Pi has no 40-pin header in this build),
+    # so a bare Pi normally shows no devices. Detect the bus and report what is on it.
+    if ! i2c_tool i2cdetect -l >/dev/null 2>&1; then
+        hw_skip "I2C (i2c-tools not installed)"
+        return
+    fi
+    local buses
+    buses=$(i2c_tool i2cdetect -l 2>/dev/null | awk '$1 ~ /^i2c-/ {print $1}' | sort -uV | tr '\n' ' ')
+    if [ -z "${buses// /}" ]; then
+        hw_skip "I2C (no bus exposed; enable I2C in raspi-config)"
+        return
+    fi
+
+    local found="" bus map nbus
+    nbus=$(echo $buses | wc -w)
+    hw_note "$nbus I2C bus(es) exposed"
+    for bus in $buses; do
+        map=$(i2c_tool i2cdetect -y "${bus#i2c-}" 2>/dev/null || true)
+        [ -n "$map" ] || continue
+        local addrs
+        addrs=$(echo "$map" | awk 'NR>1 {for (i=2;i<=NF;i++) if ($i ~ /^[0-9a-f][0-9a-f]$/) print $i}')
+        [ -n "$addrs" ] && found="$found $bus:$addrs"
+    done
+
+    if [ -z "$found" ]; then
+        hw_skip "I2C devices (none found on ${nbus} bus(es); the FireBeetle is the I2C master in this build)"
+        return
+    fi
+    hw_pass "I2C devices:$found"
+
+    # expected addresses from the r4 topology; only complain about ones we know about
+    local all; all=$(echo "$found" | tr ' :' '\n\n' | sort -u)
+    for spec in "42:UPS INA219 gauge" "3c:OLED" "3d:OLED (alternate)" "68:DS3231" "76:BME688" "77:BME688 (alt)"; do
+        local addr=${spec%%:*} label=${spec#*:}
+        if echo "$all" | grep -qx "$addr"; then hw_pass "  $label at 0x$addr"; fi
+    done
+}
+
+hw_ups() {
+    # The HAT (B) reports through the INA219 at 0x42 on the FireBeetle bus. On the Pi itself
+    # there is nothing to read, so this only reports whether the address was seen above.
+    if ! i2c_tool i2cdetect -l >/dev/null 2>&1; then
+        hw_skip "UPS gauge (i2c-tools not installed)"
+        return
+    fi
+    local hit=0 bus map
+    for bus in $(i2c_tool i2cdetect -l 2>/dev/null | awk '$1 ~ /^i2c-/ {print $1}'); do
+        map=$(i2c_tool i2cdetect -y "${bus#i2c-}" 2>/dev/null || true)
+        echo "$map" | grep -qw 42 && { hit=1; break; }
+    done
+    if [ "$hit" = 1 ]; then
+        hw_pass "UPS HAT (B) INA219 answering at 0x42"
+    else
+        hw_skip "UPS HAT (B) gauge at 0x42 not visible from the Pi (it is read by the FireBeetle)"
+    fi
+}
+
+hw_rtc() {
+    # The Pi 5 RTC needs the ML-2020 on J5 and the trickle-charge dtparam; both are checkable.
+    local rtc
+    rtc=$(ls /dev/rtc* 2>/dev/null | head -1 || true)
+    if [ -z "$rtc" ]; then
+        if is_pi; then
+            hw_fail "no /dev/rtc* (RTC cell missing or the interface is disabled)"
+        else
+            hw_skip "no /dev/rtc* (no RTC on this machine)"
+        fi
+        return
+    fi
+    local since
+    since=$(cat /sys/class/rtc/rtc0/since_epoch 2>/dev/null || echo "")
+    if [ -n "$since" ] && [ "$since" -gt 1600000000 ] 2>/dev/null; then
+        hw_pass "RTC $rtc holds $(date -u -d "@$since" '+%F %T UTC' 2>/dev/null || echo "$since")"
+    else
+        # an epoch near 1970 means the cell is flat or never set
+        hw_fail "RTC $rtc reads $(date -u -d "@${since:-0}" '+%F %T UTC' 2>/dev/null || echo "${since:-?}") - cell flat or unset"
+    fi
+    if grep -qs 'rtc_bbat_vchg' /boot/firmware/config.txt; then
+        hw_pass "RTC trickle charging configured"
+    else
+        hw_note "hint: add dtparam=rtc_bbat_vchg=3000000 to /boot/firmware/config.txt"
+    fi
+}
+
+hw_storage() {
+    local target=${1:-/}
+    local avail used
+    avail=$(df -Pk "$target" 2>/dev/null | awk 'NR==2 {print int($4/1024)}')
+    used=$(df -P "$target" 2>/dev/null | awk 'NR==2 {gsub("%","",$5); print $5}')
+    if [ -z "$avail" ]; then
+        hw_fail "cannot stat $target"
+        return
+    fi
+    local kind="microSD"
+    local dev root_src
+    root_src=$(findmnt -n -o SOURCE / 2>/dev/null || true)
+    case $root_src in
+        /dev/mmcblk*) kind="microSD ($root_src)" ;;
+        /dev/nvme*)   kind="NVMe ($root_src)" ;;
+        /dev/sd*)     kind="USB/SATA ($root_src)" ;;
+        "")           kind="root" ;;
+        *)            kind="$root_src" ;;
+    esac
+    if [ "$avail" -lt 2048 ]; then
+        hw_fail "$target: $avail MB free ($used % used) on $kind - too little for the desktop"
+    else
+        hw_pass "$target: $avail MB free ($used % used) on $kind"
+    fi
+
+    # the ZIM library wants its own space; report it when it exists
+    if [ -d "$ZIM_DIR" ]; then
+        local zims
+        zims=$(find "$ZIM_DIR" -maxdepth 1 -name '*.zim' | wc -l)
+        local zsize
+        zsize=$(du -sh "$ZIM_DIR" 2>/dev/null | awk '{print $1}')
+        if [ "$zims" -eq 0 ]; then
+            hw_fail "ZIM library $ZIM_DIR is empty (kiwix-serve will not start)"
+        else
+            hw_pass "ZIM library: $zims archive(s), $zsize"
+        fi
+    fi
+}
+
+hw_network() {
+    local up
+    up=$(find /sys/class/net -mindepth 1 -maxdepth 1 ! -name lo -exec cat '{}/operstate' \; 2>/dev/null \
+         | grep -c up || true)
+    if [ "${up:-0}" -gt 0 ]; then
+        hw_pass "$up network interface(s) up"
+    else
+        hw_skip "no network link (expected: Wi-Fi/LAN are off in this build)"
+    fi
+
+    # the kiosk only needs loopback, so this is informational
+    if ss -ltn 2>/dev/null | grep -q ":$SERVICE_PORT "; then
+        hw_pass "port $SERVICE_PORT listening"
+    else
+        hw_note "hint: port $SERVICE_PORT not listening yet (service starts once a ZIM exists)"
+    fi
+}
+
+hw_audio() {
+    # no sound in this build; only report if a card is unexpectedly present
+    if [ -e /proc/asound/cards ] && grep -qv '^\s*$' /proc/asound/cards 2>/dev/null; then
+        hw_note "audio card detected (not used by this build)"
+    fi
+}
+
+run_hw_tests() {
+    if ! $WITH_HWTEST; then
+        log_stage "Hardware"
+        log_info "skipped (--no-hwtest)"
+        return 0
+    fi
+    log_stage "Hardware"
+
+    hw_pi
+    hw_display
+    hw_i2c_bus
+    hw_ups
+    hw_rtc
+    hw_storage /
+    hw_network
+    hw_audio
+
+    printf '\n  %d checks, %d failed\n' "$HW_CHECKS" "$HW_FAILS"
+    if [ "$HW_FAILS" -gt 0 ]; then
+        log_warn "$HW_FAILS hardware check(s) failed; the software is installed regardless"
+    fi
+}
+
 
 update_system() {
     if ! $WITH_UPDATE; then
@@ -281,6 +550,8 @@ install_packages() {
     # the kiosk needs a browser; chromium is the Pi OS default. On Ubuntu this package is a
     # snap transition, so only warn rather than fail if it cannot be installed.
     $WITH_KIOSK && pkgs+=(chromium-browser)
+    # the hardware report uses i2cdetect/vcgencmd; harmless if a package is unavailable
+    $WITH_HWTEST && pkgs+=(i2c-tools)
 
     log_info "installing: ${pkgs[*]}"
     # with --no-update the package lists were not refreshed yet
@@ -518,6 +789,9 @@ summary() {
     if $WITH_KIOSK; then
         printf '  kiosk     %s autostarts kiwix-kiosk on login\n' "$KIOSK_USER"
     fi
+    if $WITH_HWTEST; then
+        printf '  hardware  %d checks, %d failed\n' "$HW_CHECKS" "$HW_FAILS"
+    fi
     printf '  desktop   kiwix (or "kiwix-desktop" if your release names it that way)\n'
     printf '  list      %s\n' "${SAMPLE_URL%/*}/"
 }
@@ -533,6 +807,9 @@ main() {
             --no-gui)        WITH_GUI=false ;;
             --no-update)     WITH_UPDATE=false ;;
             --kiosk)         WITH_KIOSK=true ;;
+            --no-hwtest)     WITH_HWTEST=false ;;
+            --hwtest-only)   HWTEST_ONLY=true; DRY_RUN=true; WITH_HWTEST=true ;;
+            --strict)        STRICT=true ;;
             --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
             --rotate)        ROTATE=${2:?--rotate needs normal|left|right|inverted}; shift ;;
             --zim-dir)       ZIM_DIR=${2:?--zim-dir needs a path}; shift ;;
@@ -551,12 +828,20 @@ main() {
 
     $DRY_RUN || require_root "$@"
 
-    if ! $DRY_RUN && ! $ASSUME_YES; then
+    if ! $DRY_RUN && ! $ASSUME_YES && ! $HWTEST_ONLY; then
         confirm "Install Kiwix into $ZIM_DIR and enable $SERVICE_NAME.service on port $SERVICE_PORT?" \
             || { log_info "aborted"; exit 0; }
     fi
 
     check_platform
+    run_hw_tests            # before anything is installed: reports the box as it arrived
+    if $HWTEST_ONLY; then
+        # a diagnostic run: report and leave without touching the system
+        log_stage "Summary"
+        printf '  %d hardware checks, %d failed\n' "$HW_CHECKS" "$HW_FAILS"
+        [ "$HW_FAILS" -gt 0 ] && exit 1
+        exit 0
+    fi
     update_system
     install_packages
     setup_library
@@ -566,6 +851,11 @@ main() {
     $WITH_SAMPLE && download_sample
     verify
     summary
+
+    if $STRICT && [ "$HW_FAILS" -gt 0 ]; then
+        log_error "$HW_FAILS hardware check(s) failed (--strict)"
+        exit 1
+    fi
 }
 
 main "$@"
