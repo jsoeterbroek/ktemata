@@ -5,6 +5,9 @@
 #   R1=1 bash work/scripts/check.sh   # original r1 hardware
 # A "HIT" whose bbox is flat in one axis (zero volume) is a tangent contact and expected.
 cd "$(dirname "$0")/../../cad"
+# private scratch dir: two concurrent runs must not overwrite each other's STLs
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
 extra=""
 if [ "$R1" = "1" ]; then
   extra='-D R2=false'
@@ -20,15 +23,16 @@ for p in $parts; do for c in $comps; do pairs="$pairs $p:$c"; done; done
 pairs="$pairs bottom:face bottom:kbs face:kbs kbs:keyboard"
 [ "$R1" = "1" ] && pairs="$pairs bottom:pull bottom:button kbs:battery"
 [ "$R1" != "1" ] && pairs="$pairs pi:ups pi:cells ups:cells"
+# stl_report.py lives next to this script; we have already cd'd into cad/
+report="../work/scripts/stl_report.py"
+
 for pr in $pairs; do
-  out=$(timeout 300 openscad -o /tmp/chk_${pr/:/_}.stl $extra -D "CHECK=\"$pr\"" assembly.scad 2>&1)
-  if echo "$out" | grep -q "top level object is empty"; then echo "OK    $pr"; else
-    echo "HIT   $pr  $(python3 -I -c "
-import sys,struct
-d=open('/tmp/chk_${pr/:/_}.stl').read().split()
-v=[float(x) for i,x in enumerate(d) if i>0 and d[i-1] in('vertex',) or (i>1 and d[i-2]=='vertex') or (i>2 and d[i-3]=='vertex')]
-xs=v[0::3];ys=v[1::3];zs=v[2::3]
-print('degenerate/tangent (no triangles)' if not xs else 'bbox x %.1f..%.1f  y %.1f..%.1f  z %.1f..%.1f'%(min(xs),max(xs),min(ys),max(ys),min(zs),max(zs)))" 2>&1)"; fi
+  f="$tmp/chk_${pr/:/_}.stl"
+  out=$(timeout 300 openscad -o "$f" $extra -D "CHECK=\"$pr\"" assembly.scad 2>&1)
+  if echo "$out" | grep -q "top level object is empty"; then echo "OK    $pr"
+  elif [ ! -f "$f" ]; then echo "ERR   $pr  openscad produced no STL"
+  else echo "HIT   $pr  $(python3 -I "$report" bbox "$f")"
+  fi
 done
 
 # --- corner overmould tool ---------------------------------------------------------------
@@ -38,27 +42,12 @@ done
 # anything above zero means the pieces intrude on each other (and the mould would not close).
 if [ "$R1" != "1" ] && [ "$R4" != "0" ]; then
   for pair in cap:case cup:case plate:case lid:case cup:cap plate:cap lid:cup; do
-    f="/tmp/chk_cm_${pair/:/_}.stl"
+    f="$tmp/chk_cm_${pair/:/_}.stl"
     out=$(timeout 300 openscad -o "$f" -D "CHECK=\"$pair\"" corner_mould_check.scad 2>&1)
-    if echo "$out" | grep -q "top level object is empty"; then echo "OK    corner_$pair"; else
-      echo "$(F="$f" P="$pair" python3 -I -c "
-import os, sys
-f, pair = os.environ['F'], os.environ['P']
-try:
-    tok = open(f).read().split()
-except OSError:
-    print('OK    corner_%s' % pair); sys.exit()
-v = []
-for i in range(1, len(tok) - 3):
-    if tok[i-1] == 'vertex':
-        v += [float(tok[i]), float(tok[i+1]), float(tok[i+2])]
-vol = 0.0
-for i in range(0, len(v) - 8, 9):
-    ax, ay, az, bx, by, bz, cx, cy, cz = v[i:i+9]
-    vol += (ax*(by*cz-bz*cy) - ay*(bx*cz-bz*cx) + az*(bx*cy-by*cx)) / 6.0
-vol = abs(vol) / 1000.0
-print('OK    corner_%s (tangent, %.6f cm3)' % (pair, vol) if vol < 1e-6
-      else 'HIT   corner_%s  intrudes %.4f cm3' % (pair, vol))" 2>&1)"
+    if echo "$out" | grep -q "top level object is empty"; then echo "OK    corner_$pair"
+    elif [ ! -f "$f" ]; then echo "ERR   corner_$pair  openscad produced no STL"
+    else r=$(python3 -I "$report" vol "$f")
+      case "$r" in tangent*) echo "OK    corner_$pair - $r";; *) echo "HIT   corner_$pair - $r";; esac
     fi
   done
 fi
