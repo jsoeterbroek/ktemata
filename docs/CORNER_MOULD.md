@@ -12,8 +12,8 @@ A 2 mm rubber shell over each corner bumper, from z = 5 to z = 35 mm — above t
 38.55 mm split plane, so it covers the seam and both shells. It follows the bumper's own 45° taper and stops
 26 mm along the top/bottom walls and 23 mm along the sides.
 
-**Silicone per corner: ≈ 3.3 ml** (0.25 mm clearance included ≈ 3.4 ml). Four corners ≈ 14 ml, so a 250 ml
-kit is ample.
+**Silicone per corner: ≈ 3.3 ml** as modelled with `CM_FIT = 0.15`. Four corners ≈ 13 ml, so a 250 ml kit is
+ample (and leaves room to re-cast a corner).
 
 ## The tool
 
@@ -49,9 +49,9 @@ Silicone sticks to PETG far less than to PLA; PLA is fine with a mould release.
 python3 cad/tools/export.py corner_cap corner_plate corner_cup corner_lid
 ```
 
-One tool set does one corner. Print four sets for all four, or cast the corners one at a time and reuse the
-set (the plate and cup see the same geometry on all four corners; only the *sensor pocket* corner differs —
-see below).
+One tool set does one corner. Print four sets to cast all four at once, or reprint one set per corner and
+reuse the hardware. The tool is mirror-symmetric in use (`CM_MX`/`CM_MY`), so the same STL serves every
+corner; only the left-hand corners need the shorter reach (see below).
 
 ## Hardware
 
