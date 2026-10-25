@@ -410,6 +410,7 @@ I2C_SCANNED=false
 I2C_BUSES=""
 I2C_FOUND=""
 I2C_ALL=""
+I2C_BOGUS=""      # buses that answer for nearly every address (not real buses)
 
 i2c_scan() {
     $I2C_SCANNED && return 0
@@ -418,16 +419,27 @@ i2c_scan() {
     I2C_BUSES=$(i2c_tool i2cdetect -l 2>/dev/null | awk '$1 ~ /^i2c-/ {print $1}' | sort -uV)
     [ -n "$I2C_BUSES" ] || return 1
 
-    local bus map addrs a
+    local bus map addrs a n
     for bus in $I2C_BUSES; do
         map=$(i2c_tool i2cdetect -y "${bus#i2c-}" 2>/dev/null || true)
         [ -n "$map" ] || continue
         addrs=$(echo "$map" | grep -E '^[0-9a-f]{2}:' \
                 | sed 's/^[0-9a-f][0-9a-f]://' \
                 | grep -oE '\b[0-9a-f]{2}\b' | grep -v '^--$')
+        n=$(printf '%s\n' $addrs | grep -c . || true)
+
+        # A bus that answers for (nearly) every address is not a bus: it is an adapter that
+        # ACKs regardless (the vc4-hdmi DDC line is the usual culprit on a Pi). Counting it
+        # turns one bad adapter into dozens of "devices" and can make it look as though two
+        # strapped addresses of the same chip coexist (0x3c and 0x3d), which is impossible.
+        if [ "$n" -gt 0 ] && [ "$n" -ge 32 ]; then
+            I2C_BOGUS="$I2C_BOGUS $bus($n)"
+            continue
+        fi
         for a in $addrs; do I2C_FOUND="$I2C_FOUND $bus:$a"; done
     done
     I2C_FOUND=${I2C_FOUND# }
+    I2C_BOGUS=${I2C_BOGUS# }
     I2C_ALL=$(printf '%s\n' $I2C_FOUND | cut -d: -f2 | sort -u | tr '\n' ' ')
     return 0
 }
@@ -472,10 +484,24 @@ hw_i2c_bus() {
         fi
     done
     [ -n "$known" ] && hw_pass "I2C: $known"
+
+    # 0x3c/0x3d (OLED) and 0x76/0x77 (BME688) are strap options of one chip: a real bus
+    # cannot show both, so the addresses are coming from somewhere that is not a device.
+    has_addr() { printf '%s\n' $I2C_ALL | grep -qx "$1"; }
+    if has_addr 3c && has_addr 3d; then
+        hw_warn "I2C: 0x3c and 0x3d cannot both exist - one OLED, two strap options"
+    fi
+    if has_addr 76 && has_addr 77; then
+        hw_warn "I2C: 0x76 and 0x77 cannot both exist - one BME688, two strap options"
+    fi
+
     # anything else is only counted: display/camera bridges and HATs are not our business
     if [ -n "${unknown// /}" ]; then
         local n; n=$(echo $unknown | wc -w)
         hw_note "I2C: $n other address(es) present (not part of this build)"
+    fi
+    if [ -n "${I2C_BOGUS// /}" ]; then
+        hw_note "I2C: ignoring ${I2C_BOGUS// /, } - answers on nearly every address (adapter, not a bus)"
     fi
     [ "$nbus" -gt 2 ] && hw_note "I2C: $nbus buses exposed"
     return 0
