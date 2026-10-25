@@ -61,7 +61,7 @@ so it runs on a Pi unchanged.
 | per-digest push, then manifest merge | one multi-arch tag serving both architectures |
 | `IMAGE: ghcr.io/${{ github.repository }}` | upstream hardcodes `crosstalk-solutions`, which a fork cannot push to |
 | authorization gate falls open when the secret is unset | the upstream gate reads `DEPLOYMENT_AUTHORIZED_USERS`, absent in a fork, so every build would be skipped |
-| tag list built in bash | an empty `:latest` argument would be a real argv entry, and `imagetools` rejects it |
+| `--tag` flags, built in bash | `imagetools create` treats positional arguments as SOURCES; passing tags positionally fails with `can't push with no tags specified`. Building the list in bash also avoids an empty `:latest` argv entry |
 
 ## Caveats
 
@@ -81,7 +81,23 @@ so it runs on a Pi unchanged.
 - `actionlint` clean on all three files.
 - Installed into a clean clone of the fork; `git diff` is only the intended change.
 - The manifest-merge shell was executed with 1 and 2 digest files, with `tag_latest` both
-  false and true: correct tag list every time, no empty argument.
+  false and true: correct `--tag` list every time, no empty argument, junk files in the
+  digests directory ignored.
+- The exact merge command was dry-run against real alpine amd64 + arm64 digests and
+  produced a correct two-platform index.
+
+### Fixed after the first real run
+
+The first build on the fork failed at the merge step with:
+
+```
+ERROR: can't push with no tags specified, please set --tag or --dry-run
+```
+
+The tags were passed positionally, which `imagetools create` reads as SOURCES. Only the two
+platform builds had succeeded - they pushed untagged digests, so the package had no tags at
+all and `tags: null` in the registry. That is why pulling the index gave an amd64-only
+attestation index.
 
 **Not verified:** an actual `docker buildx` run on GitHub runners. The workflow logic and
 shell are tested; the arm64 build itself has not been executed.

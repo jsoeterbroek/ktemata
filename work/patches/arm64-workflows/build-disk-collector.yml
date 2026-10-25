@@ -126,15 +126,22 @@ jobs:
           TAG_LATEST: ${{ inputs.tag_latest }}
         run: |
           set -eu
-          # Tag list built in bash: when tag_latest is false there must be NO empty argument,
-          # because an empty string is a real argv entry and imagetools rejects it.
-          tags=( "$IMAGE:$VERSION" "$IMAGE:v$VERSION" )
-          if [ "$TAG_LATEST" = "true" ]; then tags+=( "$IMAGE:latest" ); fi
-          # One image ref per digest file. Do not use printf with the image as an extra
-          # argument - printf would consume it as a %s and emit "digest@sha256:".
-          sources=()
-          for f in *; do sources+=( "$IMAGE@sha256:$f" ); done
-          docker buildx imagetools create "${tags[@]}" "${sources[@]}"
+          # Tags go in --tag flags: `imagetools create` treats positional arguments as
+          # SOURCES, so passing them positionally fails with "can't push with no tags
+          # specified". Building the list in bash also avoids an empty :latest argument
+          # when tag_latest is false - an empty string is a real argv entry.
+          args=( --tag "$IMAGE:$VERSION" --tag "$IMAGE:v$VERSION" )
+          if [ "$TAG_LATEST" = "true" ]; then args+=( --tag "$IMAGE:latest" ); fi
+          # One source per digest file. Only names that look like a sha256 hex digest are
+          # used, so a stray file in the artifacts directory cannot become a source.
+          shopt -s nullglob
+          for f in *; do
+            case "$f" in
+              *[!0-9a-f]*|"") continue ;;
+            esac
+            [ ${#f} -eq 64 ] && args+=( "$IMAGE@sha256:$f" )
+          done
+          docker buildx imagetools create "${args[@]}"
       - name: Inspect the result
         env:
           IMAGE: ghcr.io/${{ github.repository }}-disk-collector
