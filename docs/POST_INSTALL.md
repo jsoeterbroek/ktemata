@@ -32,7 +32,8 @@ file, no YAML config, no whiptail menu. Idempotent — safe to re-run.
 | 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
 | 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
 | 11 | Replaces the early boot splash with the logo | `--no-splash`, `--splash [FILE]` |
-| 12 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
+| 12 | Optionally sets `camera_auto_detect=0` in `config.txt` | `--no-camera-autodetect` |
+| 13 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
 not get a Kiwix build that is already superseded.
@@ -196,6 +197,28 @@ Notes:
 - Only the early splash is a static image; the console rotation from `--rotate` applies after it.
 - Nothing changes on a machine with no `/boot/firmware/cmdline.txt`.
 
+## config.txt (opt-in)
+
+Only one `config.txt` change is offered, and only when asked for, because a bad edit there can make the board
+unbootable:
+
+```bash
+sudo ./work/scripts/post-install.sh --no-camera-autodetect
+```
+
+That sets `camera_auto_detect=0` — the build has no CSI camera, so the firmware's camera scan is pure boot
+time. The edit handles the enabled, commented (`#camera_auto_detect=1`) and absent forms, never leaves two live
+lines, keeps `config.txt.ktemata.bak` once, and is a no-op when already disabled.
+
+**Deliberately not touched:**
+
+| Setting | Why |
+|---|---|
+| `display_auto_detect=1` | it loads overlays for recognised DSI displays — `0` would stop the Touch Display 2 being detected |
+| `display_rotate` | firmware-legacy, deprecated, ignored by the KMS driver on Pi 5; rotation belongs in `cmdline.txt` (`--rotate`) |
+| `dtparam=audio=on` | stock and harmless; the build does not need it changed |
+| `dtoverlay=nospi10` | Pi 5 stock; it disables `spi10`, which shares pins with the DSI touch path |
+
 ## Autologin
 
 The device is a single-purpose appliance: it should come up in the library without a password prompt.
@@ -339,6 +362,8 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --no-wallpaper     leave the desktop background alone
     --wallpaper [FILE] set it (default), optionally from FILE
     --no-splash        leave the boot splash alone
+    --no-camera-autodetect
+                       set camera_auto_detect=0 in config.txt (opt-in)
     --splash [FILE]    replace the boot splash, optionally from a 24-bit TGA
     --no-autologin     leave the GDM login screen
     --autologin-user N account to log in automatically (default ktemata)
@@ -372,6 +397,11 @@ left untouched. **GDM** (Ubuntu): insert into a stock `custom.conf`, replace an 
 `AutomaticLoginEnable=false` / `AutomaticLogin=pi`, append a missing `[daemon]` section to a config that only
 had `[security]`, and the Debian layout where only `daemon.conf` exists. Each case leaves the other sections
 intact and keeps a backup identical to the original.
+
+The `config.txt` edit was tested against the actual Pi 5 file: the diff is exactly one line
+(`camera_auto_detect=1` → `0`), `dtparam=audio=on` and `display_auto_detect=1` are untouched, a
+second run reports "already disabled", the commented and absent forms both end with one live line, a
+dry run changes nothing, and a default (no-flag) run leaves the file byte-identical.
 
 Both orientations were run through the real script: landscape gives `RGB 1920 x 1080 x 24` (104 colours),
 portrait `RGB 608 x 1080 x 24` (102 colours), and a bad value is rejected before any work starts. The rendered

@@ -62,6 +62,7 @@ WALLPAPER_DONE=false
 WALLPAPER_IMG=""
 WALLPAPER_WHY="not applied"
 WITH_SPLASH=true
+WITH_NOCAMERA=false     # opt-in: only edit config.txt when asked
 SPLASH_ORIENTATION=${SPLASH_ORIENTATION:-landscape}
 WALLPAPER_SRC=${WALLPAPER_SRC:-}       # optional override; default installs the repo artwork
 
@@ -109,6 +110,9 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-wallpaper     Do not set the desktop background.
       --wallpaper [FILE] Set the background (default), or use this image instead of the logo.
       --no-splash        Do not change the boot splash screen.
+      --no-camera-autodetect
+                         Set camera_auto_detect=0 in config.txt (no CSI camera in this
+                         build). Touches config.txt, so it is opt-in.
       --splash [FILE]    Enable the boot splash (default), or use this 24-bit TGA
                          (<=1920x1080, <=224 colours).
       --splash-orientation WHAT
@@ -1213,6 +1217,54 @@ install_splash() {
     log_info "splash: $tga (takes effect on the next boot)"
 }
 
+# Turn off the firmware's CSI-camera probe. The build has no camera, so this only removes
+# a boot-time scan. Opt-in: config.txt can make the board unbootable, so nothing here runs
+# unless asked for, and the edit is the narrowest possible.
+#
+# Deliberately NOT touched:
+#   display_auto_detect=1  - it loads overlays for the DSI display; 0 breaks the TD2
+#   display_rotate         - firmware-legacy, ignored by the KMS driver on Pi 5
+#   dtparam=audio=on       - stock, and the build does not need it changed
+set_camera_autodetect_off() {
+    $WITH_NOCAMERA || return 0
+    log_stage "Camera autodetect"
+
+    local cfg="${CONFIG_TXT:-/boot/firmware/config.txt}"
+    if [ ! -f "$cfg" ]; then
+        log_info "no $cfg: not a Raspberry Pi boot partition, skipping"
+        return 0
+    fi
+
+    if grep -qE '^[[:space:]]*camera_auto_detect=0' "$cfg"; then
+        log_ok "already disabled"
+        return 0
+    fi
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s set camera_auto_detect=0 in %s\n' "$C_YELLOW" "$C_OFF" "$cfg"
+        return 0
+    fi
+
+    [ -f "$cfg.ktemata.bak" ] || cp -a "$cfg" "$cfg.ktemata.bak"
+
+    # commented ("#camera_auto_detect=1"), enabled, or absent: handle all three, and never
+    # leave two live copies
+    if grep -qE '^[#[:space:]]*camera_auto_detect[[:space:]]*=' "$cfg"; then
+        sed -i -E 's|^[#[:space:]]*camera_auto_detect[[:space:]]*=.*|camera_auto_detect=0|' "$cfg"
+    else
+        printf 'camera_auto_detect=0\n' >>"$cfg"
+    fi
+
+    local n
+    n=$(grep -c '^camera_auto_detect=' "$cfg")
+    if [ "$n" = 1 ] && grep -qx 'camera_auto_detect=0' "$cfg"; then
+        log_ok "camera_auto_detect=0 ($cfg)"
+    else
+        log_error "camera_auto_detect edit looks wrong: $n live line(s)"
+        log_warn "restore with: sudo cp $cfg.ktemata.bak $cfg"
+    fi
+}
+
 install_kiosk() {
     $WITH_KIOSK || { log_stage "Kiosk"; log_info "skipped (pass --kiosk to enable)"; return 0; }
     log_stage "Kiosk"
@@ -1453,12 +1505,14 @@ main() {
                 if [ $# -ge 2 ] && [ -f "$2" ]; then WALLPAPER_SRC=$2; shift; else WALLPAPER_SRC=""; fi
                 WITH_WALLPAPER=true ;;
             --no-splash)     WITH_SPLASH=false ;;
+            --no-camera-autodetect) WITH_NOCAMERA=true ;;
             --splash-orientation)
                 SPLASH_ORIENTATION=${2:?--splash-orientation takes landscape or portrait}; shift ;;
             # bare --splash just means "enable it" (the default image); a path is an override
             --splash)
                 if [ $# -ge 2 ] && [ -f "$2" ]; then SPLASH_SRC=$2; shift; else SPLASH_SRC=""; fi
                 WITH_SPLASH=true
+WITH_NOCAMERA=false     # opt-in: only edit config.txt when asked
 SPLASH_ORIENTATION=${SPLASH_ORIENTATION:-landscape} ;;
             --autologin-user) AUTOLOGIN_USER=${2:?--autologin-user needs a name}; shift ;;
             --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
@@ -1504,6 +1558,7 @@ SPLASH_ORIENTATION=${SPLASH_ORIENTATION:-landscape} ;;
     install_autologin
     install_wallpaper
     install_splash
+    set_camera_autodetect_off
     install_kiosk
     $WITH_SAMPLE && download_sample
     verify
