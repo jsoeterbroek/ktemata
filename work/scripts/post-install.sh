@@ -1336,6 +1336,31 @@ grant_library_access() {
     run_sh "chgrp -R '$SERVICE_USER' '$ZIM_DIR' && chmod -R g+rX '$ZIM_DIR'"
 }
 
+# Build $ZIM_DIR/library.xml from the archives present, using kiwix-manage (part of
+# kiwix-tools). Called once here and on every service start via ExecStartPre, so adding a ZIM
+# and restarting is all that is needed.
+rebuild_library() {
+    local xml="$ZIM_DIR/library.xml" z tmp n=0
+    $DRY_RUN && { printf '%s  [dry-run]%s build %s\n' "$C_YELLOW" "$C_OFF" "$xml"; return 0; }
+
+    for z in "$ZIM_DIR"/*.zim; do [ -e "$z" ] && n=$((n + 1)); done
+    if [ "$n" -eq 0 ]; then
+        log_info "no ZIM files yet; the service waits for $xml"
+        return 0
+    fi
+
+    tmp="$xml.tmp"
+    printf '<library version="20110515">\n</library>\n' >"$tmp"
+    for z in "$ZIM_DIR"/*.zim; do
+        [ -e "$z" ] || continue
+        kiwix-manage "$tmp" add "$z" >/dev/null 2>&1 || log_warn "could not add $(basename "$z")"
+    done
+    mv "$tmp" "$xml"
+    chgrp "$SERVICE_USER" "$xml" 2>/dev/null || true
+    chmod 0644 "$xml"
+    log_ok "library.xml: $n archive(s)"
+}
+
 install_service() {
     $WITH_SERVICE || { log_stage "Service"; log_info "skipped (--no-service)"; return 0; }
     log_stage "Service"
@@ -1351,14 +1376,21 @@ install_service() {
 Description=Kiwix offline library server
 Documentation=https://wiki.kiwix.org/wiki/Kiwix-serve
 After=network.target
-# no archives yet -> nothing to serve; start once a ZIM is present
-ConditionPathExistsGlob=$ZIM_DIR/*.zim
+# Gate on the directory, not the XML: ExecStartPre rebuilds the XML from the ZIM files, and
+# a Condition on the XML would suppress ExecStartPre as well, so the library could never be
+# created. An empty directory still leaves nothing to serve, but that is a normal idle unit.
+ConditionPathExists=$ZIM_DIR
 
 [Service]
 Type=simple
 User=$SERVICE_USER
 Group=$SERVICE_USER
-ExecStart=/usr/bin/kiwix-serve --port=$SERVICE_PORT $ZIM_DIR/*.zim
+# The XML lists the archives; regenerate it on every start so dropping in a new ZIM and
+# restarting is enough. Passed as argv (no shell), so quoting is simple.
+ExecStartPre=/usr/local/bin/kiwix-library
+# No ZIMs -> the XML is absent -> would exit 1 and restart. sh -c lets us exit 0 instead and
+# wait for a restart, so an idle card does not produce a restart loop.
+ExecStart=/bin/sh -c 'if [ -f "$ZIM_DIR/library.xml" ]; then exec /usr/bin/kiwix-serve --port=$SERVICE_PORT --library "$ZIM_DIR/library.xml"; fi; echo "no ZIM files yet in $ZIM_DIR"; exit 0'
 Restart=on-failure
 RestartSec=3
 # the library is read-only; keep the service boxed in
@@ -1374,6 +1406,34 @@ EOF
         chmod 0644 "$unit"
         log_ok "unit written"
     fi
+
+    # small wrapper so ExecStartPre does not need a shell in the unit
+    if ! $DRY_RUN; then
+        cat >/usr/local/bin/kiwix-library <<HELPER
+#!/bin/sh
+# Rebuild the kiwix library XML from the ZIM files in the directory.
+set -e
+dir=$ZIM_DIR
+xml=\$dir/library.xml
+set --
+for z in "\$dir"/*.zim; do
+    [ -e "\$z" ] && set -- "\$@" "\$z"
+done
+[ "\$#" -gt 0 ] || exit 0
+tmp=\$xml.tmp
+printf '<library version="20110515">\\n</library>\\n' > "\$tmp"
+for z in "\$@"; do
+    kiwix-manage "\$tmp" add "\$z"
+done
+mv "\$tmp" "\$xml"
+chgrp $SERVICE_USER "\$xml" 2>/dev/null || true
+chmod 0644 "\$xml"
+HELPER
+        chmod 0755 /usr/local/bin/kiwix-library
+        log_ok "/usr/local/bin/kiwix-library"
+    fi
+
+    rebuild_library
 
     if have_systemd; then
         run systemctl daemon-reload

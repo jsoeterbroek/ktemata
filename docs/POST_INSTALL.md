@@ -96,7 +96,7 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | **Pi RTC** | `/dev/rtc0` with a sane epoch | FAIL if the cell is flat/unset; hints at `dtparam=rtc_bbat_vchg=3000000` |
 | **Storage** | ≥ 2 GB free on `/`, and the ZIM library not empty | FAIL on an empty library, because `kiwix-serve` will not start |
 | **Network** | any interface `up` | SKIP when none — normal, Wi-Fi/LAN are off |
-| **Port** | 8080 listening | informational only |
+| **Port** | 8080 listening | informational only. It is not listening on a fresh install because there is no `library.xml` until a ZIM exists |
 
 Checks never block the install: findings are counted and reported. `--strict` fails the run on a **fault**
 (undervoltage), not on a **warning** (heat). `--hwtest-only` prints the report and exits without touching the
@@ -312,14 +312,30 @@ window that never appears.
 ## kiwix-serve
 
 The unit runs as the unprivileged `kiwix` user and is hardened (`NoNewPrivileges`, `ProtectSystem=strict`,
-read-only library). It carries
+read-only library).
+
+It serves through a **library XML**, not a glob:
+
+```ini
+ConditionPathExists=/srv/kiwix/zim
+ExecStartPre=/usr/local/bin/kiwix-library
+ExecStart=/bin/sh -c 'if [ -f "$ZIM_DIR/library.xml" ]; then exec kiwix-serve --library …; fi; exit 0'
+```
+
+Why: **systemd does not run `ExecStart` through a shell**, so a bare `/srv/kiwix/zim/*.zim` arrives at
+kiwix-serve as the literal string and it exits 1:
 
 ```
-ConditionPathExistsGlob=/srv/kiwix/zim/*.zim
+Unable to add the ZIM file '/srv/kiwix/zim/*.zim' to the internal library.
 ```
 
-so on a fresh install with an empty library it stays inactive instead of failing in a restart loop. Drop ZIMs
-in and `systemctl restart kiwix`.
+`--library` takes an XML listing instead. `kiwix-library` (installed to `/usr/local/bin`) rebuilds that XML
+from the `*.zim` files on every start, so dropping in an archive and restarting is enough. `kiwix-manage`
+does the listing.
+
+The condition is on the **directory**, not the XML: a `ConditionPathExists` on the XML would also suppress
+`ExecStartPre`, so the library could never be created. With no archives at all the start command prints
+`no ZIM files yet` and exits 0, so an idle card produces an idle unit rather than a restart loop.
 
 The service user must be able to read the archives, so the script sets the library group to `kiwix` with
 `g+rX` — and repeats that after the `--sample` download, which otherwise lands `root:root` and is invisible
