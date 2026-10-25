@@ -404,61 +404,93 @@ i2c_tool() {
     return 127
 }
 
+# Scan once and cache: hw_ups needs the same data, and i2cdetect over every bus is slow.
+# Sets I2C_BUSES, I2C_FOUND ("bus:addr ...") and I2C_ALL (unique lowercase addresses).
+I2C_SCANNED=false
+I2C_BUSES=""
+I2C_FOUND=""
+I2C_ALL=""
+
+i2c_scan() {
+    $I2C_SCANNED && return 0
+    I2C_SCANNED=true
+    i2c_tool i2cdetect -l >/dev/null 2>&1 || return 1
+    I2C_BUSES=$(i2c_tool i2cdetect -l 2>/dev/null | awk '$1 ~ /^i2c-/ {print $1}' | sort -uV)
+    [ -n "$I2C_BUSES" ] || return 1
+
+    local bus map addrs a
+    for bus in $I2C_BUSES; do
+        map=$(i2c_tool i2cdetect -y "${bus#i2c-}" 2>/dev/null || true)
+        [ -n "$map" ] || continue
+        addrs=$(echo "$map" | grep -E '^[0-9a-f]{2}:' \
+                | sed 's/^[0-9a-f][0-9a-f]://' \
+                | grep -oE '\b[0-9a-f]{2}\b' | grep -v '^--$')
+        for a in $addrs; do I2C_FOUND="$I2C_FOUND $bus:$a"; done
+    done
+    I2C_FOUND=${I2C_FOUND# }
+    I2C_ALL=$(printf '%s\n' $I2C_FOUND | cut -d: -f2 | sort -u | tr '\n' ' ')
+    return 0
+}
+
+# Label our own devices so the report names them instead of dumping raw addresses.
+i2c_label() {
+    case $1 in
+        42) echo "UPS INA219" ;;
+        3c|3d) echo "OLED" ;;
+        68) echo "DS3231" ;;
+        76|77) echo "BME688" ;;
+        *)  return 1 ;;
+    esac
+}
+
 hw_i2c_bus() {
-    # The FireBeetle, not the Pi, is the I2C master (the Pi has no 40-pin header in this build),
-    # so a bare Pi normally shows no devices. Detect the bus and report what is on it.
+    # The FireBeetle, not the Pi, is the I2C master (the Pi has no 40-pin header in this
+    # build), so a bare Pi shows nothing useful. Report our devices, not every address.
     if ! i2c_tool i2cdetect -l >/dev/null 2>&1; then
         hw_skip "I2C (i2c-tools not installed: sudo apt install i2c-tools)"
         return
     fi
-    local buses
-    buses=$(i2c_tool i2cdetect -l 2>/dev/null | awk '$1 ~ /^i2c-/ {print $1}' | sort -uV | tr '\n' ' ')
-    if [ -z "${buses// /}" ]; then
+    if ! i2c_scan || [ -z "${I2C_BUSES// /}" ]; then
         hw_skip "I2C (no bus exposed; enable I2C in raspi-config)"
         return
     fi
 
-    local found="" bus map nbus
-    nbus=$(echo $buses | wc -w)
-    hw_note "$nbus I2C bus(es) exposed"
-    for bus in $buses; do
-        map=$(i2c_tool i2cdetect -y "${bus#i2c-}" 2>/dev/null || true)
-        [ -n "$map" ] || continue
-        local addrs
-        addrs=$(echo "$map" | awk 'NR>1 {for (i=2;i<=NF;i++) if ($i ~ /^[0-9a-f][0-9a-f]$/) print $i}')
-        [ -n "$addrs" ] && found="$found $bus:$addrs"
-    done
+    local nbus; nbus=$(echo $I2C_BUSES | wc -w)
 
-    if [ -z "$found" ]; then
-        hw_skip "I2C devices (none found on ${nbus} bus(es); the FireBeetle is the I2C master in this build)"
+    if [ -z "${I2C_FOUND// /}" ]; then
+        hw_skip "I2C: nothing on ${nbus} bus(es) — the FireBeetle is the I2C master in this build"
         return
     fi
-    hw_pass "I2C devices:$found"
 
-    # expected addresses from the r4 topology; only complain about ones we know about
-    local all; all=$(echo "$found" | tr ' :' '\n\n' | sort -u)
-    for spec in "42:UPS INA219 gauge" "3c:OLED" "3d:OLED (alternate)" "68:DS3231" "76:BME688" "77:BME688 (alt)"; do
-        local addr=${spec%%:*} label=${spec#*:}
-        if echo "$all" | grep -qx "$addr"; then hw_pass "  $label at 0x$addr"; fi
+    # one line for our devices: "0x42 (UPS INA219), 0x68 (DS3231)"
+    local known="" unknown="" addr label
+    for addr in $I2C_ALL; do
+        if label=$(i2c_label "$addr"); then
+            known="${known:+$known, }0x$addr ($label)"
+        else
+            unknown="$unknown $addr"
+        fi
     done
+    [ -n "$known" ] && hw_pass "I2C: $known"
+    # anything else is only counted: display/camera bridges and HATs are not our business
+    if [ -n "${unknown// /}" ]; then
+        local n; n=$(echo $unknown | wc -w)
+        hw_note "I2C: $n other address(es) present (not part of this build)"
+    fi
+    [ "$nbus" -gt 2 ] && hw_note "I2C: $nbus buses exposed"
+    return 0
 }
 
 hw_ups() {
-    # The HAT (B) reports through the INA219 at 0x42 on the FireBeetle bus. On the Pi itself
-    # there is nothing to read, so this only reports whether the address was seen above.
-    if ! i2c_tool i2cdetect -l >/dev/null 2>&1; then
-        hw_skip "UPS gauge (i2c-tools not installed: sudo apt install i2c-tools)"
-        return
-    fi
-    local hit=0 bus map
-    for bus in $(i2c_tool i2cdetect -l 2>/dev/null | awk '$1 ~ /^i2c-/ {print $1}'); do
-        map=$(i2c_tool i2cdetect -y "${bus#i2c-}" 2>/dev/null || true)
-        echo "$map" | grep -qw 42 && { hit=1; break; }
-    done
-    if [ "$hit" = 1 ]; then
+    # The HAT (B) reports through the INA219 at 0x42 on the FireBeetle bus, so on the Pi itself
+    # this only reports whether 0x42 appeared in the scan above.
+    i2c_tool i2cdetect -l >/dev/null 2>&1 || { hw_skip "UPS gauge (i2c-tools not installed)"; return; }
+    i2c_scan || { hw_skip "UPS gauge (no I2C bus)"; return; }
+
+    if printf '%s\n' $I2C_ALL | grep -qx 42; then
         hw_pass "UPS HAT (B) INA219 answering at 0x42"
     else
-        hw_skip "UPS HAT (B) gauge at 0x42 not visible from the Pi (it is read by the FireBeetle)"
+        hw_skip "UPS HAT (B) gauge at 0x42 not visible from the Pi (the FireBeetle reads it)"
     fi
 }
 
