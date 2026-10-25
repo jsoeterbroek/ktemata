@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 608 1080" width="608" height="1080">
+  <!--
+    Portrait boot splash. Native portrait layout with upright text, 608x1080 so both
+    dimensions stay inside the firmware's 1920x1080 limit (configure-splash rejects either
+    axis larger than 1080) and it fits the Touch Display 2's 720x1280 panel when scaled.
+    Keep it within 224 colours; the build quantises anyway.
+  -->
+  <rect width="608" height="1080" fill="#000000"/>
+
+  <g transform="translate(304 400)" fill="none" stroke="#c98a45" stroke-width="7" stroke-linejoin="round">
+    <path d="M-115 -40 C -67 -62, -24 -62, 0 -36 C 24 -62, 67 -62, 115 -40 L115 66 C 67 45, 24 45, 0 70 C -24 45, -67 45, -115 66 Z"/>
+    <path d="M0 -36 V70"/>
+  </g>
+
+  <text x="304" y="640" text-anchor="middle" font-family="Liberation Sans, DejaVu Sans, sans-serif"
+        font-size="86" font-weight="700" letter-spacing="9" fill="#f2ebe0">KTEMATA</text>
+  <text x="304" y="710" text-anchor="middle" font-family="Liberation Sans, DejaVu Sans, sans-serif"
+        font-size="34" font-style="italic" fill="#c99a63">κτῆμα ἐς ἀεί</text>
+</svg>

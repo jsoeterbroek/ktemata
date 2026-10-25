@@ -169,10 +169,17 @@ then ImageMagick (7's `magick` on Debian, 6's `convert` on Ubuntu) — quantises
 3. uses `/usr/bin/configure-splash` directly when that package is installed
 
 ```bash
-sudo ./work/scripts/post-install.sh --splash             # default logo
-sudo ./work/scripts/post-install.sh --splash logo.tga    # your own, must meet the constraints
+sudo ./work/scripts/post-install.sh --splash                         # default logo (landscape)
+sudo ./work/scripts/post-install.sh --splash --splash-orientation portrait
+sudo ./work/scripts/post-install.sh --splash logo.tga                # your own TGA
 sudo ./work/scripts/post-install.sh --no-splash
 ```
+
+**Orientation.** `configure-splash` rejects either axis above 1080, so a portrait splash cannot be
+1080×1920; portrait renders at **608×1080** from
+[`docs/ktemata-splash-portrait.svg`](../docs/ktemata-splash-portrait.svg), a separate file with an upright
+layout (rotating the landscape artwork leaves the text sideways). The Touch Display 2 is natively 720×1280,
+so if the splash appears rotated relative to the case, switch to `--splash-orientation portrait`.
 
 Notes:
 
@@ -351,6 +358,10 @@ Autologin was tested against real-shaped GDM configs in a container: **insert** 
 missing `[daemon]` section to a config that only had `[security]`, and the Debian layout where only
 `daemon.conf` exists (the script must not create a stray `custom.conf`). Each case leaves the other sections
 intact and writes a backup identical to the original.
+
+Both orientations were run through the real script: landscape gives `RGB 1920 x 1080 x 24` (104 colours),
+portrait `RGB 608 x 1080 x 24` (102 colours), and a bad value is rejected before any work starts. The rendered
+TGA was converted back to PNG and inspected — the artwork is centred with upright text in both.
 
 The wallpaper and splash steps were run end-to-end on both **Debian 13** and **Ubuntu 24.04** containers: the
 pcmanfm config points at the per-user PNG with `desktop_bg=#000000`; the splash comes out as

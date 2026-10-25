@@ -59,6 +59,7 @@ AUTOLOGIN_USER=${AUTOLOGIN_USER:-ktemata}
 WITH_AUTOLOGIN=true
 WITH_WALLPAPER=true
 WITH_SPLASH=true
+SPLASH_ORIENTATION=${SPLASH_ORIENTATION:-landscape}
 WALLPAPER_SRC=${WALLPAPER_SRC:-}       # optional override; default installs the repo artwork
 
 # ---------------- output ----------------
@@ -107,6 +108,10 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-splash        Do not change the boot splash screen.
       --splash [FILE]    Enable the boot splash (default), or use this 24-bit TGA
                          (<=1920x1080, <=224 colours).
+      --splash-orientation WHAT
+                         landscape (default) or portrait. The Touch Display 2 is natively
+                         720x1280, so the firmware may draw the splash rotated relative to
+                         the case; try portrait if that happens.
       --autologin-user N Account to log in automatically (default: ktemata).
   -h, --help             This message.
   -V, --version          Print the version.
@@ -999,10 +1004,22 @@ install_splash() {
             return 0
         fi
         local src
-        if has_command rsvg-convert && [ -r "$dir/../../docs/ktemata-splash.svg" ]; then
+        # configure-splash rejects anything larger than 1920x1080 in EITHER axis, so a
+        # portrait splash has to fit in 1080 height: 608x1080 is the 9:16 equivalent.
+        local w h
+        case $SPLASH_ORIENTATION in
+            portrait) w=608;  h=1080 ;;
+            *)        w=1920; h=1080 ;;
+        esac
+        # There are two source SVGs rather than one rotated at build time: rotating the
+        # landscape artwork leaves the text sideways. The portrait file lays the same content
+        # out upright for a 9:16 panel.
+        local svg="$dir/../../docs/ktemata-splash.svg"
+        [ "$SPLASH_ORIENTATION" = portrait ] && svg="$dir/../../docs/ktemata-splash-portrait.svg"
+        if has_command rsvg-convert && [ -r "$svg" ]; then
             src="$tga.png"
-            rsvg-convert -w 1920 -h 1080 "$dir/../../docs/ktemata-splash.svg" -o "$src"
-            log_ok "rendered from docs/ktemata-splash.svg"
+            rsvg-convert -w "$w" -h "$h" "$svg" -o "$src"
+            log_ok "rendered from $(basename "$svg") ($SPLASH_ORIENTATION ${w}x${h})"
         elif [ -r "$dir/ktemata-splash.png" ]; then
             src="$dir/ktemata-splash.png"
             log_ok "using the bundled splash PNG"
@@ -1019,9 +1036,21 @@ install_splash() {
     fi
 
     # the firmware only accepts TGA, 24-bit, <=1920x1080
-    case $(file -b "$tga") in
-        *"Targa image data - RGB"*"x 24"*) ;;
-        *) log_warn "generated splash is not a 24-bit RGB TGA: $(file -b "$tga")"
+    local dims
+    dims=$(file -b "$tga")
+    case $dims in
+        *"Targa image data - RGB"*"x 24"*)
+            # configure-splash also rejects >1920x1080, so check rather than find out at boot
+            local pw ph
+            pw=$(echo "$dims" | sed -n 's/.*[[:space:]]\([0-9][0-9]*\) x \([0-9][0-9]*\) x 24.*/\1/p')
+            ph=$(echo "$dims" | sed -n 's/.*[[:space:]]\([0-9][0-9]*\) x \([0-9][0-9]*\) x 24.*/\2/p')
+            if [ -n "$pw" ] && { [ "$pw" -gt 1920 ] || [ "$ph" -gt 1080 ]; }; then
+                log_warn "splash is ${pw}x${ph}; the firmware accepts at most 1920x1080"
+                log_warn "use --splash-orientation portrait (608x1080) for a portrait panel"
+                return 0
+            fi
+            ;;
+        *) log_warn "generated splash is not a 24-bit RGB TGA: $dims"
            log_warn "leaving cmdline.txt alone"; return 0 ;;
     esac
 
@@ -1313,10 +1342,13 @@ main() {
                 if [ $# -ge 2 ] && [ -f "$2" ]; then WALLPAPER_SRC=$2; shift; else WALLPAPER_SRC=""; fi
                 WITH_WALLPAPER=true ;;
             --no-splash)     WITH_SPLASH=false ;;
+            --splash-orientation)
+                SPLASH_ORIENTATION=${2:?--splash-orientation takes landscape or portrait}; shift ;;
             # bare --splash just means "enable it" (the default image); a path is an override
             --splash)
                 if [ $# -ge 2 ] && [ -f "$2" ]; then SPLASH_SRC=$2; shift; else SPLASH_SRC=""; fi
-                WITH_SPLASH=true ;;
+                WITH_SPLASH=true
+SPLASH_ORIENTATION=${SPLASH_ORIENTATION:-landscape} ;;
             --autologin-user) AUTOLOGIN_USER=${2:?--autologin-user needs a name}; shift ;;
             --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
             --rotate)        ROTATE=${2:?--rotate needs normal|left|right|inverted}; shift ;;
@@ -1334,6 +1366,8 @@ main() {
     # fail fast on a bad --rotate instead of halfway through the install
     [ -z "$ROTATE" ] || rotation_degrees "$ROTATE" >/dev/null
     case ${POWER_SOURCE:-usbc} in usbc|hat) ;; *) die "--power takes usbc or hat" ;; esac
+    case $SPLASH_ORIENTATION in landscape|portrait) ;;
+        *) die "--splash-orientation takes landscape or portrait" ;; esac
 
     $DRY_RUN || require_root "$@"
 
