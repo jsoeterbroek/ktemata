@@ -25,7 +25,7 @@ file, no YAML config, no whiptail menu. Idempotent — safe to re-run.
 | 1 | Platform check: Debian/Ubuntu derivative, warns on untested arch | — |
 | 2 | **Hardware checks** — see below; runs *before* anything is changed | `--no-hwtest`, `--hwtest-only`, `--strict` |
 | 3 | **System update**: `apt-get update` then a non-interactive `full-upgrade` (keeps existing conffiles) | `--no-update` |
-| 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app | `--no-gui` |
+| 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app; `librsvg2-bin` + `imagemagick` for the artwork, `i2c-tools` for the hardware report | `--no-gui`, `--no-splash`/`--no-wallpaper` |
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | — |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service` |
 | 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
@@ -164,7 +164,11 @@ constraints are strict: a **24-bit TGA**, at most **1920 × 1080**, at most **22
 
 The script renders [`docs/ktemata-splash.svg`](../docs/ktemata-splash.svg) at install time — `rsvg-convert`
 then ImageMagick (7's `magick` on Debian, 6's `convert` on Ubuntu) — quantises to 224 colours, and writes a
-24-bit RGB TGA, so an updated logo propagates without committing a 6 MB bitmap. It then:
+24-bit RGB TGA, so an updated logo propagates without committing a 6 MB bitmap.
+
+Both packages are installed by the script when either artwork step is enabled (`librsvg2-bin`,
+`imagemagick`, plus `file` to verify the TGA); with `--no-splash --no-wallpaper` they are not pulled in at all.
+It then:
 
 1. copies the TGA to `/lib/firmware/logo.tga` and installs the initramfs hook, rebuilding the initramfs
 2. adds `fullscreen_logo=1 fullscreen_logo_name=logo.tga vt.global_cursor_default=0` to `cmdline.txt`
@@ -372,6 +376,11 @@ intact and keeps a backup identical to the original.
 Both orientations were run through the real script: landscape gives `RGB 1920 x 1080 x 24` (104 colours),
 portrait `RGB 608 x 1080 x 24` (102 colours), and a bad value is rejected before any work starts. The rendered
 TGA was converted back to PNG and inspected — the artwork is centred with upright text in both.
+
+From a clean `debian:trixie` container the script installs its own dependencies and completes both artwork
+steps: wallpaper rendered at 1920×1080, splash `RGB 1920 x 1080 x 24`. Package selection was checked for each
+flag combination — default pulls librsvg2-bin/imagemagick/file, `--no-splash` still pulls them for the
+wallpaper, `--no-splash --no-wallpaper` pulls neither.
 
 The wallpaper and splash steps were run end-to-end on both **Debian 13** and **Ubuntu 24.04** containers: the
 pcmanfm config points at the per-user PNG with `desktop_bg=#000000`; the splash comes out as

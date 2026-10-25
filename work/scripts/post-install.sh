@@ -58,6 +58,9 @@ KIOSK_USER=${KIOSK_USER:-${SUDO_USER:-}}   # whose session autostarts the kiosk
 AUTOLOGIN_USER=${AUTOLOGIN_USER:-ktemata}
 WITH_AUTOLOGIN=true
 WITH_WALLPAPER=true
+WALLPAPER_DONE=false
+WALLPAPER_IMG=""
+WALLPAPER_WHY="not applied"
 WITH_SPLASH=true
 SPLASH_ORIENTATION=${SPLASH_ORIENTATION:-landscape}
 WALLPAPER_SRC=${WALLPAPER_SRC:-}       # optional override; default installs the repo artwork
@@ -766,6 +769,17 @@ install_packages() {
     fi
     # the hardware report uses i2cdetect/vcgencmd; harmless if a package is unavailable
     $WITH_HWTEST && pkgs+=(i2c-tools)
+    # The splash is built from an SVG into a 24-bit TGA: rsvg-convert renders it, ImageMagick
+    # quantises and converts. Without either, the step falls back (bundled PNG) or skips, so
+    # these are only pulled in when a splash is wanted.
+    if $WITH_SPLASH; then
+        pkgs+=(librsvg2-bin imagemagick file)
+    fi
+    # the wallpaper is rendered from the same SVG; rsvg-convert is what renders it, so the
+    # splash branch above usually covers this, but a --no-splash run still wants a wallpaper
+    if $WITH_WALLPAPER && ! $WITH_SPLASH; then
+        pkgs+=(librsvg2-bin imagemagick)
+    fi
 
     log_info "installing: ${pkgs[*]}"
     # with --no-update the package lists were not refreshed yet
@@ -934,9 +948,11 @@ install_wallpaper() {
 
     # target user: the autologin account is the one whose desktop is actually shown
     local owner=${KIOSK_USER:-$AUTOLOGIN_USER}
-    id -u "$owner" >/dev/null 2>&1 || { log_warn "no user $owner; skipping wallpaper"; return 0; }
+    id -u "$owner" >/dev/null 2>&1 || {
+        WALLPAPER_WHY="not applied (no user $owner)"; log_warn "no user $owner; skipping wallpaper"; return 0; }
     home=$(getent passwd "$owner" | cut -d: -f6)
-    [ -d "$home" ] || { log_warn "no home for $owner; skipping wallpaper"; return 0; }
+    [ -d "$home" ] || {
+        WALLPAPER_WHY="not applied (no home for $owner)"; log_warn "no home for $owner; skipping"; return 0; }
 
     install -d -m 0755 /usr/local/share/ktemata
     user_img="$home/.local/share/ktemata/ktemata-wallpaper.png"
@@ -958,6 +974,7 @@ install_wallpaper() {
             install -m 0644 "$dir/ktemata-wallpaper.png" /usr/local/share/ktemata/ktemata-wallpaper.png
             log_ok "installed the pre-rendered PNG"
         else
+            WALLPAPER_WHY="not applied (no source image; apt install librsvg2-bin)"
             log_warn "no wallpaper source (need rsvg-convert, or --wallpaper FILE); skipping"
             return 0
         fi
@@ -1044,6 +1061,8 @@ EOF
         fi
     fi
 
+    WALLPAPER_DONE=true
+    WALLPAPER_IMG=$img
     log_info "image: $img"
 }
 
@@ -1395,8 +1414,10 @@ summary() {
     if $WITH_AUTOLOGIN; then
         printf '  autologin %s (GDM)\n' "$AUTOLOGIN_USER"
     fi
-    if $WITH_WALLPAPER; then
-        printf '  wallpaper /usr/local/share/ktemata/ktemata-wallpaper.png\n'
+    if $WITH_WALLPAPER && [ "${WALLPAPER_DONE:-false}" = true ]; then
+        printf '  wallpaper %s\n' "$WALLPAPER_IMG"
+    elif $WITH_WALLPAPER; then
+        printf '  wallpaper %s\n' "${WALLPAPER_WHY:-not applied}"
     fi
     if $WITH_SPLASH; then
         printf '  splash    /usr/local/share/ktemata/ktemata-splash.tga (next boot)\n'
