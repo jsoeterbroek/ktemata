@@ -1,0 +1,145 @@
+name: Build Primary Docker Image
+
+# Fork change: builds linux/amd64 and linux/arm64, and pushes to this fork's own namespace
+# (upstream hardcodes crosstalk-solutions).
+#
+# Why: upstream publishes amd64 only; the admin Dockerfile is already architecture-aware
+# (it pins PMTILES_SHA256_ARM64 and switches on TARGETARCH), so only the workflow needed
+# changing. Sidecars are FROM alpine:3.20 + apk packages, all multi-arch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Semantic version to label the Docker image under (no "v" prefix, e.g. "1.2.3")'
+        required: true
+        type: string
+      tag_latest:
+        description: 'Also tag this image as :latest?'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  check_authorization:
+    name: Check authorization to publish new Docker image
+    runs-on: ubuntu-latest
+    outputs:
+      isAuthorized: ${{ steps.check-auth.outputs.is_authorized }}
+    steps:
+      - name: check-auth
+        id: check-auth
+        # Fork change: upstream only allows actors listed in DEPLOYMENT_AUTHORIZED_USERS,
+        # a secret that does not exist in a fork, so every build would be skipped.
+        env:
+          AUTHORIZED: ${{ secrets.DEPLOYMENT_AUTHORIZED_USERS }}
+          ACTOR: ${{ github.triggering_actor }}
+        run: |
+          if [ -z "$AUTHORIZED" ]; then
+            echo "is_authorized=true" >> "$GITHUB_OUTPUT"
+          elif printf '%s' "$AUTHORIZED" | tr ',' '\n' | grep -qx "$ACTOR"; then
+            echo "is_authorized=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_authorized=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build ${{ matrix.platform }}
+    needs: check_authorization
+    if: needs.check_authorization.outputs.isAuthorized == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ubuntu-24.04-arm is a native ARM runner, free for public repositories. On a
+          # private fork, use runner: ubuntu-latest for the arm64 row and add
+          # docker/setup-qemu-action@v3 before the build step (slower, same result).
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=ghcr.io/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            VERSION=${{ inputs.version }}
+            BUILD_DATE=${{ github.event.workflow_run.created_at }}
+            VCS_REF=${{ github.sha }}
+            CREATOR_PACKS_APP_KEY=${{ secrets.CREATOR_PACKS_APP_KEY }}
+      - name: Export digest
+        run: |
+          mkdir -p "${{ runner.temp }}/digests"
+          # strip the algorithm prefix in bash: GitHub expressions have no ${x#prefix}
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Merge multi-arch manifest
+    needs: [check_authorization, build]
+    if: needs.check_authorization.outputs.isAuthorized == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+          TAG_LATEST: ${{ inputs.tag_latest }}
+        run: |
+          set -eu
+          # Tag list built in bash: when tag_latest is false there must be NO empty argument,
+          # because an empty string is a real argv entry and imagetools rejects it.
+          tags=( "$IMAGE:$VERSION" "$IMAGE:v$VERSION" )
+          if [ "$TAG_LATEST" = "true" ]; then tags+=( "$IMAGE:latest" ); fi
+          # One image ref per digest file. Do not use printf with the image as an extra
+          # argument - printf would consume it as a %s and emit "digest@sha256:".
+          sources=()
+          for f in *; do sources+=( "$IMAGE@sha256:$f" ); done
+          docker buildx imagetools create "${tags[@]}" "${sources[@]}"
+      - name: Inspect the result
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+          VERSION: ${{ inputs.version }}
+        run: docker buildx imagetools inspect "$IMAGE:$VERSION"
