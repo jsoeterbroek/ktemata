@@ -1,8 +1,12 @@
 # Post-install (Ubuntu / Raspberry Pi OS)
 
-[`work/scripts/post-install.sh`](../work/scripts/post-install.sh) prepares a fresh Ubuntu, Debian or
-Raspberry Pi OS install for the Ktemata build. Tested on **Ubuntu 24.04** and **Debian 13 (trixie)** — the
-latter is what Raspberry Pi OS is built on, and the one a real Pi 5 was verified against.
+[`work/scripts/post-install.sh`](../work/scripts/post-install.sh) prepares a fresh **Raspberry Pi OS (Debian 13
+trixie)** install for the Ktemata build. Ubuntu 24.04 and plain Debian 13 are also supported, and each step
+degrades to a SKIP where the platform differs.
+
+The reference target is the image as flashed: **Raspberry Pi OS Lite or Desktop, trixie, user `ktemata`,
+password `ktemata`, ssh-server enabled**. Nothing here needs a second account, and the script does not touch an
+existing user's password.
 
 ```bash
 sudo ./work/scripts/post-install.sh                  # update, install Kiwix, enable the service
@@ -192,26 +196,31 @@ Notes:
 ## Autologin
 
 The device is a single-purpose appliance: it should come up in the library without a password prompt.
-The script creates a **`ktemata`** account and turns on GDM automatic login for it:
 
-```ini
-[daemon]
-AutomaticLoginEnable=true
-AutomaticLogin=ktemata
-```
+**The display manager decides how**, and Raspberry Pi OS and Ubuntu use different ones — writing the wrong
+file looks successful and does nothing:
+
+| Platform | Display manager | Setting |
+|---|---|---|
+| **Raspberry Pi OS (trixie)** | **LightDM** | `autologin-user=ktemata` in `/etc/lightdm/lightdm.conf` `[Seat:*]` |
+| Ubuntu (GNOME) | GDM | `AutomaticLoginEnable=true` + `AutomaticLogin=ktemata` in `/etc/gdm3/custom.conf` |
+
+The script detects which is present and uses the matching mechanism; LightDM also wins if both are
+installed, which is the Pi OS case. The LightDM edit is the same one `raspi-config`'s **B4 Desktop Autologin**
+performs, so a manual `sudo raspi-config` afterwards agrees with it rather than fighting it.
 
 Details:
 
-- **The file name differs by distro** — GDM reads `/etc/gdm3/custom.conf` on Ubuntu and
-  `/etc/gdm3/daemon.conf` on Debian. The script uses whichever exists and only creates one if GDM is
-  installed but has no config.
-- **Only the two keys it owns are touched.** Everything else in the file, including the commented
-  `#AutomaticLogin = user1` example, is left alone; a `.ktemata.bak` copy is kept once.
-- The account is created with `useradd --create-home` and then **locked** (`passwd -l`): GDM starts the
-  session without a password, and nothing can log in as it remotely.
+- **Only the keys it owns are touched.** The LightDM file is largely commented defaults
+  (`#autologin-user=`), which are enabled in place; everything else (`greeter-session`,
+  `xserver-command`, …) is left alone. A `.ktemata.bak` copy is kept once.
+- **An existing account is never modified.** On the flashed Pi OS image `ktemata` already exists with a
+  password; the script only creates the user when it is missing (and then warns to set a password). It does
+  **not** lock the account, because you log in with it over ssh.
 - The **kiosk autostart follows this account** — `--kiosk` defaults `KIOSK_USER` to the autologin user, so
   the two cannot drift apart.
 - A missing desktop environment is called out, since autologin without one just opens a text console.
+- No LightDM or GDM at all (Lite image): the step skips and points at console autologin instead.
 
 ```bash
 sudo ./work/scripts/post-install.sh --autologin-user ktemata   # default
@@ -353,11 +362,13 @@ Pi-only branches forced in a harness: a fake Pi model PASSes, a missing `vcgencm
 `1 archive(s), 4.5M`. Step order was confirmed from the `==>` lines: Platform → Hardware → System update →
 Packages → Library → Service → Rotation → Kiosk.
 
-Autologin was tested against real-shaped GDM configs in a container: **insert** into a stock
-`custom.conf`, **replace** an existing `AutomaticLoginEnable=false` / `AutomaticLogin=pi`, **append** a
-missing `[daemon]` section to a config that only had `[security]`, and the Debian layout where only
-`daemon.conf` exists (the script must not create a stray `custom.conf`). Each case leaves the other sections
-intact and writes a backup identical to the original.
+Autologin was tested against real-shaped configs in a container. **LightDM** (the Pi OS path): the commented
+`#autologin-user=` in a stock `[Seat:*]` block is enabled in place, `greeter-session` and
+`xserver-command` survive, and when both a LightDM and a GDM file exist LightDM is chosen and the GDM file is
+left untouched. **GDM** (Ubuntu): insert into a stock `custom.conf`, replace an existing
+`AutomaticLoginEnable=false` / `AutomaticLogin=pi`, append a missing `[daemon]` section to a config that only
+had `[security]`, and the Debian layout where only `daemon.conf` exists. Each case leaves the other sections
+intact and keeps a backup identical to the original.
 
 Both orientations were run through the real script: landscape gives `RGB 1920 x 1080 x 24` (104 colours),
 portrait `RGB 608 x 1080 x 24` (102 colours), and a bad value is rejected before any work starts. The rendered

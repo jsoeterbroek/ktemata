@@ -755,33 +755,86 @@ install_autologin() {
     $WITH_AUTOLOGIN || { log_stage "Autologin"; log_info "skipped (--no-autologin)"; return 0; }
     log_stage "Autologin"
 
-    # 1. the account. A locked, password-less system account is enough: GDM starts the
-    # session without a password, and nothing can log in as it over the network.
+    # 1. the account. On Raspberry Pi OS the first-boot wizard already created it (with the
+    # password you chose), so only create one when it is missing — and never lock an account
+    # the user can currently log in with over ssh.
     if id -u "$AUTOLOGIN_USER" >/dev/null 2>&1; then
         log_ok "user $AUTOLOGIN_USER exists"
     else
         run useradd --create-home --shell /bin/bash "$AUTOLOGIN_USER"
-        run passwd -l "$AUTOLOGIN_USER"
-        $DRY_RUN || log_ok "created $AUTOLOGIN_USER (password locked)"
+        $DRY_RUN || log_ok "created $AUTOLOGIN_USER (no password set)"
+        log_warn "set a password: passwd $AUTOLOGIN_USER"
     fi
 
-    # 2. pick the config GDM actually reads
+    # 2. which display manager is in charge? Raspberry Pi OS uses LightDM, Ubuntu GNOME uses
+    # GDM, and they do not read the same file — writing the wrong one silently does nothing.
+    if [ -f "${LIGHTDM_CONF:-/etc/lightdm/lightdm.conf}" ] || has_command lightdm; then
+        autologin_lightdm
+    elif [ -f /etc/gdm3/custom.conf ] || [ -f /etc/gdm3/daemon.conf ] || has_command gdm3; then
+        autologin_gdm
+    else
+        log_warn "neither LightDM nor GDM found; skipping autologin"
+        log_info "  console autologin instead: systemctl edit getty@tty1"
+        return 0
+    fi
+
+    # 3. autologin is pointless without a session to log in to
+    if ! dpkg -l 2>/dev/null | awk '$1=="ii"{print $2}' | grep -qE 'task-.*-desktop|ubuntu-desktop|gnome-shell|labwc|lxde|raspberrypi-ui-mods'; then
+        log_warn "no desktop environment found: autologin would start a text console"
+    fi
+}
+
+# Raspberry Pi OS: [Seat:*] autologin-user in /etc/lightdm/lightdm.conf, which is exactly
+# what raspi-config's "B4 Desktop Autologin" writes. The file is largely commented defaults.
+autologin_lightdm() {
+    # overridable for testing; nothing in normal operation sets it
+    local conf=${LIGHTDM_CONF:-/etc/lightdm/lightdm.conf}
+    if [ ! -f "$conf" ]; then
+        log_warn "$conf not found; install lightdm or use raspi-config B4"
+        return 0
+    fi
+    log_info "display manager: LightDM"
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s set autologin-user=%s in %s\n' "$C_YELLOW" "$C_OFF" "$AUTOLOGIN_USER" "$conf"
+        return 0
+    fi
+
+    [ -f "$conf.ktemata.bak" ] || cp -a "$conf" "$conf.ktemata.bak"
+
+    if grep -qE '^[#;]?[[:space:]]*autologin-user[[:space:]]*=' "$conf"; then
+        sed -i -E "s|^[#;]?[[:space:]]*autologin-user[[:space:]]*=.*|autologin-user=$AUTOLOGIN_USER|" "$conf"
+    elif grep -q '^\[Seat:\*\]' "$conf"; then
+        sed -i "/^\[Seat:\*\]/a autologin-user=$AUTOLOGIN_USER" "$conf"
+    else
+        printf '\n[Seat:*]\nautologin-user=%s\n' "$AUTOLOGIN_USER" >>"$conf"
+    fi
+
+    # pam needs to allow the nopasswd login for the greeter to auto-session
+    if [ -f /etc/pam.d/lightdm-autologin ] && ! grep -q "nopasswdlogin" /etc/group 2>/dev/null; then
+        log_info "note: LightDM autologin uses /etc/pam.d/lightdm-autologin"
+    fi
+
+    local got
+    got=$(sed -n 's/^autologin-user=//p' "$conf" | head -1)
+    if [ "$got" = "$AUTOLOGIN_USER" ]; then
+        log_ok "autologin-user=$got ($conf)"
+    else
+        log_error "could not set autologin-user in $conf (reads '$got')"
+    fi
+}
+
+# Ubuntu / GNOME. Only the two keys we own are touched.
+autologin_gdm() {
     local conf=""
     for c in /etc/gdm3/custom.conf /etc/gdm3/daemon.conf; do
         [ -f "$c" ] && { conf=$c; break; }
     done
     if [ -z "$conf" ]; then
-        if has_command gdm3 || has_command gdm; then
-            # installed but unpurged config: GDM's own default is custom.conf
-            conf=/etc/gdm3/custom.conf
-            $DRY_RUN || { install -d -m 0755 /etc/gdm3; : >"$conf"; }
-            $DRY_RUN || log_ok "created $conf"
-        else
-            log_warn "GDM is not installed; skipping autologin (install gdm3 or use --no-autologin)"
-            return 0
-        fi
+        conf=/etc/gdm3/custom.conf
+        $DRY_RUN || { install -d -m 0755 /etc/gdm3; : >"$conf"; }
     fi
-    log_info "config: $conf"
+    log_info "display manager: GDM ($conf)"
 
     if $DRY_RUN; then
         printf '%s  [dry-run]%s set [daemon] AutomaticLoginEnable=true, AutomaticLogin=%s\n' \
@@ -789,28 +842,21 @@ install_autologin() {
         return 0
     fi
 
-    # 3. edit in place. Back up once, keep the file's other keys untouched.
     [ -f "$conf.ktemata.bak" ] || cp -a "$conf" "$conf.ktemata.bak"
+    grep -q '^\[daemon\]' "$conf" || printf '\n[daemon]\n' >>"$conf"
 
-    if ! grep -q '^\[daemon\]' "$conf"; then
-        printf '\n[daemon]\n' >>"$conf"
-    fi
-
-    # set-or-replace a key inside [daemon]; the key must not exist elsewhere
     set_daemon_key() {
         local key=$1 value=$2
         # allow "Key=value", "Key = value" and the commented "#  Key = value" default
         if grep -qE "^[#;]?[[:space:]]*${key}[[:space:]]*=" "$conf"; then
             sed -i -E "s|^[#;]?[[:space:]]*${key}[[:space:]]*=.*|${key}=${value}|" "$conf"
         else
-            # insert after the [daemon] header
             sed -i -E "/^\[daemon\]/a ${key}=${value}" "$conf"
         fi
     }
     set_daemon_key AutomaticLoginEnable true
     set_daemon_key AutomaticLogin "$AUTOLOGIN_USER"
 
-    # 4. verify by reading it back, not by trusting sed
     local readback
     readback=$(awk -F= '/^\[daemon\]/{d=1;next} /^\[/{d=0} d && /^(AutomaticLoginEnable|AutomaticLogin)=/{print}' "$conf" | tr '\n' ' ')
     case $readback in
@@ -818,23 +864,9 @@ install_autologin() {
             log_ok "[daemon] $readback" ;;
         *)  log_error "could not set autologin; $conf reads: $readback" ;;
     esac
-
-    # 5. the session only appears on the seat GDM starts; warn if there is no desktop
-    if ! dpkg -l 2>/dev/null | awk '$1=="ii"{print $2}' | grep -qE 'task-.*-desktop|ubuntu-desktop|gnome-shell|labwc|lxde'; then
-        log_warn "no desktop environment found: autologin will start a text session"
-        log_warn "install one (e.g. apt install raspberrypi-ui-mods, or gnome-shell)"
-    fi
 }
 
-# Set the Ktemata logo on black as the desktop background.
-#
-# Three desktop stacks have to be covered because they set wallpaper independently:
-#   - Raspberry Pi OS Bookworm/Trixie: labwc + pcmanfm, wallpaper in
-#     ~/.config/pcmanfm/LXDE-pi/desktop-items-0.conf, applied with pcmanfm --set-wallpaper
-#   - GNOME (Ubuntu desktop): gsettings org.gnome.desktop.background
-#   - minimal X11: feh, via ~/.xinitrc / autostart
-# The image is rendered from the repo SVG when rsvg-convert is available, so the wallpaper
-# always matches the logo; otherwise a pre-rendered PNG next to this script is used.
+
 install_wallpaper() {
     $WITH_WALLPAPER || { log_stage "Wallpaper"; log_info "skipped (--no-wallpaper)"; return 0; }
     log_stage "Wallpaper"
