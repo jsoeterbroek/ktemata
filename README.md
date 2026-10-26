@@ -176,10 +176,12 @@ sealed charge port and the 12 mm PBS-33B OLED button (add a rubber boot for seal
 r1 pull-switch slot, side cutout and battery button are not used in r2/r3/r4; the r4 charge port is a
 **Ø9.5 mm DC socket** rather than the r2 USB-C opening.
 
-
-## project briefing
+## Content Management
+Project N.O.M.A.D. (custom ARM64 build)
+ 
+## Project briefing
 - ruggedized, strong case, rubber corners
-- boots into ubuntu kiwix - project nomad, no AI
+- boots into ubuntu, project NOMAD, no AI
 - local offline maps, wikipedia, prepper, medical
 - no networking (no wifi, no lan, no bluetooth)
 - power by battery (UPS board); recharge by solar (main) + separate hand crank generator (backup); optional solar cells on backside
