@@ -197,6 +197,37 @@ Notes:
 - Only the early splash is a static image; the console rotation from `--rotate` applies after it.
 - Nothing changes on a machine with no `/boot/firmware/cmdline.txt`.
 
+## Project NOMAD images
+
+Upstream publishes the NOMAD management images for **amd64 only**, so `docker compose up` on a Pi fails with
+`no matching manifest for linux/arm64`. The step pulls the multi-arch fork **before** NOMAD's own installer
+runs, so that installer's `docker compose up` finds the images already present.
+
+```bash
+sudo ./work/scripts/post-install.sh --nomad-version 1.35.1
+sudo ./work/scripts/post-install.sh --nomad-registry ghcr.io/you
+sudo ./work/scripts/post-install.sh --no-nomad
+```
+
+Three images: `project-nomad`, `-sidecar-updater`, `-disk-collector`.
+
+**It verifies rather than assumes.** `docker image inspect .Architecture` is empty on the containerd image
+store, so the check reads the manifest:
+
+- multi-arch index → lists every platform
+- single-platform manifest → `docker manifest inspect --verbose`, whose `Descriptor.platform.architecture`
+  names it (the architecture is in the config blob, not the manifest)
+
+An image without a manifest for the host architecture is an **error**, with `upstream publishes amd64 only` as
+the hint on ARM. Pulls use `docker pull --platform linux/<arch>`.
+
+It also rewrites an existing `/opt/project-nomad/compose.yml`: upstream's compose pins
+`ghcr.io/crosstalk-solutions/...` with `pull_policy: always`, which would drag the amd64 image back in on the
+next `compose up`. Image references are repointed at the configured registry and version, other services
+(`mysql`, `redis`, …) are untouched, and `compose.yml.ktemata.bak` is kept.
+
+Skips cleanly when Docker is absent or the daemon is unreachable.
+
 ## config.txt (opt-in)
 
 Only one `config.txt` change is offered, and only when asked for, because a bad edit there can make the board
@@ -378,6 +409,9 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --no-wallpaper     leave the desktop background alone
     --wallpaper [FILE] set it (default), optionally from FILE
     --no-splash        leave the boot splash alone
+    --no-nomad         do not pull the NOMAD images
+    --nomad-version V  NOMAD tag to pull (default 1.35.1)
+    --nomad-registry R registry/namespace (default ghcr.io/jsoeterbroek)
     --no-camera-autodetect
                        set camera_auto_detect=0 in config.txt (opt-in)
     --splash [FILE]    replace the boot splash, optionally from a 24-bit TGA
@@ -413,6 +447,12 @@ left untouched. **GDM** (Ubuntu): insert into a stock `custom.conf`, replace an 
 `AutomaticLoginEnable=false` / `AutomaticLogin=pi`, append a missing `[daemon]` section to a config that only
 had `[security]`, and the Debian layout where only `daemon.conf` exists. Each case leaves the other sections
 intact and keeps a backup identical to the original.
+
+The NOMAD step was tested against the real registry with the host architecture forced:
+the fork (`ghcr.io/jsoeterbroek`) reports `arm64 amd64` and pulls; **upstream reports `amd64` only and is
+refused on arm64** with the "build the fork's arm64 images" hint; upstream passes on amd64. A realistic
+upstream `compose.yml` was rewritten to the fork's registry and version with `mysql:8.0` untouched and a
+backup kept. The step skips cleanly when Docker is absent or the daemon is unreachable.
 
 The `config.txt` edit was tested against the actual Pi 5 file: the diff is exactly one line
 (`camera_auto_detect=1` → `0`), `dtparam=audio=on` and `display_auto_detect=1` are untouched, a
