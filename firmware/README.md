@@ -50,7 +50,7 @@ Suggested bring-up order:
 
 1. Wire the PBS-33B from GPIO4 to GND, check short/long press, then set `-DSCREEN_OFF_MS=60000UL` and reflash to re-enable idle blanking.
 2. Fit the DS3231 and set the time once from the Pi.
-3. Fit the BME688 and check the environment screen.
+3. Fit the BME688 and check the environment screen — r4 only; r5 has no sensor.
 4. Connect the UPS HAT (B) and check pack voltage/current/percent (derived from the 2S pack voltage).
 5. Add the Pi-side serial sender for time and storage.
 
@@ -154,7 +154,9 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
 ## What the firmware does
 
 - Four screens, in this order: **time** (default), **battery**,
-  **environment**, **storage**.
+  **environment**, **storage**. **r5 has no BME688**, so there the
+  environment screen reports the absence and its alert never fires; nothing else changes
+  (see `docs/R5.md`).
 - Short button press cycles screens and wakes the OLED. A long press
   acknowledges the active alert.
 - Back to the time screen after 30 s without a press. Alert screens stay until

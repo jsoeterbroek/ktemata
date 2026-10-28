@@ -4,6 +4,7 @@
   python3 cad/tools/export.py                 # r4 parts (default: TD2 + UPS HAT (B) + K06)
   python3 cad/tools/export.py --r2            # previous r2/r3 set (DFR0550 + HAT (E) + Phistone)
   python3 cad/tools/export.py --r1            # original r1 set instead
+  python3 cad/tools/export.py --r5            # r5 internal cassette (tray, deck, lid plate)
   python3 cad/tools/export.py face bottom     # only some parts
   python3 cad/tools/export.py corner_cap corner_cup corner_plate corner_lid   # corner overmould tool
 
@@ -16,8 +17,11 @@ PARTS = {'bottom':'ktemata_bottom', 'face':'ktemata_face', 'keyboard_support':'k
          'charge_plug':'ktemata_charge_plug',
          'corner_cap':'ktemata_corner_cap', 'corner_plate':'ktemata_corner_plate',
          'corner_cup':'ktemata_corner_cup', 'corner_lid':'ktemata_corner_lid',
+         'r5_tray':'ktemata_r5_tray', 'r5_deck':'ktemata_r5_deck',
+         'r5_lid_plate':'ktemata_r5_lid_plate',
          'pull_switch':'ktemata_pull_switch', 'power_button':'ktemata_power_button'}
 LEGACY = {'pull_switch', 'power_button'}
+R5_PARTS = {'r5_tray', 'r5_deck', 'r5_lid_plate'}
 # the corner tool is a per-corner accessory, not part of the case; skip it unless asked for
 TOOLING = {'corner_cap', 'corner_plate', 'corner_cup', 'corner_lid'}
 
@@ -51,16 +55,22 @@ def check_manifold(tris):
 args = sys.argv[1:]
 r1 = '--r1' in args
 r2 = '--r2' in args
-if r1 and r2:
-    sys.exit('choose either --r1 or --r2')
-args = [a for a in args if a not in ('--r1', '--r2')]
-# r4 is the default; --r2 selects the previous r2/r3 mechanics, --r1 the original case
+r5 = '--r5' in args
+if sum((r1, r2, r5)) > 1:
+    sys.exit('choose one of --r1, --r2, --r5')
+args = [a for a in args if a not in ('--r1', '--r2', '--r5')]
+# r4 is the default; --r2 selects the previous r2/r3 mechanics, --r1 the original case, and
+# --r5 the internal cassette that drops into a host hard case (same electronics as r4)
 extra = ['-D', 'R2=false'] if r1 else (['-D', 'R4=false'] if r2 else [])
+if r5:
+    extra += ['-D', 'R5=true']
 
 os.makedirs(OUT, exist_ok=True)
 for part, fname in PARTS.items():
     if r1 is False and part in LEGACY: continue
     if not args and part in TOOLING: continue
+    # r5 is a separate part set; r4 parts are not valid with it and vice versa
+    if (part in R5_PARTS) != r5: continue
     if args and part not in args: continue
     with tempfile.TemporaryDirectory() as td:
         tmp = os.path.join(td, 'p.stl')

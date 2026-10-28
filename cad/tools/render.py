@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Render the case preview images to ../renders. Run export.py first (the ktemata_* views use the STLs).
-   python3 cad/tools/render.py            # everything
+   python3 cad/tools/render.py            # everything (r4)
+   python3 cad/tools/render.py --r5       # the r5 cassette views (after export.py --r5)
    python3 cad/tools/render.py asm_iso    # only images whose name contains one of the arguments
 
 The hand crank generator is a separate project (github.com/jsoeterbroek/handcrank); its previews
@@ -37,8 +38,18 @@ VIEWS = {
     'ktemata_corner_cap':       ('stl:corner_cap',   (900, 700), ISO, [], True),
     'ktemata_corner_cup':       ('stl:corner_cup',   (900, 700), ISO, [], True),
     'ktemata_corner_plate':     ('stl:corner_plate', (900, 700), ISO, [], True),
+    'ktemata_r5_tray':          ('stl:r5_tray',      (1200, 950), ISO, [], True),
+    'ktemata_r5_deck':          ('stl:r5_deck',      (1200, 950), ISO, [], True),
+    'ktemata_r5_lid_plate':     ('stl:r5_lid_plate', (1200, 950), ISO, [], True),
     'ktemata_corner_lid':       ('stl:corner_lid',   (900, 700), ISO, [], True),
+    # r5 internal cassette (needs `export.py --r5` first); render with --r5
+    'r5_assembly':  ('assembly_r5.scad', (1400, 1100), '0,0,0,55,0,25,0', [], True),
+    'r5_cassette':  ('assembly_r5.scad', (1400, 1100), '0,0,0,55,0,25,0', ['-D', 'SHOW_HOST=false'], True),
+    'r5_exploded':  ('assembly_r5.scad', (1400, 1100), '0,0,0,60,0,30,0', ['-D', 'SHOW_HOST=false', '-D', 'EXPLODE=60'], True),
 }
+
+R5_ONLY = {'r5_assembly', 'r5_cassette', 'r5_exploded', 'ktemata_r5_tray', 'ktemata_r5_deck',
+           'ktemata_r5_lid_plate'}
 
 R1_ONLY = {'power_button', 'pull_switch', 'ktemata_power_button', 'ktemata_pull_switch'}
 
@@ -49,6 +60,8 @@ def render(name, td):
         extra += ['-D', 'R2=false']
     if '--r2' in sys.argv[1:]:
         extra += ['-D', 'R4=false']
+    if name in R5_ONLY:
+        extra += ['-D', 'R5=true']
     if src.startswith('stl:'):
         src = os.path.join(td, name + '.scad')
         open(src, 'w').write(f'color("#4a72b0") import("{os.path.join(STL, "ktemata_" + VIEWS[name][0][4:] + ".stl")}");\n')
@@ -60,9 +73,14 @@ def render(name, td):
     r = subprocess.run(cmd, capture_output=True, text=True)
     return name, r.returncode, r.stderr.strip().splitlines()[-1:] if r.returncode else ''
 
-args = [a for a in sys.argv[1:] if a != '--r1']
-names = [n for n in VIEWS
-         if (args and any(a in n for a in args)) or (not args and (n not in R1_ONLY or '--r1' in sys.argv[1:]))]
+args = [a for a in sys.argv[1:] if a not in ('--r1', '--r5')]
+r5 = '--r5' in sys.argv[1:]
+if args:
+    names = [n for n in VIEWS if any(a in n for a in args)]
+else:
+    # no arguments: render this build's set only (r5 views need export.py --r5 first)
+    skip = R5_ONLY if not r5 else set(VIEWS) - R5_ONLY
+    names = [n for n in VIEWS if n not in skip and (n not in R1_ONLY or '--r1' in sys.argv[1:])]
 with tempfile.TemporaryDirectory() as td, ThreadPoolExecutor(os.cpu_count() or 4) as ex:
     for name, rc, err in ex.map(lambda n: render(n, td), names):
         print(f'{"ok  " if rc == 0 else "FAIL"} {name}.png {err or ""}')

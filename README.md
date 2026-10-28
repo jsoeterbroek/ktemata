@@ -32,14 +32,20 @@ re-export.
 | **r2** | Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700; same geometry and STLs as r3 | Wired USB keyboard; optional Pimoroni trackball; Wi-Fi/Bluetooth off |
 | **r3** | Same mechanical build and STLs as r2 | Phistone Mini Keyboard (2.4 GHz USB dongle or Bluetooth 5.0); no Pimoroni trackball; Wi-Fi off |
 | **r4** | **Current target and default CAD:** Pi 5 + Touch Display 2 (5", landscape) + UPS HAT (B) with 2× 18650 (2S); 172 × 237 × 53 mm | **Rii K06** 151 × 59 × 11 mm, 2.4 GHz dongle or Bluetooth; touchpad replaces the trackball; no Wi-Fi |
+| **r5** | Same electronics as r4, **no air-quality sensor**; no printed exterior: an internal cassette (tray + deck + lid plate) drops into a bought Peli 1200, display on the inside of the lid | K06 on the deck; see [`docs/R5.md`](docs/R5.md) |
 
 The default CAD is the **r4 build**. Two switches in `cad/common.scad` select the others: `R4` (`true`,
-the default) turns the r4 retarget off, and `R2` (`false`) selects the original r1 case.
+the default) turns the r4 retarget off, and `R2` (`false`) selects the original r1 case. `R5`
+(`-D R5=true`, or `export.py --r5`) switches to the internal-cassette build, which needs the r4
+mechanics and a host hard case (`HOST` = `"1200"` by default). **The Peli R40 proposed for r5 cannot
+host the build** — its whole interior (48.3 mm) is shallower than the display plus the cell stack; see
+[`docs/R5.md`](docs/R5.md) for the measurements and for the cases that do fit.
 
 ```bash
 python3 cad/tools/export.py           # r4 parts (default)
 python3 cad/tools/export.py --r2      # r2/r3 parts (DFR0550 + HAT (E) + Phistone)
 python3 cad/tools/export.py --r1      # original r1 set
+python3 cad/tools/export.py --r5      # r5 cassette (tray, deck, lid plate)
 openscad -D R4=false -o out.png cad/assembly.scad      # r2/r3 assembly preview
 openscad -D R2=false -o out.png cad/assembly.scad      # r1 assembly preview
 ```
@@ -62,7 +68,7 @@ caps with [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md) (a retrofit accessory; 
 
 `cad/assembly.scad` shows everything with stand-in components (`-D EXPLODE=40`).
 `-D 'CHECK="bottom:pi"'` intersects one part with another, which is handy for clearance checks.
-To re-export the STLs: `python3 cad/tools/export.py` (use `--r2` or `--r1` for the older sets).
+To re-export the STLs: `python3 cad/tools/export.py` (use `--r2`, `--r1` or `--r5` for the other sets).
 To refresh the images in `renders/` afterwards: `python3 cad/tools/render.py` (add `--r1` to include the r1-only views;
 the previews follow whatever is in `stl/`, so export the set you want rendered).
 `R1=1 bash work/scripts/check.sh` runs the old interference set; the default is the r4 set

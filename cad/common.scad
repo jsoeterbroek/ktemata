@@ -15,9 +15,14 @@
 
 $fn = 40;
 
+R5    = is_undef(R5)    ? false : R5;      // r5: internal cassette that drops into a host hard case
 R2    = is_undef(R2)    ? true  : R2;      // r2/r3 mechanics; false = r1
 R4    = is_undef(R4)    ? R2    : R4;      // r4 retarget; automatically off in r1 mode
-SEN66 = is_undef(SEN66) ? false : SEN66;   // true = larger SEN66 sensor pocket instead of BME688
+SEN66 = is_undef(SEN66) ? false : SEN66;   // r2/r3 only: larger SEN66 pocket instead of the BME688
+
+// r5 keeps the r4 electronics (TD2, UPS HAT (B), K06) and removes the air-quality sensor; it
+// only replaces the printed exterior with a cassette + host hard case. See docs/R5.md.
+assert(!R5 || (R4 && R2), "r5 needs the r4 mechanics: drop -D R4=false / -D R2=false");
 
 // r4 -> a, r2/r3 -> b, r1 -> c
 function pick(a, b, c) = R4 ? a : (R2 ? b : c);
@@ -285,6 +290,132 @@ KBS_POSTS = pick([[32, 136], [140, 136], [32, 220], [140, 220]],
 
 // ---------------- helpers ----------------
 module at(x, y, z=0) translate([x, L-y, z]) children();
+
+// r5 parts are their own envelope (R5_W x R5_L), so they flip y about R5_L, not L.
+module r5_at(x, y, z=0) translate([x, R5_L-y, z]) children();
+// box given by its drawing-coord span (min-x, min-y, max-x, max-y) - a cube grows towards +y,
+// which is drawing -y, so the real min-y corner is R5_L - y1.
+module r5_box(x0, y0, x1, y1, z, h) translate([x0, R5_L - y1, z]) cube([x1 - x0, y1 - y0, h]);
+// ---------------- r5: cassette + host hard case ----------------
+// NOTE: r5 keeps the r4 hardware parameters above (Pi, HAT (B), TD2, K06, cells); it only
+// replaces the printed exterior with a cassette, so most of the r4 geometry is reused.
+// r5 prints no visible exterior: a floor tray (r5_tray), a deck that carries the keyboard and
+// the status OLED (r5_deck), and a plate that mounts the display on the inside of the host lid
+// (r5_lid_plate). Bumpers, ribs and chamfers belong to the host case, so only the host's
+// INTERIOR sizes the printed parts. Lid/bottom depth are Peli's published figures
+// (https://www.pelican.com/us/en/product/cases/<model>), not estimates:
+//   1200   9.31 x 7.13 x 4.12 in, lid 1.19, bottom 2.93   (236.5 x 181.1 / 30.2 / 74.4 mm)
+//   1400  11.81 x 8.87 x 5.18 in, lid 1.18, bottom 4.00   (300.0 x 225.3 / 30.0 / 101.6 mm)
+// The R40/R60 Ruck cases cannot host this build: their whole interior is ~48 / 75 mm, so the
+// lid is shallower than the 14.92 mm display plus plate and the base is shallower than the cell
+// stack. See docs/R5.md. r5 has no air-quality sensor.
+HOST = is_undef(HOST) ? "1200" : HOST;
+function host_dims(m) =
+    m == "1200" ? [236.5, 181.1, 30.2, 74.4] :
+    m == "1400" ? [300.0, 225.3, 30.0, 101.6] :
+    assert(false, str("unknown r5 host \"", m, "\": use 1200 or 1400 (see docs/R5.md)")) [0, 0, 0, 0];
+HOST_I = host_dims(HOST);
+HOST_L = HOST_I[0]; HOST_W = HOST_I[1]; HOST_LID = HOST_I[2]; HOST_BOT = HOST_I[3];
+HOST_CLR = 1.5;                    // cassette -> host wall, per side
+R5_W = HOST_L - 2*HOST_CLR;        // cassette width  (x, across the display)
+R5_L = HOST_W - 2*HOST_CLR;        // cassette length (y, y = 0 at the hinge)
+R5_R = 14;                         // printed corner radius
+R5_WALL = 2.6;
+R5_FLOOR = 2.4;
+R5_DECK_T = 3;
+R5_PAD = 8;                        // closed-cell foam under the tray
+CHG_Z_R5 = 18;                     // charge socket centre height above the cassette floor
+R5_CHG_Y = 118;                    // ... and its position along the right wall
+
+// ---- vertical stack, z = 0 at the cassette floor (same order as r4) ----
+R5_CELL_Z0 = R5_FLOOR + 1;                              // cell bottom
+CELL_ZC_R5 = R5_CELL_Z0 + CELL_D/2;                     // cell axis height
+R5_HAT_BOT = R5_CELL_Z0 + HAT_B_BELOW_R4;               // HAT (B) pcb underside
+R5_HAT_TOP = R5_HAT_BOT + UPS_T;
+R5_PI_BOT  = R5_HAT_TOP + UPS_COMP + UPS_PI_GAP;        // Pi pcb underside
+R5_PI_TOP  = R5_PI_BOT + 1.6;
+// The stack is not screwed to the cassette. Waveshare's HAT (B) kit bolts Pi to HAT with four
+// 6 mm standoffs (that is the pogo gap) and the whole assembly then rests on its cells, which
+// sit in cradles on the tray floor. Nothing may clamp the Pi from above: a pillar on the GPIO
+// edge's mounting holes collides with the 40-pin header body (3.5 mm from the edge, 5.1 mm
+// wide). So the deck simply caps the stack with clearance. R5_HDR is the air gap the deck needs
+// over the Pi pcb for that header and Pi 5's top-side FFC connectors.
+R5_HDR     = 9.5;                                       // 8.5 mm header + 1 mm air
+R5_H_BOT   = R5_PI_TOP + R5_HDR;                        // tray rim = deck underside
+R5_DECK_Z  = R5_H_BOT;
+R5_DECK_TOP = R5_DECK_Z + R5_DECK_T;
+
+// ---- plan, drawing coords ----
+R5_PI_X0 = (R5_W - 85)/2;                               // Pi pcb, GPIO end
+R5_PI_Y0 = 10;                                          // USB-C / HDMI / DSI edge at the hinge
+R5_UPS_X = R5_PI_X0;                                    // HAT (B) rotated 90 deg, as in r4
+R5_UPS_Y = R5_PI_Y0;
+// Cells run along y under the HAT. The 8.4 V jack and USB-A overhang the board's +y end on the
+// CELL side (12.5 and 11.75 mm long, reaching 95 -> 82.5), so the cans stop at y = 82: a 65 mm
+// cell then spans 17..82, fully under the 85 mm board.
+R5_CELL_CY = R5_UPS_Y + 39.5;
+R5_CELL_POS = [[R5_UPS_X + UPS_W/2 + CELL_PITCH_R4/2, R5_CELL_CY],
+               [R5_UPS_X + UPS_W/2 - CELL_PITCH_R4/2, R5_CELL_CY]];
+
+// keyboard: at the latch end, i.e. outside the display's shadow, so its height is free
+R5_KB_POCKET = [151.6, 59.6];                           // K06 151 x 59 + 0.6 clearance
+R5_KB_X0 = (R5_W - R5_KB_POCKET[0])/2;
+R5_KB_Y0 = R5_L - 16 - R5_KB_POCKET[1];
+R5_KB_WALL = 1.8;
+R5_KB_LIP = 2.5;                                       // lip overlap over the Esc row
+R5_KB_TOP = R5_DECK_TOP + KB_BODY[2];                   // pocket walls end flush with the keys
+
+// status OLED module on the deck, left of the keyboard (visible with the lid open)
+R5_OLED_W = 35.8; R5_OLED_H = 34.8;                     // 35 x 34 module + clearance
+R5_OLED_X0 = 3;
+R5_OLED_Y0 = R5_KB_Y0 + (R5_KB_POCKET[1] - R5_OLED_H)/2;
+R5_OLED_T = 3.2;                                        // module pcb + glass (lies in a through-pocket)
+R5_OLED_LEDGE = 1.0;                                    // corner ledges that carry the module
+
+// FireBeetle 2, DS3231 and charger module on the free floor left/right of the HAT
+R5_FB_X = 26; R5_FB_Y = 30;                             // 25.4 x 60 FireBeetle, left of the HAT
+R5_RTC_X = 174; R5_RTC_Y = 26;                          // DS3231 38 x 22, right of the HAT
+R5_MPPT_X = 188; R5_MPPT_Y = 62;                        // 26 x 20 tray
+
+// ---- host lid: display plate ----
+// The display's back (panel 6.42 + its own 8.5 standoffs) faces the lid, the glass faces the
+// base. A 2 mm plate screws into the display's standoffs and is taped to the lid, so the host
+// stays sealed (no holes through it).
+R5_LID_T = 2;
+R5_DISP_DEEP = R5_LID_T + 8.5 + 6.42;                   // 16.92 mm from the lid wall to the glass
+R5_DISP_X0 = (R5_W - DISP_W)/2;
+R5_DISP_Y0 = 8;                                         // hinge end of the lid
+R5_LID_PLATE = [DISP_W + 12, DISP_H + 12];              // 155.4 x 103.5
+R5_DISP_HOLE_IX = (DISP_W - 122.74)/2;                  // outer standoffs 122.74 x 72.96
+R5_DISP_HOLE_IY = (DISP_H - 72.96)/2;
+R5_DISP_HOLES = [for (dx=[R5_DISP_HOLE_IX, R5_DISP_HOLE_IX + 122.74])
+                 for (dy=[R5_DISP_HOLE_IY, R5_DISP_HOLE_IY + 72.96]) [dx, dy]];
+
+// deck screws: on the straight wall runs only (a boss in a 14 mm corner would break the
+// outer radius). Each is a Ø7 column whose centre sits 2.5 mm inside the inner face, so it
+// overlaps the wall by 1 mm and protrudes 6 mm into the cavity.
+R5_INSET = BOSS_D/2 - 1;                               // 2.5
+R5_SCREWS = [[R5_WALL + R5_INSET, 40], [R5_W - R5_WALL - R5_INSET, 40],
+             [R5_WALL + R5_INSET, R5_L - 40], [R5_W - R5_WALL - R5_INSET, R5_L - 40],
+             [R5_W/2, R5_WALL + R5_INSET], [R5_W/2, R5_L - R5_WALL - R5_INSET]];
+
+// ---- closed-case clearance ----
+// The base and the lid meet at the seal plane (z = HOST_BOT), so the lid ceiling sits HOST_LID
+// above it. The plate is taped to that ceiling and the display hangs down from it, which puts
+// the glass (R5_DISP_DEEP below the ceiling) well clear of the deck.
+R5_GLASS = HOST_BOT + HOST_LID - R5_DISP_DEEP;          // glass height above the host floor
+// 4 mm beyond the assembly: the DSI/GPIO leads have to fold between plate and lid
+assert(!R5 || HOST_LID >= R5_DISP_DEEP + 4,
+       str("host ", HOST, ": lid ", HOST_LID, " mm, the display assembly + lead fold needs ",
+           R5_DISP_DEEP + 4));
+assert(!R5 || R5_W >= R5_KB_POCKET[0] + 2*R5_KB_WALL + 6,
+       str("host ", HOST, ": ", R5_W, " mm wide, the keyboard pocket needs ",
+           R5_KB_POCKET[0] + 2*R5_KB_WALL + 6));
+assert(!R5 || R5_PAD + R5_KB_TOP + 2 <= R5_GLASS,
+       str("host ", HOST, ": ", R5_GLASS, " mm under the display, the deck + keyboard needs ",
+           R5_PAD + R5_KB_TOP + 2));
+assert(!R5 || R5_PAD + R5_KB_TOP <= HOST_BOT - 2,
+       str("host ", HOST, ": ", HOST_BOT, " mm base, the keyboard stack needs ", R5_PAD + R5_KB_TOP));
 
 // base chamfered rectangle (in real XY, origin bottom-left)
 module chamfer_rect(w, l, c) {
