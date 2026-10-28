@@ -40,6 +40,12 @@ K = {
     "heavy (video/CPU)":  (12.5, "~8.8 W CPU-bound + display; thermally capped in r5's sealed host"),
 }
 
+# Ktemata's Pi 5 has the same 2.4/5 GHz radio on board. r5 ships with it DISABLED by policy
+# (dtoverlay=disable-wifi), not because the hardware cannot do it; hostapd + dnsmasq make it an
+# access point in one config change. AP_EXTRA_W is the estimate for that mode - same order as the
+# Prepper Disk's figure, and explicitly not measured on a Pi 5.
+AP_EXTRA_W = 0.40
+
 # ---------------- 24/7 duty profiles (at the 5 V rail) ----------------
 # Every platform is scored over the same 24 h. Ktemata has a display bolted to it, so it gets
 # a realistic profile; NOMAD is headless and serves over the LAN, so 100 % of its time is idle
@@ -51,6 +57,8 @@ PROFILES = {   # values are energy per day at the 5 V rail (Wh), not watts
                                             "4 h reading, display off otherwise"),
     "Ktemata r5 — kiosk, display on 24 h": (24 * K["idle, screen on"][0],
                                             "display always lit; the worst case for r5"),
+    "Ktemata r5 — Wi-Fi hotspot (est. +0.4 W)": (24 * (K["screen off, Pi up"][0] + AP_EXTRA_W),
+                                            "radio enabled by config, screen off"),
 }
 
 # ---------------- Project NOMAD, AI off (idle is unchanged by disabling AI) ----------------
@@ -108,7 +116,7 @@ def rows():
 
 
 def table_247():
-    print("| Platform (24/7, AI off) | Draw | Wh/day | Panel | Battery, 1 day | €/yr at €0.30 |")
+    print("| Platform (24/7, AI off) | Draw | Wh/day | Solar panel | Battery, 1 day | €/yr at €0.30/kWh |")
     print("|---|---|---|---|---|---|")
     for name, w, wh, note in rows():
         unit = "5 V" if name.startswith("Ktemata") else "wall"
@@ -201,6 +209,7 @@ def prepper_tables():
     rows_pd = [
         ("Prepper Disk (Pi 4B, 512 GB)", PREPPER["draw"], PREPPER["devices"]),
         ("Ktemata r5 (Pi 5, screen off)", K["screen off, Pi up"][0], 1),
+        ("Ktemata r5 as a Wi-Fi hotspot", K["screen off, Pi up"][0] + AP_EXTRA_W, PREPPER["devices"]),
         ("Ktemata r5 (4 h reading)", None, 1),
     ]
     for name, w, n in rows_pd:
@@ -232,11 +241,14 @@ def prepper_tables():
 
 
 def chart_prepper(path):
-    fig, ax = plt.subplots(figsize=(8.4, 3.4))
+    fig, ax = plt.subplots(figsize=(8.8, 3.8))
     names = ["Prepper Disk\nper connected device (of 20)",
+             "Ktemata r5 as a hotspot\nper connected device (of 20)",
              "Ktemata r5\nper reader (the device itself)"]
-    vals = [PREPPER["draw"] / PREPPER["devices"] * 1000, K["idle, screen on"][0] * 1000]
-    bars = ax.barh(names, vals, color=["#4a72b0", "#c4622d"], height=0.55)
+    vals = [PREPPER["draw"] / PREPPER["devices"] * 1000,
+            (K["screen off, Pi up"][0] + AP_EXTRA_W) / PREPPER["devices"] * 1000,
+            K["idle, screen on"][0] * 1000]
+    bars = ax.barh(names, vals, color=["#4a72b0", "#6b8fbf", "#c4622d"], height=0.5)
     for b, v in zip(bars, vals):
         ax.text(b.get_width() * 1.06, b.get_y() + b.get_height() / 2, f"{v:.0f} mW",
                 va="center", fontsize=10)

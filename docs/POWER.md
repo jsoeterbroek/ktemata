@@ -17,6 +17,10 @@ therefore deliberately unflattering duty profiles, not the handheld best case:
 NOMAD is headless and serves browsers over the LAN, so 100 % of its 24 h is idle or loaded with no
 display of its own attached. Its AI is off in every row.
 
+One r5 variant is scored as a hotspot: the Pi 5's Wi-Fi radio is on board and only disabled by policy
+(`dtoverlay=disable-wifi`), so `hostapd` + `dnsmasq` is a configuration change, not a hardware one.
+That row adds an estimated 0.4 W for the access point.
+
 ![Daily energy and the panel that sustains it](power_24_7.png)
 
 | Platform (24/7, AI off) | Draw | Wh/day | Solar panel | Battery, 1 day | €/yr at €0.30/kWh |
@@ -24,9 +28,10 @@ display of its own attached. Its AI is off in every row.
 | Ktemata r5 — screen off 24 h | 4.0 W (5 V) | 109 | 48 W | 128 Wh | €12 |
 | Ktemata r5 — 4 h reading + 20 h off | 4.4 W (5 V) | 120 | 53 W | 142 Wh | €13 |
 | Ktemata r5 — kiosk, display on 24 h | 5.1 W (5 V) | 139 | 61 W | 164 Wh | €15 |
+| Ktemata r5 — Wi-Fi hotspot (est. +0.4 W) | 4.4 W (5 V) | 120 | 53 W | 141 Wh | €13 |
 | NOMAD budget (refurb SFF) | 14.5 W (wall) | 348 | 153 W | 409 Wh | €38 |
 | NOMAD recommended (UM890 class) | 8.0 W (wall) | 192 | 84 W | 226 Wh | €21 |
-| NOMAD power (+RTX 3060) | 35 W (wall) | 840 | 369 W | 988 Wh | €92 |
+| NOMAD power (+RTX 3060) | 35.0 W (wall) | 840 | 369 W | 988 Wh | €92 |
 
 Panel and battery columns use 3.5 peak-sun-hours at 0.65 derate and 0.85 depth of discharge — both
 assumptions, see [Caveats](#caveats). Costs are the grid-price equivalent of the energy, not a
@@ -53,13 +58,13 @@ Component draws, from measurements where measurements exist:
 States and runtime. The pack column applies η = 0.88 and 0.85 usable depth of discharge, so 22.2 Wh
 gives ≈ 16.6 Wh at the 5 V rail:
 
-| State (r5) | 5 V rail | at the pack | runtime, 22.2 Wh (3.0 Ah) | runtime, 25.9 Wh (3.5 Ah) |
+| State (r5) | 5 V rail | at pack | runtime, 22.2 Wh | runtime, 25.9 Wh |
 |---|---|---|---|---|
-| Screen off, Pi up | 4.0 W | 4.5 W | 4.2 h | 4.8 h |
-| Idle, screen on | 5.1 W | 5.8 W | 3.3 h | 3.8 h |
-| Reading / Kiwix, light touch | 6.5 W | 7.4 W | 2.6 h | 3.0 h |
-| Browsing Wikipedia + maps | 8.7 W | 9.9 W | 1.9 h | 2.2 h |
-| Heavy (video, CPU stress) | 12.5 W | 14.2 W | 1.3 h | 1.5 h |
+| screen off, Pi up | 4.0 W | 4.5 W | 4.2 h | 4.8 h |
+| idle, screen on | 5.1 W | 5.8 W | 3.3 h | 3.8 h |
+| reading / Kiwix | 6.5 W | 7.4 W | 2.6 h | 3.0 h |
+| browsing + maps | 8.7 W | 9.9 W | 1.9 h | 2.2 h |
+| heavy (video/CPU) | 12.5 W | 14.2 W | 1.3 h | 1.5 h |
 
 `README.md` and `BOM.md` claim **2–2.5 h** of Pi 5 runtime. That holds and is the right conservative
 number: 22.2 Wh over 2–2.5 h is 8.9–11.1 W at the pack, i.e. the browsing and heavy rows. It
@@ -91,6 +96,13 @@ ThinkCentre M710q 11–13 W, M920q 12–15 W, M75q Gen 2 ≈ 12 W (same series);
 ([ServeTheHome](https://www.servethehome.com/minisforum-um890-pro-review-re-architected-amd-ryzen-8945hs-mini-pc/4/)).
 
 ![Idle versus load](power_profile.png)
+
+| Platform | Idle | Load | Ratio load/idle |
+|---|---|---|---|
+| Ktemata r5 | 5.1 W (5 V) | 12.5 W (5 V) | 2.5x |
+| NOMAD budget (refurb SFF) | 14.5 W | 50 W | 3.4x |
+| NOMAD recommended (UM890 class) | 8.0 W | 85 W | 10.6x |
+| NOMAD power (+RTX 3060) | 35.0 W | 250 W | 7.1x |
 
 The shape matters more than any single number. The recommended build **idles lower than a
 refurbished SFF PC** (8 W against 14.5 W) yet **loads 10.6× above its own idle** (85 W) where the

@@ -13,8 +13,8 @@ everything else:
 | Source | this repository, MIT-style DIY | closed product, proprietary UI on Internet-in-a-Box |
 
 The honest summary: **the Prepper Disk is the better product; Ktemata is the better device for one
-specific job.** The Prepper Disk wins on price, size, weight, power, polish, support and the number
-of people it serves. Ktemata wins on independence from other devices, on storage and upgradeability,
+specific job.** The Prepper Disk wins on price, size, weight, power, polish and support — and on
+serving a room *by default*, though Ktemata has the same radio and only disables it by policy. Ktemata wins on independence from other devices, on storage and upgradeability,
 on being field-repairable, and on being a computer you can use *with no phone in the room*. Which of
 those matters depends entirely on whether you expect to have a working phone and a charged laptop
 with you.
@@ -38,11 +38,21 @@ less energy** (73 against 96 Wh/day), and it needs no display.
 
 ![Power per reader](prepperdisk_served.png)
 
-**It serves a room.** Up to 20 phones, tablets and laptops at once, over its own Wi-Fi. At 3.05 W
-that is ~152 mW of server power per connected device. Ktemata serves exactly one reader — the person
-holding it — at 5.1 W. For a family, a classroom, or a group in a shelter, the hotspot is
-categorically more useful. It also means the client devices keep their own batteries, screens and
-familiar browsers, so the failure of one phone costs you one user, not the library.
+**It serves a room out of the box.** Up to 20 phones, tablets and laptops at once, over its own
+Wi-Fi. At 3.05 W that is ~152 mW of server power per connected device, against 5.1 W for the person
+holding the Ktemata.
+
+This is worth stating precisely, because it is the one place where the two machines are **not**
+technically different. **Ktemata's Pi 5 has the same dual-band Wi-Fi radio on board as the Prepper
+Disk's Pi 4B.** r5 disables it by policy (`dtoverlay=disable-wifi` in `config.txt`, see the "Radios
+off" row in `README.md`) because the project's brief is an offline device with no networking. That
+is a **design choice, not a hardware limit**: `hostapd` + `dnsmasq` and a DHCP range turn it into a
+hotspot in one configuration change, serving the same ZIM files to the same browsers. The cost is
+about 0.4 W, which moves it to 4.4 W and **220 mW per connected device** — still in the Prepper
+Disk's league, and the machine keeps its own screen and battery while doing it.
+
+What the Prepper Disk still has over that mode is simplicity: the hotspot *is* the product, it is
+already configured, and there is no laptop-and-SSH step to get there.
 
 **No assembly, no printing, no wiring.** It arrives configured, tested, with a one-year warranty,
 60-day returns, 7,000+ units shipped and a 4.8-star review base. Ktemata r5 requires a 3D printer,
@@ -110,7 +120,7 @@ battery-percentage bug is a pull request, not a support ticket.
 | Draw, 24/7 | 4.0–5.1 W | 3.05 W | **Prepper Disk** ~¼ less energy/day |
 | Energy/day | 96–139 Wh | 73 Wh | **Prepper Disk** 1.3–1.9× |
 | Autonomy as shipped | 3.3–4.2 h | none (mains/USB bank) | **Ktemata** |
-| Readers served | 1 | up to 20 | **Prepper Disk** |
+| Readers served | 1 (20 as a hotspot, one config change) | up to 20 | tie, Prepper Disk by default |
 | Needs another device | no | yes | **Ktemata** |
 | Storage | 512 GB NVMe, upgradeable | 512 GB microSD, replaceable | **Ktemata** (durability) |
 | Setup effort | print, wire, flash, debug | plug in | **Prepper Disk** |
@@ -123,13 +133,15 @@ battery-percentage bug is a pull request, not a support ticket.
 
 - **Buy the Prepper Disk** if you want an offline library in a bag, will have phones or laptops with
   you, want it working in ten minutes, and would rather spend €271 than a weekend. It is the right
-  answer for most people, and the 20-device hotspot is genuinely more useful than a single screen.
+  answer for most people.
 - **Build Ktemata** if the point is a self-contained reading and computing device that works with
   nothing else in the room, if you want to own and repair the hardware, if 512 GB of NVMe and the
-  option to swap in a terabyte matters, or if the building is the point.
+  option to swap in a terabyte matters, or if the building is the point. If you also want the
+  hotspot, enable the radio — it is already there.
 - **Both** is not silly: €271 for the family hotspot plus a handheld for the person who walks out
   with the bag. They share the same ZIM files and the same Kiwix software, so the second copy costs
-  only storage.
+  only storage. Equally, one Ktemata can do both — enable the radio when a group needs it, leave it
+  off when the point is to be unfindable.
 
 ## Sources and caveats
 
@@ -138,7 +150,8 @@ battery-percentage bug is a pull request, not a support ticket.
   [DIY page](https://www.prepperdisk.com/pages/diy-prepper-disk-adv) for the parts-and-cost breakdown,
   and its product copy for the content list.
 - Pi 4B idle draw: [Dramble power benchmarks](https://www.pidramble.com/wiki/benchmarks/power-consumption.html),
-  540 mA at 5 V with nothing on USB. The 0.35 W access-point figure is an **estimate**, unmeasured.
+  540 mA at 5 V with nothing on USB. The 0.35 W (Prepper Disk) and 0.4 W (Ktemata) access-point
+  figures are **estimates**, unmeasured; the Pi 5's radio draws at the same order as the Pi 4B's.
 - Ktemata figures: `docs/POWER.md`, same 24/7 basis, same η = 0.88 / 0.85 DoD / 3.5 PSH / 0.65 derate
   assumptions. Prices from `BOM.md` (reconciled orders; r5's Peli 1200 is not yet in that total, so
   treat ≈ €635 as indicative).
