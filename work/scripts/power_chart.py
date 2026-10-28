@@ -64,6 +64,18 @@ NOMAD = {
 }
 
 
+# ---------------- Prepper Disk (commercial, Raspberry Pi 4B 2 GB headless) ----------------
+# Measured Pi 4B idle: 540 mA at 5 V = 2.7 W, nothing on USB (Dramble power benchmarks).
+# The board also runs its own Wi-Fi access point; ~0.35 W is an estimate, not a measurement.
+PREPPER = {
+    "draw": 2.7 + 0.35,
+    "devices": 20,            # vendor: "up to 20 phones, laptops and tablets at once"
+    "price_eur": 270.95,      # Premium 512 GB, vendor price 28 Oct 2026
+    "price_sw_eur": 150.95,   # software-only SD card for an existing Pi
+    "storage_gb": 512,
+}
+
+
 def pack(w5v):
     """5 V-rail watts -> watts drawn from the 2S pack."""
     return w5v / ETA
@@ -183,7 +195,101 @@ def chart_profile(path):
     plt.close(fig)
 
 
+def prepper_tables():
+    print("| Machine | Draw | Wh/day | Solar panel | Battery, 1 day | Devices served | Per device |")
+    print("|---|---|---|---|---|---|---|")
+    rows_pd = [
+        ("Prepper Disk (Pi 4B, 512 GB)", PREPPER["draw"], PREPPER["devices"]),
+        ("Ktemata r5 (Pi 5, screen off)", K["screen off, Pi up"][0], 1),
+        ("Ktemata r5 (4 h reading)", None, 1),
+    ]
+    for name, w, n in rows_pd:
+        if w is None:
+            wh = PROFILES["Ktemata r5 — 4 h reading + 20 h off"][0]
+            w = wh / 24.0
+        else:
+            wh = wh_day_5v(w)
+        print(f"| {name} | {w:.2f} W | {wh:.0f} | {panel_w(wh):.0f} W | {battery_wh(wh):.0f} Wh | "
+              f"{n} | {w / n * 1000:.0f} mW |")
+    print()
+    # A 5 V USB bank powers the Prepper Disk; it cannot feed Ktemata's HAT (B), which wants
+    # 8.4 V on its barrel jack. So this is a Prepper-Disk-only figure, not a shared table.
+    print("| Prepper Disk on a 5 V USB power bank | Runtime |")
+    print("|---|---|")
+    for mah in (10000, 20000):
+        wh = mah * 3.7 / 1000.0
+        print(f"| {mah // 1000} Ah ({wh:.0f} Wh) | {wh * DOD * ETA / PREPPER['draw']:.1f} h |")
+    print()
+    # cost: BOM.md's reconciled r4 total against the vendor price
+    kt, pd, pds = 635.0, PREPPER["price_eur"], PREPPER["price_sw_eur"]
+    print("| | Ktemata r5 (built) | Prepper Disk Premium | Prepper Disk, software only |")
+    print("|---|---|---|---|")
+    print(f"| Price | ≈ €{kt:.0f} (BOM.md) | €{pd:.2f} | €{pds:.2f} |")
+    print(f"| Ratio to Ktemata | 1.0x | {pd / kt:.2f}x | {pds / kt:.2f}x |")
+    print(f"| Storage | 512 GB NVMe (of 833 GiB library) | {PREPPER['storage_gb']} GB microSD | "
+          f"{PREPPER['storage_gb']} GB card + your Pi |")
+    print()
+
+
+def chart_prepper(path):
+    fig, ax = plt.subplots(figsize=(8.4, 3.4))
+    names = ["Prepper Disk\nper connected device (of 20)",
+             "Ktemata r5\nper reader (the device itself)"]
+    vals = [PREPPER["draw"] / PREPPER["devices"] * 1000, K["idle, screen on"][0] * 1000]
+    bars = ax.barh(names, vals, color=["#4a72b0", "#c4622d"], height=0.55)
+    for b, v in zip(bars, vals):
+        ax.text(b.get_width() * 1.06, b.get_y() + b.get_height() / 2, f"{v:.0f} mW",
+                va="center", fontsize=10)
+    ax.set_xscale("log")
+    ax.set_xlabel("power attributable to one reader (mW, log scale)", fontsize=9)
+    ax.set_xlim(100, 12000)
+    ax.set_title("Power per reader: a hotspot is shared, a handheld is not",
+                 fontsize=10.5)
+    ax.grid(axis="x", color="#ddd", lw=0.6)
+    ax.set_axisbelow(True)
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+
+
+def chart_autonomy(path):
+    # Shipped configuration only. The Prepper Disk takes 5 V on USB-C and ships without a cell,
+    # so on its own it has zero autonomy. Ktemata carries a 2S pack that the HAT (B) charges from
+    # 8.4 V, which a 5 V USB bank cannot feed without a converter - so the two are not
+    # interchangeable and are not plotted against each other on a bank.
+    fig, ax = plt.subplots(figsize=(7.6, 3.2))
+    names = ["Prepper Disk\nships without a battery",
+             "Ktemata r5\nown 22.2 Wh pack"]
+    hrs = [0.0, PACK_WH * ETA * DOD / K["idle, screen on"][0]]
+    bars = ax.barh(names, hrs, color=["#4a72b0", "#c4622d"], height=0.5)
+    for b, h in zip(bars, hrs):
+        ax.text(max(h, 0.08) + 0.12, b.get_y() + b.get_height() / 2,
+                "needs mains or a USB bank" if h == 0 else f"{h:.1f} h with the screen on",
+                va="center", fontsize=9, color="#333")
+    ax.set_xlim(0, 5.2)
+    ax.set_xlabel("hours of operation without mains", fontsize=9)
+    ax.set_title("Autonomy as shipped", fontsize=10.5)
+    ax.grid(axis="x", color="#ddd", lw=0.6)
+    ax.set_axisbelow(True)
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
+    if "--compare" in sys.argv:
+        os.makedirs(DOCS, exist_ok=True)
+        chart_prepper(os.path.join(DOCS, "prepperdisk_served.png"))
+        chart_autonomy(os.path.join(DOCS, "prepperdisk_autonomy.png"))
+        print(f"wrote {os.path.join(DOCS, 'prepperdisk_served.png')}")
+        print(f"wrote {os.path.join(DOCS, 'prepperdisk_autonomy.png')}")
+        print()
+        prepper_tables()
+        sys.exit(0)
     if "--tables" not in sys.argv:
         os.makedirs(DOCS, exist_ok=True)
         chart_247(os.path.join(DOCS, "power_24_7.png"))

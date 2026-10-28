@@ -26,7 +26,8 @@ re-export.
 
 Design notes, one page per concern: [`docs/R4.md`](docs/R4.md) (current hardware),
 [`docs/R5.md`](docs/R5.md) (internal cassette), [`docs/POWER.md`](docs/POWER.md) (r5 power budget,
-24/7, against all three Project NOMAD tiers), [`docs/WIRING.md`](docs/WIRING.md), [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md),
+24/7, against all three Project NOMAD tiers), [`docs/COMPARISON-PREPPERDISK.md`](docs/COMPARISON-PREPPERDISK.md)
+(pros and cons against the commercial Prepper Disk), [`docs/WIRING.md`](docs/WIRING.md), [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md),
 [`docs/SLIMMING.md`](docs/SLIMMING.md).
 
 ### Build variants
