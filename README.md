@@ -24,6 +24,11 @@ re-export.
 
 ## Files
 
+Design notes, one page per concern: [`docs/R4.md`](docs/R4.md) (current hardware),
+[`docs/R5.md`](docs/R5.md) (internal cassette), [`docs/POWER.md`](docs/POWER.md) (power budget and
+the comparison with Project NOMAD), [`docs/WIRING.md`](docs/WIRING.md), [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md),
+[`docs/SLIMMING.md`](docs/SLIMMING.md).
+
 ### Build variants
 
 | Build | Mechanics | Keyboard / radios |
