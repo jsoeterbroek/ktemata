@@ -66,6 +66,15 @@ WITH_NOCAMERA=false     # opt-in: only edit config.txt when asked
 # Project NOMAD management images. On ARM these must come from a multi-arch fork,
 # because upstream publishes amd64 only. Empty NOMAD_STACK disables the step.
 NOMAD_STACK=${NOMAD_STACK:-auto}      # auto | off
+# The handheld is also a library hotspot. The Pi 5's radio is on board; serving the ZIM files
+# over a private AP is a configuration choice, not extra hardware. Off by default so a fresh
+# image keeps the old no-networking behaviour until someone asks for it.
+WITH_HOTSPOT=false
+HOTSPOT_SSID=${HOTSPOT_SSID:-Ktemata}
+HOTSPOT_PASS=${HOTSPOT_PASS:-}          # empty: open network (no password)
+HOTSPOT_ADDR=${HOTSPOT_ADDR:-10.10.10.1}
+HOTSPOT_CIDR=${HOTSPOT_CIDR:-24}
+HOTSPOT_BAND=${HOTSPOT_BAND:-auto}      # auto (2.4+5 GHz) | 2.4 | 5
 NOMAD_REGISTRY=${NOMAD_REGISTRY:-ghcr.io/jsoeterbroek}
 NOMAD_VERSION=${NOMAD_VERSION:-1.35.1}
 NOMAD_COMPOSE_DIR=${NOMAD_COMPOSE_DIR:-/opt/project-nomad}
@@ -119,6 +128,14 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-camera-autodetect
                          Set camera_auto_detect=0 in config.txt (no CSI camera in this
                          build). Touches config.txt, so it is opt-in.
+      --hotspot          Serve the library over its own Wi-Fi access point (wlan0).
+                         Uses NetworkManager when present, else hostapd + dnsmasq.
+      --no-hotspot       Do not create an access point (default).
+      --hotspot-ssid N   Network name (default: Ktemata).
+      --hotspot-pass P   WPA2 password, 8+ characters (default: open network).
+      --hotspot-open     Explicitly leave the network open, even if a password was set.
+      --hotspot-band B   auto (default) | 2.4 | 5. Only 2.4 GHz reaches older e-readers.
+      --hotspot-addr A   AP address (default: 10.10.10.1, matching the Prepper Disk's habit).
       --no-nomad         Do not pull the Project NOMAD images.
       --nomad-version V  NOMAD image tag to pull (default 1.35.1).
       --nomad-registry R Image registry/namespace (default ghcr.io/jsoeterbroek).
@@ -133,7 +150,8 @@ ${C_BOLD}OPTIONS${C_OFF}
   -V, --version          Print the version.
 
 ${C_BOLD}ENVIRONMENT${C_OFF}
-  ZIM_DIR, SERVICE_PORT, SERVICE_USER, NO_COLOR
+  ZIM_DIR, SERVICE_PORT, SERVICE_USER, NO_COLOR,
+  HOTSPOT_SSID, HOTSPOT_PASS, HOTSPOT_ADDR, HOTSPOT_CIDR, HOTSPOT_BAND
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
   1. checks it is running as root on a Debian derivative
@@ -147,8 +165,9 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   9. enables GDM automatic login (unless --no-autologin)
  10. sets the Ktemata logo as the desktop background (unless --no-wallpaper)
  11. replaces the early boot splash with the logo (unless --no-splash)
- 12. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
- 13. verifies the server answers
+ 12. optionally serves the library over its own Wi-Fi access point (--hotspot)
+ 13. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
+ 14. verifies the server answers
 EOF
 }
 
@@ -1276,6 +1295,180 @@ set_camera_autodetect_off() {
 }
 
 # ---------------------------------------------------------------------------------------
+# Library hotspot (access point for phones / laptops / e-readers)
+# ---------------------------------------------------------------------------------------
+# The Pi 5 has a dual-band 2.4/5 GHz radio on board. Nothing has to be added to serve the library
+# to a room: hostapd makes it an AP, dnsmasq hands out addresses and resolves every name to the
+# box, and kiwix-serve (:8080) is what they browse. Roughly 0.4 W, estimated.
+#
+# NetworkManager is used when it is present (Raspberry Pi OS Bookworm+ and Ubuntu desktop both
+# ship it) because `nmcli` writes a self-contained profile that survives reboots; otherwise the
+# step falls back to hostapd + dnsmasq units. Either way the wired/uplink interface is untouched,
+# so the machine can still be updated over Ethernet while it serves.
+#
+# Deliberately NOT done here:
+#   - no NAT to the internet. `ipv4.method shared` normally forwards clients to whatever uplink is
+#     up, so ipv4.ip-forward is pinned to 0: DHCP and DNS still come from NetworkManager's own
+#     dnsmasq, but clients reach this box and nothing beyond it. An appliance that silently NATs a
+#     room onto a hotel/office LAN is worse than one that does not.
+#   - no rfkill unblock by default: if the radio is hard-blocked by a switch, the step reports it.
+#   - no hostname change: `kiwix.local` and the IP both work, and mDNS is already on the image.
+setup_hotspot() {
+    $WITH_HOTSPOT || return 0
+    log_stage "Library hotspot"
+
+    if [ ! -d /sys/class/net/wlan0 ]; then
+        log_warn "no wlan0 interface: this board has no usable Wi-Fi radio, skipping"
+        return 0
+    fi
+
+    # an existing AP profile must not be silently overwritten by re-running the installer
+    if has_command nmcli && nmcli -t -f NAME connection show 2>/dev/null | grep -qx "$HOTSPOT_SSID"; then
+        log_ok "NetworkManager profile '$HOTSPOT_SSID' already exists, leaving it alone"
+        verify_hotspot
+        return 0
+    fi
+
+    if has_command nmcli; then
+        install_hotspot_nm
+    else
+        install_hotspot_hostapd
+    fi
+    verify_hotspot
+}
+
+# NetworkManager's band property: 'bg' = 2.4 GHz only, 'a' = 5 GHz only, unset = either.
+hotspot_nm_band() {
+    case $HOTSPOT_BAND in
+        2.4) echo bg ;;
+        5)   echo a ;;
+        *)   echo "" ;;   # auto: leave it to the driver
+    esac
+}
+
+install_hotspot_nm() {
+    log_info "NetworkManager is present: creating a shared AP profile"
+    $DRY_RUN || {
+        # 802-11-wireless mode ap = real access point (not ad-hoc), so phones connect normally
+        nmcli connection add type wifi ifname wlan0 con-name "$HOTSPOT_SSID" \
+            autoconnect yes ssid "$HOTSPOT_SSID" >/dev/null
+        # band is only set when pinned: an empty value is an nmcli error, and leaving it unset
+        # lets the driver pick, which is what "auto" should mean
+        local nm_args=(
+            802-11-wireless.mode ap
+            ipv4.method shared
+            ipv4.addresses "$HOTSPOT_ADDR/$HOTSPOT_CIDR"
+            ipv4.ip-forward 0
+            ipv6.method disabled
+        )
+        local band; band=$(hotspot_nm_band)
+        [ -n "$band" ] && nm_args+=(802-11-wireless.band "$band")
+        nmcli connection modify "$HOTSPOT_SSID" "${nm_args[@]}" >/dev/null
+        if [ -n "$HOTSPOT_PASS" ]; then
+            nmcli connection modify "$HOTSPOT_SSID" \
+                802-11-wireless-security.key-mgmt wpa-psk \
+                802-11-wireless-security.psk "$HOTSPOT_PASS" >/dev/null
+        else
+            log_warn "no password: the library is readable by anyone in radio range"
+        fi
+        log_ok "profile '$HOTSPOT_SSID' created on wlan0 ($HOTSPOT_ADDR/$HOTSPOT_CIDR)"
+    }
+    $DRY_RUN && printf '%s  [dry-run]%s nmcli connection add ... ssid %s\n' \
+        "$C_YELLOW" "$C_OFF" "$HOTSPOT_SSID"
+
+    # ipv4.method shared gives DHCP + DNS via NetworkManager's own dnsmasq instance, so no
+    # separate dnsmasq/hostapd unit is needed; ip-forward=0 keeps it from routing anyone onwards.
+    # Bring it up now rather than at the next boot.
+    run nmcli connection up "$HOTSPOT_SSID" || log_warn "could not bring the AP up yet"
+}
+
+install_hotspot_hostapd() {
+    log_info "no NetworkManager: falling back to hostapd + dnsmasq"
+    local pkgs=(hostapd dnsmasq)
+    run env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${pkgs[@]}"
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s write /etc/hostapd/hostapd.conf and /etc/dnsmasq.d/ktemata-hotspot.conf\n' \
+            "$C_YELLOW" "$C_OFF"
+        return 0
+    fi
+
+    local hw
+    hw=$(grep -q '^country=' /etc/wpa_supplicant/wpa_supplicant.conf 2>/dev/null && \
+         sed -n 's/^country=\(..\).*/\1/p' /etc/wpa_supplicant/wpa_supplicant.conf | head -1)
+    hw=${hw:-NL}
+
+    # hw_mode/ieee80211ac follow --hotspot-band; 2.4 GHz is the safe default because older
+    # e-readers and cheap phones have no 5 GHz radio at all
+    local hw_mode=g ac_line=""
+    case $HOTSPOT_BAND in
+        5) hw_mode=a; ac_line="ieee80211ac=1" ;;
+    esac
+
+    cat >/etc/hostapd/hostapd.conf <<APCONF
+# Ktemata library hotspot (written by post-install.sh)
+interface=wlan0
+driver=nl80211
+ssid=$HOTSPOT_SSID
+hw_mode=$hw_mode
+channel=$([ "$hw_mode" = a ] && echo 36 || echo 6)
+country_code=$hw
+ieee80211n=1
+$ac_line
+wmm_enabled=1
+APCONF
+    if [ -n "$HOTSPOT_PASS" ]; then
+        cat >>/etc/hostapd/hostapd.conf <<APCONF
+wpa=2
+wpa_key_mgmt=WPA-PSK
+wpa_passphrase=$HOTSPOT_PASS
+rsn_pairwise=CCMP
+APCONF
+    else
+        log_warn "no password: the library is readable by anyone in radio range"
+    fi
+    chmod 0600 /etc/hostapd/hostapd.conf
+    sed -i 's|^#\?DAEMON_CONF=.*|DAEMON_CONF="/etc/hostapd/hostapd.conf"|' /etc/default/hostapd 2>/dev/null || true
+
+    # dnsmasq: DHCP on wlan0 only, and answer every name with this box so any URL works
+    cat >/etc/dnsmasq.d/ktemata-hotspot.conf <<DNSCONF
+# Ktemata library hotspot (written by post-install.sh)
+interface=wlan0
+bind-interfaces
+dhcp-range=${HOTSPOT_ADDR%.*}.10,${HOTSPOT_ADDR%.*}.200,12h
+address=/#/$HOTSPOT_ADDR
+DNSCONF
+
+    run systemctl unmask hostapd || true
+    run systemctl enable --now hostapd
+    run systemctl enable --now dnsmasq
+    run systemctl restart dnsmasq
+    log_ok "hostapd + dnsmasq enabled on wlan0 ($HOTSPOT_ADDR/$HOTSPOT_CIDR)"
+}
+
+verify_hotspot() {
+    $DRY_RUN && return 0
+    if has_command nmcli; then
+        if nmcli -t -f NAME connection show --active 2>/dev/null | grep -qx "$HOTSPOT_SSID"; then
+            log_ok "AP '$HOTSPOT_SSID' is up on wlan0"
+        else
+            log_warn "AP '$HOTSPOT_SSID' is not up yet; it will start on the next boot"
+        fi
+    else
+        systemctl is-active --quiet hostapd && log_ok "hostapd active" \
+            || log_warn "hostapd is not active"
+    fi
+    # the library must answer over the AP address, not just loopback
+    if has_command curl; then
+        if curl -fsS -m 4 -o /dev/null "http://$HOTSPOT_ADDR:$SERVICE_PORT/" 2>/dev/null; then
+            log_ok "library answers on http://$HOTSPOT_ADDR:$SERVICE_PORT/ over the AP"
+        else
+            log_warn "library did not answer on http://$HOTSPOT_ADDR:$SERVICE_PORT/ (no ZIM yet?)"
+        fi
+    fi
+}
+
+# ---------------------------------------------------------------------------------------
 # Project NOMAD images
 #
 # Upstream publishes the admin and sidecar images for amd64 only, so `docker compose up`
@@ -1709,6 +1902,13 @@ main() {
                 WITH_WALLPAPER=true ;;
             --no-splash)     WITH_SPLASH=false ;;
             --no-camera-autodetect) WITH_NOCAMERA=true ;;
+            --hotspot)       WITH_HOTSPOT=true ;;
+            --no-hotspot)    WITH_HOTSPOT=false ;;
+            --hotspot-ssid)  HOTSPOT_SSID=${2:?--hotspot-ssid needs a name}; shift ;;
+            --hotspot-pass)  HOTSPOT_PASS=${2:?--hotspot-pass needs a password}; shift ;;
+            --hotspot-open)  HOTSPOT_PASS="" ;;
+            --hotspot-band)  HOTSPOT_BAND=${2:?--hotspot-band takes auto, 2.4 or 5}; shift ;;
+            --hotspot-addr)  HOTSPOT_ADDR=${2:?--hotspot-addr needs an address}; shift ;;
             --no-nomad)      NOMAD_STACK=off ;;
             --nomad-version) NOMAD_VERSION=${2:?--nomad-version needs a tag}; shift ;;
             --nomad-registry) NOMAD_REGISTRY=${2:?--nomad-registry needs a registry}; shift ;;
@@ -1737,6 +1937,14 @@ main() {
     case ${POWER_SOURCE:-usbc} in usbc|hat) ;; *) die "--power takes usbc or hat" ;; esac
     case $SPLASH_ORIENTATION in landscape|portrait) ;;
         *) die "--splash-orientation takes landscape or portrait" ;; esac
+    case $HOTSPOT_BAND in auto|2.4|5) ;; *) die "--hotspot-band takes auto, 2.4 or 5" ;; esac
+    # WPA2-PSK needs 8..63 printable characters; anything else silently fails at connect time
+    if [ -n "$HOTSPOT_PASS" ] && [ ${#HOTSPOT_PASS} -lt 8 ]; then
+        die "--hotspot-pass needs at least 8 characters (WPA2 minimum), or use --hotspot-open"
+    fi
+    case $HOTSPOT_ADDR in
+        *[!0-9.]*|'') die "--hotspot-addr must be an IPv4 address" ;;
+    esac
 
     $DRY_RUN || require_root "$@"
 
@@ -1763,6 +1971,7 @@ main() {
     install_wallpaper
     install_splash
     set_camera_autodetect_off
+    setup_hotspot
     prepare_nomad_images
     install_kiosk
     $WITH_SAMPLE && download_sample

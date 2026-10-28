@@ -24,6 +24,7 @@ Git repo. Commit or back up before large changes (an older version is also in `w
 For development phase use:
 
 - for ESP32/OLED component, use the project venv: `source .venv/bin/activate` then `pio ...` (or `.venv/bin/pio`). The venv has PlatformIO and `intelhex`.
+- **The library hotspot is a supported feature, not a deviation.** `post-install.sh --hotspot` makes the Pi an access point (NetworkManager profile, else hostapd + dnsmasq) serving `:8080` at `10.10.10.1`, ~0.4 W estimated. Do not reintroduce "no networking" as a requirement; Bluetooth and the FireBeetle radios stay off. `ipv4.ip-forward 0` is deliberate — the AP must not NAT clients onto an uplink.
 - r5 needs no firmware change for the missing sensor: `initBme688()` logs `BME688 not found` and the environment screen/alert simply never becomes valid (`env.valid` stays false). The environment page then shows the absence; do not add a stub.
 -
 

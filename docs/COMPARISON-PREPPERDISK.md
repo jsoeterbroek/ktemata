@@ -14,7 +14,7 @@ everything else:
 
 The honest summary: **the Prepper Disk is the better product; Ktemata is the better device for one
 specific job.** The Prepper Disk wins on price, size, weight, power, polish and support — on
-serving a room *by default*, though Ktemata has the same radio and only disables it by policy — and
+serving a room *by default*, though Ktemata now has the same function behind one install flag — and
 on EMP, where it sells a working bag for €22 while Ktemata's shielding is still a plan. Ktemata wins on independence from other devices, on storage and upgradeability,
 on being field-repairable, and on being a computer you can use *with no phone in the room*. Which of
 those matters depends entirely on whether you expect to have a working phone and a charged laptop
@@ -39,21 +39,18 @@ less energy** (73 against 96 Wh/day), and it needs no display.
 
 ![Power per reader](prepperdisk_served.png)
 
-**It serves a room out of the box.** Up to 20 phones, tablets and laptops at once, over its own
+**It serves a room by default.** Up to 20 phones, tablets and laptops at once, over its own
 Wi-Fi. At 3.05 W that is ~152 mW of server power per connected device, against 5.1 W for the person
 holding the Ktemata.
 
-This is worth stating precisely, because it is the one place where the two machines are **not**
-technically different. **Ktemata's Pi 5 has the same dual-band Wi-Fi radio on board as the Prepper
-Disk's Pi 4B.** r5 disables it by policy (`dtoverlay=disable-wifi` in `config.txt`, see the "Radios
-off" row in `README.md`) because the project's brief is an offline device with no networking. That
-is a **design choice, not a hardware limit**: `hostapd` + `dnsmasq` and a DHCP range turn it into a
-hotspot in one configuration change, serving the same ZIM files to the same browsers. The cost is
-about 0.4 W, which moves it to 4.4 W and **220 mW per connected device** — still in the Prepper
-Disk's league, and the machine keeps its own screen and battery while doing it.
+Ktemata now does this too, so this is **no longer a difference in capability**. The Pi 5 has the
+same dual-band radio as the Prepper Disk's Pi 4B, and `post-install.sh --hotspot` builds the access
+point (NetworkManager profile, else `hostapd` + `dnsmasq`) serving the same ZIM files to the same
+browsers. The cost is about 0.4 W, which moves r5 to 4.4 W and **220 mW per connected device** —
+the same league, with the machine keeping its own screen and battery while it serves.
 
-What the Prepper Disk still has over that mode is simplicity: the hotspot *is* the product, it is
-already configured, and there is no laptop-and-SSH step to get there.
+What the Prepper Disk still has over it is simplicity: the hotspot *is* the product, it is already
+configured, and there is no install flag to pass.
 
 **No assembly, no printing, no wiring.** It arrives configured, tested, with a one-year warranty,
 60-day returns, 7,000+ units shipped and a 4.8-star review base. Ktemata r5 requires a 3D printer,
@@ -203,7 +200,7 @@ between.
 | Draw, 24/7 | 4.0–5.1 W | 3.05 W | **Prepper Disk** ~¼ less energy/day |
 | Energy/day | 96–139 Wh | 73 Wh | **Prepper Disk** 1.3–1.9× |
 | Autonomy as shipped | 3.3–4.2 h | none (mains/USB bank) | **Ktemata** |
-| Readers served | 1 (20 as a hotspot, one config change) | up to 20 | tie, Prepper Disk by default |
+| Readers served | up to 20 with `--hotspot` (one flag) | up to 20 | tie, Prepper Disk by default |
 | Needs another device | no | yes | **Ktemata** |
 | Storage | 512 GB NVMe, upgradeable | 512 GB microSD, replaceable | **Ktemata** (durability) |
 | Setup effort | print, wire, flash, debug | plug in | **Prepper Disk** |

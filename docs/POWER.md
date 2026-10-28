@@ -17,9 +17,9 @@ therefore deliberately unflattering duty profiles, not the handheld best case:
 NOMAD is headless and serves browsers over the LAN, so 100 % of its 24 h is idle or loaded with no
 display of its own attached. Its AI is off in every row.
 
-One r5 variant is scored as a hotspot: the Pi 5's Wi-Fi radio is on board and only disabled by policy
-(`dtoverlay=disable-wifi`), so `hostapd` + `dnsmasq` is a configuration change, not a hardware one.
-That row adds an estimated 0.4 W for the access point.
+One r5 variant is scored as a hotspot. That is now a **shipped option** —
+`work/scripts/post-install.sh --hotspot` builds it (NetworkManager profile, else `hostapd` +
+`dnsmasq`), so it is no longer hypothetical. The row adds an estimated 0.4 W for the access point.
 
 ![Daily energy and the panel that sustains it](power_24_7.png)
 

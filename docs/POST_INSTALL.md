@@ -18,6 +18,56 @@ sudo ./work/scripts/post-install.sh --sample         # + fetch one small ZIM to 
 Inspired by [`after-effects`](https://github.com/tprasadtp/ubuntu-post-install) but deliberately small: one
 file, no YAML config, no whiptail menu. Idempotent — safe to re-run.
 
+## Library hotspot
+
+The Pi 5 has a dual-band 2.4/5 GHz radio on board, so serving the library to a room is a
+configuration choice, not hardware. This is the same function the commercial Prepper Disk ships
+with; it costs about **0.4 W** (estimated), which is why it is worth having.
+
+```bash
+sudo ./work/scripts/post-install.sh --hotspot --hotspot-pass 'somepassphrase'
+sudo ./work/scripts/post-install.sh --hotspot --hotspot-open --hotspot-ssid Ktemata
+sudo ./work/scripts/post-install.sh --hotspot --hotspot-band 2.4   # older e-readers
+```
+
+Clients join the network and browse `http://10.10.10.1:8080/` (or any hostname — DNS answers
+everything with the box's address). Defaults: SSID `Ktemata`, **open network**, `10.10.10.1/24`,
+dual-band.
+
+| Flag | Meaning |
+|---|---|
+| `--hotspot` | create the AP (default: off, so a fresh image keeps the old behaviour) |
+| `--no-hotspot` | explicitly do not create one |
+| `--hotspot-ssid N` | network name (default `Ktemata`) |
+| `--hotspot-pass P` | WPA2 passphrase, **8+ characters**; the script refuses shorter ones |
+| `--hotspot-open` | leave it open even if a password was configured |
+| `--hotspot-band auto\|2.4\|5` | pin the band; `2.4` also serves devices with no 5 GHz radio |
+| `--hotspot-addr A` | AP address (default `10.10.10.1`) |
+
+How it is implemented:
+
+- **NetworkManager first.** Present on Raspberry Pi OS Bookworm+ and Ubuntu desktop, so the
+  installer creates a self-contained `nmcli` profile (`802-11-wireless.mode ap`,
+  `ipv4.method shared`). DHCP and DNS come from NetworkManager's own dnsmasq; nothing else is
+  installed, and the profile survives reboots and `apt` upgrades.
+- **hostapd + dnsmasq otherwise.** For images without NetworkManager, it writes
+  `/etc/hostapd/hostapd.conf` (mode 0600) and `/etc/dnsmasq.d/ktemata-hotspot.conf` and enables
+  both units.
+- **No routing.** `ipv4.ip-forward 0` stops `method shared` from NATing clients onto whatever
+  uplink is present. The AP serves this box and nothing beyond it — an appliance that silently
+  becomes a router on a hotel or office LAN is a worse failure than not routing.
+- **Idempotent.** An existing profile with the same SSID is left untouched, so re-running the
+  installer never resets a password.
+- **Verified, not assumed.** The step brings the AP up and then fetches
+  `http://<addr>:8080/` to prove the library answers over that interface.
+
+Turning it off again:
+
+```bash
+sudo nmcli connection delete Ktemata        # NetworkManager path
+sudo systemctl disable --now hostapd dnsmasq   # hostapd path
+```
+
 ## What it does, in order
 
 | Step | Action | Flag |
@@ -33,7 +83,8 @@ file, no YAML config, no whiptail menu. Idempotent — safe to re-run.
 | 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
 | 11 | Replaces the early boot splash with the logo | `--no-splash`, `--splash [FILE]` |
 | 12 | Optionally sets `camera_auto_detect=0` in `config.txt` | `--no-camera-autodetect` |
-| 13 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
+| 13 | **Optionally serves the library over its own Wi-Fi AP** — see below | `--hotspot` |
+| 14 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
 not get a Kiwix build that is already superseded.
