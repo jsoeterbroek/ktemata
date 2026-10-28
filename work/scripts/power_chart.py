@@ -203,6 +203,57 @@ def chart_profile(path):
     plt.close(fig)
 
 
+# ---------------- EMP shielding geometry (docs/COMPARISON-PREPPERDISK.md) ----------------
+# Not a power model: this is what an anti-EMP lining of the Peli 1200 interior has to achieve.
+# Worst-case slot-antenna estimate SE(dB) ~ 20*log10(lambda / (2*L)) for the longest aperture L.
+# The seam is the binding constraint: an un-gasketed lid joint is an 835 mm slot, which is
+# -14.9 dB at 1 GHz, i.e. it amplifies rather than shields. CISA's EMP guidelines put 30 dB as
+# the Level 3 floor and 80 dB at Level 4.
+EMP = {
+    "seam_mm": 835,          # 2 x (236.5 + 181.1), the lid/base joint of a Peli 1200
+    "area_cm2": 1730,        # interior surface to coat: 2 floors/ceilings + all walls
+    "lambda_mm_1ghz": 299.79,
+    "cisa_l3_db": 30,
+    "cisa_l4_db": 80,
+    "nx3_db": (85, 90),      # vendor-claimed attenuation of the Faraday bag they sell
+}
+
+
+def emp_tables():
+    import math
+    lam, seam = EMP["lambda_mm_1ghz"], EMP["seam_mm"]
+
+    def se_db(L):
+        return 20 * math.log10(lam / (2 * L))
+
+    print("| Longest un-gasketed aperture | Worst-case SE at 1 GHz | Verdict |")
+    print("|---|---|---|")
+    for L, note in ((seam, "the lid/base seam, as shipped"), (100, "one 10 cm hole"),
+                    (20, "one 2 cm hole"), (5, "one 5 mm hole"), (2, "one 2 mm hole")):
+        db = se_db(L)
+        verdict = "amplifies" if db < 0 else ("below CISA L3" if db < EMP["cisa_l3_db"] else
+                                             ("meets L3" if db < EMP["cisa_l4_db"] else "meets L4"))
+        print(f"| {L} mm ({note}) | {db:+.1f} dB | {verdict} |")
+    print()
+    print("| Target | Largest allowed aperture at 1 GHz | What that means |")
+    print("|---|---|---|")
+    for target, label, means in (
+            (30, "CISA Level 3", "contact spacing under ~5 mm: knitted-wire or conductive-elastomer "
+                                 "gasket in the existing O-ring groove"),
+            (40, "typical MIL-STD-461", "under ~1.5 mm: finger-stock or a machined gasket channel"),
+            (80, "CISA Level 4", "under ~0.01 mm: a welded, seamless metal box - not a moulded case")):
+        L = lam / (2 * 10 ** (target / 20))
+        print(f"| {target} dB ({label}) | {L:.2f} mm | {means} |")
+    print()
+    print("| Consumable | Quantity for one Peli 1200 |")
+    print("|---|---|")
+    area_m2 = EMP["area_cm2"] / 10000.0
+    print(f"| Conductive coating | {EMP['area_cm2']:.0f} cm² ({area_m2:.3f} m²) → "
+          f"≈ {2 * area_m2 / 5 * 1000:.0f} mL for two coats at 5 m²/L coverage |")
+    print(f"| Seam gasket | {EMP['seam_mm']:.0f} mm of conductive gasket, one continuous loop |")
+    print()
+
+
 def prepper_tables():
     print("| Machine | Draw | Wh/day | Solar panel | Battery, 1 day | Devices served | Per device |")
     print("|---|---|---|---|---|---|---|")
@@ -301,6 +352,9 @@ if __name__ == "__main__":
         print(f"wrote {os.path.join(DOCS, 'prepperdisk_autonomy.png')}")
         print()
         prepper_tables()
+        sys.exit(0)
+    if "--emp" in sys.argv:
+        emp_tables()
         sys.exit(0)
     if "--tables" not in sys.argv:
         os.makedirs(DOCS, exist_ok=True)
