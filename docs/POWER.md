@@ -1,129 +1,163 @@
-# Power budget — Ktemata (r4) vs Project NOMAD, no AI
+# Power budget — Ktemata r5 vs Project NOMAD, all running 24/7, no AI
 
-Two very different machines, so the comparison has to be made in the right unit. Ktemata is a
-**handheld used 1–4 h/day on a 22–26 Wh pack**; a NOMAD box is a **station that stays on**. This page
-gives both, in watts and in Wh/day, and then in the solar panel and battery each would need off-grid.
+Ktemata r5 is the internal-cassette build: r4's electronics (Pi 5, Touch Display 2, UPS HAT (B)
+with 2× 18650, Rii K06) in a bought hard case, and **no air-quality sensor**. This page prices
+its energy against Project NOMAD's three hardware tiers with the AI left off, which NOMAD's own
+FAQ supports ("the AI is 100% optional").
 
-| | Ktemata r4 (Pi 5 handheld) | Project NOMAD, recommended build |
-|---|---|---|
-| Storage form | 2× 18650 in 2S, **22.2–25.9 Wh** usable pack | mains; a UPS only rides out outages |
-| Typical draw | **5.1 W** idle with screen on, 3.5 W screen off | **7–9 W** idle, 80–90 W load |
-| Duty cycle | handheld, 1–4 h/day | 24/7 if left on |
-| Energy per day (typical) | **14–40 Wh** | **192 Wh** |
-| Runtime on Ktemata's pack | 2.6–4.7 h (see below) | **2.1 h** at idle, 0.2 h at load |
+**Both are scored over the same 24 hours.** That is the point of the comparison: Ktemata is a
+handheld, but a machine that is on all day can still be compared with a station that is on all
+day, and the r5 pack is what it has to carry itself. Two of the three Ktemata rows below are
+therefore deliberately unflattering duty profiles, not the handheld best case:
 
-## Ktemata (r4)
+- **screen off 24 h** — a pure server role, nobody reading (its best case)
+- **4 h reading + 20 h off** — normal handheld use spread over a day
+- **kiosk, display on 24 h** — a wall display nobody switches off (its worst case)
 
-Components and their draws, from measured sources rather than datasheet maxima:
+NOMAD is headless and serves browsers over the LAN, so 100 % of its 24 h is idle or loaded with no
+display of its own attached. Its AI is off in every row.
+
+![Daily energy and the panel that sustains it](power_24_7.png)
+
+| Platform (24/7, AI off) | Draw | Wh/day | Solar panel | Battery, 1 day | €/yr at €0.30/kWh |
+|---|---|---|---|---|---|
+| Ktemata r5 — screen off 24 h | 4.0 W (5 V) | 109 | 48 W | 128 Wh | €12 |
+| Ktemata r5 — 4 h reading + 20 h off | 4.4 W (5 V) | 120 | 53 W | 142 Wh | €13 |
+| Ktemata r5 — kiosk, display on 24 h | 5.1 W (5 V) | 139 | 61 W | 164 Wh | €15 |
+| NOMAD budget (refurb SFF) | 14.5 W (wall) | 348 | 153 W | 409 Wh | €38 |
+| NOMAD recommended (UM890 class) | 8.0 W (wall) | 192 | 84 W | 226 Wh | €21 |
+| NOMAD power (+RTX 3060) | 35 W (wall) | 840 | 369 W | 988 Wh | €92 |
+
+Panel and battery columns use 3.5 peak-sun-hours at 0.65 derate and 0.85 depth of discharge — both
+assumptions, see [Caveats](#caveats). Costs are the grid-price equivalent of the energy, not a
+purchase.
+
+Read against the handheld's own pack, the last two columns are the interesting ones: **Ktemata's
+22.2 Wh pack is a 3–4 hour buffer**, while a 24/7 NOMAD station needs **226–988 Wh** to ride out a
+single day without sun. The pack does not scale into that role; it was never meant to.
+
+## Ktemata r5
+
+Component draws, from measurements where measurements exist:
 
 | Component | Idle | Load | Source |
 |---|---|---|---|
-| Pi 5 (4 GB) | ~3.0 W headless; ~3.6 W with Ethernet + USB + HDMI | ~8.8 W all-core; ~16 W with USB-SSD + 4K | [raspberry.tips Pi 5 measurements, Oct 2026](https://raspberry.tips/en/raspberrypi-tutorials/raspberry-pi-power-consumption-update-2026-all-models-compared) |
-| Pi 5, soft-off | **1.7 W** (PMIC stays alive) | — | same |
-| Touch Display 2, 5" | 1.4 W | 1.4 W | Pi product brief / this repo's BOM |
-| NVMe (WD SN740) | 1–2 W | 4.7 W max | raspberry.tips accessory table; drive datasheet |
-| FireBeetle 2 + OLED (radios off) | ~0.2 W | ~0.2 W | ESP32 ~40–50 mA @ 3.3 V + OLED, estimate |
-| UPS HAT (B) conversion | — | η ≈ 0.88 assumed | **assumption**, not measured |
+| Pi 5 (4 GB) | 3.0 W headless; 3.6 W with Ethernet + USB + HDMI | 8.8 W all-core; up to 16 W with USB-SSD + 4K | [raspberry.tips Pi 5 measurements, Oct 2026](https://raspberry.tips/en/raspberrypi-tutorials/raspberry-pi-power-consumption-update-2026-all-models-compared) |
+| Pi 5, soft-off | **1.7 W** — the PMIC stays alive | — | same |
+| Touch Display 2, 5" | 1.4 W (backlight) | 1.4 W | Pi product brief / `BOM.md` |
+| NVMe, WD SN740 | ~0.5 W | 4.7 W max | drive datasheet; Pi 5 NVMe figures |
+| FireBeetle 2 + 1.3" OLED, radios off | ~0.2 W | ~0.2 W | ESP32 ~40–50 mA at 3.3 V + OLED, estimate |
+| UPS HAT (B) 2S → 5 V buck | — | η ≈ 0.88 **assumed** | not measured |
+| ~~BME688~~ | — | — | **removed in r5**; it was milliwatts in forced mode, so its absence does not move these numbers |
 
-Resulting states. The pack column applies η = 0.88 and a usable depth of discharge of 0.85, so a
-22.2 Wh pack yields ≈ 16.6 Wh at the 5 V rail:
+States and runtime. The pack column applies η = 0.88 and 0.85 usable depth of discharge, so 22.2 Wh
+gives ≈ 16.6 Wh at the 5 V rail:
 
-| State | 5 V rail | at the pack | runtime, 22.2 Wh (3.0 Ah) | runtime, 25.9 Wh (3.5 Ah) |
+| State (r5) | 5 V rail | at the pack | runtime, 22.2 Wh (3.0 Ah) | runtime, 25.9 Wh (3.5 Ah) |
 |---|---|---|---|---|
-| Screen off, Pi up | 3.5 W | 4.0 W | 4.7 h | 5.5 h |
+| Screen off, Pi up | 4.0 W | 4.5 W | 4.2 h | 4.8 h |
 | Idle, screen on | 5.1 W | 5.8 W | 3.3 h | 3.8 h |
 | Reading / Kiwix, light touch | 6.5 W | 7.4 W | 2.6 h | 3.0 h |
 | Browsing Wikipedia + maps | 8.7 W | 9.9 W | 1.9 h | 2.2 h |
 | Heavy (video, CPU stress) | 12.5 W | 14.2 W | 1.3 h | 1.5 h |
 
-`README.md` and `BOM.md` claim **2–2.5 h** of Pi 5 runtime. That holds: 22.2 Wh over 2–2.5 h is
-8.9–11.1 W at the pack, i.e. the browsing/heavy rows. It is *not* the reading figure (2.6 h) and
-badly understates screen-off use (4.7 h). Leave the claim as the conservative browsing number.
+`README.md` and `BOM.md` claim **2–2.5 h** of Pi 5 runtime. That holds and is the right conservative
+number: 22.2 Wh over 2–2.5 h is 8.9–11.1 W at the pack, i.e. the browsing and heavy rows. It
+understates screen-off use (4.2 h) and reading (2.6 h).
 
-**Daily energy, duty-cycled** (this is the number that matters for a handheld):
+**r5 specifically** (against r4, same electronics): the sealed host has no through-wall vent, so the
+Pi 5 reaches its 80 °C throttle point under sustained load instead of holding boost. That does not
+change idle or reading draw — it caps the *heavy* row in time rather than in watts. The removed
+air-quality sensor saves nothing measurable. The 12.5 W heavy figure is therefore an upper bound
+that the thermal limit enforces.
 
-| Use | Energy at the pack per day | Solar panel needed (3.5 peak-sun-hours, 0.7 derate) | Pack for 1 day autonomy |
-|---|---|---|---|
-| 1 h/day reading | 7 Wh | 2.9 W | 9 Wh |
-| 2 h/day reading | 15 Wh | 6.1 W | 19 Wh |
-| 2 h/day browsing | 20 Wh | 8.2 W | 25 Wh |
-| 4 h/day browsing | 40 Wh | 16.3 W | 50 Wh |
+## Project NOMAD, AI off
 
-So the r4 pack covers a normal day without any charging, and the repository's 20–30 W foldable
-panel (≈ 49–74 Wh/day) refills it two to three times over. The panel sizing in `README.md` is
-therefore generous for real use, and deliberately so for multi-day autonomy.
+AI-off is a supported configuration, and it does not change idle: the same box, OS and service
+stack still run. What it removes is the inference bursts, which only matter if the machine is
+loaded for long stretches.
 
-## Project NOMAD, no AI
-
-NOMAD's AI is **optional by design** (their FAQ: the library works "without ever touching the AI"),
-so "no AI" is a supported configuration, not a downgrade. It does not change the idle budget: the
-box is the same and the OS/services stack still runs. It removes the inference bursts, which
-matter only if the machine is loaded for long stretches.
-
-From the [hardware page](https://www.projectnomad.us/hardware), the three tiers and what each is:
-
-| Tier | Price | Hardware | Idle (measured) | Load (measured / vendor) |
+| Tier | Price | Hardware | Idle (measured) | Load |
 |---|---|---|---|---|
-| Budget | $150–300 | used OptiPlex Micro / ThinkCentre Tiny / EliteDesk Mini, i5/i7 8th gen+, 16–32 GB DDR4, 500 GB SSD | **11–18 W** | 35–65 W, NOMAD's "15–65 W" range |
-| **Recommended** | $500–800 | Minisforum/Beelink, Ryzen 7/9 (8845HS, 780M), 32 GB DDR5, 1 TB NVMe | **7–9 W** | **80–90 W** |
-| Power | $1,000+ | as above + RTX 3060 12 GB or better | ~30–40 W (inferred: a 3060 Ti alone idles at 11 W with screens off) | 200–300 W, inferred from GPU TBP + host |
+| Budget | $150–300 | used OptiPlex Micro / ThinkCentre Tiny / EliteDesk Mini, i5/i7 8th gen+, 16–32 GB DDR4, 500 GB SSD | **11–18 W** | 35–65 W (NOMAD's own "15–65 W" range) |
+| **Recommended** | $500–800 | Minisforum/Beelink, Ryzen 7/9 (8845HS, Radeon 780M), 32 GB DDR5, 1 TB NVMe | **7–9 W** | **80–90 W** |
+| Power | $1,000+ | as above + RTX 3060 12 GB or better | ~30–40 W (**inferred**: a 3060 Ti alone idles at 11 W with screens off) | 200–300 W (inferred from GPU TBP + host) |
 
-Idle figures come from independent measurements, not vendor claims: OptiPlex 7060 Micro just over
-18 W and 7070 Micro just over 13 W for six-core units ([ServeTheHome](https://www.servethehome.com/dell-optiplex-7070-micro-project-tinyminimicro-guide-and-review/3/));
+Idle figures are independent measurements rather than vendor claims: OptiPlex 7060 Micro just over
+18 W and 7070 Micro just over 13 W for six-core units
+([ServeTheHome](https://www.servethehome.com/dell-optiplex-7070-micro-project-tinyminimicro-guide-and-review/3/));
 ThinkCentre M710q 11–13 W, M920q 12–15 W, M75q Gen 2 ≈ 12 W (same series); Minisforum UM890 Pro
-**7–9 W idle, 80–90 W load** ([ServeTheHome](https://www.servethehome.com/minisforum-um890-pro-review-re-architected-amd-ryzen-8945hs-mini-pc/4/)).
-NOMAD's own guidance is "a mini PC draws **15–65 W** depending on load" — accurate for its budget
-tier, conservative for the recommended one.
+**7–9 W idle, 80–90 W load**
+([ServeTheHome](https://www.servethehome.com/minisforum-um890-pro-review-re-architected-amd-ryzen-8945hs-mini-pc/4/)).
 
-Note the shape of the recommended build: it idles *lower* than a refurbished SFF PC but loads far
-higher. For an always-on knowledge library that is the better profile; for intermittent use neither
-idle number matters much.
+![Idle versus load](power_profile.png)
 
-**Daily energy** at 24/7 (the honest assumption for a station you leave running):
-
-| Build | Mid-idle | Wh/day | Panel for 1 day | Pack for 1 day (80 % DoD) |
-|---|---|---|---|---|
-| Budget | 14.5 W | 348 Wh | 142 W | 435 Wh |
-| Recommended | 8.0 W | 192 Wh | 78 W | 240 Wh |
-| Power | 35 W | 840 Wh | 343 W | 1050 Wh |
+The shape matters more than any single number. The recommended build **idles lower than a
+refurbished SFF PC** (8 W against 14.5 W) yet **loads 10.6× above its own idle** (85 W) where the
+refurb manages 3.4× (50 W). For a 24/7 library that is the better profile — most hours are idle —
+and it is why its daily energy is lower than the budget tier's despite costing about three times as
+much ($500–800 against $150–300).
 
 ## The comparison
 
-| | Ktemata r4, 2 h/day | Ktemata r4, 4 h/day | NOMAD recommended, 24/7 | NOMAD budget, 24/7 |
+| | Ktemata r5 | NOMAD budget | NOMAD recommended | NOMAD power |
 |---|---|---|---|---|
-| Energy per day | 14–20 Wh | 29–40 Wh | **192 Wh** | **348 Wh** |
-| Solar panel | 6–8 W | 12–16 W | 78 W | 142 W |
-| Battery for 1 day (80 % DoD) | 19–25 Wh | 37–50 Wh | 240 Wh | 435 Wh |
+| Energy per day (24/7) | **109–139 Wh** | 348 Wh | 192 Wh | 840 Wh |
+| Solar panel to sustain it | **48–61 W** | 153 W | 84 W | 369 W |
+| Battery for 1 day without sun | **128–164 Wh** | 409 Wh | 226 Wh | 988 Wh |
+| Typical continuous draw | 4.0–5.1 W | 14.5 W | 8.0 W | 35 W |
+| Ratio to Ktemata (4 h reading) | 1.0× | 2.9× | 1.6× | 7.0× |
+| Grid cost per year | €12–15 | €38 | €21 | €92 |
 
-- **Per hour of use, Ktemata is cheaper**: 5.1–8.7 W against 8–14.5 W idle, and it needs no
-  monitor, access point or router on top.
-- **Per day, Ktemata is 5–14× cheaper** (192 Wh against its 14–40 Wh), because it is off
-  between sessions and a station is not; against the budget NOMAD it is up to 25×.
-- **Per unit of work, NOMAD wins outright**: a Ryzen 8845HS serves several browser clients at once
-  and hosts the full stack (dashboard, Kiwix, maps, courses), while the Pi 5 serves one handheld
-  screen. Comparing watts per hour flatters the handheld; comparing watts per served user does not.
-- **The packs are not interchangeable.** A 22.2 Wh pack runs a NOMAD box for 1.1 h (budget idle) or
-  2.1 h (recommended idle) and 0.2 h under load. Ktemata's pack is a *session* buffer; a NOMAD
-  deployment is a *station* buffer of 240–435 Wh minimum.
-- **The 20–30 W panel in this repository cannot run a NOMAD station.** At 3.5 peak-sun-hours and a
-  0.7 derate it delivers ≈ 49–74 Wh/day, i.e. 2.0–3.1 W continuous — enough for Ktemata's 2 h/day
-  (20 Wh) with margin, but only a quarter to a third of a recommended NOMAD's daily need.
+- **On identical 24/7 duty, Ktemata uses 1.6–7× less energy than any NOMAD tier**, and it is the
+  only one of the four whose shipped battery can run it at all — the others need a separate 226 Wh+
+  bank. That same 22.2 Wh pack gives a NOMAD recommended box 2.1 h idle and 0.2 h loaded.
+- **NOMAD does more per watt only if you count served users.** A Ryzen 8845HS answers several
+  browser clients at once and hosts the whole stack (dashboard, Kiwix, maps, courses); the Pi 5
+  drives one handheld screen. Watts per hour flatter the handheld; watts per concurrent reader
+  flatter the mini PC. Neither is a fair single number, so this page does not claim one.
+- **The power tier is in a different class.** A 24/7 RTX build (840 Wh/day, 369 W of panel) is a
+  fixed installation with a battery bank, not something you carry. Its idle draw alone (35 W) is
+  5.4× Ktemata's *reading* draw (6.5 W).
+- **The 20–30 W panel in this repository cannot run any NOMAD tier 24/7.** At 3.5 peak-sun-hours
+  and 0.65 derate it delivers ≈ 46–68 Wh/day, i.e. 33–63 % of even Ktemata's daily need — so a
+  24/7 role needs the 48–61 W the table asks for, not the 20–30 W the BOM lists. For a NOMAD
+  station it is a quarter of the recommended tier's panel and a twentieth of the power tier's
+  (84 W and 369 W respectively), with 226–988 Wh of battery behind them.
+- **Ktemata's own pack does not cover a 24/7 day.** 128–164 Wh is what the 24/7 profiles above
+  need; the shipped 22.2 Wh is a session buffer of 2.6–4.2 h. That is a design statement, not a
+  shortfall: the device is carried and recharged, and a pack large enough for 24/7 (≈ 130 Wh, a
+  6× increase) would not fit the case at all — the 2× 18650 holders are the case's floor.
+
+## Reproducing these numbers
+
+Every figure on this page comes from one script, which also writes the two charts:
+
+```bash
+python3 work/scripts/power_chart.py            # tables to stdout + charts into docs/
+python3 work/scripts/power_chart.py --tables   # tables only, no images
+```
+
+Edit the measured constants at the top of that file (`K`, `PROFILES`, `NOMAD`) and both the tables
+and the images follow, so the prose and the data cannot drift apart — except the prose, which quotes
+the numbers above and has to be re-read when they change.
 
 ## Caveats
 
-- **Assumptions, not measurements**: η = 0.88 for the HAT (B) buck converter, 0.85 usable depth of
-  discharge for the 2S pack, 3.5 peak-sun-hours and 0.7 panel derate. Measure the pack side with an
-  inline meter; the HAT (B) INA219 at 0x42 reports it directly once the firmware reads it.
-- **Cell capacity drives everything.** The README's 23 Wh figure is a 3.0 Ah pair; 3.5 Ah cells give
-  25.9 Wh (+17 %). Runtime scales linearly, so the tables above cover both.
-- **Pi 5 soft-off is not off.** It draws ~1.7 W until the supply is cut. On r4 that means the pack
-  drains even with the Pi shut down — the UPS keeps the 5 V rail alive. Use a real shutdown plus the
-  HAT's output switch, or accept ~1.7 W of standby.
-- **NOMAD's idle figures are x86 at the wall**, including the PSU; the Pi figures are at the board.
-  With the HAT's conversion losses the two are close enough to compare directly, which is why the
-  "at the pack" column above exists.
-- **No AI, either side.** Ktemata has no inference at all; the NOMAD columns assume its AI is left
-  off, which their FAQ supports. Both then do the same job — serve a local wiki — at very different
-  scales: one handheld screen against a LAN server.
-- **AI-off NOMAD still loads high when busy.** Installing content, transcoding video or compiling
-  hits 65–90 W; the 240 Wh pack plus 78 W panel above assumes idle-dominated use.
+- **Assumptions, not measurements**: η = 0.88 for the HAT (B) buck, 0.85 usable depth of discharge,
+  3.5 peak-sun-hours, 0.65 panel derate, €0.30/kWh. The HAT (B)'s INA219 at I²C 0x42 reports the
+  pack side directly once the firmware reads it — that is the measurement to make first.
+- **Cell capacity drives the runtime.** 3.0 Ah cells give 22.2 Wh, 3.5 Ah cells 25.9 Wh (+17 %);
+  both columns are in the table because the BOM does not fix a capacity.
+- **Pi 5 soft-off is not off**: ~1.7 W until the supply is cut. On r5 the UPS keeps the 5 V rail
+  alive, so "screen off, Pi up" is a real state, not a figure of speech. Only the HAT's output
+  switch (or pulling the pack) reaches zero.
+- **The Ktemata figures are at the 5 V rail**, the NOMAD figures at the wall including the PSU.
+  The "at the pack" column exists so the two can be compared without pretending the conversion is
+  free.
+- **The NOMAD power build's idle is inferred**, not measured — no review publishes a 24/7 idle for
+  that exact combination. It is marked as such wherever it appears.
+- **AI-off NOMAD still loads hard when busy**: installing content, transcoding or compiling reaches
+  65–90 W. The daily figures assume idle-dominated use, which is what a library server is.
+- **r5's thermal limit is a time limit.** In the sealed host the Pi 5 throttles under sustained
+  load, so a NOMAD-style always-busy workload is not something r5 could do even at its wattage.
