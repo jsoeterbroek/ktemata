@@ -10,13 +10,20 @@
 </head>
 <body>
 <main>
+  <nav class="pages">
+    <a href="index.html" aria-current="page">Ktemata</a>
+    <a href="power.html">Power</a>
+    <a href="comparisons.html">Comparisons</a>
+    <a href="https://github.com/jsoeterbroek/ktemata">Source</a>
+  </nav>
+
   <img class="logo" src="logo.svg" alt="Ktemata — κτήματα, a possession for all time" width="560" height="245">
 
   <p class="lede">
-    A rugged offline-library handheld: Raspberry Pi 5, a 5&Prime; touch display, a 2S&nbsp;18650 UPS and a
-    compact keyboard in a printed case. It keeps Wikipedia, maps and the Gutenberg books on the device —
-    no network, no account, no cloud. Charged by solar and/or axial-flux hand crank. Content (maps, wikipedia, 
-    manuals etc.) managed with Project NOMAD.
+    A <b>rugged offline-library handheld with a very low power consumption</b>: Raspberry Pi5 4Gb, a 5&Prime; touch display, a 2S&nbsp;18650 UPS and a
+    compact keyboard in a sturdy case. It keeps Wikipedia, maps and the Gutenberg books on the device —
+    no network, no account, no cloud. Charged by solar and/or axial-flux hand crank if mains power is not available. Content (maps, wikipedia, 
+    manuals etc.) are managed with Project NOMAD.
   </p>
 
   <h2>The name</h2>
@@ -31,12 +38,19 @@
   <dl>
     <dt>Computer</dt><dd>Raspberry Pi 5</dd>
     <dt>Display</dt><dd>Raspberry Pi Touch Display 2, 5&Prime; (143.4 × 91.46 mm)</dd>
-    <dt>Input</dt><dd>Rii K06 keyboard with touchpad (2.4&nbsp;GHz dongle or Bluetooth)</dd>
+    <dt>Input</dt><dd>Rii K06 keyboard with touchpad</dd>
     <dt>Power</dt><dd>Waveshare UPS HAT&nbsp;(B), 2× 18650 in 2S, 8.4&nbsp;V DC charge input</dd>
-    <dt>Charge</dt><dd>Solar or axial-flux hand crank generator</dd>
+    <dt>Wi-Fi</dt><dd>Configured as a Wi-Fi hotspot for max 20 clients</dd>
+    <dt>Charge</dt><dd>Mains, solar or axial-flux hand crank generator</dd>
     <dt>Content Management</dt><dd>Project NOMAD</dd>
-    <dt>Case</dt><dd>172 × 237 × 53 mm, parametric OpenSCAD prints</dd>
+    <dt>Inner case</dt><dd>Custom parametric cassette (3D stl files available)</dd>
+    <dt>Outer case</dt><dd>Sturdy Peli Case 1200 (IP67 certified)</dd>
   </dl>
+
+    <dl>
+    <dt>Power <a href="power.html">what it draws and what the pack gives back</a></td>
+    <dt>See <a href="comparisons.html">how it compares with the Prepper Disk and Project NOMAD</a></td>
+    </dl>
 
   <p>
     Everything for the device build — geometry, drawings, STLs, renders and notes — lives in the repository:

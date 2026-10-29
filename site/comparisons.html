@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparisons — Ktemata r5, Prepper Disk, Project NOMAD</title>
+<meta name="description" content="Ktemata r5 as a Wi-Fi hotspot compared with the Prepper Disk and Project NOMAD's budget, recommended and power builds: power, autonomy, cost, DIY and open source.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+
+<nav class="pages">
+  <a href="index.html">Ktemata</a>
+  <a href="power.html">Power</a>
+  <a href="comparisons.html" aria-current="page">Comparisons</a>
+  <a href="https://github.com/jsoeterbroek/ktemata">Source</a>
+</nav>
+
+<h1>Comparisons</h1>
+<p class="deck">
+  Ktemata r5 with its Wi-Fi hotspot switched on, set against a commercial closed hotspot and the
+  three Project NOMAD hardware tiers. Same 24 hours, AI off, one measuring stick.
+</p>
+
+<ul class="kpis">
+  <li><b>4.4 W</b><span>r5 as a hotspot — 20 clients, screen off</span></li>
+  <li><b>120 Wh</b><span>per day, from a pack you carry</span></li>
+  <li><b>≈ €635</b><span>built by you, parts documented</span></li>
+  <li><b>1.6–7×</b><span>less energy than any NOMAD tier</span></li>
+</ul>
+
+<p>
+  These are three different machines that overlap in one place: all three put Wikipedia, maps,
+  books and courses on hardware you own, with no internet. What differs is who assembles it, what
+  it needs around it, and how many watts that costs.
+</p>
+
+<div class="warn">
+  <p><strong>The Prepper Disk is useless if the laptops and phones around it are drained — and they
+  are usually the first thing to run out.</strong> It has no screen, no keyboard and no battery of its
+  own: it is a hotspot waiting for a client. In a real grid-down week the phone is the first thing
+  flat, so a device that can only be read <em>through</em> a phone has a single point of failure that
+  it does not control. Ktemata puts the reader in the box.</p>
+  <p><strong>Project NOMAD's hardware draws too much power for an off-grid device.</strong> Its own
+  guidance is a 15–65&nbsp;W mini PC; even the recommended tier idles at 8&nbsp;W and peaks at
+  85&nbsp;W, and the power build idles at ~35&nbsp;W. Running any of them 24/7 costs 192–840&nbsp;Wh
+  a day and needs 226–988&nbsp;Wh of battery to survive one cloudy day — a fixed installation with a
+  battery bank, not something you carry.</p>
+</div>
+
+<p>
+  Ktemata r5 is the third option: 4.0&nbsp;W with the screen off, 5.1&nbsp;W with it lit, 4.4&nbsp;W
+  as a Wi-Fi hotspot for twenty clients, all from a 22.2&nbsp;Wh pack inside the case. It is the only
+  machine here that ships with a battery at all, and the only one whose battery can actually run it.
+</p>
+
+<div class="table-wrap">
+<table>
+  <caption>What each one is, before any numbers.</caption>
+  <thead>
+    <tr><th>Platform</th><th>Shape</th><th>Needs another device?</th><th>Source</th></tr>
+  </thead>
+  <tbody>
+    <tr class="hl"><td><strong>Ktemata r5</strong> + hotspot</td><td>handheld computer in a Peli 1200: screen, keyboard, battery, its own access point</td><td>no — and serves up to 20 phones if you switch the radio on</td><td>CAD, firmware and scripts published in the repository; printed cassette in a bought case</td></tr>
+    <tr><td><strong>Prepper Disk</strong> Premium</td><td>headless hotspot in a milled aluminium brick, 89 × 70 × 25 mm</td><td>yes — browse from your own phone</td><td>closed product; proprietary UI over Internet-in-a-Box</td></tr>
+    <tr><td><strong>Project NOMAD</strong> budget</td><td>refurbished mini PC (OptiPlex Micro, ThinkCentre Tiny, EliteDesk Mini)</td><td>yes — a browser on the LAN</td><td><a href="https://github.com/Crosstalk-Solutions/project-nomad">Apache-2.0, open source</a>; you supply the hardware</td></tr>
+    <tr><td><strong>Project NOMAD</strong> recommended</td><td>Minisforum/Beelink class mini PC, Ryzen 7/9, 32 GB</td><td>yes</td><td>same, open source</td></tr>
+    <tr><td><strong>Project NOMAD</strong> power</td><td>the same plus an RTX 3060 12 GB or better</td><td>yes</td><td>same, open source</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Same duty, different appetite</h2>
+
+<p>
+  The r5 row below is the shipped hotspot configuration: <code>post-install.sh --hotspot</code>
+  builds a NetworkManager access point (or <code>hostapd</code> + <code>dnsmasq</code>) at
+  <code>10.10.10.1:8080</code>, with <code>ipv4.ip-forward&nbsp;0</code> so it serves this box and
+  never becomes a router on someone else's LAN. It adds an estimated 0.4&nbsp;W.
+</p>
+
+<figure>
+  <img src="img/site_energy.png" width="1400" height="620" alt="Bar chart of energy per day: Prepper Disk 73 Wh, Ktemata r5 hotspot 120 Wh, Ktemata r5 kiosk 139 Wh, NOMAD recommended 192 Wh, NOMAD budget 348 Wh, NOMAD power 840 Wh.">
+  <figcaption>Ktemata is measured at the pack and NOMAD at the wall — the energy each machine pulls from its source, conversion losses included. Hotspot use keeps the r5 display dark, which is why it costs no more than reading four hours a day.</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <caption>24/7 duty, AI off. Panel and battery: 3.5 peak-sun-hours, 0.65 derate, 0.85 depth of discharge. The draw column is at the machine's own rail or wall socket; the Wh/day column is what its source must supply — Ktemata at the pack (conversion losses included), NOMAD at the wall, the Prepper Disk at its 5 V input.</caption>
+  <thead>
+    <tr><th>Machine</th><th class="num">Draw</th><th class="num">Wh/day</th><th class="num">Solar to sustain</th><th class="num">Battery for 1 day</th><th class="num">Price</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Prepper Disk (Pi 4B, 512 GB)</td><td class="num">3.05 W (5 V)</td><td class="num">73</td><td class="num">32 W</td><td class="num">86 Wh</td><td class="num">€271</td></tr>
+    <tr class="hl"><td><strong>Ktemata r5, Wi-Fi hotspot</strong></td><td class="num">4.4 W (5 V)</td><td class="num">120</td><td class="num">53 W</td><td class="num">141 Wh</td><td class="num">≈ €635</td></tr>
+    <tr class="hl"><td>Ktemata r5, kiosk, display on</td><td class="num">5.1 W (5 V)</td><td class="num">139</td><td class="num">61 W</td><td class="num">164 Wh</td><td class="num">≈ €635</td></tr>
+    <tr><td>NOMAD budget (refurb SFF)</td><td class="num">14.5 W (wall)</td><td class="num">348</td><td class="num">153 W</td><td class="num">409 Wh</td><td class="num">$150–300</td></tr>
+    <tr><td>NOMAD recommended (UM890 class)</td><td class="num">8.0 W (wall)</td><td class="num">192</td><td class="num">84 W</td><td class="num">226 Wh</td><td class="num">$500–800</td></tr>
+    <tr><td>NOMAD power (+RTX 3060)</td><td class="num">35.0 W (wall)</td><td class="num">840</td><td class="num">369 W</td><td class="num">988 Wh</td><td class="num">$1,000+</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  The Prepper Disk is the most parsimonious of the lot on paper: a Pi&nbsp;4B idles at 2.7&nbsp;W
+  where a Pi&nbsp;5 idles at 3.0&nbsp;W, and it has no display to feed. Ktemata's hotspot row pays
+  0.7&nbsp;W of that back and still lands at 120&nbsp;Wh/day — a third of the cheapest NOMAD tier.
+  The Pi is not a compromise here; it is the reason the numbers are small.
+</p>
+
+<figure>
+  <img src="img/site_readers.png" width="1400" height="540" alt="Bar chart on a log scale: Prepper Disk 153 milliwatts per connected device, Ktemata r5 hotspot 220 milliwatts per connected device, Ktemata r5 5100 milliwatts per reader.">
+  <figcaption>Per reader, a shared hotspot looks unbeatable and a handheld looks indulgent. Per reader <em>who has nothing else to read on</em>, the comparison inverts.</figcaption>
+</figure>
+
+<h2>Pros and cons, honestly</h2>
+
+<div class="proscons">
+  <div class="pro">
+    <h3>Ktemata r5</h3>
+    <ul>
+      <li><strong>Works alone.</strong> 720 × 1280 touchscreen, keyboard, trackpad and battery in one case; no phone, no DHCP, no browser tab.</li>
+      <li><strong>Very low draw for a full computer.</strong> 4.0 W screen off, 5.1 W with the display lit; the Pi&nbsp;5's own idle is 3.0 W.</li>
+      <li><strong>Carries its power.</strong> 22.2 Wh pack, 2.6–4.2 h, charged at 8.4 V from mains, solar via MPPT, or the separate hand crank.</li>
+      <li><strong>Hotspot included.</strong> Same dual-band radio as any Pi; one install flag serves 20 clients and leaves the screen usable.</li>
+      <li><strong>512 GB NVMe</strong> in a standard M.2 socket — a drive swap, not a card replacement.</li>
+      <li><strong>Field-repairable and inspectable.</strong> Standard Pi, standard display, standard HAT, Peli case, published STLs; the firmware is a thousand lines you can read.</li>
+      <li><strong>Buildable and hackable.</strong> Parametric OpenSCAD, an export toolchain, a post-install script and a hotspot installer — all in the repository, no vendor in the loop.</li>
+    </ul>
+  </div>
+  <div class="con">
+    <h3>…and what it costs you</h3>
+    <ul>
+      <li><strong>You build it.</strong> Printer, soldering iron for the pack leads, firmware flashing, and the willingness to debug a buck converter.</li>
+      <li><strong>≈ €635</strong> against €271 for a Prepper Disk, and no warranty, no support desk.</li>
+      <li><strong>Big and heavy.</strong> ~8.3 L and ~1.6 kg in a Peli 1200, against 0.16 L and ~0.2 kg.</li>
+      <li><strong>Throttles under sustained load</strong> — the sealed host has no vent, so a long CPU job hits 80 °C.</li>
+      <li><strong>Content is what you download.</strong> No licensed field guides, no curated updates.</li>
+      <li><strong>EMP protection is a plan</strong>, not a part you can buy today.</li>
+    </ul>
+  </div>
+</div>
+
+<figure class="figure-plain">
+  <img src="img/site_r5_exploded.png" width="1400" height="1000" alt="Exploded render of the r5 cassette: floor tray, deck plate with keyboard pocket and status-OLED cut-out, and the display lid plate.">
+  <figcaption>The r5 cassette: floor tray, deck with the keyboard pocket and status-OLED through-pocket, and the display plate that is taped into the host lid. Three printed parts, all parametric.</figcaption>
+</figure>
+
+<h3>Prepper Disk</h3>
+<div class="proscons">
+  <div class="pro">
+    <h3>Wins</h3>
+    <ul>
+      <li>Arrives configured, tested, with a one-year warranty and returns.</li>
+      <li>€271, or €151 as a card for a Pi you already own.</li>
+      <li>0.16 L and ~0.2 kg — fits a glovebox or a go-bag lid.</li>
+      <li>73 Wh/day, and it serves a room by default.</li>
+      <li>Curated, licensed content that updates, including material you cannot assemble yourself.</li>
+      <li>Sells a €22 Faraday bag that actually fits it.</li>
+    </ul>
+  </div>
+  <div class="con">
+    <h3>Costs</h3>
+    <ul>
+      <li><strong>Useless once the client devices are flat.</strong> No screen, no keyboard, no battery — it is a hotspot waiting for a phone that still has charge, and phones are usually the first thing to die in an outage.</li>
+      <li><strong>Ships without a cell</strong>; mains or a 5&nbsp;V USB bank, which is one more thing to keep charged.</li>
+      <li>512 GB on a microSD card — the most common failure point in a Pi deployment.</li>
+      <li>An appliance, not a computer: browse what it serves, and that is the contract.</li>
+      <li>Closed enclosure integration; not field-serviceable.</li>
+      <li>Proprietary UI and licensed content are also a dependency on one company.</li>
+    </ul>
+  </div>
+</div>
+
+<h3>Project NOMAD</h3>
+<div class="proscons">
+  <div class="pro">
+    <h3>Wins</h3>
+    <ul>
+      <li><strong>Genuinely open source</strong> (Apache-2.0) and hardware-agnostic; it is a management layer over Kiwix, Kolibri, ProtoMaps, CyberChef and optional local AI.</li>
+      <li>Real multi-user serving: several browser clients, courses with progress tracking, an admin UI.</li>
+      <li>The recommended tier idles at 8 W — less than a refurbished SFF — so it is not automatically a power hog.</li>
+      <li>You can build it on hardware you already own; NOMAD runs on almost any x86 Linux box.</li>
+      <li>Same content pipeline Ktemata uses: NOMAD manages the ZIM library on the Pi too.</li>
+    </ul>
+  </div>
+  <div class="con">
+    <h3>Costs</h3>
+    <ul>
+      <li>Always needs a second device with a browser. There is no screen and no keyboard of its own.</li>
+      <li><strong>Its hardware draws too much power for an off-grid device.</strong> Its own guidance is a 15–65&nbsp;W mini PC; the power tier idles at ~35&nbsp;W, which is <strong>5.4× Ktemata's reading draw</strong>, and the recommended tier peaks at 85&nbsp;W.</li>
+      <li>24/7 energy of 192–840&nbsp;Wh/day needs a 226–988&nbsp;Wh battery to survive one sunless day — a fixed installation with a battery bank, not something in a bag.</li>
+      <li>Upstream images are <strong>amd64-only</strong>; running it on a Pi needs a community ARM64 build.</li>
+      <li>No authentication; it expects a trusted LAN.</li>
+      <li>An x86 mini PC is not a device you carry, and not one you can reprint.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Power is where the Pi earns its place</h2>
+
+<p>
+  Three numbers make the case better than any adjective:
+</p>
+
+<ul>
+  <li><strong>3.0 W</strong> — a headless Pi&nbsp;5, SSD and all. The cheapest NOMAD tier's refurbished office PC sits at 14.5&nbsp;W doing the same job.</li>
+  <li><strong>5.1 W</strong> — the same machine with a 5&Prime; screen lit. That is below the recommended NOMAD tier's 8&nbsp;W idle, and that tier has no screen at all.</li>
+  <li><strong>2.5×</strong> — how far a Pi&nbsp;5 ever rises above its own idle. A Ryzen mini PC rises 10.6×, so the moment a NOMAD station is busy it is pulling 85&nbsp;W.</li>
+</ul>
+
+<figure>
+  <img src="img/site_autonomy.png" width="1400" height="460" alt="Bar chart: the Prepper Disk ships without a battery and needs mains or a USB bank; Ktemata r5 runs 3.3 hours on its own 22.2 Wh pack with the screen on.">
+  <figcaption>Autonomy as shipped. A 5 V USB bank powers a Prepper Disk for ~18 h on 20 Ah, but it cannot feed Ktemata's HAT (B), which wants 8.4 V on its barrel jack — the two power paths are not interchangeable.</figcaption>
+</figure>
+
+<p>
+  The low draw is not only an efficiency claim; it is what makes the device self-contained. A pack
+  that fits inside the case runs a Pi for hours. The same 22.2&nbsp;Wh gives a 35&nbsp;W NOMAD power
+  build <strong>28 minutes at idle</strong> and four minutes at load — which is why that tier is a
+  fixed installation with a battery bank, not something you carry.
+</p>
+
+<h2>DIY and open source, concretely</h2>
+
+<p>
+  What "open" buys here is not ideology, it is the ability to keep the thing alive when the vendor
+  is not:
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Layer</th><th>Ktemata r5</th><th>Prepper Disk</th><th>Project NOMAD</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Enclosure</td><td>parametric OpenSCAD, STLs, a bought Peli case</td><td>milled aluminium, closed</td><td>whatever the PC came in</td></tr>
+    <tr><td>Electronics</td><td>off-the-shelf Pi&nbsp;5, Touch Display 2, UPS HAT (B), 18650 cells</td><td>Pi&nbsp;4B, microSD, custom integration</td><td>your choice; NOMAD is hardware-agnostic</td></tr>
+    <tr><td>Firmware / software</td><td>PlatformIO firmware for the status OLED, post-install and hotspot scripts, kiosk launcher</td><td>vendor image, proprietary UI</td><td>Apache-2.0, containers, one install script</td></tr>
+    <tr><td>Content</td><td>whatever you download from the Kiwix catalogue</td><td>curated and licensed, updated</td><td>Kiwix, Kolibri, ProtoMaps and more, downloaded on demand</td></tr>
+    <tr><td>When it breaks</td><td>swap the Pi, reprint the shell, read the source</td><td>one-year warranty, then a support ticket</td><td>fix it or fork it</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  The hotspot is a good example of the difference. On the Prepper Disk it <em>is</em> the product,
+  already configured. On Ktemata it is a flag:
+</p>
+
+<pre><code>sudo ./work/scripts/post-install.sh --hotspot --hotspot-pass 'somepassphrase'
+# clients join "Ktemata" and open http://10.10.10.1:8080/</code></pre>
+
+<p>
+  If the installer breaks, you can read it. If you want the radio off because the point is to be
+  unfindable, you run <code>--no-hotspot</code> and nothing listens. That control is what DIY means
+  at this layer — not that you must solder, but that no one can take the choice away from you.
+</p>
+
+<h2>Recommended</h2>
+
+<div class="win">
+  <p><strong>If you want one device that works when nothing else does, build Ktemata r5 and turn the hotspot on.</strong>
+  4.4&nbsp;W, a 22.2&nbsp;Wh pack, a screen and a keyboard in one IP67 case, and an access point for
+  the other nineteen people in the room when they need it. It costs about €635 and a weekend, and
+  every part of it is documented or replaceable.</p>
+</div>
+
+<div class="table-wrap">
+<table>
+  <caption>Pick by what you actually expect to happen.</caption>
+  <thead>
+    <tr><th>If…</th><th>Then</th><th class="num">Energy/day</th></tr>
+  </thead>
+  <tbody>
+    <tr class="hl"><td>you will be alone with the device, or the phones may be the first thing to die</td><td><strong>Ktemata r5</strong> — screen, keyboard and battery in the case, hotspot included</td><td class="num">120–139 Wh</td></tr>
+    <tr><td>you want a library in a bag, working in ten minutes, and accept that it needs a charged phone to read anything</td><td><strong>Prepper Disk</strong> — €271, 0.2 kg, no assembly</td><td class="num">73 Wh</td></tr>
+    <tr><td>you have mains power and want to serve a household or classroom, with courses and multi-user progress</td><td><strong>NOMAD recommended</strong> — 8&nbsp;W idle is a good server profile, but it is not a portable</td><td class="num">192 Wh</td></tr>
+    <tr><td>you want local AI as the point, on a desk, with a battery bank</td><td><strong>NOMAD power</strong> — a fixed installation, 840&nbsp;Wh/day and up</td><td class="num">840 Wh</td></tr>
+    <tr><td>you already own a retired office PC and the sun is not your only source</td><td><strong>NOMAD budget on it</strong> — cheapest path to a full library</td><td class="num">348 Wh</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  None of these is wrong. Ktemata and NOMAD are not even rivals in the same sense: NOMAD is the
+  content management layer, and Ktemata runs it. A Pi&nbsp;5 with 4&nbsp;GB runs NOMAD without AI
+  in under a gigabyte, which is why the same device can be a reader and a small station. The
+  difference is what you carry.
+</p>
+
+<h2>Sources and caveats</h2>
+
+<div class="warn">
+  <ul>
+    <li><strong>Prepper Disk:</strong> <a href="https://www.prepperdisk.com/">prepperdisk.com</a> product page (Pi&nbsp;4B 2&nbsp;GB, 512&nbsp;GB, 89 × 70 × 25 mm, 20 devices, €270.95, one-year warranty) and its DIY page for the parts-and-cost breakdown. Content list, review scores and shipping claims are the vendor's own and are not independently verified here.</li>
+    <li><strong>NOMAD:</strong> <a href="https://www.projectnomad.us/hardware">hardware guide</a> for the three tiers and prices; its README for the Apache-2.0 licence, the under-1&nbsp;GB RAM figure without AI and the amd64-only images. Idle figures are independent measurements (ServeTheHome reviews of the OptiPlex 7070 Micro, ThinkCentre M710q/M920q, Minisforum UM890 Pro), not vendor claims.</li>
+    <li><strong>Pi&nbsp;4B idle</strong> is 540&nbsp;mA at 5&nbsp;V = 2.7&nbsp;W with nothing on USB (Dramble benchmarks). The 0.35&nbsp;W Prepper Disk and 0.4&nbsp;W Ktemata access-point figures are <strong>estimates, unmeasured</strong>.</li>
+    <li><strong>Ktemata figures</strong> share the model and the assumptions of the <a href="power.html">power page</a>: η&nbsp;=&nbsp;0.88, 0.85 depth of discharge, 3.5 peak-sun-hours, 0.65 derate, €0.30/kWh. ≈&nbsp;€635 is the reconciled BOM without the Peli case and cells, so treat it as indicative.</li>
+    <li><strong>Volume and mass</strong> are computed from the Peli 1200's external dimensions plus the cassette, and the Prepper Disk's from its published 3.5 × 2.75 × 1 in.</li>
+    <li><strong>Per-reader figures flatter the hotspot.</strong> A Ryzen box answers several clients at once; a Pi drives one screen. Neither watts-per-hour nor watts-per-concurrent-reader is a fair single number, so this page does not claim one.</li>
+    <li><strong>The r5 hotspot cost is an estimate</strong> and the AP is off by default. With the radio on you are findable, and the device is a bigger target for a curious stranger than a closed box in a bag.</li>
+    <li><strong>EMP:</strong> the Prepper Disk sells a working Faraday bag for €22; Ktemata's shielding is a planned r6 direction, not a shipped feature.</li>
+  </ul>
+</div>
+
+<p>
+  Reproduce the power numbers with <code>python3 work/scripts/power_chart.py --compare</code> and the
+  site charts with <code>--site</code>; the longer prose is in
+  <a href="https://github.com/jsoeterbroek/ktemata/blob/main/docs/COMPARISON-PREPPERDISK.md">docs/COMPARISON-PREPPERDISK.md</a>
+  and <a href="https://github.com/jsoeterbroek/ktemata/blob/main/docs/POWER.md">docs/POWER.md</a>.
+</p>
+
+<footer>
+  <p>Ktemata · <a href="https://github.com/jsoeterbroek/ktemata">source</a> · content on this page is free to reuse</p>
+  <p>This is a hobby project, published as-is, with no warranty. Comparing designs is not a recommendation to buy, build or power any of them without doing your own checks.</p>
+</footer>
+
+</main>
+</body>
+</html>

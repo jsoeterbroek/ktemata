@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Power — Ktemata r5</title>
+<meta name="description" content="Ktemata r5 power budget: 4.0 W screen off, 5.1 W with the display lit, 22.2 Wh 2S 18650 pack, 2.6–4.2 h runtime. Compared with Project NOMAD over the same 24 hours.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+
+<nav class="pages">
+  <a href="index.html">Ktemata</a>
+  <a href="power.html" aria-current="page">Power</a>
+  <a href="comparisons.html">Comparisons</a>
+  <a href="https://github.com/jsoeterbroek/ktemata">Source</a>
+</nav>
+
+<h1>Power</h1>
+<p class="deck">
+  What the r5 handheld actually draws, what its own pack gives back, and how both compare with a
+  24/7 Project NOMAD station over the same twenty-four hours.
+</p>
+
+<ul class="kpis">
+  <li><b>4.0 W</b><span>screen off, Pi&nbsp;5 up, from the 5&nbsp;V rail</span></li>
+  <li><b>5.1 W</b><span>idle with the 5&Prime; display lit</span></li>
+  <li><b>22.2 Wh</b><span>2× 18650 in 2S — the pack it carries</span></li>
+  <li><b>2.6–4.2 h</b><span>reading to screen-off, no charging</span></li>
+</ul>
+
+<h2>Where the energy goes</h2>
+
+<p>
+  Everything on the device hangs off one 5&nbsp;V rail. The UPS HAT&nbsp;(B) takes the 2S pack
+  (6.0–8.4&nbsp;V), bucks it down at an efficiency of about 0.88, and the Pi distributes it to the
+  display, the SSD and the status microcontroller. Charging comes in the other way, at 8.4&nbsp;V,
+  through the same HAT.
+</p>
+
+<figure>
+<svg class="figure" viewBox="0 0 748 292" role="img" aria-labelledby="flowTitle flowDesc" font-family="Liberation Sans, Helvetica Neue, Arial, sans-serif" font-size="13">
+  <title id="flowTitle">Ktemata r5 power path</title>
+  <desc id="flowDesc">Roughly 4.4 watts of 5 volt load splits into 3.0 watts for the Pi 5, 1.4 watts for the display backlight, 0.5 watts for the NVMe drive and 0.2 watts for the ESP32 status OLED. A 2S 18650 pack of 22.2 watt-hours feeds a buck converter at 88 percent efficiency, and is charged at 8.4 volts from mains, or through an MPPT module from solar, or from the hand crank.</desc>
+
+  <!-- charge inputs -->
+  <text x="10" y="24" fill="var(--muted)" font-size="10.5" letter-spacing="1.2">CHARGE IN &#183; 8.4 V</text>
+  <g fill="var(--panel)" stroke="var(--line)" stroke-width="1.5">
+    <rect x="10" y="34" width="126" height="28" rx="6"/>
+    <rect x="10" y="74" width="126" height="28" rx="6"/>
+    <rect x="10" y="114" width="126" height="28" rx="6"/>
+  </g>
+  <text x="73" y="53" text-anchor="middle" fill="var(--fg)">mains 8.4 V</text>
+  <text x="73" y="93" text-anchor="middle" fill="var(--fg)">solar &#8594; MPPT</text>
+  <text x="73" y="133" text-anchor="middle" fill="var(--fg)">hand crank</text>
+
+  <!-- convergence -->
+  <path d="M136 48 H166 M136 88 H166 M136 128 H166 M166 48 V128" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+  <path d="M166 88 H186" fill="none" stroke="var(--accent)" stroke-width="2"/>
+
+  <!-- pack -->
+  <rect x="186" y="64" width="112" height="48" rx="7" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="242" y="83" text-anchor="middle" fill="var(--fg)" font-weight="bold">2S 18650</text>
+  <text x="242" y="101" text-anchor="middle" fill="var(--muted)" font-size="10.5">22.2 Wh &#183; 16.6 usable</text>
+
+  <!-- buck -->
+  <path d="M298 88 H320" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <rect x="320" y="64" width="86" height="48" rx="7" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="363" y="83" text-anchor="middle" fill="var(--fg)">buck</text>
+  <text x="363" y="101" text-anchor="middle" fill="var(--muted)" font-size="10.5">&#951; &#8776; 0.88 *</text>
+
+  <!-- 5 V rail -->
+  <path d="M406 88 H428" fill="none" stroke="var(--accent)" stroke-width="2"/>
+  <rect x="428" y="52" width="104" height="72" rx="7" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="480" y="76" text-anchor="middle" fill="var(--fg)" font-weight="bold">5 V rail</text>
+  <text x="480" y="94" text-anchor="middle" fill="var(--accent)" font-size="15" font-weight="bold">4.4 W</text>
+  <text x="480" y="112" text-anchor="middle" fill="var(--muted)" font-size="10">4 h reading + 20 h off</text>
+
+  <!-- loads -->
+  <path d="M532 88 H556 M556 34 V196 M556 34 H572 M556 88 H572 M556 142 H572 M556 196 H572" fill="none" stroke="var(--line)" stroke-width="1.5"/>
+  <g fill="var(--panel)" stroke="var(--line)">
+    <rect x="572" y="24" width="152" height="24" rx="5"/>
+    <rect x="572" y="76" width="152" height="24" rx="5"/>
+    <rect x="572" y="130" width="152" height="24" rx="5"/>
+    <rect x="572" y="184" width="152" height="24" rx="5"/>
+  </g>
+  <text x="582" y="40" fill="var(--fg)">Pi 5 &#183; 3.0 W</text>
+  <text x="582" y="92" fill="var(--fg)">display &#183; 1.4 W</text>
+  <text x="582" y="146" fill="var(--fg)">NVMe &#183; ~0.5 W</text>
+  <text x="582" y="200" fill="var(--fg)">ESP32 + OLED &#183; 0.2 W</text>
+
+  <!-- footnotes -->
+  <text x="572" y="228" fill="var(--muted)" font-size="10">+0.4 W when the hotspot is enabled</text>
+  <text x="10" y="228" fill="var(--muted)" font-size="10">* assumed, not measured</text>
+  <text x="10" y="248" fill="var(--muted)" font-size="10">Soft-off is not off: the PMIC keeps 1.7 W alive until the HAT&#8217;s output switch is opened.</text>
+  <text x="10" y="266" fill="var(--muted)" font-size="10">No air-quality sensor in r5 &#8212; it drew milliwatts, so its removal does not move these numbers.</text>
+</svg>
+<figcaption>
+  The whole device sits behind one 22.2&nbsp;Wh pack and one buck converter. The figures are 5&nbsp;V-rail
+  draws for r5; the reading profile is 4&nbsp;h of Kiwix plus 20&nbsp;h with the display dark.
+</figcaption>
+</figure>
+
+<h2>Component draws</h2>
+
+<div class="table-wrap">
+<table>
+  <caption>Measured where a measurement exists; the buck efficiency is an assumption.</caption>
+  <thead>
+    <tr><th>Component</th><th class="num">Idle</th><th class="num">Load</th><th>Source</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Pi&nbsp;5 (4&nbsp;GB)</td><td class="num">3.0 W headless<br>3.6 W with Ethernet + USB + HDMI</td><td class="num">8.8 W all-core<br>up to 16 W with USB-SSD + 4K</td><td><a href="https://raspberry.tips/en/raspberrypi-tutorials/raspberry-pi-power-consumption-update-2026-all-models-compared">raspberry.tips, Oct 2026</a></td></tr>
+    <tr><td>Pi&nbsp;5, soft-off</td><td class="num">1.7 W — the PMIC stays alive</td><td class="num">—</td><td>same</td></tr>
+    <tr><td>Touch Display 2, 5&Prime;</td><td class="num">1.4 W (backlight)</td><td class="num">1.4 W</td><td>Pi product brief</td></tr>
+    <tr><td>NVMe, WD SN740</td><td class="num">~0.5 W</td><td class="num">4.7 W max</td><td>drive datasheet</td></tr>
+    <tr><td>FireBeetle 2 + 1.3&Prime; OLED, radios off</td><td class="num">~0.2 W</td><td class="num">~0.2 W</td><td>ESP32 ~40–50 mA at 3.3 V + OLED, estimate</td></tr>
+    <tr><td>UPS HAT&nbsp;(B) 2S → 5&nbsp;V buck</td><td class="num">—</td><td class="num">η ≈ 0.88 <em>assumed</em></td><td>not measured</td></tr>
+    <tr><td><s>BME688</s></td><td class="num">—</td><td class="num">—</td><td><strong>removed in r5</strong>; milliwatts in forced mode</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>States and runtime</h2>
+
+<p>
+  The pack column applies η&nbsp;=&nbsp;0.88 and a 0.85 usable depth of discharge, so 22.2&nbsp;Wh
+  gives about 16.6&nbsp;Wh at the 5&nbsp;V rail. The BOM does not fix a cell capacity, so both
+  3.0&nbsp;Ah and 3.5&nbsp;Ah cells are shown.
+</p>
+
+<figure>
+  <img src="img/site_runtime.png" width="1400" height="580" alt="Horizontal bar chart of runtime by state on the shipped 22.2 Wh pack: 1.3 h heavy, 1.9 h browsing and maps, 2.6 h reading, 3.3 h idle with screen on, 4.2 h screen off.">
+  <figcaption>Runtime from a full pack with nothing plugged in. The 2–2.5&nbsp;h figure in the README is the conservative browsing/heavy case and is correct.</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>State (r5)</th><th class="num">5 V rail</th><th class="num">at pack</th><th class="num">22.2 Wh</th><th class="num">25.9 Wh</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>screen off, Pi up</td><td class="num">4.0 W</td><td class="num">4.5 W</td><td class="num">4.2 h</td><td class="num">4.8 h</td></tr>
+    <tr class="hl"><td>idle, screen on</td><td class="num">5.1 W</td><td class="num">5.8 W</td><td class="num">3.3 h</td><td class="num">3.8 h</td></tr>
+    <tr><td>reading / Kiwix</td><td class="num">6.5 W</td><td class="num">7.4 W</td><td class="num">2.6 h</td><td class="num">3.0 h</td></tr>
+    <tr><td>browsing + maps</td><td class="num">8.7 W</td><td class="num">9.9 W</td><td class="num">1.9 h</td><td class="num">2.2 h</td></tr>
+    <tr><td>heavy (video/CPU)</td><td class="num">12.5 W</td><td class="num">14.2 W</td><td class="num">1.3 h</td><td class="num">1.5 h</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  <p>
+    <strong>r5 specifically.</strong> The sealed host has no through-wall vent, so the Pi&nbsp;5
+    reaches its 80&nbsp;°C throttle point under sustained load instead of holding boost. That does
+    not change idle or reading draw — it caps the <em>heavy</em> row in time rather than in watts.
+    The 12.5&nbsp;W heavy figure is therefore an upper bound that the thermal limit enforces.
+  </p>
+</div>
+
+<h2>Twenty-four hours, same for every machine</h2>
+
+<p>
+  Ktemata is a handheld, but a machine that is on all day can be priced against a station that is on
+  all day. Three of the four Ktemata rows below are deliberately unflattering duty profiles, not the
+  handheld best case: a pure server role, normal mixed use, and a wall display nobody switches off.
+  One row is the shipped Wi-Fi hotspot (<code>post-install.sh --hotspot</code>), which adds an
+  estimated 0.4&nbsp;W. NOMAD is headless, so 100&nbsp;% of its day is idle or loaded with no display
+  of its own. Its AI is off in every row.
+</p>
+
+<figure>
+  <img src="img/site_24_7.png" width="1400" height="700" alt="Bar chart of energy per day: Ktemata r5 screen-off 109 Wh, four-hour reading 120 Wh, kiosk 139 Wh, hotspot 120 Wh; NOMAD budget 348 Wh, recommended 192 Wh, power build 840 Wh.">
+  <figcaption>Daily energy at the pack. Ktemata figures are at the 5&nbsp;V rail divided by the buck efficiency; NOMAD figures include the wall PSU.</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <caption>24/7, AI off. Panel and battery use 3.5 peak-sun-hours at 0.65 derate and 0.85 depth of discharge — assumptions, see Caveats.</caption>
+  <thead>
+    <tr><th>Platform</th><th class="num">Draw</th><th class="num">Wh/day</th><th class="num">Solar panel</th><th class="num">Battery, 1 day</th><th class="num">€/yr</th></tr>
+  </thead>
+  <tbody>
+    <tr class="hl"><td>Ktemata r5 — screen off 24 h</td><td class="num">4.0 W (5 V)</td><td class="num">109</td><td class="num">48 W</td><td class="num">128 Wh</td><td class="num">€12</td></tr>
+    <tr class="hl"><td>Ktemata r5 — 4 h reading + 20 h off</td><td class="num">4.4 W (5 V)</td><td class="num">120</td><td class="num">53 W</td><td class="num">142 Wh</td><td class="num">€13</td></tr>
+    <tr class="hl"><td>Ktemata r5 — kiosk, display on 24 h</td><td class="num">5.1 W (5 V)</td><td class="num">139</td><td class="num">61 W</td><td class="num">164 Wh</td><td class="num">€15</td></tr>
+    <tr class="hl"><td>Ktemata r5 — Wi-Fi hotspot (est. +0.4 W)</td><td class="num">4.4 W (5 V)</td><td class="num">120</td><td class="num">53 W</td><td class="num">141 Wh</td><td class="num">€13</td></tr>
+    <tr><td>NOMAD budget (refurb SFF)</td><td class="num">14.5 W (wall)</td><td class="num">348</td><td class="num">153 W</td><td class="num">409 Wh</td><td class="num">€38</td></tr>
+    <tr><td>NOMAD recommended (UM890 class)</td><td class="num">8.0 W (wall)</td><td class="num">192</td><td class="num">84 W</td><td class="num">226 Wh</td><td class="num">€21</td></tr>
+    <tr><td>NOMAD power (+RTX 3060)</td><td class="num">35.0 W (wall)</td><td class="num">840</td><td class="num">369 W</td><td class="num">988 Wh</td><td class="num">€92</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Costs are the grid-price equivalent of the energy at €0.30/kWh, not a purchase. Read against the
+  handheld's own pack, the last two columns are the interesting ones: <strong>Ktemata's 22.2&nbsp;Wh
+  pack is a 3–4 hour buffer</strong>, while a 24/7 NOMAD station needs <strong>226–988&nbsp;Wh</strong>
+  to ride out a single day without sun. The pack does not scale into that role; it was never meant to.
+</p>
+
+<h2>The shape of the load</h2>
+
+<figure>
+  <img src="img/site_profile.png" width="1400" height="640" alt="Log-scale bar chart of idle and load: Ktemata r5 5.1 W idle and 12.5 W load, NOMAD budget 14.5 and 50 W, NOMAD recommended 8 and 85 W, NOMAD power 35 and 250 W.">
+  <figcaption>The recommended NOMAD idles lower than a refurbished SFF PC, yet loads 10.6× above its own idle where the refurb manages 3.4×.</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Platform</th><th class="num">Idle</th><th class="num">Load</th><th class="num">Load / idle</th></tr>
+  </thead>
+  <tbody>
+    <tr class="hl"><td>Ktemata r5</td><td class="num">5.1 W (5 V)</td><td class="num">12.5 W (5 V)</td><td class="num">2.5×</td></tr>
+    <tr><td>NOMAD budget (refurb SFF)</td><td class="num">14.5 W</td><td class="num">50 W</td><td class="num">3.4×</td></tr>
+    <tr><td>NOMAD recommended (UM890 class)</td><td class="num">8.0 W</td><td class="num">85 W</td><td class="num">10.6×</td></tr>
+    <tr><td>NOMAD power (+RTX 3060)</td><td class="num">35.0 W</td><td class="num">250 W</td><td class="num">7.1×</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  The shape matters more than any single number. A library server spends most hours idle, which is
+  why the recommended NOMAD tier uses less energy per day than the cheaper budget tier despite
+  costing about three times as much. Ktemata goes one step further: it is not merely low at idle,
+  its <em>whole range</em> is small, and the machine is off between sessions because there is nobody
+  to serve.
+</p>
+
+<h2>Assumptions that could be wrong</h2>
+
+<div class="warn">
+  <ul>
+    <li><strong>Assumptions, not measurements:</strong> η&nbsp;=&nbsp;0.88 for the HAT&nbsp;(B) buck, 0.85 usable depth of discharge, 3.5 peak-sun-hours, 0.65 panel derate, €0.30/kWh. The HAT&nbsp;(B)'s INA219 at I²C 0x42 reports the pack side directly once the firmware reads it — that is the measurement to make first.</li>
+    <li><strong>Cell capacity drives the runtime.</strong> 3.0&nbsp;Ah cells give 22.2&nbsp;Wh, 3.5&nbsp;Ah cells 25.9&nbsp;Wh (+17&nbsp;%); both columns are above because the BOM does not fix a capacity.</li>
+    <li><strong>Pi 5 soft-off is not off:</strong> ~1.7&nbsp;W until the supply is cut. On r5 the UPS keeps the 5&nbsp;V rail alive, so "screen off, Pi up" is a real state, not a figure of speech. Only the HAT's output switch (or pulling the pack) reaches zero.</li>
+    <li><strong>Ktemata figures are at the 5&nbsp;V rail</strong>, NOMAD's at the wall including the PSU. The "at pack" column exists so the two can be compared without pretending the conversion is free.</li>
+    <li><strong>The NOMAD power build's idle is inferred</strong>, not measured — no review publishes a 24/7 idle for that exact combination.</li>
+    <li><strong>AI-off NOMAD still loads hard when busy:</strong> installing content, transcoding or compiling reaches 65–90&nbsp;W. The daily figures assume idle-dominated use, which is what a library server is.</li>
+    <li><strong>r5's thermal limit is a time limit.</strong> In the sealed host the Pi&nbsp;5 throttles under sustained load, so a NOMAD-style always-busy workload is not something r5 could do even at its wattage.</li>
+    <li><strong>The hotspot's 0.4&nbsp;W is an estimate</strong>, not a Pi&nbsp;5 measurement; it is the same order as the Prepper Disk's Pi&nbsp;4B figure.</li>
+  </ul>
+</div>
+
+<h2>Reproduce it</h2>
+
+<p>
+  Every figure on this page comes from one script, which also writes the charts. Edit the measured
+  constants at the top of it and the tables and images follow, so the prose and the data cannot drift
+  apart.
+</p>
+
+<pre><code>python3 work/scripts/power_chart.py            # tables + the white docs charts
+python3 work/scripts/power_chart.py --tables   # tables only, no images
+python3 work/scripts/power_chart.py --site     # the dark charts this page uses
+python3 work/scripts/power_chart.py --compare  # Prepper Disk tables + charts</code></pre>
+
+<p>
+  The full derivation, including the NOMAD measurement sources, is in
+  <a href="https://github.com/jsoeterbroek/ktemata/blob/main/docs/POWER.md">docs/POWER.md</a>.
+</p>
+
+<footer>
+  <p>Ktemata · <a href="https://github.com/jsoeterbroek/ktemata">source</a> · content on this page is free to reuse</p>
+  <p>Design figures, not a certified product. Build and power your own hardware at your own risk.</p>
+</footer>
+
+</main>
+</body>
+</html>

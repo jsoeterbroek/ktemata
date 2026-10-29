@@ -30,6 +30,18 @@ Design notes, one page per concern: [`docs/R4.md`](docs/R4.md) (current hardware
 (pros and cons against the commercial Prepper Disk), [`docs/WIRING.md`](docs/WIRING.md), [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md),
 [`docs/SLIMMING.md`](docs/SLIMMING.md).
 
+The website is in [`site/`](site/) and is published at **<https://ktemata.org>**:
+
+| Page | Local file | Public URL |
+|---|---|---|
+| Landing page: the name, the build, the risk statement | `site/index.html` | <https://ktemata.org/> |
+| **Power**: r5 component draws, runtime on the 22.2 Wh pack, 24/7 energy against all three NOMAD tiers, caveats | `site/power.html` | <https://ktemata.org/power.html> |
+| **Comparisons**: r5 with its hotspot against the Prepper Disk and NOMAD budget/recommended/power — pros, cons, DIY and open source, low Pi draw | `site/comparisons.html` | <https://ktemata.org/comparisons.html> |
+
+Both data pages read their charts from `work/scripts/power_chart.py --site`, the same source of truth as
+[`docs/POWER.md`](docs/POWER.md), so the pages cannot drift from the prose; `bash site/build.sh` regenerates
+the images and `bash site/deploy.sh` rebuilds then uploads them.
+
 ### Build variants
 
 | Build | Mechanics | Keyboard / radios |
