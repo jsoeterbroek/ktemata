@@ -38,6 +38,7 @@ dual-band.
 |---|---|
 | `--hotspot` | create the AP (default: off, so a fresh image keeps the old behaviour) |
 | `--no-hotspot` | explicitly do not create one |
+| `--no-radio` | disable the on-board radios in the firmware — the real off switch; see below |
 | `--hotspot-ssid N` | network name (default `Ktemata`) |
 | `--hotspot-pass P` | WPA2 passphrase, **8+ characters**; the script refuses shorter ones |
 | `--hotspot-open` | leave it open even if a password was configured |
@@ -68,6 +69,51 @@ sudo nmcli connection delete Ktemata        # NetworkManager path
 sudo systemctl disable --now hostapd dnsmasq   # hostapd path
 ```
 
+## Radio silence: `--no-radio`
+
+Deleting the AP is not the same as being silent. Without `--hotspot` the installer simply declines
+to create an access point: the radio is still enabled, `wlan0` exists, and if the box has ever been
+joined to a network it will associate with it again. `kiwix-serve` also runs with no `--address`, so
+it binds `0.0.0.0:8080` on every interface that comes up.
+
+`--no-radio` is the real off switch. It disables the on-board Wi-Fi and Bluetooth **in the
+firmware**, which is persistent and applies before the kernel probes the hardware:
+
+```bash
+sudo ./work/scripts/post-install.sh --no-radio
+```
+
+What it writes to `/boot/firmware/config.txt` (after a `.ktemata.bak` backup):
+
+| Device | Line |
+|---|---|
+| Pi 5 / 500 / CM5 (BCM2712) | `dtoverlay=disable-wifi-pi5`, `dtoverlay=disable-bt-pi5` |
+| Pi 4 and earlier | `dtoverlay=disable-wifi`, `dtoverlay=disable-bt` |
+
+The SoC is read from `/proc/device-tree/compatible` (falling back to the `Model` line in
+`/proc/cpuinfo`), because the Pi 5 overlays target `&sdio2` and `&bluetooth` rather than the
+`&mmc`/`&mmcnr` nodes of earlier boards. The firmware would select the `-pi5` variant automatically
+when given the unsuffixed name, but this writes the explicit one: a silent boot should not depend on
+a fallback rule.
+
+- **Mutually exclusive with `--hotspot`** — a disabled radio cannot host an AP, so the script
+  refuses the combination instead of installing both and failing at boot with `no wlan0`.
+- **Takes effect on the next boot.** The interfaces stay up in the running system until then; the
+  step says so.
+- **Bluetooth is included.** There is no reason to leave a second radio alive.
+- **What it does not cover:** a USB Wi-Fi dongle or an Ethernet link that is up. The library server
+  still binds all interfaces, so if a cable is connected the content is reachable — this flag stops
+  the device *transmitting*, not every possible path to it. `--no-service` plus a USB-only workflow,
+  or unplugging Ethernet, is the rest of that answer.
+
+Verify after a reboot:
+
+```bash
+ip -brief link | grep -c wlan0     # 0
+rfkill list                        # no phy entries for the onboard radio
+hciconfig -a 2>/dev/null           # nothing
+```
+
 ## What it does, in order
 
 | Step | Action | Flag |
@@ -83,6 +129,7 @@ sudo systemctl disable --now hostapd dnsmasq   # hostapd path
 | 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
 | 11 | Replaces the early boot splash with the logo | `--no-splash`, `--splash [FILE]` |
 | 12 | Optionally sets `camera_auto_detect=0` in `config.txt` | `--no-camera-autodetect` |
+| 12b | **Optionally disables the Wi-Fi and Bluetooth radios in the firmware** — see below | `--no-radio` |
 | 13 | **Optionally serves the library over its own Wi-Fi AP** — see below | `--hotspot` |
 | 14 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 

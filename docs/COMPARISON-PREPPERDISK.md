@@ -222,8 +222,9 @@ between.
   hotspot, enable the radio — it is already there.
 - **Both** is not silly: €271 for the family hotspot plus a handheld for the person who walks out
   with the bag. They share the same ZIM files and the same Kiwix software, so the second copy costs
-  only storage. Equally, one Ktemata can do both — enable the radio when a group needs it, leave it
-  off when the point is to be unfindable.
+  only storage. Equally, one Ktemata can do both — enable the radio when a group needs it, and run
+  `--no-radio` (firmware-level `disable-wifi`/`disable-bt`) when it has to be silent rather than
+  merely not hosting an AP.
 
 ## Sources and caveats
 

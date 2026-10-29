@@ -125,7 +125,7 @@
       <li><strong>Works alone.</strong> 720 × 1280 touchscreen, keyboard, trackpad and battery in one case; no phone, no DHCP, no browser tab.</li>
       <li><strong>Very low draw for a full computer.</strong> 4.0 W screen off, 5.1 W with the display lit; the Pi&nbsp;5's own idle is 3.0 W.</li>
       <li><strong>Carries its power.</strong> 22.2 Wh pack, 2.6–4.2 h, charged at 8.4 V from mains, solar via MPPT, or the separate hand crank.</li>
-      <li><strong>Hotspot included.</strong> Same dual-band radio as any Pi; one install flag serves 20 clients and leaves the screen usable. Leave the flag off and no access point is created — there is no network to join. (The radio itself is not switched off, and <code>kiwix-serve</code> binds all interfaces, so treat "unfindable" as policy, not a guarantee.)</li>
+      <li><strong>Hotspot included, and a real off switch.</strong> Same dual-band radio as any Pi; one install flag serves 20 clients and leaves the screen usable. For a build that must not transmit, <code>--no-radio</code> disables the on-board Wi-Fi and Bluetooth in the firmware (<code>dtoverlay=disable-wifi-pi5</code>/<code>disable-bt-pi5</code> on a Pi&nbsp;5), persistently and before the kernel probes them — at boot the device is silent, with no AP, no client association and no Bluetooth.</li>
       <li><strong>512 GB NVMe</strong> in a standard M.2 socket — a drive swap, not a card replacement.</li>
       <li><strong>Field-repairable and inspectable.</strong> Standard Pi, standard display, standard HAT, Peli case, published STLs; the firmware is a thousand lines you can read.</li>
       <li><strong>Buildable and hackable.</strong> Parametric OpenSCAD, an export toolchain, a post-install script and a hotspot installer — all in the repository, no vendor in the loop.</li>
@@ -255,9 +255,11 @@
 # clients join "Ktemata" and open http://10.10.10.1:8080/</code></pre>
 
 <p>
-  If the installer breaks, you can read it. If you want the radio off because the point is to be
-  unfindable, you run <code>--no-hotspot</code> and nothing listens. That control is what DIY means
-  at this layer — not that you must solder, but that no one can take the choice away from you.
+  If the installer breaks, you can read it. If you want the device to be silent rather than
+  merely unjoined, you run <code>--no-radio</code>: the on-board Wi-Fi and Bluetooth are disabled
+  in the firmware, so there is no interface to find and nothing to associate with. That control is
+  what DIY means at this layer — not that you must solder, but that no one can take the choice
+  away from you.
 </p>
 
 <h2>Recommended</h2>

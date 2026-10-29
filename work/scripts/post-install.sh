@@ -75,6 +75,12 @@ HOTSPOT_PASS=${HOTSPOT_PASS:-}          # empty: open network (no password)
 HOTSPOT_ADDR=${HOTSPOT_ADDR:-10.10.10.1}
 HOTSPOT_CIDR=${HOTSPOT_CIDR:-24}
 HOTSPOT_BAND=${HOTSPOT_BAND:-auto}      # auto (2.4+5 GHz) | 2.4 | 5
+# --no-radio turns the radios off in the firmware, so the device is silent at boot and stays
+# silent: no AP, no client association, no Bluetooth. Unlike --no-hotspot (which only declines
+# to create an AP) this is a real off switch, and it is persistent. Mutually exclusive with
+# --hotspot, because a disabled radio cannot host an access point.
+WITH_NO_RADIO=false
+RADIO_STATE="unchanged"                 # what the config.txt step actually did
 NOMAD_REGISTRY=${NOMAD_REGISTRY:-ghcr.io/jsoeterbroek}
 NOMAD_VERSION=${NOMAD_VERSION:-1.35.1}
 NOMAD_COMPOSE_DIR=${NOMAD_COMPOSE_DIR:-/opt/project-nomad}
@@ -131,6 +137,13 @@ ${C_BOLD}OPTIONS${C_OFF}
       --hotspot          Serve the library over its own Wi-Fi access point (wlan0).
                          Uses NetworkManager when present, else hostapd + dnsmasq.
       --no-hotspot       Do not create an access point (default).
+      --no-radio         Turn the Wi-Fi and Bluetooth radios OFF in the firmware
+                         (dtoverlay=disable-wifi/disable-bt, plus disable-wifi-pi5/
+                         disable-bt-pi5 on a Pi 5). No AP, no client association, no
+                         Bluetooth: the device cannot transmit at all. Persistent, and
+                         takes effect on the next boot. Cannot be combined with --hotspot.
+                         Note that kiwix-serve still binds all interfaces, so a USB or
+                         Ethernet link that is up can still reach the library.
       --hotspot-ssid N   Network name (default: Ktemata).
       --hotspot-pass P   WPA2 password, 8+ characters (default: open network).
       --hotspot-open     Explicitly leave the network open, even if a password was set.
@@ -1295,6 +1308,103 @@ set_camera_autodetect_off() {
 }
 
 # ---------------------------------------------------------------------------------------
+# --no-radio: turn the radios off in the firmware
+# ---------------------------------------------------------------------------------------
+# This is the real off switch, as opposed to --no-hotspot, which only declines to create an
+# access point: without this, wlan0 is still enabled and associates with any saved network,
+# and kiwix-serve still binds 0.0.0.0:8080.
+#
+# dtoverlay=disable-wifi / disable-bt load a .dtbo that sets the WLAN SDIO controller and the
+# Bluetooth node to "disabled", so the kernel never probes them. The Pi 5 (BCM2712) has its
+# own variants that target &sdio2 and &bluetooth instead of &mmc/&mmcnr; the firmware picks
+# them automatically, but this writes the explicit name as well, because a silent boot should
+# not depend on a fallback rule.
+#
+# What it does NOT do: unload an already-loaded radio in the running system (only a reboot
+# removes the interface), and it does not stop a USB Wi-Fi dongle or an Ethernet link. It is
+# the on-board radios, which is what the device ships with.
+set_radio_off() {
+    $WITH_NO_RADIO || return 0
+    log_stage "Radios off"
+
+    local cfg="${CONFIG_TXT:-/boot/firmware/config.txt}"
+    if [ ! -f "$cfg" ]; then
+        log_info "no $cfg: not a Raspberry Pi boot partition, skipping"
+        RADIO_STATE="no $cfg"
+        return 0
+    fi
+
+    # BCM2712 = Pi 5 / 500 / CM5, which need the -pi5 overlay variants. Read the SoC from the
+    # device tree when it is there; fall back to the model line in /proc/cpuinfo.
+    # KTEMATA_DEVICE_TREE and KTEMATA_CPUINFO exist so the choice can be exercised in a test
+    # without a Pi 5; both default to the real paths.
+    local soc="" overlays
+    local dt="${KTEMATA_DEVICE_TREE:-/proc/device-tree}"
+    local cpuinfo="${KTEMATA_CPUINFO:-/proc/cpuinfo}"
+    if [ -r "$dt/compatible" ]; then
+        soc=$(tr -d '\0' <"$dt/compatible" 2>/dev/null || true)
+    fi
+    if [ -z "$soc" ] && [ -r "$cpuinfo" ]; then
+        soc=$(sed -n 's/^Model.*: //p' "$cpuinfo" 2>/dev/null | head -1 || true)
+    fi
+    case "$soc" in
+        *bcm2712*|*"Raspberry Pi 5"*|*"Raspberry Pi 500"*|*"Compute Module 5"*)
+            overlays="disable-wifi-pi5 disable-bt-pi5" ;;
+        *)
+            overlays="disable-wifi disable-bt" ;;
+    esac
+
+    local ov lines=() missing=()
+    for ov in $overlays; do
+        lines+=("dtoverlay=$ov")
+    done
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s add %s to %s (next boot)\n' \
+            "$C_YELLOW" "$C_OFF" "${lines[*]}" "$cfg"
+        RADIO_STATE="would be off (${overlays})"
+        return 0
+    fi
+
+    [ -f "$cfg.ktemata.bak" ] || cp -a "$cfg" "$cfg.ktemata.bak"
+
+    local line
+    for line in "${lines[@]}"; do
+        # already live, commented out, or absent: end up with exactly one live line
+        if grep -qx -- "$line" "$cfg"; then
+            continue
+        fi
+        if grep -qE "^[#[:space:]]*dtoverlay=${line#dtoverlay=}[[:space:]]*$" "$cfg"; then
+            # uncomment in place; keep the file's own ordering
+            sed -i -E "s|^[#[:space:]]*(dtoverlay=${line#dtoverlay=})[[:space:]]*\$|\1|" "$cfg"
+        else
+            printf '%s\n' "$line" >>"$cfg"
+        fi
+    done
+
+    # verify each one ended up live exactly once; a duplicated dtoverlay is harmless but a
+    # missing one is the whole point of the flag
+    local n
+    for line in "${lines[@]}"; do
+        n=$(grep -cx -- "$line" "$cfg")
+        if [ "$n" = 1 ]; then
+            log_ok "$line"
+        else
+            log_error "$line appears $n times in $cfg"
+            missing+=("$line")
+        fi
+    done
+    if [ ${#missing[@]} -gt 0 ]; then
+        log_warn "restore with: sudo cp $cfg.ktemata.bak $cfg"
+        RADIO_STATE="FAILED"
+        return 0          # do not abort the install over this; the summary reports it
+    fi
+
+    RADIO_STATE="off (${overlays}), next boot"
+    log_info "the radios stay up until the next reboot"
+}
+
+# ---------------------------------------------------------------------------------------
 # Library hotspot (access point for phones / laptops / e-readers)
 # ---------------------------------------------------------------------------------------
 # The Pi 5 has a dual-band 2.4/5 GHz radio on board. Nothing has to be added to serve the library
@@ -1873,6 +1983,9 @@ summary() {
     if $WITH_KIOSK; then
         printf '  kiosk     %s autostarts kiwix-kiosk on login\n' "$KIOSK_USER"
     fi
+    if $WITH_NO_RADIO; then
+        printf '  radios    %s\n' "$RADIO_STATE"
+    fi
     if $WITH_HWTEST; then
         printf '  hardware  %d checks, %d failed, %d warning(s)\n' "$HW_CHECKS" "$HW_FAILS" "$HW_WARNS"
     fi
@@ -1904,6 +2017,7 @@ main() {
             --no-camera-autodetect) WITH_NOCAMERA=true ;;
             --hotspot)       WITH_HOTSPOT=true ;;
             --no-hotspot)    WITH_HOTSPOT=false ;;
+            --no-radio)      WITH_NO_RADIO=true ;;
             --hotspot-ssid)  HOTSPOT_SSID=${2:?--hotspot-ssid needs a name}; shift ;;
             --hotspot-pass)  HOTSPOT_PASS=${2:?--hotspot-pass needs a password}; shift ;;
             --hotspot-open)  HOTSPOT_PASS="" ;;
@@ -1938,6 +2052,11 @@ main() {
     case $SPLASH_ORIENTATION in landscape|portrait) ;;
         *) die "--splash-orientation takes landscape or portrait" ;; esac
     case $HOTSPOT_BAND in auto|2.4|5) ;; *) die "--hotspot-band takes auto, 2.4 or 5" ;; esac
+    # a disabled radio cannot host an access point: refuse rather than install both and have
+    # the AP fail at boot with "no wlan0"
+    if $WITH_NO_RADIO && $WITH_HOTSPOT; then
+        die "--no-radio and --hotspot are mutually exclusive: a disabled radio cannot serve an AP"
+    fi
     # WPA2-PSK needs 8..63 printable characters; anything else silently fails at connect time
     if [ -n "$HOTSPOT_PASS" ] && [ ${#HOTSPOT_PASS} -lt 8 ]; then
         die "--hotspot-pass needs at least 8 characters (WPA2 minimum), or use --hotspot-open"
@@ -1971,6 +2090,7 @@ main() {
     install_wallpaper
     install_splash
     set_camera_autodetect_off
+    set_radio_off
     setup_hotspot
     prepare_nomad_images
     install_kiosk
