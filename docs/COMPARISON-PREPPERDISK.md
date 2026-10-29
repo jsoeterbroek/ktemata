@@ -112,10 +112,10 @@ failed screen is €60; a cracked shell is a reprint. The Prepper Disk's alumini
 custom integration are not field-serviceable, and its warranty is one year against a lifetime of
 expected use.
 
-**No vendor, no licence, no dependency.** MIT-style CAD and firmware in this repo, ZIM files from the
-Kiwix catalogue, no account, no content licence that can be withdrawn, no company that can stop
-shipping. The Prepper Disk's exclusive content and curated UI are genuine value — and also a
-dependency.
+**No vendor, no licence, no dependency.** MIT firmware and tooling, CC BY-SA CAD and prose in this
+repo, ZIM files from the Kiwix catalogue, no account, no content licence that can be withdrawn, no
+company that can stop shipping. The Prepper Disk's exclusive content and curated UI are genuine value
+— and also a dependency.
 
 **It is repairable and inspectable at the source level.** The firmware in `firmware/` is 1,000 lines
 you can read, with the I²C addresses, the UPS gauge protocol and the OLED screens all documented. A

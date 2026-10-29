@@ -1,0 +1,72 @@
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+==========================================================================
+
+Copyright (c) 2026 Joost Soeterbroek
+
+This licence covers the non-software parts of this repository:
+
+  - cad/**.scad            the parametric OpenSCAD case geometry
+  - docs/**.md, docs/**.svg, docs/**.png, docs/**.pdf, docs/**.csv
+  - README.md, AGENTS.md, BOM.md and the other prose in the repository root
+  - renders/**.png         the rendered previews
+  - site/**.html, site/**.svg, site/img/**.png
+                            the website's prose, markup and images (the
+                            stylesheet, site/style.css, is MIT)
+  - stl/**.stl             the exported meshes derived from cad/
+
+You are free to:
+
+  Share  — copy and redistribute the material in any medium or format.
+  Adapt  — remix, transform, and build upon the material for any purpose,
+           even commercially.
+
+Under the following terms:
+
+  Attribution — You must give appropriate credit, provide a link to the
+  licence, and indicate if changes were made. You may do so in any reasonable
+  manner, but not in any way that suggests the licensor endorses you or your
+  use.
+
+  ShareAlike — If you remix, transform, or build upon the material, you must
+  distribute your contributions under the same licence as the original.
+
+  No additional restrictions — You may not apply legal terms or technological
+  measures that legally restrict others from doing anything the licence
+  permits.
+
+No warranties are given. The licence may not give you all of the permissions
+necessary for your intended use. For example, other rights such as publicity,
+privacy, or moral rights may limit how you use the material.
+
+Full legal code: https://creativecommons.org/licenses/by-sa/4.0/legalcode
+Human-readable summary: https://creativecommons.org/licenses/by-sa/4.0/
+
+Suggested attribution for a build or a derivative:
+
+  "Ktemata r5 by Joost Soeterbroek, https://ktemata.org, CC BY-SA 4.0.
+   Changes: <what you changed>."
+
+Note on safety: the licence grants rights to reuse the design, not a claim
+that it is safe, certified or fit for any purpose. It is a hobby project
+published as-is; see the warning in README.md.
+
+--------------------------------------------------------------------------
+
+What is NOT covered by either licence
+-------------------------------------
+
+Third-party material that lives in, or is referenced from, this repository
+keeps its own terms and is not relicensed here:
+
+  - Pi_Flux_r1_-_Build_Guide.pdf, build_guide.txt and the page images in
+    work/pages/: the original build guide, included for reference only.
+  - reference/ files derived from third-party videos, with their own
+    transcripts and quotations.
+  - ZIM files (Wikipedia, Wiktionary, Gutenberg, WikEM, etc.) and any other
+    Kiwix content: each carries the licence of its source project, usually
+    CC BY-SA. Download them yourself from https://library.kiwix.org.
+  - Project NOMAD (Apache-2.0), Kiwix, Kolibri, ProtoMaps, Raspberry Pi OS,
+    Ubuntu and the other software this device runs.
+  - Product names, photographs and trademarks: Peli, Waveshare, Raspberry
+    Pi, Rii, DFRobot, Minisforum and others belong to their owners. This
+    project is not affiliated with or endorsed by any of them.

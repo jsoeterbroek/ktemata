@@ -15,6 +15,7 @@
   <a href="index.html">Ktemata</a>
   <a href="power.html">Power</a>
   <a href="comparisons.html" aria-current="page">Comparisons</a>
+  <a href="license.html">Licence</a>
   <a href="https://github.com/jsoeterbroek/ktemata">Source</a>
 </nav>
 
@@ -307,14 +308,21 @@
 </div>
 
 <p>
-  Reproduce the power numbers with <code>python3 work/scripts/power_chart.py --compare</code> and the
-  site charts with <code>--site</code>; the longer prose is in
+  Reproduce the numbers, and the charts on both pages, from one script:
+</p>
+
+<pre><code>python3 work/scripts/power_chart.py --compare   # Prepper Disk tables + charts
+python3 work/scripts/power_chart.py --site      # the dark charts site/ uses
+python3 work/scripts/power_chart.py --tables    # tables only, no images</code></pre>
+
+<p>
+  The longer prose is in
   <a href="https://github.com/jsoeterbroek/ktemata/blob/main/docs/COMPARISON-PREPPERDISK.md">docs/COMPARISON-PREPPERDISK.md</a>
   and <a href="https://github.com/jsoeterbroek/ktemata/blob/main/docs/POWER.md">docs/POWER.md</a>.
 </p>
 
 <footer>
-  <p>Ktemata · <a href="https://github.com/jsoeterbroek/ktemata">source</a> · content on this page is free to reuse</p>
+  <p>Ktemata · <a href="https://github.com/jsoeterbroek/ktemata">source</a> · text is CC BY-SA 4.0, see <a href="license.html">licence</a></p>
   <p>This is a hobby project, published as-is, with no warranty. Comparing designs is not a recommendation to buy, build or power any of them without doing your own checks.</p>
 </footer>
 

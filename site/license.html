@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Licence — Ktemata</title>
+<meta name="description" content="Ktemata licensing: MIT for the firmware and tooling, CC BY-SA 4.0 for the CAD, docs and site, and what is explicitly not covered.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+
+<nav class="pages">
+  <a href="index.html">Ktemata</a>
+  <a href="power.html">Power</a>
+  <a href="comparisons.html">Comparisons</a>
+  <a href="license.html" aria-current="page">Licence</a>
+  <a href="https://github.com/jsoeterbroek/ktemata">Source</a>
+</nav>
+
+<h1>Licence</h1>
+<p class="deck">
+  Two licences, split by what the thing is: software gets MIT, everything you read, print or build
+  from gets CC&nbsp;BY-SA&nbsp;4.0. Both allow commercial use.
+</p>
+
+<div class="table-wrap">
+<table>
+  <caption>What covers what.</caption>
+  <thead>
+    <tr><th>Material</th><th>Licence</th><th>You may</th><th>You must</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Firmware, scripts and tooling<br><code>firmware/</code>, <code>cad/tools/</code>, <code>work/scripts/</code>, <code>site/style.css</code></td>
+      <td><strong>MIT</strong></td>
+      <td>use, copy, modify, merge, publish, distribute, sublicense, sell</td>
+      <td>keep the copyright notice and the permission text</td>
+    </tr>
+    <tr>
+      <td>CAD geometry, docs, renders, STLs, site prose and images<br><code>cad/*.scad</code>, <code>docs/</code>, <code>renders/</code>, <code>stl/</code>, <code>site/*.html</code></td>
+      <td><strong>CC&nbsp;BY&#8209;SA&nbsp;4.0</strong></td>
+      <td>share, remix, transform, build on it, even commercially</td>
+      <td>credit the author, link the licence, say what you changed, and licence your version under the same terms</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Why the split</h2>
+
+<p>
+  Code wants to be reusable without strings attached: MIT is the shortest licence that lets you drop
+  a driver or a script into your own project and not think about it again. A physical design is
+  different — an STL or a case revision that drifts from its source is hard for the next person to fix.
+  ShareAlike keeps improvements to the enclosure and the documentation open, which is the point of
+  publishing a parametric case at all.
+</p>
+
+<div class="win">
+  <p><strong>The short version.</strong> Take the firmware and the tooling, no obligations beyond the
+  copyright line. Take the design, print it, sell the print — but credit it and keep your modified
+  design under CC&nbsp;BY-SA&nbsp;4.0 as well.</p>
+</div>
+
+<h2>Attribution</h2>
+
+<p>A form that satisfies both the credit and the "indicate changes" clause:</p>
+
+<pre><code>Ktemata r5 by Joost Soeterbroek, https://ktemata.org, CC BY-SA 4.0.
+Changes: widened the keyboard pocket by 2 mm, reprinted in PETG.</code></pre>
+
+<p>
+  For the software, keep the notice from <code>LICENSE</code> in the source or in the about box, as
+  MIT asks.
+</p>
+
+<h2>Full texts</h2>
+
+<ul>
+  <li><a href="https://github.com/jsoeterbroek/ktemata/blob/main/LICENSE">LICENSE</a> — MIT, for the software.</li>
+  <li><a href="https://github.com/jsoeterbroek/ktemata/blob/main/LICENSE-CONTENT">LICENSE-CONTENT</a> — CC BY-SA 4.0, for the design and the prose, with the scope spelled out.</li>
+  <li><a href="https://creativecommons.org/licenses/by-sa/4.0/">creativecommons.org/licenses/by-sa/4.0</a> — the canonical deed and legal code.</li>
+</ul>
+
+<h2>Not covered</h2>
+
+<p>
+  Some things in or referenced from the repository keep their own terms and are not relicensed here:
+</p>
+
+<ul>
+  <li><strong>The original build guide.</strong> <code>Pi_Flux_r1_-_Build_Guide.pdf</code>, <code>build_guide.txt</code> and the page images in <code>work/pages/</code> are included for reference only.</li>
+  <li><strong>ZIM content.</strong> Wikipedia, Wiktionary, Gutenberg, WikEM and the rest carry the licence of their source project, usually CC&nbsp;BY-SA. Download them yourself from <a href="https://library.kiwix.org">library.kiwix.org</a>; they are not shipped here.</li>
+  <li><strong>Software this device runs.</strong> Project NOMAD (Apache-2.0), Kiwix, Kolibri, ProtoMaps, Raspberry Pi OS and Ubuntu keep their own licences.</li>
+  <li><strong>Names and marks.</strong> Peli, Waveshare, Raspberry Pi, Rii, DFRobot, Minisforum and others belong to their owners. This project is not affiliated with or endorsed by any of them.</li>
+</ul>
+
+<h2>No warranty</h2>
+
+<div class="warn">
+  <p>
+    Both licences disclaim warranty. Ktemata is a hobby project published as-is: the case and the
+    wiring are design proposals, not certified hardware. The licence gives you the right to reuse the
+    design, not a claim that it is safe or fit for any purpose. You are responsible for your own build
+    — check the fit of your parts, verify polarity and fusing before connecting lithium cells, and
+    never leave a charging pack unattended.
+  </p>
+</div>
+
+<footer>
+  <p>Ktemata · <a href="https://github.com/jsoeterbroek/ktemata">source</a> · text on this page is CC BY-SA 4.0</p>
+</footer>
+
+</main>
+</body>
+</html>
