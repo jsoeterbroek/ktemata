@@ -46,10 +46,16 @@ VIEWS = {
     'r5_assembly':  ('assembly_r5.scad', (1400, 1100), '0,0,0,55,0,25,0', [], True),
     'r5_cassette':  ('assembly_r5.scad', (1400, 1100), '0,0,0,55,0,25,0', ['-D', 'SHOW_HOST=false'], True),
     'r5_exploded':  ('assembly_r5.scad', (1400, 1100), '0,0,0,60,0,30,0', ['-D', 'SHOW_HOST=false', '-D', 'EXPLODE=60'], True),
+    # dark views for site/ (same geometry, Tomorrow Night instead of Tomorrow); build.sh copies them
+    'site_r5_exploded': ('assembly_r5.scad', (1400, 1000), '0,0,0,60,0,30,0',
+                         ['-D', 'SHOW_HOST=false', '-D', 'EXPLODE=60'], True),
 }
 
 R5_ONLY = {'r5_assembly', 'r5_cassette', 'r5_exploded', 'ktemata_r5_tray', 'ktemata_r5_deck',
-           'ktemata_r5_lid_plate'}
+           'ktemata_r5_lid_plate', 'site_r5_exploded'}
+
+# The site is dark; the default Tomorrow scheme renders on white and clashes with it.
+DARK = {'site_r5_exploded'}
 
 R1_ONLY = {'power_button', 'pull_switch', 'ktemata_power_button', 'ktemata_pull_switch'}
 
@@ -68,7 +74,8 @@ def render(name, td):
     else:
         src = os.path.join(CAD, src)
     view = ['--camera=' + cam] + (['--viewall', '--autocenter'] if cam.count(',') == 6 and cam.startswith('0,0,0,') else [])
-    cmd = ['openscad', '-o', os.path.join(OUT, name + '.png'), f'--imgsize={w},{h}', '--colorscheme=Tomorrow',
+    scheme = 'Tomorrow Night' if name in DARK else 'Tomorrow'
+    cmd = ['openscad', '-o', os.path.join(OUT, name + '.png'), f'--imgsize={w},{h}', f'--colorscheme={scheme}',
            *(['--render'] if full else []), *view, *extra, src]
     r = subprocess.run(cmd, capture_output=True, text=True)
     return name, r.returncode, r.stderr.strip().splitlines()[-1:] if r.returncode else ''

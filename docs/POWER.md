@@ -148,11 +148,13 @@ Every figure on this page comes from one script, which also writes the two chart
 ```bash
 python3 work/scripts/power_chart.py            # tables to stdout + charts into docs/
 python3 work/scripts/power_chart.py --tables   # tables only, no images
+python3 work/scripts/power_chart.py --site     # the dark-theme set used by site/power.html
 ```
 
-Edit the measured constants at the top of that file (`K`, `PROFILES`, `NOMAD`) and both the tables
-and the images follow, so the prose and the data cannot drift apart — except the prose, which quotes
-the numbers above and has to be re-read when they change.
+Edit the measured constants at the top of that file (`K`, `PROFILES`, `NOMAD`, `PREPPER`) and both
+the tables and the images follow, so the prose and the data cannot drift apart — except the prose,
+which quotes the numbers above and has to be re-read when they change. The website's charts read the
+same constants, so `--site` keeps <https://ktemata.org/power.html> in step as well.
 
 ## Caveats
 

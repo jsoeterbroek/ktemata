@@ -6,6 +6,9 @@ writes the two charts, so the prose, the tables and the images cannot drift apar
 
   python3 work/scripts/power_chart.py            # tables to stdout + charts to ../docs/
   python3 work/scripts/power_chart.py --tables   # tables only
+  python3 work/scripts/power_chart.py --site     # dark-theme charts to ../site/img/
+  python3 work/scripts/power_chart.py --compare  # Prepper Disk charts + tables
+  python3 work/scripts/power_chart.py --emp      # EMP shielding tables
 
 Inputs are measured where a measurement exists (see docs/POWER.md for the sources); the
 efficiency, depth-of-discharge, peak-sun-hour and panel-derate figures are assumptions and
@@ -343,7 +346,198 @@ def chart_autonomy(path):
     plt.close(fig)
 
 
+# ---------------- website charts (site/img, dark theme) ----------------
+# Same data, different rendering: the docs charts are for a white markdown page and are
+# unreadable on ktemata.org's dark background, and their labels are too long for a
+# 44 rem column. Nothing here changes a number - it reads K, PROFILES, NOMAD, PREPPER.
+SITE = os.path.join(os.path.dirname(DOCS), "site", "img")
+SC = {"bg": "#1f2830", "fg": "#f2ebe0", "muted": "#a9b2bb", "line": "#2f3a45",
+      "accent": "#c99a63", "second": "#6b8fbf"}
+
+
+def site_style(fig, ax):
+    fig.patch.set_facecolor(SC["bg"])
+    ax.set_facecolor(SC["bg"])
+    ax.tick_params(colors=SC["muted"], labelsize=9)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(SC["line"])
+    ax.title.set_color(SC["fg"])
+    ax.xaxis.label.set_color(SC["muted"])
+    ax.yaxis.label.set_color(SC["muted"])
+    ax.grid(color=SC["line"], lw=0.7)
+    ax.set_axisbelow(True)
+
+
+def chart_site_247(path):
+    """Daily energy, 24/7: the four Ktemata duty profiles and the three NOMAD tiers."""
+    data = rows()
+    short = {"Ktemata r5 — screen off 24 h": "Ktemata r5 · screen off 24 h",
+             "Ktemata r5 — 4 h reading + 20 h off": "Ktemata r5 · 4 h reading",
+             "Ktemata r5 — kiosk, display on 24 h": "Ktemata r5 · kiosk, display on",
+             "Ktemata r5 — Wi-Fi hotspot (est. +0.4 W)": "Ktemata r5 · Wi-Fi hotspot",
+             "NOMAD budget (refurb SFF)": "NOMAD budget (refurb SFF)",
+             "NOMAD recommended (UM890 class)": "NOMAD recommended",
+             "NOMAD power (+RTX 3060)": "NOMAD power (+RTX 3060)"}
+    fig, ax = plt.subplots(figsize=(7.0, 3.5))
+    y = list(range(len(data)))
+    wh = [d[2] for d in data]
+    colors = [SC["accent"] if n.startswith("Ktemata") else SC["second"] for n, _, _, _ in data]
+    bars = ax.barh(y, wh, color=colors, height=0.6)
+    for b, v in zip(bars, wh):
+        ax.text(b.get_width() + 10, b.get_y() + b.get_height() / 2, f"{v:.0f}",
+                va="center", fontsize=9, color=SC["fg"])
+    ax.set_yticks(y)
+    ax.set_yticklabels([short.get(n, n) for n, _, _, _ in data], fontsize=8.5, color=SC["fg"])
+    ax.invert_yaxis()
+    ax.set_xlabel("Wh per day (24/7 duty, AI off)", fontsize=9)
+    ax.set_xlim(0, max(wh) * 1.22)
+    ax.set_title("Ktemata vs NOMAD: daily energy at the pack", fontsize=10.5, loc="left")
+    site_style(fig, ax)
+    ax.grid(axis="x"); ax.grid(axis="y", visible=False)
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+
+
+def chart_site_profile(path):
+    fig, ax = plt.subplots(figsize=(7.0, 3.2))
+    groups = [("Ktemata r5", K["idle, screen on"][0], K["heavy (video/CPU)"][0])]
+    for name, (idle, load, note) in NOMAD.items():
+        groups.append((name.replace(" (", "\n("), idle, load))
+    x = list(range(len(groups)))
+    w = 0.36
+    b1 = ax.bar([i - w / 2 for i in x], [g[1] for g in groups], w, label="idle", color=SC["second"])
+    b2 = ax.bar([i + w / 2 for i in x], [g[2] for g in groups], w, label="load", color=SC["accent"])
+    for bars in (b1, b2):
+        for b in bars:
+            ax.text(b.get_x() + b.get_width() / 2, b.get_height() * 1.1,
+                    f"{b.get_height():.0f}", ha="center", fontsize=8, color=SC["fg"])
+    ax.set_yscale("log")
+    ax.set_ylabel("watts (log)", fontsize=9)
+    ax.set_xticks(x)
+    ax.set_xticklabels([g[0] for g in groups], fontsize=8, color=SC["fg"])
+    ax.set_ylim(3, 900)
+    ax.set_title("Idle vs load: a small Pi peaks 2.5× above idle; a mini PC 10×",
+                 fontsize=10.5, loc="left")
+    site_style(fig, ax)
+    leg = ax.legend(frameon=False, fontsize=9, loc="upper left")
+    for t in leg.get_texts():
+        t.set_color(SC["fg"])
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+
+
+def chart_site_runtime(path):
+    fig, ax = plt.subplots(figsize=(7.0, 2.9))
+    names = ["heavy (video/CPU)", "browsing + maps", "reading / Kiwix",
+             "idle, screen on", "screen off, Pi up"]
+    hrs = [PACK_WH * ETA * DOD / K[n][0] for n in names]
+    labels = ["heavy — video, CPU bound", "browsing + maps", "reading / Kiwix",
+              "idle, screen on", "screen off, Pi up"]
+    bars = ax.barh(labels, hrs, color=SC["accent"], height=0.55)
+    for b, h in zip(bars, hrs):
+        ax.text(b.get_width() + 0.06, b.get_y() + b.get_height() / 2,
+                f"{h:.1f} h", va="center", fontsize=9, color=SC["fg"])
+    ax.set_xlim(0, 5.2)
+    ax.set_xlabel("hours on the shipped 22.2 Wh pack (2× 18650, 3.0 Ah)", fontsize=9)
+    ax.set_title("Runtime by state, no charging", fontsize=10.5, loc="left")
+    site_style(fig, ax)
+    ax.grid(axis="x"); ax.grid(axis="y", visible=False)
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+
+
+def chart_site_energy(path):
+    """The comparison page: 24/7 energy, Prepper Disk and the three NOMAD tiers.
+
+    Ktemata is at the pack and NOMAD at the wall - in both cases the energy the machine
+    actually pulls from its source, conversion losses included, which is what a solar panel
+    or battery has to supply. The Prepper Disk has no conversion of its own, so it is at its
+    5 V input. Same basis as table_247(); the caption says so."""
+    items = [("Prepper Disk (Pi 4B, headless)", PREPPER["draw"] * 24, SC["second"]),
+             ("Ktemata r5 · Wi-Fi hotspot", pack(K["screen off, Pi up"][0] + AP_EXTRA_W) * 24,
+              SC["accent"]),
+             ("Ktemata r5 · kiosk, 24 h on", pack(K["idle, screen on"][0]) * 24, SC["accent"]),
+             ("NOMAD recommended", NOMAD["NOMAD recommended (UM890 class)"][0] * 24, SC["second"]),
+             ("NOMAD budget", NOMAD["NOMAD budget (refurb SFF)"][0] * 24, SC["second"]),
+             ("NOMAD power (+RTX 3060)", NOMAD["NOMAD power (+RTX 3060)"][0] * 24, SC["second"])]
+    fig, ax = plt.subplots(figsize=(7.0, 3.1))
+    names = [i[0] for i in items]
+    wh = [i[1] for i in items]
+    bars = ax.barh(names, wh, color=[i[2] for i in items], height=0.6)
+    for b, v in zip(bars, wh):
+        ax.text(b.get_width() + 10, b.get_y() + b.get_height() / 2, f"{v:.0f} Wh",
+                va="center", fontsize=9, color=SC["fg"])
+    ax.set_xlim(0, max(wh) * 1.22)
+    ax.set_xlabel("energy per day, all four running the same 24 hours", fontsize=9)
+    ax.set_title("Same duty, different appetite", fontsize=10.5, loc="left")
+    site_style(fig, ax)
+    ax.grid(axis="x"); ax.grid(axis="y", visible=False)
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+
+
+def chart_site_readers(path):
+    fig, ax = plt.subplots(figsize=(7.0, 2.7))
+    names = ["Prepper Disk\nper connected device", "Ktemata r5 hotspot\nper connected device",
+             "Ktemata r5\nper reader (the device)"]
+    vals = [PREPPER["draw"] / PREPPER["devices"] * 1000,
+            (K["screen off, Pi up"][0] + AP_EXTRA_W) / PREPPER["devices"] * 1000,
+            K["idle, screen on"][0] * 1000]
+    bars = ax.barh(names, vals, color=[SC["second"], SC["accent"], SC["accent"]], height=0.5)
+    for b, v in zip(bars, vals):
+        ax.text(b.get_width() * 1.08, b.get_y() + b.get_height() / 2, f"{v:.0f} mW",
+                va="center", fontsize=9, color=SC["fg"])
+    ax.set_xscale("log")
+    ax.set_xlim(100, 15000)
+    ax.set_xlabel("power per reader (mW, log scale)", fontsize=9)
+    ax.set_title("A hotspot shares its power; a handheld does not", fontsize=10.5, loc="left")
+    site_style(fig, ax)
+    ax.grid(axis="x"); ax.grid(axis="y", visible=False)
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+
+
+def chart_site_autonomy(path):
+    fig, ax = plt.subplots(figsize=(7.0, 2.3))
+    names = ["Prepper Disk — ships without a cell", "Ktemata r5 — own 22.2 Wh pack"]
+    hrs = [0.0, PACK_WH * ETA * DOD / K["idle, screen on"][0]]
+    bars = ax.barh(names, hrs, color=[SC["second"], SC["accent"]], height=0.5)
+    for b, h in zip(bars, hrs):
+        ax.text(max(h, 0.05) + 0.1, b.get_y() + b.get_height() / 2,
+                "mains or a USB bank" if h == 0 else f"{h:.1f} h with the screen on",
+                va="center", fontsize=9, color=SC["fg"])
+    ax.set_xlim(0, 5.2)
+    ax.set_xlabel("hours without mains", fontsize=9)
+    ax.set_title("Autonomy as shipped", fontsize=10.5, loc="left")
+    site_style(fig, ax)
+    ax.grid(axis="x"); ax.grid(axis="y", visible=False)
+    fig.tight_layout()
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+
+
+def site_charts():
+    os.makedirs(SITE, exist_ok=True)
+    outs = {"site_24_7.png": chart_site_247, "site_profile.png": chart_site_profile,
+            "site_runtime.png": chart_site_runtime, "site_energy.png": chart_site_energy,
+            "site_readers.png": chart_site_readers, "site_autonomy.png": chart_site_autonomy}
+    for name, fn in outs.items():
+        p = os.path.join(SITE, name)
+        fn(p)
+        print(f"wrote {p}")
+
+
 if __name__ == "__main__":
+    if "--site" in sys.argv:
+        site_charts()
+        sys.exit(0)
     if "--compare" in sys.argv:
         os.makedirs(DOCS, exist_ok=True)
         chart_prepper(os.path.join(DOCS, "prepperdisk_served.png"))
