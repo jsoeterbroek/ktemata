@@ -125,7 +125,7 @@
       <li><strong>Works alone.</strong> 720 × 1280 touchscreen, keyboard, trackpad and battery in one case; no phone, no DHCP, no browser tab.</li>
       <li><strong>Very low draw for a full computer.</strong> 4.0 W screen off, 5.1 W with the display lit; the Pi&nbsp;5's own idle is 3.0 W.</li>
       <li><strong>Carries its power.</strong> 22.2 Wh pack, 2.6–4.2 h, charged at 8.4 V from mains, solar via MPPT, or the separate hand crank.</li>
-      <li><strong>Hotspot included.</strong> Same dual-band radio as any Pi; one install flag serves 20 clients and leaves the screen usable.</li>
+      <li><strong>Hotspot included.</strong> Same dual-band radio as any Pi; one install flag serves 20 clients and leaves the screen usable. Leave the flag off and no access point is created — there is no network to join. (The radio itself is not switched off, and <code>kiwix-serve</code> binds all interfaces, so treat "unfindable" as policy, not a guarantee.)</li>
       <li><strong>512 GB NVMe</strong> in a standard M.2 socket — a drive swap, not a card replacement.</li>
       <li><strong>Field-repairable and inspectable.</strong> Standard Pi, standard display, standard HAT, Peli case, published STLs; the firmware is a thousand lines you can read.</li>
       <li><strong>Buildable and hackable.</strong> Parametric OpenSCAD, an export toolchain, a post-install script and a hotspot installer — all in the repository, no vendor in the loop.</li>
@@ -190,7 +190,7 @@
   <div class="con">
     <h3>Costs</h3>
     <ul>
-      <li>Always needs a second device with a browser. There is no screen and no keyboard of its own.</li>
+      <li>Always needs a second device with a browser. There is no screen and no keyboard of its own (depending on the build).</li>
       <li><strong>Its hardware draws too much power for an off-grid device.</strong> Its own guidance is a 15–65&nbsp;W mini PC; the power tier idles at ~35&nbsp;W, which is <strong>5.4× Ktemata's reading draw</strong>, and the recommended tier peaks at 85&nbsp;W.</li>
       <li>24/7 energy of 192–840&nbsp;Wh/day needs a 226–988&nbsp;Wh battery to survive one sunless day — a fixed installation with a battery bank, not something in a bag.</li>
       <li>Upstream images are <strong>amd64-only</strong>; running it on a Pi needs a community ARM64 build.</li>
