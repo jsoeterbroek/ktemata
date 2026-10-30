@@ -365,10 +365,12 @@ R5_KB_WALL = 1.8;
 R5_KB_LIP = 2.5;                                       // lip overlap over the Esc row
 R5_KB_TOP = R5_DECK_TOP + KB_BODY[2];                   // pocket walls end flush with the keys
 
-// status OLED module on the deck, left of the keyboard (visible with the lid open)
+// status OLED module on the deck (visible with the lid open). Centred between the keyboard
+// pocket and the hinge-side edge: the keyboard owns y > R5_KB_Y0, so the free band is the
+// 100 mm strip between the Pi keep-out and the pocket, and the module sits in the middle of it.
 R5_OLED_W = 35.8; R5_OLED_H = 34.8;                     // 35 x 34 module + clearance
-R5_OLED_X0 = 3;
-R5_OLED_Y0 = R5_KB_Y0 + (R5_KB_POCKET[1] - R5_OLED_H)/2;
+R5_OLED_X0 = (R5_W - R5_OLED_W)/2;                      // centred, as of the r5 revision
+R5_OLED_Y0 = (R5_KB_Y0 - R5_OLED_H)/2 + 4;              // centred in the free band, nudged to the pocket
 R5_OLED_T = 3.2;                                        // module pcb + glass (lies in a through-pocket)
 R5_OLED_LEDGE = 1.0;                                    // corner ledges that carry the module
 
@@ -454,6 +456,31 @@ COVER_BTN_Y = COVER_L - COVER_BTN_EDGE - COVER_BTN_D/2;
 // 720 x 1280 on a 5.0" diagonal: the image is smaller than the glass, which is what lets the
 // bezel sit over the glass border instead of over the picture.
 COVER_ACTIVE = [110.7, 62.3];
+
+// ---------------- r5 deck cooling (r5_deck.scad) ----------------
+// The deck is the plate between the Pi stack and the keyboard. The old cooling was a bank of
+// five 2.4 mm slots at the right-hand end, and they were in the wrong place twice over: their
+// y span (101-108.4) crossed the keyboard pocket's hinge wall (100.7-102.5), so they cut into
+// the pocket instead of venting anything, and being a slot bank they moved little air.
+//
+// They are replaced by round fan openings in the free top corners, away from the keyboard and
+// from the six deck screws:
+//   top-left  centre (44, 38)     38 mm hole for a 40 mm fan
+//   top-right centre (189.5, 38)  the same, with DECK_FANS=2
+// The corners are clear: the nearest deck screw is 40 mm away and the keyboard starts at
+// y = 102.5, so a 40 mm fan has 25 mm of plate between it and the pocket.
+//
+// NOTE ON AIRFLOW: a sealed host has no path through its wall, so these openings move air
+// between the deck and the Pi, not out of the case. They are a path for a fan, not a cooling
+// solution on their own - see docs/R5.md, "Heat".
+DECK_FANS = is_undef(DECK_FANS) ? 1 : DECK_FANS;        // 1 = top-left, 2 = both corners
+DECK_FAN_D = 38;                                        // 40 mm fan opening (2 mm clear of the blades)
+DECK_FAN_HOLE_SP = 32;                                  // 40 mm fan's own mounting holes
+DECK_FAN_SCREW_D = 3.4;                                 // M3 clearance
+DECK_FAN_CTRL = [[44, 38], [R5_W - 44, 38]];            // top-left, then top-right
+DECK_GRILL_BARS = 7;                                    // bars across the opening
+DECK_GRILL_BAR = 1.4;                                   // bar width
+DECK_GRILL_RIB = 1.2;                                   // rib height above the deck
 
 // base chamfered rectangle (in real XY, origin bottom-left)
 module chamfer_rect(w, l, c) {

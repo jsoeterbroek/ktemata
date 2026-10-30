@@ -93,14 +93,43 @@ module openings() {
     dbox(R5_W - R5_WALL - 16, 60, R5_W - R5_WALL + 1, 100, R5_DECK_Z - 1, R5_DECK_T + 2);
 }
 
-// ---- vent slots over the Pi's cooler side (the deck is the only thing between them) ----
-module vents() for (i=[0:4])
-    dbox(150, 86 + i*5, 208, 88.4 + i*5, R5_DECK_Z - 1, R5_DECK_T + 2);
+// ---- cooling: a round fan opening in each top corner, with a grille over it ----
+// The old five-slot bank is gone. Its y span (101-108.4) crossed the keyboard pocket's hinge
+// wall at 100.7-102.5, so it cut the pocket rather than venting anything, and slots move little
+// air. A 40 mm fan opening sits in the free corner instead - clear of the keyboard, clear of
+// the deck screws (nearest is 40 mm away).
+//
+// The grille is printed as part of the deck: DECK_GRILL_BARS bars across the opening, standing
+// DECK_GRILL_RIB above the top face. Bars rather than concentric rings because everything here
+// is a straight bridge - a bridge over a 38 mm span prints cleanly, and the bars also stiffen
+// the plate where a 38 mm hole removed its middle.
+module fan_holes() {
+    for (i=[0:DECK_FANS-1]) {
+        c = DECK_FAN_CTRL[i];
+        // cut the plate only: the grille bars stand above R5_DECK_TOP, and a cut that ran
+        // through them would erase the bars it is supposed to sit under
+        r5_at(c[0], c[1], R5_DECK_Z - 1) cylinder(d=DECK_FAN_D, h=R5_DECK_T + 1.05);
+        // the fan's own M3 mounting holes, on a 32 mm square pattern
+        for (dx=[-DECK_FAN_HOLE_SP/2, DECK_FAN_HOLE_SP/2])
+            for (dy=[-DECK_FAN_HOLE_SP/2, DECK_FAN_HOLE_SP/2])
+                r5_at(c[0] + dx, c[1] + dy, R5_DECK_Z - 1)
+                    cylinder(d=DECK_FAN_SCREW_D, h=R5_DECK_T + 1.05);
+    }
+}
 
-module wordmark() {
-    // engraved on the deck's open-side margin, readable with the lid open
-    r5_at(R5_W/2, R5_L - 7, R5_DECK_TOP - 0.6) linear_extrude(1.2)
-        text("KTEMATA", size=6.5, halign="center", valign="center", font="Liberation Sans:style=Bold");
+// Bars across each opening, on the deck's top face. They span the hole and sink 0.8 mm into the
+// plate at both ends so they fuse to it (a tangent contact exports as a separate solid).
+module fan_grille() {
+    for (i=[0:DECK_FANS-1]) {
+        c = DECK_FAN_CTRL[i];
+        for (b=[-(DECK_GRILL_BARS-1)/2 : (DECK_GRILL_BARS-1)/2]) {
+            y = c[1] + b * (DECK_FAN_D / (DECK_GRILL_BARS + 0.5));
+            half = sqrt(max(0, (DECK_FAN_D/2)*(DECK_FAN_D/2) - (b*(DECK_FAN_D/(DECK_GRILL_BARS+0.5)))^2));
+            dbox(c[0] - half - 1.5, y - DECK_GRILL_BAR/2,
+                 c[0] + half + 1.5, y + DECK_GRILL_BAR/2,
+                 R5_DECK_TOP - 0.8, DECK_GRILL_RIB + 0.8);
+        }
+    }
 }
 
 module r5_deck() difference() {
@@ -108,13 +137,13 @@ module r5_deck() difference() {
         deck_slab();
         kb_pocket();
         oled_ledges();
+        fan_grille();
     }
     for (p=R5_SCREWS) screw_cut(p);
     oled_pocket();
     openings();
     pi_keepout();
-    vents();
-    wordmark();
+    fan_holes();
 }
 
 if (is_undef(ASSEMBLY)) r5_deck();
