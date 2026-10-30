@@ -11,6 +11,7 @@
        halves lie side by side in one outline. Proportions follow the real case: the lid
        interior is 236.5 x 181.1 mm, i.e. 1.31:1, and each half is that wide. -->
 
+<g transform="translate(0,14)">
 <!-- lid half: outer wall -->
 <rect x="317" y="18" width="126" height="84" rx="11" fill="#1f2830" stroke="#48545f" stroke-width="2.5"/>
 <!-- base half: outer wall -->
@@ -72,12 +73,13 @@
 </g>
 <!-- the trackpad corner of the K06, in the accent colour -->
 <rect x="411" y="148" width="13" height="9" rx="1.6" fill="#a86f34"/>
+</g>
 
 <!-- wordmark -->
-  <text x="380" y="256" text-anchor="middle"
+  <text x="380" y="262" text-anchor="middle"
         font-family="Liberation Sans, DejaVu Sans, Arial, Helvetica, sans-serif"
         font-size="58" font-weight="700" letter-spacing="8" fill="#f2ebe0">KTEMATA</text>
-  <text x="380" y="294" text-anchor="middle"
+  <text x="380" y="296" text-anchor="middle"
         font-family="Liberation Sans, DejaVu Sans, Arial, Helvetica, sans-serif"
         font-size="24" font-style="italic" fill="#c99a63">κτῆμα ἐς ἀεί</text>
 </svg>
