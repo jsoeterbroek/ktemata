@@ -363,7 +363,17 @@ R5_KB_X0 = (R5_W - R5_KB_POCKET[0])/2;
 R5_KB_Y0 = R5_L - 16 - R5_KB_POCKET[1];
 R5_KB_WALL = 1.8;
 R5_KB_LIP = 2.5;                                       // lip overlap over the Esc row
-R5_KB_TOP = R5_DECK_TOP + KB_BODY[2];                   // pocket walls end flush with the keys
+// The keyboard is SUNK into the deck so its keys finish level with the deck's top face. The body
+// is KB_BODY[2] = 11 mm and the plate is only R5_DECK_T = 3 mm, so the well has to hang below the
+// plate: R5_KB_SINK is how far the body's underside sits under R5_DECK_TOP, i.e. 8 mm below the
+// plate's underside, into the (empty) tray cavity over the keyboard band.
+R5_KB_SINK = KB_BODY[2] - R5_DECK_T;                   // 8 mm well depth below the plate
+R5_KB_WELL_BOT = R5_DECK_Z - R5_KB_SINK;               // 37.95, the keyboard's resting face
+// The body rests on the well's floor, whose TOP FACE is exactly R5_KB_WELL_BOT; the floor
+// material sits below that (R5_KB_FLOOR thick), so the body's underside and the keys land where
+// they should. Clearance in plan is already in R5_KB_POCKET (0.3 mm per side on the K06 body).
+R5_KB_FLOOR = 1.2;                                     // well floor thickness, below the resting face
+R5_KB_TOP = R5_DECK_TOP;                               // keys finish level with the plate
 
 // status OLED module on the deck (visible with the lid open). Centred between the keyboard
 // pocket and the hinge-side edge: the keyboard owns y > R5_KB_Y0, so the free band is the
@@ -480,7 +490,7 @@ DECK_FAN_SCREW_D = 3.4;                                 // M3 clearance
 DECK_FAN_CTRL = [[44, 38], [R5_W - 44, 38]];            // top-left, then top-right
 DECK_GRILL_BARS = 7;                                    // bars across the opening
 DECK_GRILL_BAR = 1.4;                                   // bar width
-DECK_GRILL_RIB = 1.2;                                   // rib height above the deck
+DECK_GRILL_RIB = 1.0;                                   // bars sit flush, this deep in the plate
 
 // base chamfered rectangle (in real XY, origin bottom-left)
 module chamfer_rect(w, l, c) {

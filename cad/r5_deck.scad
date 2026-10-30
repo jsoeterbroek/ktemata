@@ -5,9 +5,11 @@
 // four pillars. The display is not here: it hangs on the lid (r5_lid_plate.scad), so the deck
 // is what you see when the host case is open.
 //
-// Print as modelled, deck plate down: the pocket walls and the lip rise vertically off the plate
-// and the printer bridges nothing. The lip's underside is unsupported for 2.5 mm at a height of
-// 3.2 mm, which is a 38 deg overhang from vertical - inside the 45 deg limit this repo prints to.
+// PRINT TOP FACE DOWN, not plate down. The keyboard is sunk 8 mm below the plate (see kb_well
+// below), so the well hangs under it; printed plate-down that well would be a floating island.
+// Flipped, the deck's top face is the bed, every well wall is vertical, and nothing overhangs.
+// The fan grille is on the top face, so it prints into the bed - see fan_grille() for how that is
+// kept flush.
 include <common.scad>
 
 assert(R5, "r5 parts need -D R5=true");
@@ -35,27 +37,41 @@ module pi_keepout() {
     r5_box(R5_PI_X0 + 2, R5_PI_Y0 + 2, R5_PI_X0 + 83, R5_PI_Y0 + 14, R5_DECK_Z - 1, R5_DECK_T + 2);
 }
 
-// ---- keyboard pocket ----
-// The K06 is a complete body whose keys are flush to its shell on three edges (0.6-0.7 mm), so
-// the sides and the latch end get 1.8 mm walls only up to the body's back and the body drops in
-// from above. The hinge-facing edge is the one with a bezel above the Esc row: there the wall
-// continues 3.2 mm above the body and forms the lip that traps it.
-module kb_pocket() {
+// ---- keyboard well ----
+// The K06 is 11 mm thick and the deck plate is 3 mm, so a pocket that merely dropped the body
+// into the plate would leave 8 mm of keyboard proud. It is sunk instead: the plate gets a hole
+// the size of the keyboard, a well hangs R5_KB_SINK = 8 mm BELOW the plate, the body rests on a
+// 4 mm ledge at the bottom, and the keys finish level with the deck's top face.
+//
+// That is why the deck's print orientation is now TOP FACE DOWN: nothing may protrude below the
+// plate when it is printed plate-down, and the well is exactly that. Flipped, the deck's top face
+// is the bed, every well wall is vertical, and nothing overhangs.
+//
+// The body is located by the well walls (R5_KB_WALL clearance, on top of the 0.6 mm already built
+// into R5_KB_POCKET) and kept down by the lid's display pressing on its top face with the case
+// shut - the same arrangement the flat deck had, just sunk.
+module kb_body_2d(d=0) rrect(R5_KB_POCKET[0] + 2*d, R5_KB_POCKET[1] + 2*d, 3);
+
+// the hole through the plate: the keyboard occupies this volume, so the plate must be absent
+module kb_plate_cut() dbox(R5_KB_X0, R5_KB_Y0, R5_KB_X0 + R5_KB_POCKET[0],
+                           R5_KB_Y0 + R5_KB_POCKET[1], R5_DECK_Z - 1, R5_DECK_T + 2);
+
+// the well below the plate: four walls and a floor, with the interior opened out above the floor
+module kb_well() {
     w = R5_KB_POCKET[0]; h = R5_KB_POCKET[1];
     x0 = R5_KB_X0; y0 = R5_KB_Y0; x1 = x0 + w; y1 = y0 + h;
     t = R5_KB_WALL;
-    // all four walls sink 0.5 mm into the slab: flush (tangent) faces make non-manifold edges
-    zb = R5_DECK_TOP - 0.5; zh = R5_DECK_TOP + KB_BODY[2] - zb;
-    dbox(x0 - t, y0 - t, x0, y1, zb, zh);              // left
-    dbox(x1, y0 - t, x1 + t, y1, zb, zh);              // right
-    dbox(x0 - t, y1, x1 + t, y1 + t, zb, zh);          // latch end (overlaps both sides)
-    // hinge side: full body height plus the lip's height, so the lip has something to hang from
-    dbox(x0 - t, y0 - t, x1 + t, y0, zb, R5_DECK_TOP + KB_BODY[2] + 3.2 - zb);
-    // lip: 2.5 mm over the Esc row's bezel, 0.2 mm above the body's top face so it retains the
-    // keyboard without pressing on it. Its underside overhangs 2.5 mm at a height of 3.2 mm,
-    // i.e. 38 deg from vertical, which prints without support.
-    dbox(x0 - t, y0 - t, x1 + t, y0 + R5_KB_LIP,
-         R5_DECK_TOP + KB_BODY[2] + 0.2, 3.0);
+    zf = R5_KB_WELL_BOT;                            // the body's resting face = floor TOP
+    zb = zf - R5_KB_FLOOR;                          // floor underside
+    // walls run from the floor up into the plate by 0.8 mm, so the two are one solid rather
+    // than a tangent contact
+    zh = (R5_DECK_Z + 0.8) - zb;
+    difference() {
+        dbox(x0 - t, y0 - t, x1 + t, y1 + t, zb, zh);
+        // the interior above the floor: this is what makes it a well and not a block. Cut from
+        // the resting face up, never below it, or the keyboard would sink into its own floor.
+        dbox(x0, y0, x1, y1, zf, zh + 1);
+    }
 }
 
 // ---- status OLED: through-pocket with retaining ledges ----
@@ -106,9 +122,10 @@ module openings() {
 module fan_holes() {
     for (i=[0:DECK_FANS-1]) {
         c = DECK_FAN_CTRL[i];
-        // cut the plate only: the grille bars stand above R5_DECK_TOP, and a cut that ran
-        // through them would erase the bars it is supposed to sit under
-        r5_at(c[0], c[1], R5_DECK_Z - 1) cylinder(d=DECK_FAN_D, h=R5_DECK_T + 1.05);
+        // the opening is cut through the full plate thickness. The grille bars are unioned
+        // back in afterwards (see r5_deck()): they live inside the plate's own volume, so a
+        // cut that spares them impossible and a cut that keeps the plate leaves it solid.
+        r5_at(c[0], c[1], R5_DECK_Z - 1) cylinder(d=DECK_FAN_D, h=R5_DECK_T + 2);
         // the fan's own M3 mounting holes, on a 32 mm square pattern
         for (dx=[-DECK_FAN_HOLE_SP/2, DECK_FAN_HOLE_SP/2])
             for (dy=[-DECK_FAN_HOLE_SP/2, DECK_FAN_HOLE_SP/2])
@@ -117,8 +134,11 @@ module fan_holes() {
     }
 }
 
-// Bars across each opening, on the deck's top face. They span the hole and sink 0.8 mm into the
-// plate at both ends so they fuse to it (a tangent contact exports as a separate solid).
+// Bars across each opening, FLUSH with the deck's top face. The deck now prints top-face down,
+// so anything standing proud of that face would be pressed into the bed; the bars are recessed to
+// sit level instead, which also keeps the face flat for the lid's display. They span the hole and
+// sink 0.8 mm into the plate at both ends so they fuse to it (a tangent contact exports as a
+// separate solid).
 module fan_grille() {
     for (i=[0:DECK_FANS-1]) {
         c = DECK_FAN_CTRL[i];
@@ -127,23 +147,28 @@ module fan_grille() {
             half = sqrt(max(0, (DECK_FAN_D/2)*(DECK_FAN_D/2) - (b*(DECK_FAN_D/(DECK_GRILL_BARS+0.5)))^2));
             dbox(c[0] - half - 1.5, y - DECK_GRILL_BAR/2,
                  c[0] + half + 1.5, y + DECK_GRILL_BAR/2,
-                 R5_DECK_TOP - 0.8, DECK_GRILL_RIB + 0.8);
+                 R5_DECK_TOP - DECK_GRILL_RIB - 0.8, DECK_GRILL_RIB + 0.3);
         }
     }
 }
 
-module r5_deck() difference() {
-    union() {
-        deck_slab();
-        kb_pocket();
-        oled_ledges();
-        fan_grille();
+module r5_deck() union() {
+    difference() {
+        union() {
+            deck_slab();
+            kb_well();
+            oled_ledges();
+        }
+        for (p=R5_SCREWS) screw_cut(p);
+        oled_pocket();
+        openings();
+        pi_keepout();
+        fan_holes();
+        kb_plate_cut();
     }
-    for (p=R5_SCREWS) screw_cut(p);
-    oled_pocket();
-    openings();
-    pi_keepout();
-    fan_holes();
+    // the grille goes in after the cut: the bars occupy the plate's own volume inside the
+    // opening, so they can only exist as a union on top of an already-cut plate
+    fan_grille();
 }
 
 if (is_undef(ASSEMBLY)) r5_deck();
