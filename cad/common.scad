@@ -417,6 +417,44 @@ assert(!R5 || R5_PAD + R5_KB_TOP + 2 <= R5_GLASS,
 assert(!R5 || R5_PAD + R5_KB_TOP <= HOST_BOT - 2,
        str("host ", HOST, ": ", HOST_BOT, " mm base, the keyboard stack needs ", R5_PAD + R5_KB_TOP));
 
+
+// ---------------- r5 lid cover (r5_lid_cover.scad) ----------------
+// Params live here, not in r5_lid_cover.scad, because assembly_r5.scad `use`s that file: `use`
+// imports modules only, never variables, so the assembly could not see them. The assertions that
+// guard these values stay in r5_lid_cover.scad, next to the geometry they protect.
+COVER_T     = 4;          // plate thickness: tape face, and the print bed
+COVER_FRAME = 7;          // bezel wall thickness outside the glass
+COVER_GAP   = 0.5;        // clearance around the panel module, inside the bezel
+COVER_R     = 8;          // cover corner radius
+COVER_PROUD = 1.5;        // bezel height above the glass plane, to protect the panel edge
+
+COVER_W = HOST_L - 2*HOST_CLR;      // the same 1.5 mm clearance the cassette uses
+COVER_L = HOST_W - 2*HOST_CLR;
+
+// The TD2's own vertical stack: plate, its 8.5 mm standoffs, 6.42 mm of panel body, then glass.
+COVER_GLASS_Z = COVER_T + DISP_POST + DISP_T_R2;
+COVER_RIM_H   = DISP_POST + DISP_T_R2 + COVER_PROUD;    // bezel height above the plate
+
+// panel centred in x, pushed to the hinge in y, leaving a band at the latch end for the button
+PANEL_X = (COVER_W - DISP_W) / 2;
+PANEL_Y = COVER_FRAME;
+COVER_BAND = COVER_L - PANEL_Y - DISP_H - COVER_FRAME;
+
+// Power button: the deck's 12 mm PBS-33B is not IP-rated, and the lid is outside a sealed case,
+// so the 16 mm IP67 metal button is the right part. COVER_BTN_D takes either - both are a hole.
+COVER_BTN_D    = 16.2;    // 16 mm IP67 panel button, 0.2 clearance
+COVER_BTN_BODY = 19;      // nut/body diameter, counterbored on the lid side
+COVER_BTN_EDGE = 9;       // centre distance from the cover edge
+COVER_BTN_NUT  = 3;       // nut recess depth, cut from the interior face (bed stays flat)
+COVER_BTN_WALL = 3;       // material around the button boss
+COVER_BTN_BOSS = 0.6;     // ... and how far the boss stands proud, so the nut seats
+COVER_BTN_X = COVER_BTN_EDGE + COVER_BTN_D/2;
+COVER_BTN_Y = COVER_L - COVER_BTN_EDGE - COVER_BTN_D/2;
+
+// 720 x 1280 on a 5.0" diagonal: the image is smaller than the glass, which is what lets the
+// bezel sit over the glass border instead of over the picture.
+COVER_ACTIVE = [110.7, 62.3];
+
 // base chamfered rectangle (in real XY, origin bottom-left)
 module chamfer_rect(w, l, c) {
     polygon([[c,0],[w-c,0],[w,c],[w,l-c],[w-c,l],[c,l],[0,l-c],[0,c]]);

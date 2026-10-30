@@ -41,6 +41,7 @@ VIEWS = {
     'ktemata_r5_tray':          ('stl:r5_tray',      (1200, 950), ISO, [], True),
     'ktemata_r5_deck':          ('stl:r5_deck',      (1200, 950), ISO, [], True),
     'ktemata_r5_lid_plate':     ('stl:r5_lid_plate', (1200, 950), ISO, [], True),
+    'ktemata_r5_lid_cover':     ('stl:r5_lid_cover', (1200, 950), ISO, [], True),
     'ktemata_corner_lid':       ('stl:corner_lid',   (900, 700), ISO, [], True),
     # r5 internal cassette (needs `export.py --r5` first); render with --r5
     'r5_assembly':  ('assembly_r5.scad', (1400, 1100), '0,0,0,55,0,25,0', [], True),
@@ -52,7 +53,7 @@ VIEWS = {
 }
 
 R5_ONLY = {'r5_assembly', 'r5_cassette', 'r5_exploded', 'ktemata_r5_tray', 'ktemata_r5_deck',
-           'ktemata_r5_lid_plate', 'site_r5_exploded'}
+           'ktemata_r5_lid_plate', 'ktemata_r5_lid_cover', 'site_r5_exploded'}
 
 # The site is dark; the default Tomorrow scheme renders on white and clashes with it.
 DARK = {'site_r5_exploded'}

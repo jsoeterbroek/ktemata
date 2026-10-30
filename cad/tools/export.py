@@ -4,7 +4,7 @@
   python3 cad/tools/export.py                 # r4 parts (default: TD2 + UPS HAT (B) + K06)
   python3 cad/tools/export.py --r2            # previous r2/r3 set (DFR0550 + HAT (E) + Phistone)
   python3 cad/tools/export.py --r1            # original r1 set instead
-  python3 cad/tools/export.py --r5            # r5 internal cassette (tray, deck, lid plate)
+  python3 cad/tools/export.py --r5            # r5 internal cassette + lid cover
   python3 cad/tools/export.py face bottom     # only some parts
   python3 cad/tools/export.py corner_cap corner_cup corner_plate corner_lid   # corner overmould tool
 
@@ -18,10 +18,10 @@ PARTS = {'bottom':'ktemata_bottom', 'face':'ktemata_face', 'keyboard_support':'k
          'corner_cap':'ktemata_corner_cap', 'corner_plate':'ktemata_corner_plate',
          'corner_cup':'ktemata_corner_cup', 'corner_lid':'ktemata_corner_lid',
          'r5_tray':'ktemata_r5_tray', 'r5_deck':'ktemata_r5_deck',
-         'r5_lid_plate':'ktemata_r5_lid_plate',
+         'r5_lid_plate':'ktemata_r5_lid_plate', 'r5_lid_cover':'ktemata_r5_lid_cover',
          'pull_switch':'ktemata_pull_switch', 'power_button':'ktemata_power_button'}
 LEGACY = {'pull_switch', 'power_button'}
-R5_PARTS = {'r5_tray', 'r5_deck', 'r5_lid_plate'}
+R5_PARTS = {'r5_tray', 'r5_deck', 'r5_lid_plate', 'r5_lid_cover'}
 # the corner tool is a per-corner accessory, not part of the case; skip it unless asked for
 TOOLING = {'corner_cap', 'corner_plate', 'corner_cup', 'corner_lid'}
 

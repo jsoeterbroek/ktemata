@@ -11,10 +11,14 @@ include <common.scad>
 use <r5_tray.scad>
 use <r5_deck.scad>
 use <r5_lid_plate.scad>
+use <r5_lid_cover.scad>
 
 EXPLODE = 0;
 SECTION = false;
 SHOW_HOST = is_undef(SHOW_HOST) ? true : SHOW_HOST;   // -D SHOW_HOST=false for the cassette alone
+// Which lid part to show: the flat plate (r5_lid_plate, the shipped one) or the bezelled cover
+// with the power button (r5_lid_cover). -D LID="cover" to check the new part in place.
+LID = is_undef(LID) ? "plate" : LID;
 SECTION_Y = R5_L/2;
 
 // ---- host hard case: interior envelope + lid, at their published depths ----
@@ -81,6 +85,14 @@ module c_display() {
     for (p=R5_DISP_HOLES) r5_at(R5_DISP_X0 + p[0], R5_DISP_Y0 + p[1], z + R5_LID_T)
         cylinder(d=4.5, h=8.5, $fn=6);
 }
+// The lid cover, in place: taped to the lid ceiling with its well facing the base. Modelled
+// with z = 0 on the lid face, so it is flipped about x and dropped so that z = 0 lands on the
+// ceiling (z = HOST_BOT + HOST_LID) and the rim hangs down into the case.
+module c_lid_cover() {
+    translate([0, R5_L, HOST_BOT + HOST_LID]) rotate([180, 0, 0])
+        translate([0, -COVER_L, 0]) r5_lid_cover();
+}
+
 module c_floor() {
     r5_box(R5_FB_X + 2, R5_FB_Y + 2, R5_FB_X + 2 + FB_W, R5_FB_Y + 2 + FB_H, R5_FLOOR + 3.4, 7);
     r5_box(R5_RTC_X + 2, R5_RTC_Y + 2, R5_RTC_X + 2 + RTC_W, R5_RTC_Y + 2 + RTC_H, R5_FLOOR + 3.4, RTC_T);
@@ -96,6 +108,7 @@ module components() {
 
 module all() {
     if (SHOW_HOST) host_case();
+    if (LID == "cover") color("#6b8fb0") c_lid_cover();
     color("#3a3a3a") r5_tray();
     color("#555") translate([0, 0, EXPLODE]) r5_deck();
     components();
