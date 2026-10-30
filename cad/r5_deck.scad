@@ -100,13 +100,19 @@ module openings() {
     // Pi connector edge: USB-C, HDMI and the two 22-pin MIPI connectors must stay reachable,
     // and the display FFC leaves through here on its way to the lid.
     dbox(R5_PI_X0 - 2, 0, R5_PI_X0 + 87, 17, R5_DECK_Z - 1, R5_DECK_T + 2);
-    // FireBeetle USB port and its OLED / button leads
+    // FireBeetle 2: gives its USB-C port access for flashing and lets its OLED / button leads
+    // rise to the deck. This module sits below the deck (z 2.4-10.4 under a plate at 45.95), so
+    // without this hole it is sealed in.
     dbox(R5_FB_X + 6, R5_FB_Y + 30, R5_FB_X + 22, R5_FB_Y + 40, R5_DECK_Z - 1, R5_DECK_T + 2);
     // OLED module cable drops to the FireBeetle
     dbox(R5_OLED_X0 + 8, R5_OLED_Y0 + R5_OLED_H, R5_OLED_X0 + 24, R5_OLED_Y0 + R5_OLED_H + 4,
          R5_DECK_Z - 1, R5_DECK_T + 2);
-    // DS3231 and charger module leads rise at the right wall
-    dbox(R5_W - R5_WALL - 16, 60, R5_W - R5_WALL + 1, 100, R5_DECK_Z - 1, R5_DECK_T + 2);
+    // (the right-wall opening that used to be here is gone: it was cut for "DS3231 and charger
+    //  module leads", but the DS3231 (y 26-52), the MPPT charger (y 62-86) and the charge socket
+    //  (y 107-129) all sit BELOW the deck - the lowest is at z 2.4 and the deck underside is
+    //  z 45.95 - so none of their leads cross it. Measured, not assumed: the opening's only
+    //  overlap with anything was 3.1 x 24 mm of the MPPT pad's outer edge. A 12 mm hole that
+    //  opened the deck's edge for nothing was 12 mm of lost stiffness.)
 }
 
 // ---- cooling: a round fan opening in each top corner, with a grille over it ----
