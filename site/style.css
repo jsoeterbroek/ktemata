@@ -41,6 +41,7 @@ h1 {
   line-height: 1.18;
   letter-spacing: -0.01em;
   margin: 0 0 0.6rem;
+  color: var(--accent);
 }
 
 .deck {
