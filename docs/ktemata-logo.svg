@@ -1,42 +1,83 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 332" width="760" height="332" role="img" aria-labelledby="title desc">
   <title id="title">Ktemata</title>
-  <desc id="desc">Engraved plaque: the Ktemata handheld with an open-book screen, the wordmark KTEMATA and the phrase κτῆμα ἐς ἀεί.</desc>
+  <desc id="desc">Engraved plaque: the Ktemata case (a Peli 1200) seen from above with its lid open, the display with an open-book screen in the lid and the keyboard in the base, the wordmark KTEMATA and the phrase κτῆμα ἐς ἀεί.</desc>
 
   <!-- plaque -->
   <rect x="6" y="6" width="748" height="320" rx="30" fill="#151b21" stroke="#2f3a45" stroke-width="2"/>
   <rect x="18" y="18" width="724" height="296" rx="22" fill="none" stroke="#8a6234" stroke-opacity="0.45" stroke-width="1.5"/>
 
-  <!-- device front -->
-  <rect x="325" y="44" width="110" height="152" rx="16" fill="#1f2830" stroke="#48545f" stroke-width="2.5"/>
-  <rect x="333" y="52" width="94" height="136" rx="11" fill="#10161b"/>
+  <!-- the case, open, seen from above: lid half on top carrying the display, base half below
+       carrying the keyboard, hinge between them. A Peli 1200 opened 180 degrees, so the two
+       halves lie side by side in one outline. Proportions follow the real case: the lid
+       interior is 236.5 x 181.1 mm, i.e. 1.31:1, and each half is that wide. -->
 
-  <!-- screen -->
-  <rect x="339" y="59" width="82" height="60" rx="4" fill="#0a0e12" stroke="#39454f" stroke-width="1.5"/>
-  <path d="M354 76 C 364 72, 373 72, 380 77 C 387 72, 396 72, 406 76 L406 101 C 396 97, 387 97, 380 102 C 373 97, 364 97, 354 101 Z"
-        fill="none" stroke="#c98a45" stroke-width="2.4" stroke-linejoin="round"/>
-  <path d="M380 77 V102" stroke="#c98a45" stroke-width="2.4"/>
-  <path d="M360 83 H374 M386 83 H400 M360 89 H374 M386 89 H400" stroke="#8f744f" stroke-width="1.6" opacity="0.9"/>
+<!-- lid half: outer wall -->
+<rect x="317" y="18" width="126" height="84" rx="11" fill="#1f2830" stroke="#48545f" stroke-width="2.5"/>
+<!-- base half: outer wall -->
+<rect x="317" y="106" width="126" height="84" rx="11" fill="#1f2830" stroke="#48545f" stroke-width="2.5"/>
 
-  <!-- keyboard -->
-  <g fill="#39444e">
-    <rect x="340" y="126" width="11" height="8" rx="1.5"/><rect x="354" y="126" width="11" height="8" rx="1.5"/>
-    <rect x="368" y="126" width="11" height="8" rx="1.5"/><rect x="382" y="126" width="11" height="8" rx="1.5"/>
-    <rect x="396" y="126" width="11" height="8" rx="1.5"/><rect x="410" y="126" width="11" height="8" rx="1.5"/>
-    <rect x="340" y="137" width="11" height="8" rx="1.5"/><rect x="354" y="137" width="11" height="8" rx="1.5"/>
-    <rect x="368" y="137" width="11" height="8" rx="1.5"/><rect x="382" y="137" width="11" height="8" rx="1.5"/>
-    <rect x="396" y="137" width="11" height="8" rx="1.5"/><rect x="410" y="137" width="11" height="8" rx="1.5"/>
-    <rect x="340" y="148" width="11" height="8" rx="1.5"/><rect x="354" y="148" width="11" height="8" rx="1.5"/>
-    <rect x="368" y="148" width="11" height="8" rx="1.5"/><rect x="382" y="148" width="11" height="8" rx="1.5"/>
-    <rect x="396" y="148" width="11" height="8" rx="1.5"/>
-    <rect x="340" y="159" width="81" height="8" rx="1.5"/>
-  </g>
-  <rect x="410" y="148" width="11" height="8" rx="1.5" fill="#a86f34"/>
+<!-- moulded grip ribs, both long sides of both halves -->
+<g fill="#39444e">
+  <rect x="318.5" y="33" width="4.5" height="13" rx="1.4"/>
+  <rect x="318.5" y="50" width="4.5" height="13" rx="1.4"/>
+  <rect x="318.5" y="67" width="4.5" height="13" rx="1.4"/>
+  <rect x="437" y="33" width="4.5" height="13" rx="1.4"/>
+  <rect x="437" y="50" width="4.5" height="13" rx="1.4"/>
+  <rect x="437" y="67" width="4.5" height="13" rx="1.4"/>
+  <rect x="318.5" y="121" width="4.5" height="13" rx="1.4"/>
+  <rect x="318.5" y="138" width="4.5" height="13" rx="1.4"/>
+  <rect x="318.5" y="155" width="4.5" height="13" rx="1.4"/>
+  <rect x="437" y="121" width="4.5" height="13" rx="1.4"/>
+  <rect x="437" y="138" width="4.5" height="13" rx="1.4"/>
+  <rect x="437" y="155" width="4.5" height="13" rx="1.4"/>
+</g>
 
-  <!-- wordmark -->
-  <text x="380" y="252" text-anchor="middle"
+<!-- the hinge: three barrel segments on the joint between the halves -->
+<g fill="#48545f">
+  <rect x="322" y="100" width="30" height="8" rx="3"/>
+  <rect x="365" y="100" width="30" height="8" rx="3"/>
+  <rect x="408" y="100" width="30" height="8" rx="3"/>
+</g>
+
+<!-- the latches: two catches on the front edge of the base -->
+<g fill="#5d6b78">
+  <rect x="334" y="188" width="22" height="7" rx="2.5"/>
+  <rect x="404" y="188" width="22" height="7" rx="2.5"/>
+</g>
+
+<!-- lid cavity, with the display filling it -->
+<rect x="326" y="26" width="108" height="68" rx="7" fill="#10161b" stroke="#2f3a45" stroke-width="1.5"/>
+<rect x="332" y="33" width="96" height="54" rx="4" fill="#0a0e12" stroke="#39454f" stroke-width="1.5"/>
+<!-- the open book on the screen -->
+<path d="M344 57 C 355 53, 366 53, 377 58 L377 78 C 366 73, 355 73, 344 76 Z"
+      fill="none" stroke="#c98a45" stroke-width="2.2" stroke-linejoin="round"/>
+<path d="M416 57 C 405 53, 394 53, 383 58 L383 78 C 394 73, 405 73, 416 76 Z"
+      fill="none" stroke="#c98a45" stroke-width="2.2" stroke-linejoin="round"/>
+<path d="M380 58 V78" stroke="#c98a45" stroke-width="2.2"/>
+<path d="M350 62 H368 M350 67 H368 M392 62 H410 M392 67 H410" stroke="#8f744f" stroke-width="1.5" opacity="0.9"/>
+
+<!-- base cavity, with the keyboard seated in it -->
+<rect x="326" y="114" width="108" height="68" rx="7" fill="#10161b" stroke="#2f3a45" stroke-width="1.5"/>
+<g fill="#39444e">
+  <rect x="331" y="124" width="13" height="9" rx="1.6"/><rect x="347" y="124" width="13" height="9" rx="1.6"/>
+  <rect x="363" y="124" width="13" height="9" rx="1.6"/><rect x="379" y="124" width="13" height="9" rx="1.6"/>
+  <rect x="395" y="124" width="13" height="9" rx="1.6"/><rect x="411" y="124" width="13" height="9" rx="1.6"/>
+  <rect x="331" y="136" width="13" height="9" rx="1.6"/><rect x="347" y="136" width="13" height="9" rx="1.6"/>
+  <rect x="363" y="136" width="13" height="9" rx="1.6"/><rect x="379" y="136" width="13" height="9" rx="1.6"/>
+  <rect x="395" y="136" width="13" height="9" rx="1.6"/><rect x="411" y="136" width="13" height="9" rx="1.6"/>
+  <rect x="331" y="148" width="13" height="9" rx="1.6"/><rect x="347" y="148" width="13" height="9" rx="1.6"/>
+  <rect x="363" y="148" width="13" height="9" rx="1.6"/><rect x="379" y="148" width="13" height="9" rx="1.6"/>
+  <rect x="395" y="148" width="13" height="9" rx="1.6"/>
+  <rect x="331" y="160" width="82" height="9" rx="1.6"/>
+</g>
+<!-- the trackpad corner of the K06, in the accent colour -->
+<rect x="411" y="148" width="13" height="9" rx="1.6" fill="#a86f34"/>
+
+<!-- wordmark -->
+  <text x="380" y="256" text-anchor="middle"
         font-family="Liberation Sans, DejaVu Sans, Arial, Helvetica, sans-serif"
-        font-size="66" font-weight="700" letter-spacing="9" fill="#f2ebe0">KTEMATA</text>
-  <text x="380" y="290" text-anchor="middle"
+        font-size="58" font-weight="700" letter-spacing="8" fill="#f2ebe0">KTEMATA</text>
+  <text x="380" y="294" text-anchor="middle"
         font-family="Liberation Sans, DejaVu Sans, Arial, Helvetica, sans-serif"
-        font-size="25" font-style="italic" fill="#c99a63">κτῆμα ἐς ἀεί</text>
+        font-size="24" font-style="italic" fill="#c99a63">κτῆμα ἐς ἀεί</text>
 </svg>
