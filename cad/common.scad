@@ -400,6 +400,15 @@ assert(R5_PI_TOP_HDR - R5_FLOOR <= R5_PI_H_MAX + 1,
            "envelope is ", R5_PI_H_MAX, ": shorten R5_M2_GAP (standoffs) or R5_M2_CLR"));
 R5_DECK_Z  = R5_H_BOT;
 R5_DECK_TOP = R5_DECK_Z + R5_DECK_T;
+// The deck has no opening over the 40-pin header: it is a plain plate there. That is only safe
+// because the header is well below it - nothing clamps the Pi any more, so the deck is a lid and
+// not a clamp. This assert is what keeps the slot from ever being needed again; if the Pi
+// sandwich grows, it fails the build instead of putting the plate on the header.
+R5_HDR_CLEAR = 3;                                       // air the deck needs over the header
+assert(R5_DECK_Z - R5_PI_TOP_HDR >= R5_HDR_CLEAR,
+       str("deck underside ", R5_DECK_Z, " is only ", R5_DECK_Z - R5_PI_TOP_HDR,
+           " mm above the 40-pin header (", R5_PI_TOP_HDR, "), needs ", R5_HDR_CLEAR,
+           ": raise R5_STACK_AIR or shorten the Pi sandwich"));
 
 // Cells: two 18650s side by side under the HAT's pcb, on Waveshare's own holders. Their axes run
 // along y and are CELL_PITCH_R4 apart across the board's 56 mm width, centred on it. The holder

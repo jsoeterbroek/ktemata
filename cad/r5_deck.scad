@@ -28,16 +28,6 @@ module screw_cut(p) {
     r5_at(p[0], p[1], R5_DECK_TOP - 1.8) cylinder(d=M25_HEAD, h=1.81);
 }
 
-// ---- keep-out over the Pi's 40-pin header ----
-// The header stands 8.5 mm off the Pi pcb and is the tallest thing on that assembly: with the Pi
-// bolted to the floor its top is at R5_PI_TOP_HDR (30.1), which the rim already clears by
-// R5_DECK_Z - R5_PI_TOP_HDR. Nothing clamps the Pi from above any more, so this opening is now
-// only a clearance slot over the header's own footprint, kept so the deck can never touch it.
-// The header is 5.1 mm wide, 3.5 mm in from the GPIO edge (the board's -x edge, at R5_PI_X).
-module pi_keepout() {
-    r5_box(R5_PI_X, R5_PI_Y + 2, R5_PI_X + 12, R5_PI_Y + 83, R5_DECK_Z - 1, R5_DECK_T + 2);
-}
-
 // ---- keyboard recess ----
 // The K06 is 11 mm thick, so it is sunk into the deck: the plate gets a hole the size of the
 // keyboard, the body stands R5_KB_SINK = 6.5 mm below the plate's underside, and the keys finish
@@ -181,7 +171,6 @@ module r5_deck() union() {
         for (p=R5_SCREWS) screw_cut(p);
         oled_pocket();
         openings();
-        pi_keepout();
         fan_holes();
         kb_plate_cut();
     }
