@@ -30,11 +30,28 @@ Design notes, one page per concern: [`docs/R4.md`](docs/R4.md) (current hardware
 (pros and cons against the commercial Prepper Disk), [`docs/WIRING.md`](docs/WIRING.md), [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md),
 [`docs/SLIMMING.md`](docs/SLIMMING.md).
 
+## Build guide
+
+A written, photographed and filmed record of the build is in progress:
+[**ktemata.org/build.html**](https://ktemata.org/build.html), source in [`site/build.html`](site/build.html).
+
+**It is a placeholder.** The running order is fixed (parts check, print the cassette, bolt the boards
+down, solder the power run, fit the cells and modules, glue the keyboard, mount the display, route the
+FFC, close and check, first boot) and the photographs and short video clips are being captured during
+the actual build. Until those land, the authoritative numbers are in [`docs/R5.md`](docs/R5.md) and the
+per-part STLs are in [`stl/`](stl/).
+
+When the media exists, each step in `site/build.html` gets its own figure blocks (the same
+`<figure>` style the [Power](https://ktemata.org/power.html) page uses, so captions and credits stay
+consistent) and the stills go in `site/img/`; `site/build.sh` does not need changing for that, only
+`site/deploy.sh` picks the page up.
+
 The website is in [`site/`](site/) and is published at **<https://ktemata.org>**:
 
 | Page | Local file | Public URL |
 |---|---|---|
 | Landing page: the name, the build, the risk statement | `site/index.html` | <https://ktemata.org/> |
+| **Build guide**: step-by-step record of the r5 cassette build, photographs and short video per stage — **placeholder, written as the build happens** | `site/build.html` | <https://ktemata.org/build.html> |
 | **Power**: r5 component draws, runtime on the 22.2 Wh pack, 24/7 energy against all three NOMAD tiers, caveats | `site/power.html` | <https://ktemata.org/power.html> |
 | **Comparisons**: r5 with its hotspot against the Prepper Disk and NOMAD budget/recommended/power — pros, cons, DIY and open source, low Pi draw | `site/comparisons.html` | <https://ktemata.org/comparisons.html> |
 
