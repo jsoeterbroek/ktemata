@@ -327,35 +327,89 @@ R5_PAD = 8;                        // closed-cell foam under the tray
 CHG_Z_R5 = 18;                     // charge socket centre height above the cassette floor
 R5_CHG_Y = 118;                    // ... and its position along the right wall
 
-// ---- vertical stack, z = 0 at the cassette floor (same order as r4) ----
+// ---- r5 board layout: both assemblies BOLT TO THE FLOOR, side by side ----
+// r5 no longer stacks the Pi on the HAT (B) with pogo pins: power now runs from the HAT to the
+// Pi on soldered wires, so the two boards are independent and each is screwed down to the tray
+// floor on four posts (see board_post() in r5_tray.scad). Position and orientation come from
+// reference/first_fit.jpg, measured through a homography fitted to the tray's own outline:
+//   - UPS HAT (B), top middle: pcb up, its 2x 18650 cells and holders below it in the cradles,
+//   - Pi 5, top right, with the Seeed PCIe-to-M.2 BASE underneath and the SSD on that.
+// Both boards are PORTRAIT: 85 mm along y, 56 mm along x.
+R5_UPS_W = 56;  R5_UPS_L = 85;      // UPS HAT (B) pcb (Waveshare: 56 x 85)
+R5_UPS_X = 76;  R5_UPS_Y = 16;      // left / hinge-side edge  (photo: 76 / 12, nudged clear)
+R5_PI_W  = 56;  R5_PI_L  = 85;      // Pi 5 pcb (85 x 56)
+R5_PI_X  = 152; R5_PI_Y  = 16;      // left / hinge-side edge  (photo: 152 / 14, nudged clear)
+
+// Pi-standard mounting holes: 49 mm across the 56 mm axis, 58 mm along the 85 mm axis, 3.5 mm in
+// from three edges and 23.5 from the fourth (so both holes sit near the hinge end). The HAT (B)
+// carries the same pattern - Waveshare's 3D drawing has its four 3 mm holes at exactly 58 x 49
+// with the same insets - which is what lets one post design serve both boards.
+R5_HOLE_LONG  = 58; R5_HOLE_SHORT = 49; R5_HOLE_IN = 3.5;
+function board_holes(x0, y0) = [for (dx=[R5_HOLE_IN, R5_HOLE_IN + R5_HOLE_SHORT])
+                                for (dy=[R5_HOLE_IN, R5_HOLE_IN + R5_HOLE_LONG]) [x0+dx, y0+dy]];
+R5_UPS_HOLES = board_holes(R5_UPS_X, R5_UPS_Y);
+R5_PI_HOLES  = board_holes(R5_PI_X,  R5_PI_Y);
+
+// ---- heights, z = 0 at the cassette floor; the floor's top face is R5_FLOOR ----
+// UPS: the cells lie in the cradles and Waveshare's holder carries the pcb 23.35 mm above its own
+// bottom (their drawing). R5_UPS_LIFT raises the pcb - and the posts with it - if your holder
+// measures more.
 R5_CELL_Z0 = R5_FLOOR + 1;                              // cell bottom
 CELL_ZC_R5 = R5_CELL_Z0 + CELL_D/2;                     // cell axis height
-R5_HAT_BOT = R5_CELL_Z0 + HAT_B_BELOW_R4;               // HAT (B) pcb underside
+R5_UPS_LIFT = 0;
+R5_HAT_BOT = R5_CELL_Z0 + HAT_B_BELOW_R4 + R5_UPS_LIFT; // HAT (B) pcb underside = UPS post top
 R5_HAT_TOP = R5_HAT_BOT + UPS_T;
-R5_PI_BOT  = R5_HAT_TOP + UPS_COMP + UPS_PI_GAP;        // Pi pcb underside
-R5_PI_TOP  = R5_PI_BOT + 1.6;
-// The stack is not screwed to the cassette. Waveshare's HAT (B) kit bolts Pi to HAT with four
-// 6 mm standoffs (that is the pogo gap) and the whole assembly then rests on its cells, which
-// sit in cradles on the tray floor. Nothing may clamp the Pi from above: a pillar on the GPIO
-// edge's mounting holes collides with the 40-pin header body (3.5 mm from the edge, 5.1 mm
-// wide). So the deck simply caps the stack with clearance. R5_HDR is the air gap the deck needs
-// over the Pi pcb for that header and Pi 5's top-side FFC connectors.
-R5_HDR     = 9.5;                                       // 8.5 mm header + 1 mm air
-R5_H_BOT   = R5_PI_TOP + R5_HDR;                        // tray rim = deck underside
+
+// The measured envelopes are ground truth (tape measure, cells / SSD fitted): 35 mm for the
+// HAT (B) with its two 18650s, 30 mm for the Pi 5 + M.2 BASE + SSD. Both are heights above the
+// floor's top face. The deck sits on the tray rim, so the rim clears the taller of the two.
+R5_UPS_H_MAX = 35;                                      // HAT (B) + 2x 18650
+R5_PI_H_MAX  = 30;                                      // Pi 5 + M.2 BASE + SSD
+R5_STACK_AIR = 3;                                       // air over the taller assembly
+R5_H_BOT   = R5_FLOOR + max(R5_UPS_H_MAX, R5_PI_H_MAX) + R5_STACK_AIR;   // 40.4, was 46.0
+
+// Pi sandwich, built UP from the floor so the derived height can be checked against the measured
+// envelope instead of being assumed. Order: floor -> air -> M.2 BASE pcb -> SSD (in the gap) ->
+// Pi pcb -> 40-pin header.
+//   R5_M2_CLR  air under the BASE for its solder side and the FPC connector,
+//   R5_M2_GAP  the BASE-to-Pi standoff; the SSD lies in this gap, so it must clear 2.38 mm of
+//              drive plus its connector. 11 mm is the Seeed stud pack's; shorten it and the
+//              whole sandwich drops, which is the easiest way to buy vertical room.
+// One M2.5 per hole runs from the top of the Pi pcb, through the Pi, the standoff and the BASE,
+// and threads into the printed post (R5_M2_BOT is that post's top face). Kit the sandwich with
+// the standoffs first, then screw it down through the BASE into the posts.
+// The SSD sits on the BASE's UNDERSIDE (Seeed's board is back-mounted), so it hangs below the
+// BASE and the four posts stand at the corners, clear of its 22 x 42 footprint. R5_M2_CLR is the
+// air under the BASE that the drive and its connector need: 2.38 of drive + 1 of connector + 1.6
+// of margin.
+R5_M2_CLR = 5;                                          // air under the BASE (SSD + connector)
+R5_M2_T   = 1.6;                                        // M.2 BASE pcb
+R5_M2_GAP = 11;                                         // BASE -> Pi standoff (Seeed stud pack)
+R5_PI_HDR = 8.5;                                        // 2x20 header above the Pi pcb
+R5_M2_BOT = R5_FLOOR + R5_M2_CLR;                       // 7.4 = Pi post top face (the BASE seat)
+R5_PI_BOT = R5_M2_BOT + R5_M2_T + R5_M2_GAP;            // 20.0 = Pi pcb underside
+R5_PI_TOP = R5_PI_BOT + 1.6;
+R5_PI_TOP_HDR = R5_PI_TOP + R5_PI_HDR;                  // 30.1, the tallest Pi-side point
+// The measured envelope is a tape-measure figure, so allow a millimetre of slack on it. Anything
+// more and the deck would sit on the header instead of on the tray rim.
+assert(R5_PI_TOP_HDR - R5_FLOOR <= R5_PI_H_MAX + 1,
+       str("Pi sandwich is ", R5_PI_TOP_HDR - R5_FLOOR, " mm above the floor, the measured ",
+           "envelope is ", R5_PI_H_MAX, ": shorten R5_M2_GAP (standoffs) or R5_M2_CLR"));
 R5_DECK_Z  = R5_H_BOT;
 R5_DECK_TOP = R5_DECK_Z + R5_DECK_T;
 
-// ---- plan, drawing coords ----
-R5_PI_X0 = (R5_W - 85)/2;                               // Pi pcb, GPIO end
-R5_PI_Y0 = 10;                                          // USB-C / HDMI / DSI edge at the hinge
-R5_UPS_X = R5_PI_X0;                                    // HAT (B) rotated 90 deg, as in r4
-R5_UPS_Y = R5_PI_Y0;
-// Cells run along y under the HAT. The 8.4 V jack and USB-A overhang the board's +y end on the
-// CELL side (12.5 and 11.75 mm long, reaching 95 -> 82.5), so the cans stop at y = 82: a 65 mm
-// cell then spans 17..82, fully under the 85 mm board.
-R5_CELL_CY = R5_UPS_Y + 39.5;
-R5_CELL_POS = [[R5_UPS_X + UPS_W/2 + CELL_PITCH_R4/2, R5_CELL_CY],
-               [R5_UPS_X + UPS_W/2 - CELL_PITCH_R4/2, R5_CELL_CY]];
+// Cells: two 18650s side by side under the HAT's pcb, on Waveshare's own holders. Their axes run
+// along y and are CELL_PITCH_R4 apart across the board's 56 mm width, centred on it. The holder
+// stops 23.35 mm below the pcb, which is what R5_HAT_BOT encodes, so the cells hang in the
+// cradles with their cans pointing down.
+// The 8.4 V jack, the USB-A socket and the ON/OFF switch overhang the board's HINGE end by about
+// 12 mm (Waveshare's drawing: parts past the pcb edge, 12.5 long; the photo agrees). That is why
+// both boards sit at y = 16 rather than the photo's 12-14: it leaves 3.4 mm to the wall for the
+// overhang and still ends the boards at y 101, clear of the keyboard well's 102.5.
+R5_CELL_CY = R5_UPS_Y + R5_UPS_L/2;
+R5_CELL_POS = [[R5_UPS_X + R5_UPS_W/2 + CELL_PITCH_R4/2, R5_CELL_CY],
+               [R5_UPS_X + R5_UPS_W/2 - CELL_PITCH_R4/2, R5_CELL_CY]];
+R5_UPS_EDGE = R5_UPS_Y - 12;                            // 4, the jack's far face
 
 // keyboard: at the latch end, i.e. outside the display's shadow, so its height is free
 R5_KB_POCKET = [151.6, 59.6];                           // K06 151 x 59 + 0.6 clearance
@@ -384,10 +438,13 @@ R5_OLED_Y0 = (R5_KB_Y0 - R5_OLED_H)/2 + 4;              // centred in the free b
 R5_OLED_T = 3.2;                                        // module pcb + glass (lies in a through-pocket)
 R5_OLED_LEDGE = 1.0;                                    // corner ledges that carry the module
 
-// FireBeetle 2, DS3231 and charger module on the free floor left/right of the HAT
-R5_FB_X = 26; R5_FB_Y = 30;                             // 25.4 x 60 FireBeetle, left of the HAT
-R5_RTC_X = 174; R5_RTC_Y = 26;                          // DS3231 38 x 22, right of the HAT
-R5_MPPT_X = 188; R5_MPPT_Y = 62;                        // 26 x 20 tray
+// FireBeetle 2, DS3231 and charger module on the free floor. With both boards on the floor and
+// spanning y 12..99 there is no free floor between them any more, so the three modules go in the
+// 62 mm strip at the hinge end, left of the boards: x 8..70, y 100..175, which is clear of the
+// cell cradles (y 22..87) and of the UPS jack at x 132..144.
+R5_FB_X = 8;  R5_FB_Y = 104;                            // 25.4 x 60 FireBeetle, upright
+R5_RTC_X = 40; R5_RTC_Y = 104;                          // DS3231, turned 90 deg (22 along x)
+R5_MPPT_X = 40; R5_MPPT_Y = 150;                        // 26 x 20 tray, below the RTC
 
 // ---- host lid: display plate ----
 // The display's back (panel 6.42 + its own 8.5 standoffs) faces the lid, the glass faces the
@@ -407,9 +464,13 @@ R5_DISP_HOLES = [for (dx=[R5_DISP_HOLE_IX, R5_DISP_HOLE_IX + 122.74])
 // outer radius). Each is a Ø7 column whose centre sits 2.5 mm inside the inner face, so it
 // overlaps the wall by 1 mm and protrudes 6 mm into the cavity.
 R5_INSET = BOSS_D/2 - 1;                               // 2.5
+// The hinge-end pair moved outboard, from x = R5_W/2 to x = 26 / R5_W-26: the centre one stood
+// exactly where the HAT (B)'s USB-A and 8.4 V jack overhang the hinge end (x 84..118, y 4..16),
+// and that overhang hangs below the pcb, i.e. at the boss's own height. Both new positions are in
+// the solid hinge wall run, clear of the board posts and of the jack.
 R5_SCREWS = [[R5_WALL + R5_INSET, 40], [R5_W - R5_WALL - R5_INSET, 40],
              [R5_WALL + R5_INSET, R5_L - 40], [R5_W - R5_WALL - R5_INSET, R5_L - 40],
-             [R5_W/2, R5_WALL + R5_INSET], [R5_W/2, R5_L - R5_WALL - R5_INSET]];
+             [26, R5_WALL + R5_INSET], [R5_W - 26, R5_WALL + R5_INSET]];
 
 // ---- closed-case clearance ----
 // The base and the lid meet at the seal plane (z = HOST_BOT), so the lid ceiling sits HOST_LID

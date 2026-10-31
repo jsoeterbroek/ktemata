@@ -28,13 +28,14 @@ module screw_cut(p) {
     r5_at(p[0], p[1], R5_DECK_TOP - 1.8) cylinder(d=M25_HEAD, h=1.81);
 }
 
-// ---- keep-outs: the deck caps the Pi stack, so the header and FFC connectors need air ----
-// The 40-pin header is 3.5 mm in from the GPIO edge and 5.1 mm wide, i.e. its body sits over
-// the Pi's own mounting holes: a clamp pillar there would crush it. Nothing touches the Pi,
-// which is why the stack is held by cell cradles on the tray floor instead.
+// ---- keep-out over the Pi's 40-pin header ----
+// The header stands 8.5 mm off the Pi pcb and is the tallest thing on that assembly: with the Pi
+// bolted to the floor its top is at R5_PI_TOP_HDR (30.1), which the rim already clears by
+// R5_DECK_Z - R5_PI_TOP_HDR. Nothing clamps the Pi from above any more, so this opening is now
+// only a clearance slot over the header's own footprint, kept so the deck can never touch it.
+// The header is 5.1 mm wide, 3.5 mm in from the GPIO edge (the board's -x edge, at R5_PI_X).
 module pi_keepout() {
-    // one opening over the whole header + FFC edge strip, so nothing can foul them
-    r5_box(R5_PI_X0 + 2, R5_PI_Y0 + 2, R5_PI_X0 + 83, R5_PI_Y0 + 14, R5_DECK_Z - 1, R5_DECK_T + 2);
+    r5_box(R5_PI_X, R5_PI_Y + 2, R5_PI_X + 12, R5_PI_Y + 83, R5_DECK_Z - 1, R5_DECK_T + 2);
 }
 
 // ---- keyboard well ----
@@ -97,9 +98,10 @@ module oled_ledges() {
 
 // ---- openings ----
 module openings() {
-    // Pi connector edge: USB-C, HDMI and the two 22-pin MIPI connectors must stay reachable,
-    // and the display FFC leaves through here on its way to the lid.
-    dbox(R5_PI_X0 - 2, 0, R5_PI_X0 + 87, 17, R5_DECK_Z - 1, R5_DECK_T + 2);
+    // Pi hinge edge: USB-C, the two micro-HDMI sockets and the 22-pin MIPI connectors must stay
+    // reachable, the M.2 FPC has to drop through to the BASE, and the display FFC leaves through
+    // here on its way to the lid. The boards now sit at y 16, so the opening tracks them.
+    dbox(R5_PI_X - 2, 0, R5_PI_X + R5_PI_W + 2, R5_PI_Y + 4, R5_DECK_Z - 1, R5_DECK_T + 2);
     // FireBeetle 2: gives its USB-C port access for flashing and lets its OLED / button leads
     // rise to the deck. This module sits below the deck (z 2.4-10.4 under a plate at 45.95), so
     // without this hole it is sealed in.

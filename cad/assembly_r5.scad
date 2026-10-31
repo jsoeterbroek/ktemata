@@ -39,31 +39,31 @@ module host_case() {
 }
 
 // ---- components (drawing coords via r5_at) ----
+// Both boards are PORTRAIT (85 along y, 56 along x) and stand on the floor, side by side.
+// Port mapping is the r5 one: USB/Ethernet on the +x edge, USB-C/HDMI/DSI on the hinge (-y) edge.
 module c_pi() {
-    r5_at(R5_PI_X0, R5_PI_Y0 + 56, R5_PI_BOT) linear_extrude(1.6) rrect(85, 56, 3);
-    // right-edge ports: USB 3, USB 2, Ethernet, all on the +x side of the board
-    // the USB/Ethernet bodies hang off the board's +x edge (x 75..85 of the board)
-    for (p=PI_PORTS) r5_box(R5_PI_X0 + 75, R5_PI_Y0 + p[0], R5_PI_X0 + 85,
-                            R5_PI_Y0 + p[0] + p[1], R5_PI_BOT - p[2], p[2]);
-    // USB-C + 2x micro-HDMI on the -y (hinge) edge
-    for (dx=[4, 14, 24]) r5_box(R5_PI_X0 + dx, R5_PI_Y0 - 1.5, R5_PI_X0 + dx + 9,
-                                R5_PI_Y0 + 6, R5_PI_BOT - 3.2, 3.2);
-    // the two 22-pin MIPI connectors, top side near the same edge
-    r5_box(R5_PI_X0 + 1, R5_PI_Y0 + 9, R5_PI_X0 + 11, R5_PI_Y0 + 21, R5_PI_TOP, 1.2);
-    // 40-pin header: two rows of 20 (50.8 mm) along the board's 56 mm axis, 3.5 mm in from the
-    // GPIO edge, 5.1 mm wide in x. It sits directly over the Pi's own mounting holes.
-    r5_box(R5_PI_X0 + 3.5, R5_PI_Y0 + 2.6, R5_PI_X0 + 8.6, R5_PI_Y0 + 53.4, R5_PI_TOP, 8.5);
-    // SoC + cooler shadow
-
+    // the Seeed PCIe-to-M.2 BASE, bolted under the Pi; the SSD sits on its underside
+    r5_at(R5_PI_X, R5_PI_Y + R5_PI_L, R5_M2_BOT) linear_extrude(R5_M2_T) rrect(R5_PI_W, R5_PI_L, 3);
+    r5_box(R5_PI_X + 18, R5_PI_Y + 20, R5_PI_X + 40, R5_PI_Y + 62, R5_M2_BOT - 2.4, 2.4);   // SSD
+    // Pi pcb, up on the BASE's standoffs
+    r5_at(R5_PI_X, R5_PI_Y + R5_PI_L, R5_PI_BOT) linear_extrude(1.6) rrect(R5_PI_W, R5_PI_L, 3);
+    // right-edge ports: USB 3, USB 2, Ethernet, on the +x edge
+    for (p=PI_PORTS) r5_box(R5_PI_X + R5_PI_W - 10, R5_PI_Y + p[0], R5_PI_X + R5_PI_W,
+                            R5_PI_Y + p[0] + p[1], R5_PI_BOT, p[2]);
+    // USB-C + 2x micro-HDMI on the hinge (-y) edge
+    for (dx=[4, 14, 24]) r5_box(R5_PI_X + dx, R5_PI_Y - 3.2, R5_PI_X + dx + 9,
+                                R5_PI_Y + 6, R5_PI_BOT, 3.2);
+    // 40-pin header: 5.1 mm wide, 3.5 mm in from the GPIO edge (the -x edge), 50.8 long
+    r5_box(R5_PI_X + 3.5, R5_PI_Y + 2.6, R5_PI_X + 8.6, R5_PI_Y + 53.4, R5_PI_TOP, R5_PI_HDR);
 }
 module c_ups() {
-    r5_at(R5_UPS_X, R5_UPS_Y + UPS_H, R5_HAT_BOT) linear_extrude(UPS_T) rrect(UPS_W, UPS_H, 3);
-    // pogo pins + standoffs between HAT and Pi (Waveshare's 4 x M2.5)
-    r5_at(R5_UPS_X + 8, R5_UPS_Y + 32, R5_HAT_TOP) cube([20, 12, UPS_COMP]);
-    r5_at(R5_UPS_X + 52, R5_UPS_Y + 56, R5_HAT_TOP) cube([22, 16, UPS_COMP - 1]);
-    // 8.4 V jack + USB-A + switch, overhanging the +y end
-    r5_at(R5_UPS_X + 34, R5_UPS_Y + UPS_H, R5_HAT_BOT - 8.4) cube([8, 12.5, 8.4]);
-    r5_at(R5_UPS_X + 20, R5_UPS_Y + UPS_H, R5_HAT_BOT - 9.8) cube([18, 11.75, 9.8]);
+    r5_at(R5_UPS_X, R5_UPS_Y + R5_UPS_L, R5_HAT_BOT) linear_extrude(UPS_T) rrect(R5_UPS_W, R5_UPS_L, 3);
+    // components on the pcb's top side, inside the 35 mm envelope
+    r5_box(R5_UPS_X + 6, R5_UPS_Y + 56, R5_UPS_X + 46, R5_UPS_Y + 74, R5_HAT_TOP, 9);        // 5V reg / inductors
+    // 8.4 V jack + USB-A + switch, overhanging the hinge end (-y). The jack's far face reaches
+    // y = R5_UPS_EDGE (4), so the two boxes stop there and not at the pcb edge.
+    r5_box(R5_UPS_X + 8, R5_UPS_EDGE, R5_UPS_X + 20, R5_UPS_Y, R5_HAT_BOT - 8.4, 8.4);
+    r5_box(R5_UPS_X + 24, R5_UPS_EDGE, R5_UPS_X + 42, R5_UPS_Y, R5_HAT_BOT - 9.8, 9.8);
 }
 module c_cells() {
     for (p=R5_CELL_POS) r5_at(p[0], p[1] - CELL_L/2, R5_CELL_Z0 + CELL_D/2)
