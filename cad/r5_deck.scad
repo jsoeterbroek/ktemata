@@ -38,41 +38,50 @@ module pi_keepout() {
     r5_box(R5_PI_X, R5_PI_Y + 2, R5_PI_X + 12, R5_PI_Y + 83, R5_DECK_Z - 1, R5_DECK_T + 2);
 }
 
-// ---- keyboard well ----
-// The K06 is 11 mm thick and the deck plate is 3 mm, so a pocket that merely dropped the body
-// into the plate would leave 8 mm of keyboard proud. It is sunk instead: the plate gets a hole
-// the size of the keyboard, a well hangs R5_KB_SINK = 8 mm BELOW the plate, the body rests on a
-// 4 mm ledge at the bottom, and the keys finish level with the deck's top face.
+// ---- keyboard recess ----
+// The K06 is 11 mm thick, so it is sunk into the deck: the plate gets a hole the size of the
+// keyboard, the body stands R5_KB_SINK = 6.5 mm below the plate's underside, and the keys finish
+// level with the deck's top face. The body is located by the four walls (R5_KB_WALL clearance on
+// top of the 0.6 mm already in R5_KB_POCKET) and kept down by the lid's display pressing on it
+// with the case shut.
 //
-// That is why the deck's print orientation is now TOP FACE DOWN: nothing may protrude below the
-// plate when it is printed plate-down, and the well is exactly that. Flipped, the deck's top face
-// is the bed, every well wall is vertical, and nothing overhangs.
+// It used to be a well with a solid 1.2 mm floor, and that floor was the whole support problem:
+// printed top-face down it is a 151 x 59 mm ceiling, and the slicer filled it with ~4100 s of
+// tree support. It is now an open recess instead - the floor is gone, so there is no ceiling to
+// support, and only two narrow bands cross the cavity to carry the keyboard.
 //
-// The body is located by the well walls (R5_KB_WALL clearance, on top of the 0.6 mm already built
-// into R5_KB_POCKET) and kept down by the lid's display pressing on its top face with the case
-// shut - the same arrangement the flat deck had, just sunk.
+// The walls still run all the way down to the body's resting plane, because that skirt is what
+// the keyboard is glued to. Nothing here overhangs the bed: the plate is on the bed, the walls
+// grow straight up from it, and the two bands are short bridges at the top of the print.
 module kb_body_2d(d=0) rrect(R5_KB_POCKET[0] + 2*d, R5_KB_POCKET[1] + 2*d, 3);
 
 // the hole through the plate: the keyboard occupies this volume, so the plate must be absent
 module kb_plate_cut() dbox(R5_KB_X0, R5_KB_Y0, R5_KB_X0 + R5_KB_POCKET[0],
                            R5_KB_Y0 + R5_KB_POCKET[1], R5_DECK_Z - 1, R5_DECK_T + 2);
 
-// the well below the plate: four walls and a floor, with the interior opened out above the floor
+// The skirt: four walls hanging below the plate, open at the bottom, plus two bands that carry
+// the keyboard. The walls stop at the body's resting plane (R5_KB_WELL_BOT) and run 0.8 mm up
+// into the plate so the two are one solid rather than a tangent contact.
 module kb_well() {
     w = R5_KB_POCKET[0]; h = R5_KB_POCKET[1];
     x0 = R5_KB_X0; y0 = R5_KB_Y0; x1 = x0 + w; y1 = y0 + h;
     t = R5_KB_WALL;
-    zf = R5_KB_WELL_BOT;                            // the body's resting face = floor TOP
-    zb = zf - R5_KB_FLOOR;                          // floor underside
-    // walls run from the floor up into the plate by 0.8 mm, so the two are one solid rather
-    // than a tangent contact
-    zh = (R5_DECK_Z + 0.8) - zb;
+    zb = R5_KB_WELL_BOT;                            // the body's resting plane = skirt bottom
+    zh = (R5_DECK_Z + 0.8) - zb;                    // ... up into the plate
     difference() {
         dbox(x0 - t, y0 - t, x1 + t, y1 + t, zb, zh);
-        // the interior above the floor: this is what makes it a well and not a block. Cut from
-        // the resting face up, never below it, or the keyboard would sink into its own floor.
-        dbox(x0, y0, x1, y1, zf, zh + 1);
+        // open the middle: no floor, so the slicer has no ceiling to support
+        dbox(x0, y0, x1, y1, zb - 1, zh + 1);
     }
+    // Two ribs that carry the keyboard, full height like the walls (zb up into the plate) and
+    // R5_KB_BAND wide. Full height matters: printed top-face down they grow straight up from the
+    // plate, so they are ordinary vertical walls with nothing under them to support. A rib that
+    // were only a strip at the resting plane would instead be a 59.6 mm bridge at the top of the
+    // print, and one running the other way would bridge 151.6 mm.
+    // They run along y, so each spans the 59.6 mm depth and lands on both long walls. Two rather
+    // than one, so the body cannot rock about a single line.
+    for (fx=[R5_KB_BAND_X0, R5_KB_BAND_X1])
+        dbox(fx, y0, fx + R5_KB_BAND, y1, zb, zh);
 }
 
 // ---- status OLED: through-pocket with retaining ledges ----
@@ -103,9 +112,11 @@ module openings() {
     // here on its way to the lid. The boards now sit at y 16, so the opening tracks them.
     dbox(R5_PI_X - 2, 0, R5_PI_X + R5_PI_W + 2, R5_PI_Y + 4, R5_DECK_Z - 1, R5_DECK_T + 2);
     // FireBeetle 2: gives its USB-C port access for flashing and lets its OLED / button leads
-    // rise to the deck. This module sits below the deck (z 2.4-10.4 under a plate at 45.95), so
-    // without this hole it is sealed in.
-    dbox(R5_FB_X + 6, R5_FB_Y + 30, R5_FB_X + 22, R5_FB_Y + 40, R5_DECK_Z - 1, R5_DECK_T + 2);
+    // rise to the deck. The module sits under the deck, so without this hole it is sealed in.
+    // R5_FB_HOLE_Y0 places it 44 mm along the module (was 30): at 30 the hole abutted the left
+    // fan opening, which read as clutter in the print view. Still well inside the 60 mm module.
+    dbox(R5_FB_X + 6, R5_FB_Y + R5_FB_HOLE_Y0, R5_FB_X + 22, R5_FB_Y + R5_FB_HOLE_Y0 + 10,
+         R5_DECK_Z - 1, R5_DECK_T + 2);
     // OLED module cable drops to the FireBeetle
     dbox(R5_OLED_X0 + 8, R5_OLED_Y0 + R5_OLED_H, R5_OLED_X0 + 24, R5_OLED_Y0 + R5_OLED_H + 4,
          R5_DECK_Z - 1, R5_DECK_T + 2);

@@ -322,7 +322,10 @@ R5_L = HOST_W - 2*HOST_CLR;        // cassette length (y, y = 0 at the hinge)
 R5_R = 14;                         // printed corner radius
 R5_WALL = 2.6;
 R5_FLOOR = 2.4;
-R5_DECK_T = 3;
+R5_DECK_T = 4.5;                   // was 3: +1.5 mm of plate, and it goes on the TOP face, so
+                                   // the underside stays at R5_DECK_Z and the keyboard well, the
+                                   // Pi keep-out and every pocket keep their own depths. A 3 mm
+                                   // plate over a 151 x 59 mm opening is what felt wobbly.
 R5_PAD = 8;                        // closed-cell foam under the tray
 CHG_Z_R5 = 18;                     // charge socket centre height above the cassette floor
 R5_CHG_Y = 118;                    // ... and its position along the right wall
@@ -418,15 +421,20 @@ R5_KB_Y0 = R5_L - 16 - R5_KB_POCKET[1];
 R5_KB_WALL = 1.8;
 R5_KB_LIP = 2.5;                                       // lip overlap over the Esc row
 // The keyboard is SUNK into the deck so its keys finish level with the deck's top face. The body
-// is KB_BODY[2] = 11 mm and the plate is only R5_DECK_T = 3 mm, so the well has to hang below the
-// plate: R5_KB_SINK is how far the body's underside sits under R5_DECK_TOP, i.e. 8 mm below the
-// plate's underside, into the (empty) tray cavity over the keyboard band.
-R5_KB_SINK = KB_BODY[2] - R5_DECK_T;                   // 8 mm well depth below the plate
-R5_KB_WELL_BOT = R5_DECK_Z - R5_KB_SINK;               // 37.95, the keyboard's resting face
-// The body rests on the well's floor, whose TOP FACE is exactly R5_KB_WELL_BOT; the floor
-// material sits below that (R5_KB_FLOOR thick), so the body's underside and the keys land where
-// they should. Clearance in plan is already in R5_KB_POCKET (0.3 mm per side on the K06 body).
-R5_KB_FLOOR = 1.2;                                     // well floor thickness, below the resting face
+// is KB_BODY[2] = 11 mm and the plate is R5_DECK_T, so the recess has to hang below the plate:
+// R5_KB_SINK is how far the body's underside sits under R5_DECK_TOP, i.e. below the plate's
+// underside, into the (empty) tray cavity over the keyboard band.
+R5_KB_SINK = KB_BODY[2] - R5_DECK_T;                   // 6.5 mm below the plate (11 - 4.5)
+R5_KB_WELL_BOT = R5_DECK_Z - R5_KB_SINK;               // 33.9, the keyboard's resting plane
+// The body rests on R5_KB_WELL_BOT - the skirt's bottom edge and the two ribs - so its underside
+// and the keys land where they should. Clearance in plan is already in R5_KB_POCKET (0.3 mm per
+// side on the K06 body).
+// The recess has no floor any more: a 151 x 59 ceiling printed top-face down needed ~4100 s of
+// tree support. Two full-height ribs carry the keyboard instead, R5_KB_BAND wide, near a third
+// and two thirds along the body so it cannot rock, and clear of the Esc row's overhang.
+R5_KB_BAND = 8;
+R5_KB_BAND_X0 = R5_KB_X0 + R5_KB_POCKET[0]/3;
+R5_KB_BAND_X1 = R5_KB_X0 + 2*R5_KB_POCKET[0]/3;
 R5_KB_TOP = R5_DECK_TOP;                               // keys finish level with the plate
 
 // status OLED module on the deck (visible with the lid open). Centred between the keyboard
@@ -443,6 +451,8 @@ R5_OLED_LEDGE = 1.0;                                    // corner ledges that ca
 // 62 mm strip at the hinge end, left of the boards: x 8..70, y 100..175, which is clear of the
 // cell cradles (y 22..87) and of the UPS jack at x 132..144.
 R5_FB_X = 8;  R5_FB_Y = 104;                            // 25.4 x 60 FireBeetle, upright
+R5_FB_HOLE_Y0 = 44;                                     // access hole start along the module
+R5_FB_HOLE_H  = 10;                                     // ... and its length (16 x 10 mm)
 R5_RTC_X = 40; R5_RTC_Y = 104;                          // DS3231, turned 90 deg (22 along x)
 R5_MPPT_X = 40; R5_MPPT_Y = 150;                        // 26 x 20 tray, below the RTC
 
@@ -544,7 +554,7 @@ COVER_ACTIVE = [110.7, 62.3];
 // NOTE ON AIRFLOW: a sealed host has no path through its wall, so these openings move air
 // between the deck and the Pi, not out of the case. They are a path for a fan, not a cooling
 // solution on their own - see docs/R5.md, "Heat".
-DECK_FANS = is_undef(DECK_FANS) ? 1 : DECK_FANS;        // 1 = top-left, 2 = both corners
+DECK_FANS = is_undef(DECK_FANS) ? 2 : DECK_FANS;        // 2 = both corners (1 = top-left only)
 DECK_FAN_D = 38;                                        // 40 mm fan opening (2 mm clear of the blades)
 DECK_FAN_HOLE_SP = 32;                                  // 40 mm fan's own mounting holes
 DECK_FAN_SCREW_D = 3.4;                                 // M3 clearance
