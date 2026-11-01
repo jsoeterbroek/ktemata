@@ -19,11 +19,12 @@ if (PART=="bottom")           bottom_part();                       // back plate
 if (PART=="face")             rotate([180,0,0]) face_part();       // face plate down
 if (PART=="keyboard_support") kb_support();
 if (PART=="charge_plug")      charge_plug();                       // flange on the bed
-// r5 (internal cassette): all three print as modelled. The deck must NOT be flipped: its
-// keyboard pocket is a 151 x 59 recess, so printing it plate-down keeps every wall vertical,
-// while flipping it would bridge the whole pocket.
+// r5 (internal cassette): the tray and the lid parts print as modelled. The deck is flipped so
+// its TOP face is on the bed (rotate about x), as r5_deck.scad's header requires: every keyboard
+// well wall and the OLED pocket then grow straight up, while the modelled orientation would hang
+// the 151 x 59 recess and bridge the pcb pocket. stl/ktemata_r5_cass.3mf already stores it flipped.
 if (PART=="r5_tray")          r5_tray();
-if (PART=="r5_deck")          r5_deck();
+if (PART=="r5_deck")          rotate([180,0,0]) r5_deck();
 if (PART=="r5_lid_plate")     r5_lid_plate();                      // plate flat, glass side down
 if (PART=="r5_lid_cover")     r5_lid_cover();                      // cover flat, lid/tape side down
 // corner overmould tool (one corner at a time); print the cap in TPU for a test fit.

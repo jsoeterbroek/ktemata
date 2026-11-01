@@ -71,9 +71,19 @@ module c_cells() {
 }
 module c_keyboard() r5_box(R5_KB_X0 + 0.3, R5_KB_Y0 + 0.3,
                            R5_KB_X0 + 151.3, R5_KB_Y0 + 59.3, R5_DECK_TOP, KB_BODY[2]);
-module c_oled() r5_box(R5_OLED_X0 + 0.4, R5_OLED_Y0 + 0.4,
-                       R5_OLED_X0 + R5_OLED_W - 0.4, R5_OLED_Y0 + R5_OLED_H - 0.4,
-                       R5_DECK_Z + R5_OLED_LEDGE, R5_OLED_T);
+// the module: pcb seated on the pocket ceiling, glass in the window well. Both are drawn at
+// their measured size so the interference sweep checks the pocket and window really clear them.
+module c_oled() {
+    r5_box(R5_OLED_X0 + R5_OLED_PCB_CLR, R5_OLED_Y0 + R5_OLED_PCB_CLR,
+           R5_OLED_X0 + R5_OLED_PCB_CLR + R5_OLED_BOARD[0],
+           R5_OLED_Y0 + R5_OLED_PCB_CLR + R5_OLED_BOARD[1],
+           R5_OLED_SEAT - R5_OLED_BOARD[2], R5_OLED_BOARD[2]);
+    r5_box(R5_OLED_X0 + R5_OLED_PCB_CLR + (R5_OLED_BOARD[0] - R5_OLED_GLASS[0])/2,
+           R5_OLED_Y0 + R5_OLED_PCB_CLR + R5_OLED_GLASS_Y,
+           R5_OLED_X0 + R5_OLED_PCB_CLR + (R5_OLED_BOARD[0] + R5_OLED_GLASS[0])/2,
+           R5_OLED_Y0 + R5_OLED_PCB_CLR + R5_OLED_GLASS_Y + R5_OLED_GLASS[1],
+           R5_OLED_SEAT, R5_OLED_GLASS[2]);
+}
 module c_display() {
     // on the lid: the plate is taped to the lid ceiling, so its back sits R5_DISP_DEEP below
     // z = HOST_BOT + HOST_LID; the display hangs down from there, glass towards the base

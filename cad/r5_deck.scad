@@ -74,42 +74,54 @@ module kb_well() {
         dbox(fx, y0, fx + R5_KB_BAND, y1, zb, zh);
 }
 
-// ---- status OLED: through-pocket with retaining ledges ----
-// The module lies face up in a pocket cut clean through the 3 mm plate, so nothing shadows the
-// 128 x 64 area and its glass sits just above the deck. Four corner ledges carry it; the lid and
-// the cables hold it down. (A recess with a window, as r4's face needed, would put the plate over
-// the panel - here the module is on the outside of the deck, so the plate must be absent.)
-module oled_pocket() {
-    x0 = R5_OLED_X0; y0 = R5_OLED_Y0; x1 = x0 + R5_OLED_W; y1 = y0 + R5_OLED_H;
-    dbox(x0, y0, x1, y1, R5_DECK_Z - 1, R5_DECK_T + 2);
+// ---- status OLED: window over the glass, pocket for the pcb in the underside ----
+// The module is measured, not assumed: pcb 35.5 x 33.7 x 1.2, the glass on it 34.5 x 23 x 1.45,
+// and the lit 128 x 64 area inside the glass border 29.42 x 14.7. What you must see is the glass;
+// sizing one through-hole to the pcb, as this did, left the board's edge in view all round the
+// panel and a 35.8 x 34.8 hole in a 4.5 mm plate for a 1.3" screen.
+//
+// So there are two cuts, and the 4.5 mm plate separates them:
+//   - R5_OLED_WIN, the glass plus 0.15 mm a side, through the top face;
+//   - R5_OLED_PCB, the pcb plus 0.4 mm a side, sunk R5_OLED_BOARD[2] = 1.2 mm into the underside.
+// The pcb drops in from below until its front face meets the pocket's ceiling, which is the seat
+// (R5_OLED_SEAT) - flush with the deck's underside, so the module's back is exposed and can be
+// taped across to hold it. The ring of plate between the two cuts is the bezel: it stops the
+// module going any further and hides the board. The glass then stands in a 3.3 mm deep well and
+// finishes 1.85 mm below the top face, so nothing can press on the panel.
+//
+// Print note: with the deck printed top-face down (see export.scad), the seat ring is the lowest
+// 3.3 mm of the part and the pocket is an upward-facing recess - no support, no bridge, and the
+// window is a straight hole through to the bed. Printed as modelled it would instead be a 36 x 34
+// mm ceiling, which is why the export flips it. If you would rather have a plain hole, tape the
+// module to the deck's underside and delete oled_pocket().
+module oled_window() {
+    dbox(R5_OLED_WIN_X0, R5_OLED_WIN_Y0,
+         R5_OLED_WIN_X0 + R5_OLED_WIN[0], R5_OLED_WIN_Y0 + R5_OLED_WIN[1],
+         R5_OLED_SEAT, R5_DECK_TOP - R5_OLED_SEAT + 2);
 }
-module oled_ledges() {
-    k = 5.5; t = 1.4; h = 1.0;                     // size, inward bite, height
-    for (sx=[0, 1]) for (sy=[0, 1]) {
-        px = sx ? R5_OLED_X0 + R5_OLED_W - k : R5_OLED_X0;
-        py = sy ? R5_OLED_Y0 + R5_OLED_H - k : R5_OLED_Y0;
-        // each ledge grows 0.8 mm outwards into the plate (shared volume, so it is fused) and
-        // 5 mm inwards under the module's corner
-        dbox(sx ? px - t : px - 0.8, sy ? py - t : py - 0.8,
-             sx ? px + k : px + k + 0.8, sy ? py + k : py + k + 0.8, R5_DECK_Z, h);
-    }
+module oled_pocket() {
+    dbox(R5_OLED_X0, R5_OLED_Y0,
+         R5_OLED_X0 + R5_OLED_PCB[0], R5_OLED_Y0 + R5_OLED_PCB[1],
+         R5_DECK_Z - 1, R5_OLED_SEAT - R5_DECK_Z + 1);
 }
 
 // ---- openings ----
 module openings() {
     // Pi hinge edge: USB-C, the two micro-HDMI sockets and the 22-pin MIPI connectors must stay
     // reachable, the M.2 FPC has to drop through to the BASE, and the display FFC leaves through
-    // here on its way to the lid. The boards now sit at y 16, so the opening tracks them.
-    dbox(R5_PI_X - 2, 0, R5_PI_X + R5_PI_W + 2, R5_PI_Y + 4, R5_DECK_Z - 1, R5_DECK_T + 2);
+    // here on its way to the lid. Bounds and why they are not simply "over the Pi": common.scad,
+    // R5_OPEN_X0/X1/D - the right end stops 1 mm short of deck screw 5 and 1 mm below the right
+    // fan, so the screw keeps its head seat and the two openings stay separate.
+    dbox(R5_OPEN_X0, 0, R5_OPEN_X1, R5_OPEN_D, R5_DECK_Z - 1, R5_DECK_T + 2);
     // FireBeetle 2: gives its USB-C port access for flashing and lets its OLED / button leads
     // rise to the deck. The module sits under the deck, so without this hole it is sealed in.
     // R5_FB_HOLE_Y0 places it 44 mm along the module (was 30): at 30 the hole abutted the left
     // fan opening, which read as clutter in the print view. Still well inside the 60 mm module.
     dbox(R5_FB_X + 6, R5_FB_Y + R5_FB_HOLE_Y0, R5_FB_X + 22, R5_FB_Y + R5_FB_HOLE_Y0 + 10,
          R5_DECK_Z - 1, R5_DECK_T + 2);
-    // OLED module cable drops to the FireBeetle
-    dbox(R5_OLED_X0 + 8, R5_OLED_Y0 + R5_OLED_H, R5_OLED_X0 + 24, R5_OLED_Y0 + R5_OLED_H + 4,
-         R5_DECK_Z - 1, R5_DECK_T + 2);
+    // (the OLED cable slot that used to be here is gone: the module now sits in the deck's
+    //  underside, so its 4-pin header looks straight into the tray cavity where the FireBeetle
+    //  is. The old slot would be a 16 x 4 mm hole in the visible top face for nothing.)
     // (the right-wall opening that used to be here is gone: it was cut for "DS3231 and charger
     //  module leads", but the DS3231 (y 26-52), the MPPT charger (y 62-86) and the charge socket
     //  (y 107-129) all sit BELOW the deck - the lowest is at z 2.4 and the deck underside is
@@ -118,11 +130,13 @@ module openings() {
     //  opened the deck's edge for nothing was 12 mm of lost stiffness.)
 }
 
-// ---- cooling: a round fan opening in each top corner, with a grille over it ----
+// ---- cooling: one round fan opening in the free top-left corner, with a grille over it ----
 // The old five-slot bank is gone. Its y span (101-108.4) crossed the keyboard pocket's hinge
 // wall at 100.7-102.5, so it cut the pocket rather than venting anything, and slots move little
 // air. A 40 mm fan opening sits in the free corner instead - clear of the keyboard, clear of
-// the deck screws (nearest is 40 mm away).
+// the deck screws (nearest is 40 mm away). DECK_FANS=2 adds a second at the top right; it is off
+// by default because it buys little and its rim cramped the hinge opening (see common.scad,
+// R5_OPEN_D).
 //
 // The grille is printed as part of the deck: DECK_GRILL_BARS bars across the opening, standing
 // DECK_GRILL_RIB above the top face. Bars rather than concentric rings because everything here
@@ -166,9 +180,9 @@ module r5_deck() union() {
         union() {
             deck_slab();
             kb_well();
-            oled_ledges();
         }
         for (p=R5_SCREWS) screw_cut(p);
+        oled_window();
         oled_pocket();
         openings();
         fan_holes();

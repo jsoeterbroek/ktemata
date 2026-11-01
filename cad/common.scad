@@ -446,14 +446,55 @@ R5_KB_BAND_X0 = R5_KB_X0 + R5_KB_POCKET[0]/3;
 R5_KB_BAND_X1 = R5_KB_X0 + 2*R5_KB_POCKET[0]/3;
 R5_KB_TOP = R5_DECK_TOP;                               // keys finish level with the plate
 
-// status OLED module on the deck (visible with the lid open). Centred between the keyboard
-// pocket and the hinge-side edge: the keyboard owns y > R5_KB_Y0, so the free band is the
-// 100 mm strip between the Pi keep-out and the pocket, and the module sits in the middle of it.
-R5_OLED_W = 35.8; R5_OLED_H = 34.8;                     // 35 x 34 module + clearance
-R5_OLED_X0 = (R5_W - R5_OLED_W)/2;                      // centred, as of the r5 revision
-R5_OLED_Y0 = (R5_KB_Y0 - R5_OLED_H)/2 + 4;              // centred in the free band, nudged to the pocket
-R5_OLED_T = 3.2;                                        // module pcb + glass (lies in a through-pocket)
-R5_OLED_LEDGE = 1.0;                                    // corner ledges that carry the module
+// status OLED module on the deck (visible with the lid open). Measured module:
+//   pcb 35.5 x 33.7 x 1.2, glass 34.5 x 23 x 1.45, lit 128 x 64 area 29.42 x 14.7 (2:1)
+// The plate is 4.5 mm, i.e. thicker than the module, so the module lives INSIDE the deck: a
+// pocket of the pcb's size in the underside (dropped in from below, flush with the underside)
+// and a window in the top face over the glass. Sizing one opening to the pcb, as it was before,
+// left the board's edge in view all round the panel.
+// The plate ring between the two openings is the bezel and the seat: it covers the pcb's edge, so
+// the board is never in view. What you see through the window is the glass and its own black
+// border - 2.5 mm either side and 4.2 mm at the ends - round the 29.42 x 14.7 lit area.
+R5_OLED_BOARD  = [35.5, 33.7, 1.2];                     // pcb
+R5_OLED_GLASS  = [34.5, 23.0, 1.45];                    // glass slab on the pcb
+R5_OLED_ACTIVE = [29.42, 14.7];                        // lit area inside the glass border
+// The glass is centred across the pcb's width and sits R5_OLED_GLASS_Y in from the pcb's
+// hinge-side (low-y) edge; the leftover 9.7 mm on the far edge is the 4-pin header, which faces
+// the keyboard. Measure yours and adjust.
+R5_OLED_GLASS_Y = 1.0;
+R5_OLED_PCB_CLR = 0.4;                                 // pocket clearance, per side
+R5_OLED_WIN_CLR = 0.15;                                // window clearance around the glass
+R5_OLED_MIN_SEAT = 0.3;                                // least plate the pcb rests on
+R5_OLED_PCB = [R5_OLED_BOARD[0] + 2*R5_OLED_PCB_CLR,
+               R5_OLED_BOARD[1] + 2*R5_OLED_PCB_CLR];
+R5_OLED_WIN = [R5_OLED_GLASS[0] + 2*R5_OLED_WIN_CLR,
+               R5_OLED_GLASS[1] + 2*R5_OLED_WIN_CLR];
+// centred between the keyboard pocket and the hinge-side edge: the keyboard owns y > R5_KB_Y0,
+// so the free band is the 100 mm strip between the Pi keep-out and the pocket
+R5_OLED_X0 = (R5_W - R5_OLED_PCB[0])/2;
+R5_OLED_Y0 = (R5_KB_Y0 - R5_OLED_PCB[1])/2 + 4;        // centred in the free band, nudged to the pocket
+R5_OLED_WIN_X0 = R5_OLED_X0 + (R5_OLED_PCB[0] - R5_OLED_WIN[0])/2;
+R5_OLED_WIN_Y0 = R5_OLED_Y0 + R5_OLED_PCB_CLR + R5_OLED_GLASS_Y - R5_OLED_WIN_CLR;
+// the pcb's top face is the seat: the pocket stops there and the window starts there
+R5_OLED_SEAT = R5_DECK_Z + R5_OLED_BOARD[2];
+// How much plate the pcb actually lands on, per edge: the ring of plate at the seat plane runs
+// from the window's edge to the pocket's wall, but the board's own edge stops a clearance short
+// of that wall, so the clearance is dead width and subtracts. (The pcb is only 0.5 mm wider than
+// its glass either side, so the sides carry 0.35 mm and the ends - 0.85 and 9.55 mm of bezel - are
+// what really hold the module up. Thin sides are the hardware's doing, not a choice: see docs/R5.md.)
+R5_OLED_SEAT_X  = (R5_OLED_PCB[0] - R5_OLED_WIN[0])/2 - R5_OLED_PCB_CLR;
+R5_OLED_SEAT_Y0 = R5_OLED_WIN_Y0 - R5_OLED_Y0 - R5_OLED_PCB_CLR;
+R5_OLED_SEAT_Y1 = R5_OLED_Y0 + R5_OLED_PCB[1] - (R5_OLED_WIN_Y0 + R5_OLED_WIN[1])
+                  - R5_OLED_PCB_CLR;
+assert(min(R5_OLED_SEAT_X, R5_OLED_SEAT_Y0, R5_OLED_SEAT_Y1) >= R5_OLED_MIN_SEAT,
+       str("the OLED would rest on ", min(R5_OLED_SEAT_X, R5_OLED_SEAT_Y0, R5_OLED_SEAT_Y1),
+           " mm of plate at the narrowest (sides ", R5_OLED_SEAT_X, ", ends ", R5_OLED_SEAT_Y0,
+           " / ", R5_OLED_SEAT_Y1, "): cut R5_OLED_WIN_CLR or widen R5_OLED_PCB_CLR"));
+assert(R5_OLED_WIN[0] >= R5_OLED_ACTIVE[0] && R5_OLED_WIN[1] >= R5_OLED_ACTIVE[1],
+       "the OLED window is smaller than the lit area");
+assert(R5_DECK_T - R5_OLED_BOARD[2] - R5_OLED_GLASS[2] >= 0.5,
+       str("the deck (", R5_DECK_T, " mm) cannot sink the OLED: pcb ", R5_OLED_BOARD[2],
+           " + glass ", R5_OLED_GLASS[2], " leaves less than 0.5 mm of plate over the glass"));
 
 // FireBeetle 2, DS3231 and charger module on the free floor. With both boards on the floor and
 // spanning y 12..99 there is no free floor between them any more, so the three modules go in the
@@ -563,7 +604,7 @@ COVER_ACTIVE = [110.7, 62.3];
 // NOTE ON AIRFLOW: a sealed host has no path through its wall, so these openings move air
 // between the deck and the Pi, not out of the case. They are a path for a fan, not a cooling
 // solution on their own - see docs/R5.md, "Heat".
-DECK_FANS = is_undef(DECK_FANS) ? 2 : DECK_FANS;        // 2 = both corners (1 = top-left only)
+DECK_FANS = is_undef(DECK_FANS) ? 1 : DECK_FANS;        // 2 = both corners (1 = top-left only)
 DECK_FAN_D = 38;                                        // 40 mm fan opening (2 mm clear of the blades)
 DECK_FAN_HOLE_SP = 32;                                  // 40 mm fan's own mounting holes
 DECK_FAN_SCREW_D = 3.4;                                 // M3 clearance
@@ -571,6 +612,40 @@ DECK_FAN_CTRL = [[44, 38], [R5_W - 44, 38]];            // top-left, then top-ri
 DECK_GRILL_BARS = 7;                                    // bars across the opening
 DECK_GRILL_BAR = 1.4;                                   // bar width
 DECK_GRILL_RIB = 1.0;                                   // bars sit flush, this deep in the plate
+
+// ---- r5 deck: hinge-edge opening (Pi connectors) ----
+// The cut over the Pi's hinge edge is the one opening the cassette cannot do without: USB-C, the
+// two micro-HDMI sockets and the 22-pin MIPI/DSI all sit on that edge (Pi pcb y 16, connectors
+// overhang to y 12.8), the display FFC leaves through it and the M.2 FPC drops to the BASE.
+// It stays on the Pi side (x 152-208) and not centred - a centred opening lands over the UPS
+// HAT (B) and its 8.4 V jack, USB-A and switch (x 84-118) instead, which would seal every Pi
+// cable under plate.
+//
+// Both ends are bounded by real hardware, which the previous 150..210 span ignored:
+//   - right: deck screw 5 at (207.5, 5.1) with a Ø5.2 counterbore, so the cut must stop short of
+//            x 204.9 or that boss has no head seat (it had a 0.4 mm sliver),
+//   - right: with DECK_FANS=2 the right fan reaches down to y 19, so the cut must stay shallower
+//            than that or the two merge into one ragged outline. With DECK_FANS=1 (the default)
+//            there is no fan there and the depth only has to clear the Pi's connectors (16 mm).
+//   - left:  x 150 clears the Pi's own edge by 2 mm and nothing else is there.
+R5_OPEN_X0 = R5_PI_X - 2;                              // 150
+R5_OPEN_X1 = R5_SCREWS[5][0] - M25_HEAD/2 - 1;         // 203.9: 1 mm clear of the head
+// depth: 1 mm below the right fan if it is fitted, otherwise the connector envelope (16 mm).
+// Derived from the fan centre and DECK_FANS so it tracks the switch instead of describing it.
+R5_FAN_R_Y = DECK_FAN_CTRL[1][1] - DECK_FAN_D/2;       // 19: lowest point of the right opening
+R5_OPEN_D  = DECK_FANS > 1 ? min(R5_FAN_R_Y - 1, DECK_FAN_CTRL[1][1]) : R5_PI_Y;   // 18 or 16
+// The invariant is not "as wide as the Pi" - the opening only has to uncover the connectors that
+// sit on the hinge edge (USB-C at x 156, the two micro-HDMI at 166 and 176, each 9 mm wide, so
+// they end at 185) and to be deep enough that the plugs and the FFC/FPC fold behind it.
+R5_PI_HINGE_CONN = [R5_PI_X + 4, R5_PI_X + 33];        // 156..185, all three sockets
+assert(R5_OPEN_X0 <= R5_PI_HINGE_CONN[0] && R5_OPEN_X1 >= R5_PI_HINGE_CONN[1],
+       str("the hinge opening ", R5_OPEN_X0, "..", R5_OPEN_X1, " no longer covers the Pi's ",
+           "hinge-edge connectors ", R5_PI_HINGE_CONN[0], "..", R5_PI_HINGE_CONN[1],
+           ": deck screw 5 or the right fan has moved into it"));
+assert(R5_OPEN_D >= R5_PI_Y,
+       str("the hinge opening is ", R5_OPEN_D, " mm deep, the Pi's connectors need ", R5_PI_Y));
+assert(R5_SCREWS[5][0] - M25_HEAD/2 >= R5_OPEN_X1,
+       "the hinge opening runs into deck screw 5's counterbore");
 
 // base chamfered rectangle (in real XY, origin bottom-left)
 module chamfer_rect(w, l, c) {
