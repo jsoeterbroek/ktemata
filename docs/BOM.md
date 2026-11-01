@@ -15,7 +15,7 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | # | Part | Qty | Spec / role | ≈ Price |
 |---|---|---|---|---|
 | 1 | Raspberry Pi 5, 4 GB | 1 | 58 × 49 mm. **No 40-pin header** — the UPS HAT sits on the component side. | € 121 |
-| 2 | Raspberry Pi Touch Display 2 – 5" | 1 | 143.4 × 91.46 mm, native portrait. Includes the 22→15 pin FFC, the GPIO J1 power cable and 8× M2.5 screws. | € 44.15 |
+| 2 | Raspberry Pi Touch Display 2 – 7" | 1 | 143.4 × 91.46 mm, native portrait. Includes the 22→15 pin FFC, the GPIO J1 power cable and 8× M2.5 screws. | € 44.15 |
 | 3 | Display cable, Standard–Mini, 300 mm | 1 | Pi 5 side of the display link. 300 mm is long for a 237 mm case — coil it in the face cavity, don't fold it sharply. | € 2.29 |
 | 4 | Waveshare UPS HAT (B) | 1 | 2S 18650, 5 V / 5 A out, **8.4 V / 2 A barrel input**, INA219 at 0x42. Cells not included; its 8.4 V / 2 A supply is. | € 27.82 |
 | 5 | 18650 Li-ion cells, flat-top, unprotected, matched pair | 2 | Same batch, ≤ 67 mm long, 3.0–3.5 Ah. | € 5 ea |

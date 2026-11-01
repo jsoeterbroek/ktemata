@@ -236,10 +236,10 @@ Project N.O.M.A.D. (custom ARM64 build)
 - local offline maps, wikipedia, prepper, medical
 - power by battery (UPS board); recharge by solar (main) + separate hand crank generator (backup); optional solar cells on backside
 - Raspberry PI 5 4 GB
-- 5" sunlight-readable LCD (DSI)
+- 7" sunlight-readable LCD (DSI)
 - wired USB keyboard (no Bluetooth)
-- BME688 (successor of BME680) Breakout - Air Quality, Temperature, Pressure, Humidity Sensor
 - nice to have: extra small OLED screen (FireBeetle 2 ESP32-UE) for the environment readings and warnings, and battery status (important); cycles through at least 4 screens: time (default), battery power, environment data, storage %; auto-switches to the relevant screen when a threshold is passed
+- BME688 (successor of BME680) Breakout - Air Quality, Temperature, Pressure, Humidity Sensor
 - 512 GB SSD storage (NVMe 2242 fitted; 1 TB as the later upgrade, SATA possible)
 - rubber seals for openings (not cooling)
 - no sound
