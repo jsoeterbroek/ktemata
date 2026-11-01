@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alexandria — my curated book collection for Ktemata</title>
+<meta name="description" content="Project Alexandria: the personal, hand-picked book collection on my Ktemata — Project Gutenberg ebooks converted into searchable ZIM archives by a small Python tool.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+
+<nav class="pages">
+  <a href="index.html">Ktemata</a>
+  <a href="build.html">Build</a>
+  <a href="power.html">Power</a>
+  <a href="comparisons.html">Comparisons</a>
+  <a href="alexandria.html" aria-current="page">Alexandria</a>
+  <a href="license.html">Licence</a>
+  <a href="https://github.com/jsoeterbroek/ktemata">Source</a>
+</nav>
+
+<h1>Alexandria</h1>
+<p class="deck">
+  Project Alexandria is how I keep books on the device: a small Python tool that turns Project
+  Gutenberg ebooks into searchable ZIM archives, feeding <em>my own</em> curated shelf rather than
+  a bulk dump of everything Gutenberg has ever scanned.
+</p>
+
+<ul class="kpis">
+  <li><b>128</b><span>books on the shelf</span></li>
+  <li><b>4,291</b><span>chapters and sections</span></li>
+  <li><b>397 MiB</b><span>the whole collection</span></li>
+  <li><b>16</b><span>Kiwix shelf categories</span></li>
+</ul>
+
+<p>
+  The name is the point. The library at Alexandria was not famous for owning every scroll in
+  existence; it was famous for being <em>chosen</em>. A device that carries all of Gutenberg carries
+  a warehouse — tens of thousands of titles, most of them unread, most of them not worth the bytes
+  on a pack this size. Alexandria builds a shelf: a list I curate by hand, book by book, and can
+  defend line by line.
+</p>
+
+<div class="note">
+  <p><strong>This is my personal list, not a recommended reading list and not a curated canon for
+  anyone else.</strong> The descriptor in the repository is my shelf as it stands — the books I
+  actually want on my machine, with my choices about editions, metadata corrections and modern
+  spelling. It is published because the tool is useful, not because the selection is. Fork it and
+  put your own books in it.</p>
+</div>
+
+<h2>What it does</h2>
+
+<p>
+  Alexandria downloads the ebook HTML and its RDF metadata record from Project Gutenberg, splits the
+  text into chapters, rewrites the internal links and pulls down the referenced images, then packs
+  the result into a ZIM archive with <a href="https://github.com/openzim/python-libzim">libzim</a>.
+  A ZIM is the same container Kiwix already serves Wikipedia, maps and reference works from, so a
+  converted book sits on the device beside them with the same search, the same reader and the same
+  catalogue.
+</p>
+
+<dl>
+  <dt>Input</dt><dd>a YAML descriptor — one entry per book, keyed by Gutenberg ebook number</dd>
+  <dt>Output</dt><dd>one <code>.zim</code> per book, plus a Kiwix <code>library.xml</code> for the whole shelf</dd>
+  <dt>Per book</dt><dd>a title page with metadata and a nested table of contents, one article per chapter, its images, and a reader stylesheet</dd>
+  <dt>Search</dt><dd>full-text and title indexes built in the book's own language</dd>
+  <dt>Covers</dt><dd>each book's own cover stored as a ZIM illustration, so Kiwix's catalogue shows it</dd>
+</dl>
+
+<p>
+  Everything is written to a <code>.part</code> file and only renamed after
+  <code>libzim</code>'s integrity check and a main-entry check pass, so a failed build never
+  replaces a good archive. Reruns skip books that already exist and open cleanly.
+</p>
+
+<h2>The shelf, by subject</h2>
+
+<p>
+  The classification in each Gutenberg RDF record (Library of Congress codes such as <code>PR</code>
+  or <code>QA</code>) becomes a Kiwix shelf category, so the catalogue can be narrowed to one kind
+  of book without a text search. This is what my shelf looks like today:
+</p>
+
+<div class="table-wrap">
+<table>
+  <caption>My collection as built: 128 archives, 4,291 articles in total</caption>
+  <thead>
+    <tr><th>Category</th><th class="num">Books</th><th>Examples from my shelf</th></tr>
+  </thead>
+  <tbody>
+    <tr class="hl"><td><code>english_literature</code></td><td class="num">34</td><td>Dickens, Austen, the Brontës, Conrad, Joyce, Shakespeare, Conan Doyle</td></tr>
+    <tr><td><code>american_literature</code></td><td class="num">22</td><td>Melville, Poe, London, Hemingway, Lovecraft, Thoreau</td></tr>
+    <tr><td><code>middle_eastern_literature</code></td><td class="num">10</td><td>Burton's <em>Thousand Nights and a Night</em>, all ten volumes</td></tr>
+    <tr><td><code>history</code></td><td class="num">9</td><td>Gibbon, Herodotus, Thucydides, Tacitus, Pepys, Procopius</td></tr>
+    <tr><td><code>science</code></td><td class="num">9</td><td>Newton's <em>Principia</em>, Darwin, Faraday, Lavoisier, Einstein, Euclid, <em>Calculus Made Easy</em></td></tr>
+    <tr><td><code>philosophy</code></td><td class="num">8</td><td>Epictetus, Marcus Aurelius, Aristotle, Nietzsche, Wittgenstein's <em>Tractatus</em></td></tr>
+    <tr><td><code>romance_literature</code></td><td class="num">8</td><td>Cervantes, Dumas, Hugo, Dante, Boccaccio, Voltaire</td></tr>
+    <tr><td><code>classical_literature</code></td><td class="num">7</td><td>Homer, Virgil, Caesar, Procopius</td></tr>
+    <tr><td><code>slavic_literature</code></td><td class="num">5</td><td>Tolstoy, Dostoevsky</td></tr>
+    <tr><td><code>germanic_literature</code></td><td class="num">5</td><td>Goethe's <em>Faust</em>, Kafka, the Grimm tales, both Eddas</td></tr>
+    <tr><td><code>political_science</code></td><td class="num">3</td><td><em>The Prince</em>, <em>On Liberty</em>, <em>The Republic</em></td></tr>
+    <tr><td><code>social_sciences</code></td><td class="num">2</td><td><em>The Wealth of Nations</em>, <em>Principles of Political Economy</em></td></tr>
+    <tr><td><code>technology</code></td><td class="num">2</td><td><em>De Re Metallica</em></td></tr>
+    <tr><td><code>childrens_literature</code></td><td class="num">2</td><td><em>The Wonderful Wizard of Oz</em>, <em>Winnie-the-Pooh</em></td></tr>
+    <tr><td><code>eastern_literature</code></td><td class="num">1</td><td><em>The Analects of Confucius</em></td></tr>
+    <tr><td><code>military</code></td><td class="num">1</td><td><em>The Art of War</em></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>
+  Size is dominated by illustrations, not text. <em>The Count of Monte Cristo</em> is 102 MiB with
+  124 chapters, <em>Don Quixote</em> 60 MiB with 138; the median book is under a megabyte. The whole
+  shelf is 397 MiB — small enough to sit beside Wikipedia and the maps without competing for the
+  drive.
+</p>
+
+<h2>What the tool adds over a plain ebook</h2>
+
+<h3>Modern English, on request</h3>
+
+<p>
+  Some Gutenberg texts are archaic enough that the reading gets in the way: Burton's
+  <em>Thousand Nights</em> alone runs to thousands of "thou", "hath" and "quoth". For those entries
+  the descriptor sets <code>modernize: true</code> and the prose is rewritten before the book is
+  split — <code>thou knowest</code> becomes <code>you know</code>, <code>hath</code> becomes
+  <code>has</code>, <code>quoth</code> becomes <code>said</code>. On my shelf all ten volumes of
+  the <em>Thousand Nights</em> use it — the only books that needed it.
+</p>
+
+<p>
+  The rewrite is rule-based and deterministic, not a machine translation, and verb stems are checked
+  against the words the book actually uses, so lookalikes stay put — "the best guest", "his teeth",
+  "the art of war". Markup, attributes, links and proper names are untouched; only text nodes change.
+  Spelling and dialect stay as printed.
+</p>
+
+<h3>Editions that were never HTML</h3>
+
+<p>
+  A few ebooks ship only as PDF or LaTeX — the <em>Tractatus Logico-Philosophicus</em>, for one.
+  Those are converted to parseable HTML and split on headings and proposition numbers, then follow
+  the normal pipeline. Audio-only recordings are reported as unbuildable rather than packed as a
+  track list.
+</p>
+
+<h3>Metadata that is actually right</h3>
+
+<p>
+  Gutenberg's RDF is mostly good and occasionally wrong: ebook #68282 (<em>The Call of Cthulhu</em>)
+  ships a metadata record belonging to a different book, and the <em>Thousand Nights</em> volumes
+  credit Burton only as translator. The descriptor lets me override the display title and author, and
+  the library summary is regenerated from those — so my shelf says what I decided it says.
+</p>
+
+<h2>Using it</h2>
+
+<pre><code>make               # help: every target
+make build         # convert missing books (skips ZIMs that already exist)
+make build_all     # rebuild every book, overwriting existing ZIMs
+make only ID=11    # (re)build one book
+make list          # books in the descriptor
+make library       # refresh output/library.xml
+make verify        # integrity-check output/*.zim
+make test          # offline test suite
+make check         # lint + format check + tests</code></pre>
+
+<p>
+  A descriptor entry is a Gutenberg id plus whatever overrides the edition needs:
+</p>
+
+<pre><code>books:
+  - id: 10
+    title: "The King James Version of the Bible"
+  - id: 766
+    title: "David Copperfield"
+    author: "Charles Dickens"
+  - id: 3435
+    title: "The Book of the Thousand Nights and a Night — Volume 01 (of 10)"
+    modernize: true</code></pre>
+
+<p>
+  Point Kiwix at the generated library and the whole shelf is browsable:
+</p>
+
+<pre><code>make library
+kiwix-serve --library output/library.xml</code></pre>
+
+<h2>On the device</h2>
+
+<p>
+  Ktemata already installs <code>kiwix-serve</code> and serves the library on <code>:8080</code>
+  (<code>work/scripts/post-install.sh --hotspot</code> makes it reachable at
+  <code>10.10.10.1:8080</code> from a phone or laptop). Adding books is therefore a copy and a
+  restart: drop the <code>.zim</code> files into <code>/srv/kiwix/zim</code>, rebuild
+  <code>library.xml</code> — the service does that on start — and the catalogue picks them up. There
+  is no second reader to install and no import step; a converted book is just another archive beside
+  Wikipedia and the maps.
+</p>
+
+<div class="win">
+  <p><strong>A curated shelf is the difference between a library and a warehouse.</strong> The
+  device has a 512 GB drive and room for roughly 477 GiB of content. Filling it with everything
+  downloadable would spend that budget on books nobody opens; picking 128 books spends 397 MiB and
+  still leaves Wikipedia, the maps and the reference works the space they need.</p>
+</div>
+
+<h2>The code</h2>
+
+<p>
+  Alexandria is a separate project from Ktemata — its own repository, its own test suite, no shared
+  code with the CAD:
+  <a href="https://github.com/jsoeterbroek/alexandria">github.com/jsoeterbroek/alexandria</a>.
+</p>
+
+<p>
+  It is plain Python with no service to run and no database: a YAML descriptor in, ZIM files out. The
+  modules follow the pipeline — <code>gutenberg</code> for metadata and covers, <code>net</code> for
+  cached fetching, <code>document</code> for HTML into chapters and media, <code>archaic</code> for
+  the modern-English rewrite, <code>classification</code> for the shelf categories,
+  <code>formats</code> for PDF and TeX editions, <code>zim</code> and <code>library</code> for the
+  output, and <code>workflow</code> and <code>cli</code> over all of it.
+</p>
+
+<p>
+  The descriptor that produced the numbers on this page is the one in that repository — my list, kept
+  in version control, so every change to my shelf is a commit I can read back.
+</p>
+
+<footer>
+  <p>Ktemata · <a href="https://github.com/jsoeterbroek/ktemata">source</a> · text is CC BY-SA 4.0, see <a href="license.html">licence</a></p>
+  <p>The book selection is mine and is not a recommendation. Project Gutenberg texts carry their own terms; check them before redistributing a converted archive.</p>
+</footer>
+
+</main>
+</body>
+</html>

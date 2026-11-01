@@ -54,6 +54,7 @@ The website is in [`site/`](site/) and is published at **<https://ktemata.org>**
 | **Build guide**: step-by-step record of the r5 cassette build, photographs and short video per stage — **placeholder, written as the build happens** | `site/build.html` | <https://ktemata.org/build.html> |
 | **Power**: r5 component draws, runtime on the 22.2 Wh pack, 24/7 energy against all three NOMAD tiers, caveats | `site/power.html` | <https://ktemata.org/power.html> |
 | **Comparisons**: r5 with its hotspot against the Prepper Disk and NOMAD budget/recommended/power — pros, cons, DIY and open source, low Pi draw | `site/comparisons.html` | <https://ktemata.org/comparisons.html> |
+| **Alexandria**: Project Alexandria, the tool that turns Gutenberg ebooks into ZIMs, and my own hand-curated 128-book shelf — counts, categories, the modern-English rewrite and how the books reach the device | `site/alexandria.html` | <https://ktemata.org/alexandria.html> |
 
 Both data pages read their charts from `work/scripts/power_chart.py --site`, the same source of truth as
 [`docs/POWER.md`](docs/POWER.md), so the pages cannot drift from the prose; `bash site/build.sh` regenerates
