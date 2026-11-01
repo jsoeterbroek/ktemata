@@ -17,6 +17,19 @@ Parametric OpenSCAD re-creation of the 3D-printed case for the **Ktemata** handh
 
 **Status OLED firmware (`firmware/`).** The board is the DFR1140 FireBeetle 2 ESP32-UE: **ESP32-WROOM-32UE-N16R2, not an ESP32-S3** (16 MB flash, 2 MB PSRAM, CH340). It needs the project-local board JSON in `firmware/boards/` (`dio_qspi`, `BOARD_HAS_PSRAM`, 16 MB partitions). Verified: 1.3" 4-pin SH1106 OLED at `0x3C`; SDA GPIO21 / SCL GPIO22 (header pins `21/SDA`, `22/SCL`). Button GPIO4 to GND (TinyTronics PBS-33B 12 mm panel button; add a rubber boot for sealing), BME688 `0x76/0x77` (r4 only — r5 has no sensor), DS3231 `0x68`, Waveshare UPS HAT (B) INA219 `0x42` (the older HAT (E) was `0x2D`). The display and 16 MB/2 MB PSRAM are confirmed working; the sensors, button and Pi-side serial sender are still to be brought up. Idle blanking is currently disabled with `-DSCREEN_OFF_MS=0UL` because the button is not fitted; the blank-screen report was the OLED display-off command, not ESP32 sleep. Details and serial protocol: `firmware/README.md`. The Pi sends a **UTC** epoch; the DS3231 stores UTC; the OLED applies `TIMEZONE` (default `CET-1CEST,M3.5.0,M10.5.0/3`, Europe/Amsterdam with DST) only when rendering.
 
+## KISS principle
+
+Hardware, design and build stay simple.
+
+- Core: Pi 5 4 GB, Touch Display 2, K06 keyboard, UPS HAT (B) with 2× 18650, NVMe SSD, RTC.
+- Allowed exceptions, each with a job: the status OLED with its button (battery state without booting the
+  Pi), the BME688 (r4 only; r5 dropped it), the K06's 2.4 GHz dongle, and the library hotspot — a local
+  access point with no uplink (`ipv4.ip-forward 0`), installed by `post-install.sh --hotspot`.
+- Charging is one sealed input fed by mains, solar or the external hand crank.
+- Everything else — extra USB/GPIO add-ons, boards, switches, radios — is out. Complexity is a failure mode:
+  a nice-to-have is a point of failure that has to be debugged in the field. Do not add one without deleting
+  something else.
+
 Git repo. Commit or back up before large changes (an older version is also in `work/backup_v1/`). Tooling: OpenSCAD 2021.01 (CGAL, slow on many booleans), Python 3.
 
 ## Tools

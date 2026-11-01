@@ -217,10 +217,21 @@ sealed charge port and the 12 mm PBS-33B OLED button (add a rubber boot for seal
 r1 pull-switch slot, side cutout and battery button are not used in r2/r3/r4; the r4 charge port is a
 **Ø9.5 mm DC socket** rather than the r2 USB-C opening.
 
+## KISS principle
+
+Hardware choices, design and build stay simple. The core is the Pi 5 4 GB, the Touch Display 2, the K06
+keyboard, the UPS HAT (B) with 2× 18650, the NVMe SSD and the RTC. Everything else in the tables below is an
+exception with a job: the status OLED and its button (battery state with the Pi off), the BME688 (r4 only;
+r5 drops it), the K06's 2.4 GHz dongle, and the library hotspot — a local AP with no uplink, off by default
+and installed with `post-install.sh --hotspot`. Charging is one sealed input fed by mains, solar or the
+external hand crank. Extra USB or GPIO add-ons, boards, switches and radios are out: each one is a point of
+failure that has to be debugged in the field. Add a nice-to-have only by deleting something else.
+
 ## Content Management
 Project N.O.M.A.D. (custom ARM64 build)
  
 ## Project briefing
+- KISS (keep it simple)
 - ruggedized, strong case, rubber corners
 - boots into ubuntu, project NOMAD, no AI
 - local offline maps, wikipedia, prepper, medical
