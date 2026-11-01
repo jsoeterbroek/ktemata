@@ -49,7 +49,7 @@ Component draws, from measurements where measurements exist:
 |---|---|---|---|
 | Pi 5 (4 GB) | 3.0 W headless; 3.6 W with Ethernet + USB + HDMI | 8.8 W all-core; up to 16 W with USB-SSD + 4K | [raspberry.tips Pi 5 measurements, Oct 2026](https://raspberry.tips/en/raspberrypi-tutorials/raspberry-pi-power-consumption-update-2026-all-models-compared) |
 | Pi 5, soft-off | **1.7 W** — the PMIC stays alive | — | same |
-| Touch Display 2, 5" | 1.4 W (backlight) | 1.4 W | Pi product brief / `BOM.md` |
+| Touch Display 2, 5" | 1.4 W (backlight) | 1.4 W | Pi product brief / `docs/BOM.md` |
 | NVMe, WD SN740 | ~0.5 W | 4.7 W max | drive datasheet; Pi 5 NVMe figures |
 | FireBeetle 2 + 1.3" OLED, radios off | ~0.2 W | ~0.2 W | ESP32 ~40–50 mA at 3.3 V + OLED, estimate |
 | UPS HAT (B) 2S → 5 V buck | — | η ≈ 0.88 **assumed** | not measured |
@@ -66,7 +66,7 @@ gives ≈ 16.6 Wh at the 5 V rail:
 | browsing + maps | 8.7 W | 9.9 W | 1.9 h | 2.2 h |
 | heavy (video/CPU) | 12.5 W | 14.2 W | 1.3 h | 1.5 h |
 
-`README.md` and `BOM.md` claim **2–2.5 h** of Pi 5 runtime. That holds and is the right conservative
+`README.md` and `docs/BOM.md` claim **2–2.5 h** of Pi 5 runtime. That holds and is the right conservative
 number: 22.2 Wh over 2–2.5 h is 8.9–11.1 W at the pack, i.e. the browsing and heavy rows. It
 understates screen-off use (4.2 h) and reading (2.6 h).
 

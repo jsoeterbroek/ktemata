@@ -109,7 +109,7 @@ the bare chip.
 | Sensors | BME688, optional SEN66, trackball | Not designed for them | **No** — new internal layout |
 | Case | 150 × 205 × 46.5 mm rugged | 93.5 × 168.5 × 37 mm plastic | **No** — different geometry |
 | Glass | Face plate + display | G+G 6H optical bonding | **Only if using the 3.5" front assembly** |
-| Cost | Core BOM ≈ €555–625 | $87.99 + Pi + battery | Cheaper only as a different device |
+| Cost | Core BOM ≈ €460 (r4/r5, `docs/BOM.md`) | $87.99 + Pi + battery | Cheaper only as a different device |
 
 The PocketTerm has only **2.5 mm** of space above the Pi for add-ons. The r2 UPS HAT (E) + 4× 21700 stack is
 tens of millimetres thick, so it cannot be fitted inside the PocketTerm. Conversely, a 3.5" screen and a

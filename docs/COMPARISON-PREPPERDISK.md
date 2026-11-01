@@ -8,7 +8,7 @@ everything else:
 | What it is | a **handheld computer**: screen, keyboard, battery, all in one rugged case | a **headless hotspot**: plug it in, join its Wi-Fi, browse from your own phone |
 | Board | Pi 5, 4 GB, NVMe | Pi 4B, 2 GB, 512 GB microSD |
 | Case | printed cassette inside a bought Peli 1200 | machined aluminium, 89 × 70 × 25 mm |
-| Price | ≈ €635 built (`BOM.md`) | €270.95 (or €150.95 software-only) |
+| Price | ≈ €560–605 built (`docs/BOM.md`) | €270.95 (or €150.95 software-only) |
 | Where the work goes | designing, printing, wiring, software | none — it arrives configured |
 | Source | this repository, MIT-style DIY | closed product, proprietary UI on Internet-in-a-Box |
 
@@ -22,7 +22,7 @@ with you.
 
 ## Where the Prepper Disk wins
 
-**Price.** €271 against ≈ €635. Half the cost, and a quarter if you already own a Pi (€151 for the
+**Price.** €271 against ≈ €580. Half the cost, and a quarter if you already own a Pi (€151 for the
 card). The Ktemata BOM buys a Pi 5, a 143 mm display, a UPS HAT, 18650 cells, a mechanical keyboard,
 an NVMe drive, a Peli case and a solar path; the Prepper Disk buys a Pi 4B, a card, and a milled
 enclosure.
@@ -172,7 +172,7 @@ The practical build for r6:
 
 Cost estimate: conductive paint €25–40, 1 m of gasketed profile €20–50, shielded vent and feed-through
 parts €30–60, plus a mesh or ITO film for the display €30–100. Call it **€100–250 on top of the
-€635 build**, and it needs a shield-effectiveness test to be worth anything.
+€580 build**, and it needs a shield-effectiveness test to be worth anything.
 
 **The honest comparison.** The NX3 bag is €22 and claims 85–90 dB, because a bag has no seam, no
 port, no display and no button — it is a sealed pouch you put the device into. That is why the
@@ -195,7 +195,7 @@ between.
 
 | Criterion | Ktemata r5 | Prepper Disk | Edge |
 |---|---|---|---|
-| Price | ≈ €635 | €271 | **Prepper Disk** 2.3× cheaper |
+| Price | ≈ €580 | €271 | **Prepper Disk** 2.1× cheaper |
 | Volume / mass | ~8.3 L, ~1.6 kg | ~0.16 L, ~0.2 kg | **Prepper Disk** 53× smaller |
 | Draw, 24/7 | 4.0–5.1 W | 3.05 W | **Prepper Disk** ~¼ less energy/day |
 | Energy/day | 96–139 Wh | 73 Wh | **Prepper Disk** 1.3–1.9× |
@@ -236,8 +236,8 @@ between.
   540 mA at 5 V with nothing on USB. The 0.35 W (Prepper Disk) and 0.4 W (Ktemata) access-point
   figures are **estimates**, unmeasured; the Pi 5's radio draws at the same order as the Pi 4B's.
 - Ktemata figures: `docs/POWER.md`, same 24/7 basis, same η = 0.88 / 0.85 DoD / 3.5 PSH / 0.65 derate
-  assumptions. Prices from `BOM.md` (reconciled orders; r5's Peli 1200 is not yet in that total, so
-  treat ≈ €635 as indicative).
+  assumptions. Prices are indicative list prices from `docs/BOM.md`, which includes the r5 Peli case;
+  treat ≈ €580 as an estimate and not an invoice.
 - Volume and mass for Ktemata are computed from the Peli 1200's external dimensions plus the
   cassette; the Prepper Disk's from its published 3.5 × 2.75 × 1 in.
 - The Prepper Disk's content list, review scores and shipping claims are the vendor's own; this page

@@ -283,11 +283,11 @@ def prepper_tables():
         wh = mah * 3.7 / 1000.0
         print(f"| {mah // 1000} Ah ({wh:.0f} Wh) | {wh * DOD * ETA / PREPPER['draw']:.1f} h |")
     print()
-    # cost: BOM.md's reconciled r4 total against the vendor price
-    kt, pd, pds = 635.0, PREPPER["price_eur"], PREPPER["price_sw_eur"]
+    # cost: docs/BOM.md's indicative build total (parts + the r5 Peli case) against the vendor price
+    kt, pd, pds = 580.0, PREPPER["price_eur"], PREPPER["price_sw_eur"]
     print("| | Ktemata r5 (built) | Prepper Disk Premium | Prepper Disk, software only |")
     print("|---|---|---|---|")
-    print(f"| Price | ≈ €{kt:.0f} (BOM.md) | €{pd:.2f} | €{pds:.2f} |")
+    print(f"| Price | ≈ €{kt:.0f} (docs/BOM.md) | €{pd:.2f} | €{pds:.2f} |")
     print(f"| Ratio to Ktemata | 1.0x | {pd / kt:.2f}x | {pds / kt:.2f}x |")
     print(f"| Storage | 512 GB NVMe (of 833 GiB library) | {PREPPER['storage_gb']} GB microSD | "
           f"{PREPPER['storage_gb']} GB card + your Pi |")

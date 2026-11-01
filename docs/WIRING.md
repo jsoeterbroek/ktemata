@@ -150,7 +150,7 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 8. **Buttons/switches:** the PBS-33B is not IP-rated; fit a 12 mm rubber boot. The UPS power switch stays on;
    the Pi is shut down via software. The status button is GPIO4 to GND.
 9. **NVMe:** the Seeed M.2 BASE is back-mounted; its ≈10 mm with the SN740 does not fit the 6.5 mm
-   gap between the Pi and the UPS HAT (B). Resolve the mounting before final assembly — see `BOM.md`
+   gap between the Pi and the UPS HAT (B). Resolve the mounting before final assembly — see `docs/BOM.md`
    note 7.
 10. **First power-up:** leave the Pi disconnected, connect the UPS with a current-limited/bench supply,
     check 5 V rails and I²C addresses, then connect the Pi and display.

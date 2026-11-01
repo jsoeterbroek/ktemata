@@ -39,7 +39,7 @@ Replace the pogo connection with 5 V/GND wires and lay the HAT beside the Pi ins
 **What it wins**
 
 * The Pi's underside is free — the ordered **Seeed M.2 BASE + SN740** (≈10 mm with the card) finally has a home,
-  which `BOM.md` note 7 and `R4.md` item 6 currently record as unsolved.
+  which `docs/BOM.md` note 7 and `R4.md` item 6 currently record as unsolved.
 * No pogo contact. Waveshare's own FAQ names pogo seating as the cause of undervoltage reports
   ("The pogo pin contact is not good, please reassemble the UPS").
 * Room for a 40-pin header if wanted (do **not** add a second I²C master; the FireBeetle stays the master).
