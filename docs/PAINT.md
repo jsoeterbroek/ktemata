@@ -1,14 +1,18 @@
 # r5 paint schemes — deck and lid cover
 
+**Meridian is the chosen scheme.** It is the design to build; Strata and Bearing are kept as record
+of the alternatives and because the generator still produces them.
+
 Three airbrush designs for the two printed surfaces you actually look at: the **deck** (keyboard
 side, seen when the case is open) and the **lid cover** (bezel round the Touch Display 2, seen when
 it is closed). Each scheme is one continuous design across both parts, not two decorations that
 happen to share a palette.
 
 ```
-python3 cad/tools/paint.py              # all three sheets + a side-by-side contact sheet
-python3 cad/tools/paint.py --scheme 2   # one scheme
-python3 cad/tools/paint.py --no-png     # SVGs only
+python3 cad/tools/paint.py                          # all three sheets + contact sheet
+python3 cad/tools/paint.py --scheme 1 --stencils    # Meridian + its cut files
+python3 cad/tools/paint.py --scheme 2               # one scheme
+python3 cad/tools/paint.py --no-png                 # SVGs only
 ```
 
 Output lands in `docs/paint/`:
@@ -19,6 +23,7 @@ Output lands in `docs/paint/`:
 | `ktemata_paint_2_strata.svg` / `.png` | **STRATA** — five bands up both rails, straight past the seam |
 | `ktemata_paint_3_bearing.svg` / `.png` | **BEARING** — a slate border and one amber trace through the seam |
 | `ktemata_paint_all.png` | the three sheets side by side, for choosing |
+| `ktemata_stencil_{deck,cover}_{ash,amber,seam,bezel}.svg` | **cut files**, one per paint pass, `--stencils` |
 
 The SVGs are **1:1 in millimetres** and are drawn from the model, so they print as masking
 templates: 400 gsm card or vinyl, cut to the panels, laid on the part. There is a 50 mm scale bar
@@ -93,6 +98,35 @@ Taken from `site/style.css` so the case and the site are the same object:
 
 Every sheet's `PALETTE` strip carries the five colours that scheme actually uses.
 
+## Cutting the masks
+
+`--stencils` writes one cut file per paint pass, derived from the same mark data as the sheet:
+
+| File | Pass | Cut |
+|---|---|---|
+| `ktemata_stencil_deck_ash.svg` | ash | the 0.5 mm graticule and the short rules |
+| `ktemata_stencil_deck_amber.svg` | amber | the 0.9 mm graticule, every fifth rule |
+| `ktemata_stencil_deck_seam.svg` | deep amber | the seam rule at the hinge, the end stop at the latch edge |
+| `ktemata_stencil_cover_*.svg` | as above, plus `bezel` | the same on the lid cover; `bezel` is the slate ring |
+
+Black is the sheet you lay on the part; white is what the blade removes. Three practical points,
+because they decide whether the mask survives being handled:
+
+- **Kiss-cut and apply with transfer tape.** A slot that runs the full width of a panel severs the
+  mask into strips — that is visible in `ktemata_stencil_cover_ash.svg` and it is not a fault. Cut
+  the vinyl but leave the backing on, lay application tape over the face, and lift the whole
+  assembly onto the part in one go; the tape holds every island in register. Peel the tape last.
+- **The bezel ring needs bridges or transfer tape.** Cutting a closed ring frees it from the
+  surrounding sheet. Transfer tape carries it; without tape, add two 2 mm bridges at the ring's
+  top and bottom and accept two hairlines in the slate.
+- **0.5 mm is at the limit for a blade.** If your cutter cannot hold a 0.5 mm line cleanly, lay the
+  ash graticule with 0.5 mm pinstripe tape instead — it is a stock product, and the grid is on a
+  17.81 mm pitch so the tape wants no measuring beyond the first line. The stencils then cover
+  amber, seam and bezel only, which are all wide enough to cut and lift cleanly.
+
+The registration crosses in the margins align the passes: lay pass 1, spray, lift, lay pass 2 on
+the same crosses. The part outline is the datum, so each mask lands without measuring.
+
 ## Reading a sheet
 
 ```
@@ -117,6 +151,20 @@ panel, button, cable relief. They are annotations, not paint. Every painted elem
 the part's real apertures (`deck_holes_d`, `cover_holes_d`), so a line that reaches the Pi opening
 or the power button **stops there** in the drawing exactly as it would under tape. Nothing in these
 sheets is "touched up by hand" after masking.
+
+## Meridian: what to spray
+
+The chosen scheme, in the order the sheet gives:
+
+1. Scuff 400, adhesion promoter, **graphite** (`#151b21`) over the whole face.
+2. **Ash** pass: the graticule at 17.81 mm pitch, 0.5 mm lines.
+3. **Amber** pass: every fifth line at 0.9 mm, plus the two rules.
+4. **Deep amber** pass: the 1.7 mm seam rule at `y 2.2` and the end stop at `y l-8`. On the deck the
+   seam rule is **two pieces**, not one — the Pi opening cuts it at `x 150..203.4`. That is correct
+   and deliberate: the cut file is the authority, and a line that crosses a hole is not a line.
+5. **Slate** pass (cover only): the 7 mm bezel ring.
+6. **Word** stencil: `KTEMATA` and the tagline on the deck, the motto on the cover.
+7. Matte 2K clear over everything except the lettering.
 
 ## Printing notes
 

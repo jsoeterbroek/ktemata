@@ -279,6 +279,9 @@ class Surface:
         self.flipped = flipped
         self.paint: list[str] = []
         self.features: list[str] = []
+        # `group="ash"` etc. records the same element under a name, so a scheme drawn once can be
+        # re-emitted as one cut file per paint pass without drawing it again
+        self.groups: dict[str, list[str]] = {}
 
     # ---- coordinate conversion ----
     def y(self, v: float) -> float:
@@ -292,8 +295,10 @@ class Surface:
         """
         return (y - d) if self.flipped else (y + d)
 
-    def _add(self, layer: str, el: str) -> None:
+    def _add(self, layer: str, el: str, group: str | None = None) -> None:
         getattr(self, layer).append(el)
+        if group:
+            self.groups.setdefault(group, []).append(el)
 
     def rrect(self, x, y, w, h, r) -> str:
         """A rounded rectangle as path data in sheet coordinates (flip-aware).
@@ -305,17 +310,17 @@ class Surface:
         return rrect_d(x, top, w, h, r)
 
     def rect(self, x, y, w, h, fill, r=0.0, *, layer="paint", stroke=None, sw=0.0,
-             dash=None, opacity=None) -> None:
+             dash=None, opacity=None, group=None) -> None:
         self.path(self.rrect(x, y, w, h, r), fill, layer=layer, stroke=stroke, sw=sw,
-                  dash=dash, opacity=opacity)
+                  dash=dash, opacity=opacity, group=group)
 
     def circle(self, cx, cy, r, fill, *, layer="paint", stroke=None, sw=0.0,
-               opacity=None) -> None:
+               opacity=None, group=None) -> None:
         self.path(circle_d(cx, self.y(cy), r), fill, layer=layer, stroke=stroke, sw=sw,
-                  opacity=opacity)
+                  opacity=opacity, group=group)
 
     def path(self, d, fill, *, layer="paint", stroke=None, sw=0.0, dash=None,
-             opacity=None, rule=None) -> None:
+             opacity=None, rule=None, group=None) -> None:
         attrs = [f'd="{d}"', f'fill="{fill}"']
         if stroke:
             attrs += [f'stroke="{stroke}"', f'stroke-width="{f(sw)}"']
@@ -325,10 +330,10 @@ class Surface:
             attrs.append(f'opacity="{f(opacity)}"')
         if rule:
             attrs.append(f'fill-rule="{rule}"')
-        self._add(layer, "<path " + " ".join(attrs) + "/>")
+        self._add(layer, "<path " + " ".join(attrs) + "/>", group)
 
     def line(self, pts, stroke, sw, *, layer="paint", dash=None, opacity=None,
-             cap="square", join="round") -> None:
+             cap="square", join="round", group=None) -> None:
         d = "M" + " L".join(f"{f(x)} {f(self.y(yy))}" for x, yy in pts)
         attrs = [f'd="{d}"', 'fill="none"', f'stroke="{stroke}"', f'stroke-width="{f(sw)}"',
                  f'stroke-linecap="{cap}"', f'stroke-linejoin="{join}"']
@@ -336,14 +341,29 @@ class Surface:
             attrs.append(f'stroke-dasharray="{dash}"')
         if opacity is not None:
             attrs.append(f'opacity="{f(opacity)}"')
-        self._add(layer, "<path " + " ".join(attrs) + "/>")
+        self._add(layer, "<path " + " ".join(attrs) + "/>", group)
 
-    def text(self, s, cap, x, y, fill, *, layer="paint", **kw) -> None:
-        self._add(layer, tspan(s, cap, x, self.y(y), fill, **kw))
+    def text(self, s, cap, x, y, fill, *, layer="paint", group=None, **kw) -> None:
+        self._add(layer, tspan(s, cap, x, self.y(y), fill, **kw), group)
 
     def label(self, s, cap, x, y, fill=LABEL, **kw) -> None:
         """A grey annotation naming a printed feature.  Not paint."""
         self.text(s, cap, x, y, fill, layer="features", opacity=0.95, **kw)
+
+
+def _off_plate(px, py, w: float, h: float, r: float) -> bool:
+    """True outside the part outline, including its rounded corners.
+
+    "There is no plate here" has two causes - an aperture, or the edge - and a painted mark has to
+    respect both.  Without this the seam rule runs past the corner radius and the cut file ends up
+    with a loose black scrap outside the mask.
+    """
+    if px < 0.0 or py < 0.0 or px > w or py > h:
+        return True
+    # distance into a corner arc
+    cx = r - px if px < r else (px - (w - r) if px > w - r else 0.0)
+    cy = r - py if py < r else (py - (h - r) if py > h - r else 0.0)
+    return cx > 0.0 and cy > 0.0 and math.hypot(cx, cy) > r
 
 
 def _in_rect(px, py, box, pad=0.0) -> bool:
@@ -389,7 +409,8 @@ def deck_hit(m: Model, px, py, pad=0.0) -> bool:
     """True where the deck's top face is interrupted, or is reserved for the lettering."""
     x0, _, x1, depth = m.port
     fx, fy, fd = m.fan
-    return (_in_rect(px, py, m.type_boxes["deck"], pad)
+    return (_off_plate(px, py, m.w, m.l, m.deck_r)
+            or _in_rect(px, py, m.type_boxes["deck"], pad)
             or _in_rect(px, py, m.kb, pad) or _in_rect(px, py, m.oled, pad)
             or _in_rect(px, py, (x0, 0, x1 - x0, depth), pad)
             or _in_rect(px, py, m.fb, pad) or _in_circle(px, py, fx, fy, fd / 2, pad)
@@ -398,7 +419,8 @@ def deck_hit(m: Model, px, py, pad=0.0) -> bool:
 
 def cover_hit(m: Model, px, py, pad=0.0) -> bool:
     bx, by, bd = m.btn
-    return (_in_rect(px, py, m.type_boxes["cover"], pad)
+    return (_off_plate(px, py, m.w, m.l, m.cover_r)
+            or _in_rect(px, py, m.type_boxes["cover"], pad)
             or _in_rect(px, py, m.well, pad) or _in_rect(px, py, m.cable, pad)
             or _in_circle(px, py, bx, by, bd / 2 + 3.0, pad)
             or any(_in_circle(px, py, sx, sy, 5.5, pad) for sx, sy in m.slots))
@@ -436,69 +458,125 @@ def brand_deck(p: Surface, tagline: str, cap: float = 10.5) -> None:
     """Wordmark in the deck's free strip between the OLED and the keyboard (y 72.2 - 102.5)."""
     m = p.m
     x, y = m.w / 2, m.deck_text_y
-    p.text("KTEMATA", cap, x, y, AMBER_L, track=cap * 0.28, anchor="middle")
+    p.text("KTEMATA", cap, x, y, AMBER_L, track=cap * 0.28, anchor="middle", group="word")
     half = text_w("KTEMATA", cap, cap * 0.28) / 2
     yr, yt = p.below(y, 3.0), p.below(y, 6.8)
-    p.line([(x - half, yr), (x + half, yr)], AMBER, 0.8, opacity=0.9)
-    p.text(tagline, 2.6, x, yt, GREY_L, track=1.5, anchor="middle")
+    p.line([(x - half, yr), (x + half, yr)], AMBER, 0.8, opacity=0.9, group="word")
+    p.text(tagline, 2.6, x, yt, GREY_L, track=1.5, anchor="middle", group="word")
 
 
 def brand_cover(p: Surface, cap: float = 10.0) -> None:
     """Motto in the cover's 60 mm latch band, clear of the display well and the finger slots."""
     m = p.m
     x, y = m.w / 2, m.cover_text_y
-    p.text("κτῆμα ἐς ἀεί", cap, x, y, IVORY, italic=True, anchor="middle")
+    p.text("κτῆμα ἐς ἀεί", cap, x, y, IVORY, italic=True, anchor="middle", group="word")
     rule = text_w("κτῆμα ἐς ἀεί", cap, 0.0, True) / 2 + 8.0
     yr, yc = p.below(y, 5.2), p.below(y, 9.8)
-    p.line([(x - rule, yr), (x + rule, yr)], AMBER, 0.8, opacity=0.85)
+    p.line([(x - rule, yr), (x + rule, yr)], AMBER, 0.8, opacity=0.85, group="word")
     p.text("KTEMATA  ·  A POSSESSION FOR ALL TIME", 2.4, x, yc, GREY_L,
-           track=1.1, anchor="middle")
+           track=1.1, anchor="middle", group="word")
 
 
 # ---------------------------------------------------------------- scheme 1
-def scheme_meridian(p: Surface, cover: bool) -> None:
-    """MERIDIAN - a chart graticule, ruled from the hinge; one amber seam line."""
-    m = p.m
+class Mark:
+    """One painted mark: a rounded rectangle, optionally with a rounded hole in it (a ring).
+
+    Rects alone cannot express the bezel: four rects leave sharp slivers at the display well's
+    rounded corners. `inner` makes the ring exact, and both consumers - the colour sheet and the
+    cut file - build their geometry from this one object, so they cannot disagree.
+    """
+    __slots__ = ("x0", "y0", "x1", "y1", "fill", "group", "r", "inner", "opacity")
+
+    def __init__(self, x0, y0, x1, y1, fill, group, r=0.0, inner=None, opacity=None):
+        self.x0, self.y0, self.x1, self.y1 = x0, y0, x1, y1
+        self.fill, self.group, self.r, self.inner = fill, group, r, inner
+        self.opacity = opacity
+
+    def d(self, fy=lambda y: y) -> str:
+        out = rrect_d(self.x0, fy(self.y1), self.x1 - self.x0, self.y1 - self.y0, self.r)
+        if self.inner:
+            ix02, iy0, ix1, iy1, ir = self.inner
+            out += " " + rrect_d(ix02, fy(iy1), ix1 - ix02, iy1 - iy0, ir)
+        return out
+
+    @property
+    def rule(self) -> str | None:
+        return "evenodd" if self.inner else None
+
+
+def meridian_marks(m: Model, cover: bool) -> list[Mark]:
+    """MERIDIAN as axis-aligned rectangles: (x0, y0, x1, y1, fill, pass).
+
+    One source for both outputs. The colour sheet renders these rects; the stencil generator cuts
+    them. Written as data because every mark in this scheme is a rectangle - a 0.5 mm grid line is
+    a 0.5 mm-wide rect - so the cut file and the picture cannot drift apart.
+
+    `pass` names the tape pass a mark belongs to: ash, amber, seam, bezel, word.
+    """
     w, l = m.w, m.l
-    p.rect(0, 0, w, l, BASE, m.cover_r if cover else m.deck_r)
-
-    hit = (lambda x, y: cover_hit(m, x, y, 1.2)) if cover else \
-          (lambda x, y: deck_hit(m, x, y, 1.2))
+    out: list[Mark] = []
     pitch = l / 10.0
+    # a line stops where the plate is cut AND where the lettering is reserved: the type blocks
+    # are in type_boxes, and deck_hit/cover_hit already report them
+    hit = (lambda x, y: cover_hit(m, x, y, 1.6)) if cover else \
+          (lambda x, y: deck_hit(m, x, y, 1.6))
 
-    # The graticule is laid out FROM the hinge on both parts, so each line is at the same
-    # distance from the seam whichever half you are on and the grid continues across it.  Lines
-    # are 0.5 mm of ash; every fifth is 0.9 mm and amber.  Each is drawn as the runs where there
-    # is plate, so a line meets an aperture and stops - the mask decides, not the painter.
-    for i in range(1, 10):
-        y = i * pitch
-        strong = i % 5 == 0
-        for x0, x1 in runs_clear(lambda x: hit(x, y), 1.0, w - 1.0):
-            p.line([(x0, y), (x1, y)], AMBER if strong else GREY,
-                   0.9 if strong else 0.5, opacity=0.95 if strong else 0.55, layer="paint")
-    for i in range(1, 10):
-        x = i * pitch
-        if not (2.0 < x < w - 2.0):
-            continue
-        strong = i % 5 == 0
-        for y0, y1 in runs_clear(lambda y: hit(x, y), 1.0, l - 1.0):
-            p.line([(x, y0), (x, y1)], AMBER if strong else GREY,
-                   0.9 if strong else 0.5, opacity=0.95 if strong else 0.55, layer="paint")
+    def hline(y, x0, x1, t, fill, group):
+        out.append(Mark(x0, y - t / 2, x1, y + t / 2, fill, group,
+                        opacity=0.95 if fill == AMBER else (0.55 if fill == GREY else None)))
 
-    # the seam rule: 1.7 mm at y 2.2, full width, identical on both parts
-    p.rect(0.0, 2.2, w, 1.7, AMBER_D)
-    # and the scale's end stop at the latch edge
-    p.rect(0.0, l - 8.0, w, 1.2, AMBER_D, opacity=0.9)
+    def vline(x, y0, y1, t, fill, group):
+        out.append(Mark(x - t / 2, y0, x + t / 2, y1, fill, group,
+                        opacity=0.95 if fill == AMBER else (0.55 if fill == GREY else None)))
+
+    # Horizontals are ruled FROM the hinge, so line n is the same distance from the seam on both
+    # parts and the grid registers across it.  Verticals use the same pitch, so the cells are
+    # square, but are centred on the part: pitched from x = 0 they would stop at 160.3 and leave a
+    # 73 mm dead band on the right.  Nothing about a vertical has to line up across the hinge.
+    for i in range(1, 10):
+        y, strong = i * pitch, i % 5 == 0
+        for x0, x1 in runs_clear(lambda x: hit(x, y), 0.0, w):
+            hline(y, x0, x1, 0.9 if strong else 0.5,
+                  AMBER if strong else GREY, "amber" if strong else "ash")
+    k = 1
+    while k * pitch < w / 2 - 2.0:
+        for x in (w / 2 - k * pitch, w / 2 + k * pitch):
+            if 2.0 < x < w - 2.0:
+                strong = k % 5 == 0
+                for y0, y1 in runs_clear(lambda y: hit(x, y), 0.0, l):
+                    vline(x, y0, y1, 0.9 if strong else 0.5,
+                          AMBER if strong else GREY, "amber" if strong else "ash")
+        k += 1
+
+    # The seam rule and the scale's end stop, identical on both parts.  They are split by the
+    # same runs_clear test as the grid: the seam rule at y 2.2 crosses the deck's Pi opening
+    # (x 150..203.4, y 0..16), so on the deck it is two pieces, not one.  The colour sheet used to
+    # hide that behind its clip while the cut file had the line intact - the cut file is the one
+    # that lands on the part, so the marks are what gets split.
+    for y0, y1 in ((2.2, 3.9), (l - 8.0, l - 6.8)):
+        yc = (y0 + y1) / 2
+        for x0, x1 in runs_clear(lambda x: hit(x, yc), 0.0, w):
+            out.append(Mark(x0, y0, x1, y1, AMBER_D, "seam"))
 
     if cover:
         # the bezel takes a half step of tone, not a hue: it is the largest free surface on the
-        # part but it is not part of the grid
+        # part but it is not part of the grid.  Four rects, because it is a frame.
         wx, wy, ww, wh, wr = m.well
         fr = m.frame
-        ring = (p.rrect(wx - fr, wy - fr, ww + 2 * fr, wh + 2 * fr, wr + fr)
-                + " " + p.rrect(wx, wy, ww, wh, wr))
-        p.path(ring, SLATE, rule="evenodd")
-        p.path(ring, "none", stroke=GREY, sw=0.5, rule="evenodd", opacity=0.6)
+        # one ring mark, not four rects: the inner edge has to follow the well's corner radii or
+        # the corners come out as sharp slivers
+        out.append(Mark(wx - fr, wy - fr, wx + ww + fr, wy + wh + fr, SLATE, "bezel",
+                        r=wr + fr, inner=(wx, wy, wx + ww, wy + wh, wr)))
+    return out
+
+
+def scheme_meridian(p: Surface, cover: bool) -> None:
+    """MERIDIAN - a chart graticule, ruled from the hinge; one amber seam line."""
+    m = p.m
+    p.rect(0, 0, m.w, m.l, BASE, m.cover_r if cover else m.deck_r)
+    for mk in meridian_marks(m, cover):
+        p.path(mk.d(p.y), mk.fill, rule=mk.rule, opacity=mk.opacity, group=mk.group)
+    if cover:
         brand_cover(p, 10.5)
     else:
         brand_deck(p, "OFF  GRID  ·  ON  RECORD", 10.5)
@@ -891,12 +969,96 @@ def contact(pngs: list[Path], path: Path) -> None:
     out.save(path)
 
 
+# ---------------------------------------------------------------- stencils
+# A mask is the inverse of the paint: you cut away what gets sprayed. So each stencil is the part
+# outline with the marks of ONE pass removed, plus registration holes on a common datum so the
+# passes stack up. The colour sheet and these cut files come from the same mark data
+# (meridian_marks), so they cannot disagree.
+STENCIL_PASSES = [
+    ("ash", "ASH", "0.5 mm graticule, the short rules"),
+    ("amber", "AMBER", "0.9 mm graticule, every fifth rule"),
+    ("seam", "DEEP AMBER", "seam rule at the hinge, end stop at the latch edge"),
+    ("bezel", "SLATE", "bezel ring (lid cover only)"),
+]
+
+
+def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool) -> Path:
+    """One cut file: the mask for ONE paint pass.
+
+    Black is the material you keep and lay on the part; white is what the blade removes - the
+    waste, the apertures, and the slots paint passes through.  One file per pass, because each
+    colour is a separate masking: spray ash, lift, re-mask, cut amber, and so on.  Registration
+    crosses sit in the handling margin so the passes stack on the same datum without putting a
+    hole in the mask itself.
+    """
+    w, l = model.w, model.l
+    r = model.cover_r if cover else model.deck_r
+    pad = 14.0
+    sw, sh = 2 * pad + w, 2 * pad + l + 28.0
+
+    marks = [mk for mk in meridian_marks(model, cover) if mk.group == group]
+    holes = cover_holes_d(model) if cover else deck_holes_d(model)
+    # the cover is drawn mirrored y, exactly as on the colour sheet, so a mask cut from this file
+    # lands the same way round
+    fy = (lambda y: l - y) if cover else (lambda y: y)
+
+    title, blurb = next((n, b) for g, n, b in STENCIL_PASSES if g == group)
+    elems = [f'<rect x="0" y="0" width="{f(sw)}" height="{f(sh)}" fill="{PAPER}"/>']
+    # Printed as black-on-white, which is how a stencil sheet is read and cut.  It is deliberately
+    # NOT one boolean path: an even-odd union of an outline, a ring and its hole re-fills the ring
+    # interior, because even-odd counts every subpath crossing.  Black is laid out first, the
+    # cut-outs are painted over it, and the whole thing is clipped to the part outline so a mark
+    # that runs past the edge cannot leak outside the mask.
+    elems.append(f'<defs><clipPath id="part" clipPathUnits="userSpaceOnUse">'
+                 f'<path d="{rrect_d(0, 0, w, l, r)}"/></clipPath></defs>')
+    elems.append(f'<g transform="translate({f(pad)} {f(pad)})">'
+                 f'<path d="{rrect_d(0, 0, w, l, r)}" fill="{PAPER_INK}"/>'
+                 f'<g clip-path="url(#part)">'
+                 + "".join(f'<path d="{mk.d(fy)}" fill="{PAPER}" fill-rule="evenodd"/>'
+                           for mk in marks)
+                 + "".join(f'<path d="{h}" fill="{PAPER}"/>' for h in holes)
+                 + "</g></g>")
+
+    # The part outline is the datum, so registration crosses sit in the margin beyond the top and
+    # bottom edges where paper is plain - not on the mask, where they would be invisible against
+    # black and a hole in the sheet besides.
+    def cross(cx: float, cy: float) -> str:
+        return (f'<path d="M{f(cx - 4.5)} {f(cy)} H{f(cx + 4.5)} M{f(cx)} {f(cy - 4.5)} '
+                f'V{f(cy + 4.5)}" fill="none" stroke="{PAPER_INK}" stroke-width="0.3"/>')
+    # in the left and right margins, at mid height: the top and bottom margins carry the title
+    # and the caption, and a cross there collides with the type
+    for cx in (pad / 2, sw - pad / 2):
+        elems.append(cross(cx, pad + l / 2))
+
+    elems.append(tspan(f"MERIDIAN  ·  STENCIL  {title}  ·  {'LID COVER' if cover else 'DECK'}",
+                       3.2, pad, pad - 9.0, PAPER_INK, track=1.4))
+    elems.append(tspan(f"{blurb}   ·   cut 1:1, {f(w)} × {f(l)} mm", 2.4, pad,
+                       pad + l + 15.0, PAPER_MUTED))
+    elems.append(tspan("black = lay on the part   ·   white = cut away", 2.4, pad,
+                       pad + l + 19.4, PAPER_MUTED))
+    elems.append(tspan("crosses = registration   ·   KTEMATA r5", 2.4, sw - pad,
+                       pad + l + 15.0, PAPER_MUTED, anchor="end"))
+
+    head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{f(sw)}mm" height="{f(sh)}mm" '
+            f'viewBox="0 0 {f(sw)} {f(sh)}">\n'
+            f'<title>Meridian stencil - {"lid cover" if cover else "deck"} - {title}</title>\n')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(head + "\n".join(elems) + "\n</svg>\n", encoding="utf-8")
+    if preview:
+        subprocess.run(["rsvg-convert", "-w", "1100", "-o", str(path.with_suffix(".png")),
+                        str(path)], check=True)
+    return path
+
+
 # ---------------------------------------------------------------- main
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scheme", type=int, choices=(1, 2, 3), help="only this scheme")
     ap.add_argument("--no-png", action="store_true", help="skip the raster previews")
+    ap.add_argument("--stencils", action="store_true",
+                    help="also cut the chosen scheme (MERIDIAN) into one mask per paint pass")
     args = ap.parse_args()
 
     model = Model(probe())
@@ -911,6 +1073,17 @@ def main() -> None:
     if len(pngs) > 1:
         contact(pngs, OUT / "ktemata_paint_all.png")
         print(f"{'contact':<9} {(OUT / 'ktemata_paint_all.png').relative_to(REPO)}")
+
+    if args.stencils:
+        # MERIDIAN is the chosen scheme, and the only one that is entirely rectangles - which is
+        # why it is the one that can be cut as masks without any curve fitting
+        for cover, side in ((False, "deck"), (True, "cover")):
+            for group, name, _b in STENCIL_PASSES:
+                if not any(mk.group == group for mk in meridian_marks(model, cover)):
+                    continue
+                out = OUT / f"ktemata_stencil_{side}_{group}.svg"
+                stencil(model, cover, group, out, not args.no_png)
+                print(f"{'stencil':<9} {out.relative_to(REPO)}")
 
 
 if __name__ == "__main__":
