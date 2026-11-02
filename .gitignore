@@ -27,3 +27,4 @@ work/*
 zim/*.zim
 
 .shopping.md
+site/pdf/*.pdf
