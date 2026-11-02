@@ -79,3 +79,35 @@ openscad -o out.png --render --imgsize=1400,1100 --camera=75,90,17,60,0,35,430 c
 - Screws are M2.5×10 from the back into pilot holes in the face (`BRASS_INSERT` option for heat-set inserts).
 - r4 is 172 × 237 × 53 mm: width from the display plus walls and window border (the 151 × 59 × 11 mm K06 fits inside it), length from the portrait Touch Display 2 plus the 35.5 mm OLED band and the 59 mm K06, depth from the HAT (B) holder/cell side (23.35 mm; the board is mounted rotated 90° to clear the Pi's ports). The split plane moved to 38.55 mm (just above the Pi pcb) because the display is 14.92 mm deep; the display's own 8.5 mm standoffs span it and `face_part()` is clipped at `H_BOT`. The K06 pocket is entirely in the face part (body back at 39.97, above the plane). The K06 is **151 × 59 × 11** per its manual; the 155 × 89 × 16.5 on Rii's product page is the **i4**.
 - r2 is 150 × 205 × 46.5 mm. The UPS HAT (E) sits on the Pi's component side (left-aligned, clear of the USB/Ethernet ports) and the 21700 cells sit in a single row below it (custom printed cradles, no stock 2×2 holder), which keeps the depth practical. r2 has no active cooler or 40-pin header; the 6.5 mm gap is for the UPS pogo pins. The status OLED band adds 22 mm to the length. The face holds a separate 1.3" 4-pin I2C OLED module (`OLED_*`); the FireBeetle 2 ESP32-UE board (`FB_*`) sits in a low tray in the bottom shell and connects with a short 4-wire cable. Check `README.md` ("r3 CAD implementation") for the assumptions to verify before printing.
+
+# Agent Instructions: CAD & OpenSCAD/Freecad Specialist
+
+## Role Definition: `cad`
+When executing CAD, 3D-modeling, or mechanical design tasks, you must operate under the `cad` role context.
+* **Target Model:** `deepseek-v4.1-flash`
+* **Thinking Budget / Effort:** `high` (Ensure full reasoning trace for geometric transformations and spatial planning)
+* **Temperature:** `0.1` (Strict determinism for precise coordinates and measurements)
+
+## Strict OpenSCAD Generation Rules
+
+### 1. Code Validity & Output Format
+* Deliver **valid, directly compilable OpenSCAD (.scad) syntax** only.
+* Contain the executable code within proper markdown code blocks. 
+* Minimize verbose meta-explanations before or after the code blocks. Use inline comments (`//`) to document complex CSG operations instead.
+
+### 2. Parametric Design First
+* All critical dimensions (lengths, widths, heights, radii, wall thicknesses, tolerances) **must be declared as explicit variables** at the very top of the script.
+* Never hardcode numerical values deep inside translation or geometric modules. 
+
+### 3. CSG Logic & Artifact Prevention (Z-fighting)
+* When utilizing the `difference()` module, prevent coincident surface rendering artifacts (Z-fighting). 
+* Always clear the cutting object by adding a small offset (e.g., `+0.02` or overlapping positions like `translate([0,0,-0.01])`) to ensure clean boolean subtractions.
+
+### 4. Mesh Resolution Control
+* Manage fragment resolution responsibly using `$fn`. 
+* Apply global smooth variables (`$fn = 60;` or `$fn = 100;`) for finalized curves, but avoid excessively high values that degrade preview or render pipelines in headless environments.
+
+### 5. Mathematical Rigor & Transformations
+* Carefully compute nested spatial logic. Prioritize the correct order of operations: `translate()` then `rotate()` vs. `rotate()` then `translate()`.
+* Ensure that symmetric structural features are programmatic (e.g., using loops `for (i = [-1, 1])`) rather than duplicated manually.
+
