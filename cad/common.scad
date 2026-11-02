@@ -424,26 +424,34 @@ R5_CELL_POS = [[R5_UPS_X + R5_UPS_W/2 + CELL_PITCH_R4/2, R5_CELL_CY],
 R5_UPS_EDGE = R5_UPS_Y - 12;                            // 4, the jack's far face
 
 // keyboard: at the latch end, i.e. outside the display's shadow, so its height is free
-R5_KB_POCKET = [151.6, 59.6];                           // K06 151 x 59 + 0.6 clearance
+// The K06 outline is not a plain rectangle: its corners are rounded. R5_KB_CORNER is measured off
+// the outline drawing in the K06 manual (the same drawing that gives 151 x 59 - 746 px / 151 mm =
+// 290 px / 59 mm, and a circle fitted to the corner arc over 26 px gives r 6.4 mm, rms 0.2 px).
+R5_KB_CORNER = 6.4;
+R5_KB_CLR = 0.3;                                        // printed clearance per side
+R5_KB_POCKET = [KB_BODY[0] + 2*R5_KB_CLR,               // 151.6
+                KB_BODY[1] + 2*R5_KB_CLR];              // 59.6
 R5_KB_X0 = (R5_W - R5_KB_POCKET[0])/2;
 R5_KB_Y0 = R5_L - 16 - R5_KB_POCKET[1];
 R5_KB_WALL = 1.8;
-R5_KB_LIP = 2.5;                                       // lip overlap over the Esc row
 // The keyboard is SUNK into the deck so its keys finish level with the deck's top face. The body
-// is KB_BODY[2] = 11 mm and the plate is R5_DECK_T, so the recess has to hang below the plate:
-// R5_KB_SINK is how far the body's underside sits under R5_DECK_TOP, i.e. below the plate's
-// underside, into the (empty) tray cavity over the keyboard band.
-R5_KB_SINK = KB_BODY[2] - R5_DECK_T;                   // 6.5 mm below the plate (11 - 4.5)
-R5_KB_WELL_BOT = R5_DECK_Z - R5_KB_SINK;               // 33.9, the keyboard's resting plane
-// The body rests on R5_KB_WELL_BOT - the skirt's bottom edge and the two ribs - so its underside
-// and the keys land where they should. Clearance in plan is already in R5_KB_POCKET (0.3 mm per
-// side on the K06 body).
-// The recess has no floor any more: a 151 x 59 ceiling printed top-face down needed ~4100 s of
-// tree support. Two full-height ribs carry the keyboard instead, R5_KB_BAND wide, near a third
-// and two thirds along the body so it cannot rock, and clear of the Esc row's overhang.
-R5_KB_BAND = 8;
-R5_KB_BAND_X0 = R5_KB_X0 + R5_KB_POCKET[0]/3;
-R5_KB_BAND_X1 = R5_KB_X0 + 2*R5_KB_POCKET[0]/3;
+// is KB_BODY[2] = 11 mm and the plate is R5_DECK_T = 4.5, so the recess has to hang below the
+// plate: R5_KB_SINK is how far the body's underside sits below R5_DECK_TOP (11 mm - the whole
+// body), i.e. 6.5 mm below the plate's underside, into the (empty) tray cavity.
+R5_KB_SINK = KB_BODY[2];                               // 11 mm below the deck's TOP face
+R5_KB_WELL_BOT = R5_DECK_TOP - R5_KB_SINK;             // 33.9, the keyboard's resting plane
+// The body rests on R5_KB_WELL_BOT. Nothing may occupy the space ABOVE that plane inside the
+// pocket - the whole 11 mm column belongs to the keyboard - so the seat hangs below it: a ledge
+// along each of the two long walls, R5_KB_SEAT wide, its underside chamfered 45 deg back to the
+// wall so it prints. The K06's shell carries its rim on exactly those two edges, which is also
+// where r4's support frame touched it.
+// A ledge rather than the two full-height "carry ribs" this replaced: those stood inside the
+// keyboard's own volume, and the plate cut sheared their tops off at the plate's underside - the
+// body then landed 5.5 mm above its intended plane. A band spanning the pocket instead would be a
+// 59.6 mm unsupported bridge at the top of the print.
+R5_KB_SEAT = 2.5;                                      // ledge width under the body's edge
+R5_KB_SEAT_X0 = R5_KB_X0 + R5_KB_CORNER;               // straight run only, clear of the corners
+R5_KB_SEAT_X1 = R5_KB_X0 + R5_KB_POCKET[0] - R5_KB_CORNER;
 R5_KB_TOP = R5_DECK_TOP;                               // keys finish level with the plate
 
 // status OLED module on the deck (visible with the lid open). Measured module:
@@ -458,15 +466,18 @@ R5_KB_TOP = R5_DECK_TOP;                               // keys finish level with
 R5_OLED_BOARD  = [35.5, 33.7, 1.2];                     // pcb
 R5_OLED_GLASS  = [34.5, 23.0, 1.45];                    // glass slab on the pcb
 R5_OLED_ACTIVE = [29.42, 14.7];                        // lit area inside the glass border
-// The glass is centred across the pcb's width and sits R5_OLED_GLASS_Y in from the pcb's
-// hinge-side (low-y) edge; the leftover 9.7 mm on the far edge is the 4-pin header, which faces
-// the keyboard. Measure yours and adjust.
-R5_OLED_GLASS_Y = 1.0;
+// The glass is centred on the pcb in both axes: 34.5 against the pcb's 35.5 leaves 0.5 mm a side,
+// and its 23 mm against the pcb's 33.7 leaves (33.7 - 23)/2 = 5.35 mm to each edge, which is the
+// ~5 mm the window's border has to be. Relative to the BOARD, not the pocket: the pocket carries a
+// clearance, so centring on it would put 0.4 mm more plate at one end than the other. (It sat at
+// 1.0 mm from the hinge-side edge, i.e. 9.7 mm at the far edge, which put the window 4.75 mm too
+// far towards the hinge. Measure yours and adjust.)
 R5_OLED_PCB_CLR = 0.4;                                 // pocket clearance, per side
 R5_OLED_WIN_CLR = 0.15;                                // window clearance around the glass
 R5_OLED_MIN_SEAT = 0.3;                                // least plate the pcb rests on
 R5_OLED_PCB = [R5_OLED_BOARD[0] + 2*R5_OLED_PCB_CLR,
                R5_OLED_BOARD[1] + 2*R5_OLED_PCB_CLR];
+R5_OLED_GLASS_Y = (R5_OLED_BOARD[1] - R5_OLED_GLASS[1])/2; // 5.35, centred on the pcb
 R5_OLED_WIN = [R5_OLED_GLASS[0] + 2*R5_OLED_WIN_CLR,
                R5_OLED_GLASS[1] + 2*R5_OLED_WIN_CLR];
 // centred between the keyboard pocket and the hinge-side edge: the keyboard owns y > R5_KB_Y0,
@@ -480,8 +491,9 @@ R5_OLED_SEAT = R5_DECK_Z + R5_OLED_BOARD[2];
 // How much plate the pcb actually lands on, per edge: the ring of plate at the seat plane runs
 // from the window's edge to the pocket's wall, but the board's own edge stops a clearance short
 // of that wall, so the clearance is dead width and subtracts. (The pcb is only 0.5 mm wider than
-// its glass either side, so the sides carry 0.35 mm and the ends - 0.85 and 9.55 mm of bezel - are
-// what really hold the module up. Thin sides are the hardware's doing, not a choice: see docs/R5.md.)
+// its glass either side, so the sides carry 0.35 mm and the ends - 5.2 mm each now that the window
+// is centred - are what really hold the module up. Thin sides are the hardware's doing, not a
+// choice: see docs/R5.md.)
 R5_OLED_SEAT_X  = (R5_OLED_PCB[0] - R5_OLED_WIN[0])/2 - R5_OLED_PCB_CLR;
 R5_OLED_SEAT_Y0 = R5_OLED_WIN_Y0 - R5_OLED_Y0 - R5_OLED_PCB_CLR;
 R5_OLED_SEAT_Y1 = R5_OLED_Y0 + R5_OLED_PCB[1] - (R5_OLED_WIN_Y0 + R5_OLED_WIN[1])
@@ -521,16 +533,47 @@ R5_DISP_HOLES = [for (dx=[R5_DISP_HOLE_IX, R5_DISP_HOLE_IX + 122.74])
                  for (dy=[R5_DISP_HOLE_IY, R5_DISP_HOLE_IY + 72.96]) [dx, dy]];
 
 // deck screws: on the straight wall runs only (a boss in a 14 mm corner would break the
-// outer radius). Each is a Ø7 column whose centre sits 2.5 mm inside the inner face, so it
-// overlaps the wall by 1 mm and protrudes 6 mm into the cavity.
-R5_INSET = BOSS_D/2 - 1;                               // 2.5
+// outer radius). Each is a Ø9 column whose centre sits 2.5 mm inside the inner face, so it
+// overlaps the wall by 2 mm and protrudes 7 mm into the cavity.
+//
+// The deck is held by M3, not M2.5. It comes off for every service - keyboard, OLED, fan,
+// FireBeetle - and a heat-set insert is what survives that; a 2.2 mm self-tapping pilot in PETG
+// does not. That in turn sets the boss: an M3 insert is ~4.6 mm across, so the boss goes from
+// Ø7 (BOSS_D, still right for the board posts and the case) to Ø9, which leaves 2.4 mm of wall
+// round the insert. The four board posts keep their Ø8 and M2.5 pilots - those screws go in once.
+M3_CLR   = 3.4;                                        // clearance hole through the deck
+M3_HEAD  = 6.2;                                        // counterbore: Ø5.7 button head + 0.5
+M3_INS_D = 4.2;                                        // heat-set insert hole: 4.6 OD - 0.4 melt
+M3_INS_H = 6.0;                                        // insert depth: 5.7 mm insert + margin
+R5_BOSS_D = 9;                                         // deck boss (2.4 mm wall round the insert)
+// The inset stays at 2.5, not R5_BOSS_D/2 - 1: at 3.5 the left-wall bosses would reach x 10.6
+// and eat 0.6 mm into the FireBeetle's floor pad (module at x 10). At 2.5 the boss tops out at
+// 9.6, which is the pad's inner face, so the module still has its full seat.
+R5_INSET = 2.5;
 // The hinge-end pair moved outboard, from x = R5_W/2 to x = 26 / R5_W-26: the centre one stood
 // exactly where the HAT (B)'s USB-A and 8.4 V jack overhang the hinge end (x 84..118, y 4..16),
 // and that overhang hangs below the pcb, i.e. at the boss's own height. Both new positions are in
 // the solid hinge wall run, clear of the board posts and of the jack.
-R5_SCREWS = [[R5_WALL + R5_INSET, 40], [R5_W - R5_WALL - R5_INSET, 40],
-             [R5_WALL + R5_INSET, R5_L - 40], [R5_W - R5_WALL - R5_INSET, R5_L - 40],
-             [26, R5_WALL + R5_INSET], [R5_W - 26, R5_WALL + R5_INSET]];
+//
+// The seventh boss is the middle of the BOTTOM (keyboard-end) wall, which carried none: that wall
+// is 151.6 mm of unscrewed span between the corner bosses at x 26 / R5_W-26, and the deck's
+// keyboard pocket sits right on it, so the plate there was free to lift. It is appended rather
+// than inserted so R5_SCREWS[5] (the hinge-wall pair that bounds the Pi opening) keeps its index.
+R5_SCREW_MID = [R5_W/2, R5_L - R5_WALL - R5_INSET];    // 116.75, 173.0
+R5_SCREWS = concat([[R5_WALL + R5_INSET, 40], [R5_W - R5_WALL - R5_INSET, 40],
+                    [R5_WALL + R5_INSET, R5_L - 40], [R5_W - R5_WALL - R5_INSET, R5_L - 40],
+                    [26, R5_WALL + R5_INSET], [R5_W - 26, R5_WALL + R5_INSET]],
+                   [R5_SCREW_MID]);
+// The middle boss has to clear the keyboard well, which hangs below the deck from y 100.7 to
+// 163.9 (pocket + its 1.8 mm wall ring); 4.5 mm of boss either side of 173 leaves 6.6 mm.
+assert(R5_SCREW_MID[1] - R5_BOSS_D/2 >= R5_KB_Y0 + R5_KB_POCKET[1] + R5_KB_WALL + 1,
+       str("the middle deck boss reaches y ", R5_SCREW_MID[1] - R5_BOSS_D/2,
+           ", into the keyboard well (which ends at ",
+           R5_KB_Y0 + R5_KB_POCKET[1] + R5_KB_WALL, ")"));
+assert((R5_BOSS_D - M3_INS_D)/2 >= 2,
+       str("an M3 insert hole of ", M3_INS_D, " in a ", R5_BOSS_D,
+           " boss leaves less than 2 mm of wall"));
+assert(R5_INSET >= 1, "the deck bosses must overlap the wall by at least 1 mm");
 
 // ---- closed-case clearance ----
 // The base and the lid meet at the seal plane (z = HOST_BOT), so the lid ceiling sits HOST_LID
@@ -549,6 +592,16 @@ assert(!R5 || R5_PAD + R5_KB_TOP + 2 <= R5_GLASS,
            R5_PAD + R5_KB_TOP + 2));
 assert(!R5 || R5_PAD + R5_KB_TOP <= HOST_BOT - 2,
        str("host ", HOST, ": ", HOST_BOT, " mm base, the keyboard stack needs ", R5_PAD + R5_KB_TOP));
+// The keyboard's whole thickness column must be free: the seat hangs BELOW R5_KB_WELL_BOT, never
+// inside it, and the body drops the full KB_BODY[2] so its keys land on the deck's top face. The
+// first version of the sunk recess put two full-height ribs in that column, the plate cut sheared
+// them, and the body landed 5.5 mm high - so the geometry that made it possible is checked here.
+assert(R5_KB_WELL_BOT < R5_DECK_Z,
+       str("the keyboard seat (", R5_KB_WELL_BOT, ") is not below the plate's underside (",
+           R5_DECK_Z, "): the body cannot sink into the deck"));
+assert(R5_KB_WELL_BOT - R5_KB_SEAT > R5_FLOOR,
+       str("the seat ledge reaches down to ", R5_KB_WELL_BOT - R5_KB_SEAT,
+           ", at or through the tray floor (", R5_FLOOR, ")"));
 
 
 // ---------------- r5 lid cover (r5_lid_cover.scad) ----------------
@@ -595,7 +648,7 @@ COVER_ACTIVE = [110.7, 62.3];
 // the pocket instead of venting anything, and being a slot bank they moved little air.
 //
 // They are replaced by round fan openings in the free top corners, away from the keyboard and
-// from the six deck screws:
+// from the deck screws:
 //   top-left  centre (44, 38)     38 mm hole for a 40 mm fan
 //   top-right centre (189.5, 38)  the same, with DECK_FANS=2
 // The corners are clear: the nearest deck screw is 40 mm away and the keyboard starts at
@@ -622,14 +675,14 @@ DECK_GRILL_RIB = 1.0;                                   // bars sit flush, this 
 // cable under plate.
 //
 // Both ends are bounded by real hardware, which the previous 150..210 span ignored:
-//   - right: deck screw 5 at (207.5, 5.1) with a Ø5.2 counterbore, so the cut must stop short of
-//            x 204.9 or that boss has no head seat (it had a 0.4 mm sliver),
+//   - right: deck screw 5 at (207.5, 5.1) with a Ø6.2 counterbore, so the cut must stop short of
+//            x 204.4 or that boss has no head seat,
 //   - right: with DECK_FANS=2 the right fan reaches down to y 19, so the cut must stay shallower
 //            than that or the two merge into one ragged outline. With DECK_FANS=1 (the default)
 //            there is no fan there and the depth only has to clear the Pi's connectors (16 mm).
 //   - left:  x 150 clears the Pi's own edge by 2 mm and nothing else is there.
 R5_OPEN_X0 = R5_PI_X - 2;                              // 150
-R5_OPEN_X1 = R5_SCREWS[5][0] - M25_HEAD/2 - 1;         // 203.9: 1 mm clear of the head
+R5_OPEN_X1 = R5_SCREWS[5][0] - M3_HEAD/2 - 1;          // 203.4: 1 mm clear of the head
 // depth: 1 mm below the right fan if it is fitted, otherwise the connector envelope (16 mm).
 // Derived from the fan centre and DECK_FANS so it tracks the switch instead of describing it.
 R5_FAN_R_Y = DECK_FAN_CTRL[1][1] - DECK_FAN_D/2;       // 19: lowest point of the right opening
@@ -644,7 +697,7 @@ assert(R5_OPEN_X0 <= R5_PI_HINGE_CONN[0] && R5_OPEN_X1 >= R5_PI_HINGE_CONN[1],
            ": deck screw 5 or the right fan has moved into it"));
 assert(R5_OPEN_D >= R5_PI_Y,
        str("the hinge opening is ", R5_OPEN_D, " mm deep, the Pi's connectors need ", R5_PI_Y));
-assert(R5_SCREWS[5][0] - M25_HEAD/2 >= R5_OPEN_X1,
+assert(R5_SCREWS[5][0] - M3_HEAD/2 >= R5_OPEN_X1,
        "the hinge opening runs into deck screw 5's counterbore");
 
 // base chamfered rectangle (in real XY, origin bottom-left)

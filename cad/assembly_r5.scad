@@ -69,8 +69,13 @@ module c_cells() {
     for (p=R5_CELL_POS) r5_at(p[0], p[1] - CELL_L/2, R5_CELL_Z0 + CELL_D/2)
         rotate([90, 0, 0]) cylinder(d=CELL_D, h=CELL_L);
 }
-module c_keyboard() r5_box(R5_KB_X0 + 0.3, R5_KB_Y0 + 0.3,
-                           R5_KB_X0 + 151.3, R5_KB_Y0 + 59.3, R5_DECK_TOP, KB_BODY[2]);
+// The K06 body, sunk the full 11 mm so its key face is level with the deck's top face. Rounded to
+// R5_KB_CORNER like the real outline, so the deck:keyboard sweep checks the cut's corners too.
+// r5_at puts the shape's MAX drawing y at its argument (it grows towards +y in real coords), so
+// the far edge of the pocket is what goes in, not the near one.
+module c_keyboard() r5_at(R5_KB_X0 + R5_KB_CLR,
+                          R5_KB_Y0 + R5_KB_POCKET[1] - R5_KB_CLR, R5_KB_WELL_BOT)
+    linear_extrude(KB_BODY[2]) rrect(KB_BODY[0], KB_BODY[1], R5_KB_CORNER);
 // the module: pcb seated on the pocket ceiling, glass in the window well. Both are drawn at
 // their measured size so the interference sweep checks the pocket and window really clear them.
 module c_oled() {

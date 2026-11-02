@@ -6,7 +6,7 @@
 //     the cells: Waveshare's holders hold the cells, its 6 mm standoffs hold the Pi),
 //   - the FireBeetle 2, DS3231 and charger module on shallow floor pads,
 //   - the bulkhead charge socket bracket,
-//   - six M2.5 bosses for the deck (r5_deck.scad).
+//   - seven M3 insert bosses for the deck (r5_deck.scad).
 //
 // Print floor down. Every wall is vertical, no supports, nothing overhangs the bed face.
 include <common.scad>
@@ -48,10 +48,11 @@ module ups_posts() for (p=R5_UPS_HOLES) board_post(p, R5_HAT_BOT);
 module pi_posts()  for (p=R5_PI_HOLES)  board_post(p, R5_M2_BOT);
 
 // ---- deck screws: columns straddling the inner wall face ----
-// Ø7 boss centred 2.5 mm inside the wall: 1 mm of overlap fuses it to the wall, the rest stands
-// in the cavity, and a Ø2.2 pilot takes the M2.5 through the deck above.
-module boss_solid(p) r5_at(p[0], p[1]) translate([0, 0, R5_FLOOR]) cylinder(d=BOSS_D, h=R5_H_BOT - R5_FLOOR);
-module boss_cut(p)   r5_at(p[0], p[1]) translate([0, 0, R5_H_BOT - 9]) cylinder(d=M25_PIL, h=10);
+// Ø9 boss centred 2.5 mm inside the wall: 2 mm of overlap fuses it to the wall, the rest stands
+// in the cavity. The deck bolts down with M3 into a heat-set insert (M3_INS_* in common.scad),
+// so the bore is 4.2 mm and 6 mm deep, starting at the boss's top face.
+module boss_solid(p) r5_at(p[0], p[1]) translate([0, 0, R5_FLOOR]) cylinder(d=R5_BOSS_D, h=R5_H_BOT - R5_FLOOR);
+module boss_cut(p)   r5_at(p[0], p[1]) translate([0, 0, R5_H_BOT - M3_INS_H]) cylinder(d=M3_INS_D, h=M3_INS_H + 0.01);
 
 // ---- cell cradles ----
 // U-saddles under each cell. The bore is 1.2 mm larger than the cell, so the cell locates but is
@@ -96,20 +97,20 @@ module charge_cut() {
 }
 
 // ---- wall windows: take the middle band out of the four free wall runs ----
-// The walls do three jobs only: locate the cassette in the host, carry the six deck bosses and
+// The walls do three jobs only: locate the cassette in the host, carry the seven deck bosses and
 // close the side of the tray. The stack's weight goes through the floor (cells, HAT and Pi all
 // rest on it), so a wall only has to stay stiff in its own plane. Removing a 23.55 mm band saves
 // ~21 cm3 of PETG (~27 g) and leaves a frame: an 8 mm band above the floor (the print's first
-// 27 layers stay closed), a 12 mm rim band that the deck bolts to (the boss pilots start at
-// 36.95), the 14 mm corner radii, and a solid zone round every boss.
+// 27 layers stay closed), a 12 mm rim band that the deck bolts to (the M3 insert bores start
+// at 34.4), the 14 mm corner radii, and a solid zone round every boss.
 //
 WIN = is_undef(WIN) ? true : WIN;   // -D WIN=false prints the tray with solid walls
 WIN_Z0 = R5_FLOOR + 8;              // 10.4, clear of the floor and the cell saddles
-WIN_Z1 = R5_H_BOT - 12;            // 33.95, below the boss pilots (36.95)
+WIN_Z1 = R5_H_BOT - 12;            // 28.4, below the M3 insert bores (34.4)
 WIN_RIB = 6;                       // solid rib between two openings
 WIN_TARGET = 24;                   // opening width to aim at
 WIN_MIN = 12;                      // below this the wall stays solid
-WIN_BOSS = BOSS_D/2 + 3;           // run ends this far from a deck-boss centre (6.5)
+WIN_BOSS = R5_BOSS_D/2 + 3;        // run ends this far from a deck-boss centre (7.5)
 //
 // The head of an opening is a 45 deg gable, not a flat ceiling and not a semicircle. Measured
 // with the project's own profile (Bambu P1S, PETG, 0.3 mm layers, tree(auto)) on the identical
@@ -173,12 +174,15 @@ module wall_windows() {
     win_row_x(R5_W - R5_WALL, R5_W, 40 + WIN_BOSS, R5_CHG_Y - 17);
     win_row_x(R5_W - R5_WALL, R5_W, R5_L - 40 + WIN_BOSS, R5_L - 20);
     // hinge and keyboard ends: the boss pair sits at x 26 / R5_W-26 (see R5_SCREWS), so each end
-    // gets one long run between the two boards' post rows plus a short one at each corner
+    // gets one long run between the two boards' post rows plus a short one at each corner.
+    // The keyboard end carries the seventh boss in the middle of its run (R5_SCREW_MID), so that
+    // run is split there; the corner runs fall below WIN_MIN once WIN_BOSS grew with the M3 boss.
     win_row_y(0, R5_WALL, 20, 26 - WIN_BOSS);
     win_row_y(0, R5_WALL, 26 + WIN_BOSS, R5_W - 26 - WIN_BOSS);
     win_row_y(0, R5_WALL, R5_W - 26 + WIN_BOSS, R5_W - 20);
     win_row_y(R5_L - R5_WALL, R5_L, 20, 26 - WIN_BOSS);
-    win_row_y(R5_L - R5_WALL, R5_L, 26 + WIN_BOSS, R5_W - 26 - WIN_BOSS);
+    win_row_y(R5_L - R5_WALL, R5_L, 26 + WIN_BOSS, R5_SCREW_MID[0] - WIN_BOSS);
+    win_row_y(R5_L - R5_WALL, R5_L, R5_SCREW_MID[0] + WIN_BOSS, R5_W - 26 - WIN_BOSS);
     win_row_y(R5_L - R5_WALL, R5_L, R5_W - 26 + WIN_BOSS, R5_W - 20);
 }
 
@@ -194,7 +198,12 @@ module vents() for (i=[0:5])
 // ---- hinge-side rim notch: the display FFC and module leads cross the rim ----
 module rim_notch() r5_box(R5_W/2 - 55, R5_WALL - 1, R5_W/2 + 55, R5_WALL + 2, R5_H_BOT - 2.5, 3);
 
-module floor_text() r5_at(R5_W/2, R5_L - 6, R5_FLOOR - 0.5) linear_extrude(1)
+// The label is engraved 0.5 mm into the floor's inside face. It sits left of centre: the seventh
+// deck boss stands at the middle of this wall (R5_SCREW_MID, x 116.75, y 168.5..177.5), and an
+// engraving under a boss becomes an enclosed void inside the solid - a second, inward-facing
+// shell in the STL that no slicer can print. 78.75 also keeps it clear of the MPPT pad (x 70).
+FLOOR_TEXT_X = R5_W/2 - 38;
+module floor_text() r5_at(FLOOR_TEXT_X, R5_L - 6, R5_FLOOR - 0.5) linear_extrude(1)
     text("KTEMATA  r5", size=6, halign="center", valign="center", font="Liberation Sans:style=Bold");
 
 module r5_tray() difference() {

@@ -36,7 +36,7 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | 20 | Dupont jumpers, female–female, 20 cm | 1 set | UPS INA219 I²C (0x42) + 5 V to the FireBeetle. | € 5 |
 | 21 | USB-A → USB-C data cable, 20–30 cm | 1 | FireBeetle ↔ Pi serial. **Data-only** (VBUS disconnected) — the FireBeetle is powered from the UPS. | € 5 |
 | 22 | USB-A → 2-pin 5 V lead (JST-XH / dupont) | 1 | UPS USB-A 5 V → FireBeetle 5 V/GND; keeps the OLED alive with the Pi off. | € 5 |
-| 23 | M2.5 × 10 screws | 6 | Case screws. Display and Pi screws come with the display. | € 12 (set) |
+| 23 | M3 × 10 screws | 7 | r5 deck screws. Display and Pi screws come with the display. | € 12 (set) |
 | 24 | Fuse + holder, 3–5 A | 1 | On the 2S pack lead. | € 4 |
 | 25 | Silicone O-ring / gasket assortment | 1 | Case seam, DC socket, button. | € 10 |
 | 26 | Filament, PETG/PLA + TPU | ≈ 500 g | The r4 shells or the r5 cassette; the TPU is only for the charge plug. | € 15 + € 20 |
@@ -55,7 +55,8 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
 | Foldable 20–30 W solar panel | 1 | Must reach 8.4 V through the module above; a PD-only panel is useless here. | € 50–80 |
 | 5 W ETFE panel for the case back | 1 | Fits the 172 × 237 mm r4 back. | € 42.34 |
 | Hand crank generator | 1 | Feeds the same charge input. A 2S pack needs roughly 3–5 h of cranking for a full charge. Separate [handcrank](https://github.com/jsoeterbroek/handcrank) project, not part of this repo. | € 30–70 |
-| M2.5 heat-set inserts | — | Only with `BRASS_INSERT=true`. | € 13 |
+| M2.5 heat-set inserts | — | Only with `BRASS_INSERT=true` (r4 face). | € 13 |
+| M3 heat-set inserts (4.6 mm OD × 5.7 mm) | 7 | r5 deck bosses, `M3_INS_*` in `common.scad`. The r4 case does not use them. | € 8 |
 | Thin thermal pad | 1 | No active cooler; only if it fits the 6 mm UPS gap. | € 5 |
 
 ---
