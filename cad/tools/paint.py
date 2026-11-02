@@ -579,7 +579,7 @@ def scheme_meridian(p: Surface, cover: bool) -> None:
     if cover:
         brand_cover(p, 10.5)
     else:
-        brand_deck(p, "OFF  GRID  ·  ON  RECORD", 10.5)
+        brand_deck(p, "OFFLINE  LIBRARY", 10.5)
 
 
 # ---------------------------------------------------------------- scheme 2
@@ -666,7 +666,7 @@ def scheme_bearing(p: Surface, cover: bool) -> None:
     if cover:
         brand_cover(p, 10.0)
     else:
-        brand_deck(p, "ON  RECORD  ·  OFF  GRID", 10.5)
+        brand_deck(p, "OFFLINE  LIBRARY", 10.5)
 
 
 SCHEMES = [
