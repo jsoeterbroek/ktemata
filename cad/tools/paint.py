@@ -125,18 +125,24 @@ class Model:
         # (starts y 102.5): 4 mm clear above the cap, 4 mm below the small line
         self.deck_text_y = g("P_OLED_Y0") + g("P_OLED_H") + 4.0 + 10.5
         self.cover_text_y = 133.0             # latch band, below the display well (ends 99.0)
-        dcap = ccap = 10.5
-        dwide = text_w("KTEMATA", dcap, dcap * 0.28) / 2 + 6.0
-        cwide = text_w("κτῆμα ἐς ἀεί", ccap, 0.0, True) / 2 + 6.0
         # drawing y grows hinge -> latch, so a glyph stands ABOVE its baseline at smaller y on
         # the deck (unflipped) and at larger y on the cover (drawn flipped to keep the hinge at
         # the seam).  Build each block in the part's own frame.
-        self.type_boxes: dict[str, tuple[float, float, float, float]] = {
-            "deck": (self.w / 2 - dwide, self.deck_text_y - dcap - 2.0,
-                     2 * dwide, dcap + 6.8 + 4.0),
-            "cover": (self.w / 2 - cwide, self.cover_text_y - 9.8 - 2.0,
-                      2 * cwide, ccap + 9.8 + 4.0),
-        }
+        #
+        # The reserved plate IS the sticker (see sticker_specs): tw x th of vinyl, printed in the
+        # base graphite, laid where the graticule was told to stop.  Deriving the box from the
+        # sticker means a line can never end under the vinyl's edge, and resizing the artwork
+        # moves the keep-out with it.
+        boxes = {}
+        for side, base in (("deck", self.deck_text_y), ("cover", self.cover_text_y)):
+            tw, th = sticker_trim(side)
+            bx0, by0, _bx1, by1 = _sticker_box(next(s for s in sticker_specs()
+                                                     if s["side"] == side))
+            # the deck is drawn upright, so artwork "above the baseline" is at smaller part y;
+            # the cover is drawn mirrored, so the same ink sits at larger y there
+            y0 = (base - by1 - STICKER_MARGIN) if side == "cover" else (base + by0 - STICKER_MARGIN)
+            boxes[side] = (self.w / 2 - tw / 2, y0, tw, th)
+        self.type_boxes: dict[str, tuple[float, float, float, float]] = boxes
 
         # ---- free fields, derived and checked ----
         self.rail_l = x                       # deck free rail, 40.95
@@ -241,6 +247,90 @@ def _text_path(text: str, cap: float, italic: bool, track: float) -> tuple[str, 
 
 def text_w(text: str, cap: float, track: float = 0.0, italic: bool = False) -> float:
     return _text_path(text, cap, italic, track)[1]
+
+
+# ---------------------------------------------------------------- the two type blocks
+# Defined here, above the Model, because the mask and the sticker are the same footprint: the
+# reserved plate on the sheet IS the sticker, so a graticule line stops just short of the vinyl
+# instead of leaving a painted sliver under its edge.  One definition, two consumers.
+STICKER_MARGIN = 2.5     # graphite visible round the ink, inside the cut line
+STICKER_BLEED = 1.0      # print past the cut line, per the printer's spec
+STICKER_CAP = 10.5       # matches brand_deck's cap
+
+
+def sticker_specs() -> list[dict]:
+    cap = STICKER_CAP
+    return [
+        dict(side="deck", name="wordmark",
+             lines=[("KTEMATA", cap, cap * 0.28, False, AMBER_L, 0.0),
+                    ("OFFLINE  LIBRARY", 2.6, 1.5, False, GREY_L, 6.8)],
+             rule=(3.0, text_w("KTEMATA", cap, cap * 0.28) / 2, AMBER, 0.8),
+             note="KTEMATA wordmark, deck top face"),
+        dict(side="cover", name="motto",
+             lines=[("κτῆμα ἐς ἀεί", cap, 0.0, True, IVORY, 0.0),
+                    ("KTEMATA  ·  A POSSESSION FOR ALL TIME", 2.4, 1.1, False, GREY_L, 9.8)],
+             rule=(5.2, text_w("κτῆμα ἐς ἀεί", cap, 0.0, True) / 2 + 8.0, AMBER, 0.8),
+             note="motto, lid cover bezel face"),
+    ]
+
+
+def _sticker_box(spec: dict) -> tuple[float, float, float, float]:
+    """Ink bounds of one block: x from its centre, y down-positive from the baseline."""
+    x0 = y0 = math.inf
+    x1 = y1 = -math.inf
+    for text, cap, track, italic, _fill, dy in spec["lines"]:
+        ax0, ay0, ax1, ay1 = _text_ink(text, cap, italic, track)
+        half = text_w(text, cap, track, italic) / 2
+        x0, x1 = min(x0, ax0 - half), max(x1, ax1 - half)
+        y0, y1 = min(y0, ay0 + dy), max(y1, ay1 + dy)
+    dy, half, _fill, sw = spec["rule"]
+    return (min(x0, -half), min(y0, dy - sw / 2),
+            max(x1, half), max(y1, dy + sw / 2))
+
+
+def sticker_trim(side: str) -> tuple[float, float]:
+    """Trim size of the sticker for one part: ink + margin, rounded up to 0.1 mm.
+
+    The order form wants whole numbers and the die is placed by eye against a ruler, so a
+    sub-0.1 mm trim is false precision. Rounding UP keeps the declared margin instead of eating
+    into it.
+    """
+    bx0, by0, bx1, by1 = _sticker_box(next(s for s in sticker_specs() if s["side"] == side))
+    up = lambda v: math.ceil(v * 10.0 - 1e-9) / 10.0  # noqa: E731
+    return (up(bx1 - bx0 + 2 * STICKER_MARGIN), up(by1 - by0 + 2 * STICKER_MARGIN))
+
+
+_INK: dict[tuple, tuple[float, float, float, float]] = {}
+
+
+def _text_ink(text: str, cap: float, italic: bool, track: float):
+    """Ink extents of a line of glyphs: (x0, y0, x1, y1), y down-positive from the baseline.
+
+    `text_w` measures the pen advance, which includes the trailing letter gap and ignores
+    overhangs.  A die-cut sticker has to be sized to the ink, not to the pen: the italic motto's
+    circumflex rises 1 mm above the cap height, and a file cut to the advance would shave it.
+    """
+    key = (text, round(cap, 4), italic, round(track, 4))
+    if key in _INK:
+        return _INK[key]
+    t2p = tp.TextToPath()
+    prop = fm.FontProperties(family=FONT, style="italic" if italic else "normal", size=100)
+    scale = cap / _cap_units()
+    pen = 0.0
+    x0 = y0 = math.inf
+    x1 = y1 = -math.inf
+    for ch in text:
+        verts, _ = t2p.get_text_path(prop, ch)
+        v = np.asarray(verts, dtype=float)
+        if len(v):
+            xs = v[:, 0] * scale + pen
+            ys = -v[:, 1] * scale
+            x0, x1 = min(x0, float(xs.min())), max(x1, float(xs.max()))
+            y0, y1 = min(y0, float(ys.min())), max(y1, float(ys.max()))
+        pen += t2p.get_text_width_height_descent(ch, prop, False)[0] * scale + track
+    out = (x0, y0, x1, y1) if x0 < x1 else (0.0, 0.0, 0.0, 0.0)
+    _INK[key] = out
+    return out
 
 
 def tspan(text: str, cap: float, x: float, y: float, fill: str, *,
@@ -679,8 +769,9 @@ SCHEMES = [
             "1  400-grit scuff, adhesion promoter, graphite base over the whole face",
             "2  tape the 0.5 mm graticule at 17.81 mm pitch, every fifth line  ->  ash",
             "3  re-mask the fifth lines and the two end rules  ->  amber",
-            "4  mask the bezel ring  ->  slate; stencil KTEMATA and the motto",
-            "5  unmask, matte 2K clear over everything; the lettering stays un-cleared",
+            "4  mask the bezel ring  ->  slate",
+            "5  unmask, matte 2K clear over everything",
+            "6  lay the two printed stickers last, on the plate the mask reserved",
         ],
         note="Continuity: the graticule is laid out from the hinge at L/10 = 17.81 mm pitch on both "
              "parts, so line n is the same distance from the seam on either half and the chart "
@@ -1051,6 +1142,67 @@ def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool) ->
     return path
 
 
+# ---------------------------------------------------------------- stickers
+# The two type blocks are hand-stencilled elsewhere, and 2.4 mm lettering through a hand-cut mask
+# is the hardest thing in the whole scheme: a 0.3 mm stroke will not survive a blade, and a
+# slipped stencil cannot be touched up without showing. So they can instead be printed as two
+# vinyl stickers, one per block, laid on the plate the mask already reserved - which is why
+# sticker_trim() and the model's type_boxes come from the same spec.
+#
+# A file that reproduces the design AND can be die-cut is a rectangle: the tagline's 0.3 mm
+# strokes are far below what a contour cut can hold, so the lettering needs a background patch to
+# be handled. The patch is printed in the scheme's own graphite, so under matte laminate and the
+# 2K clear it reads as a small brand plate rather than as a white label.
+
+
+def sticker(model: Model, spec: dict, path: Path, preview: bool) -> tuple[Path, Path | None]:
+    """One sticker file: 1:1 artwork with bleed, and deliberately no cut line.
+
+    The printer uploads artwork only and adds the contour themselves - a cut line in the file is
+    rejected. The trim size therefore lives in the file name, the <title> and PAINT.md, because
+    that is what the order form asks for.
+    """
+    bx0, by0, bx1, by1 = _sticker_box(spec)
+    tw, th = sticker_trim(spec["side"])
+    fw, fh = tw + 2 * STICKER_BLEED, th + 2 * STICKER_BLEED
+    # block coords -> file coords: the ink is centred in the trim, so the margin is symmetric even
+    # where the 0.1 mm round-up gives a little more than STICKER_MARGIN on one axis
+    ox = STICKER_BLEED + (tw - (bx1 - bx0)) / 2 - bx0
+    oy = STICKER_BLEED + (th - (by1 - by0)) / 2 - by0
+    cx = fw / 2
+
+    elems = [f'<rect x="0" y="0" width="{f(fw)}" height="{f(fh)}" fill="{BASE}"/>']
+    for text, cap, track, italic, fill, dy in spec["lines"]:
+        d, width = _text_path(text, cap, italic, track)
+        elems.append(f'<path d="{d}" fill="{fill}" fill-rule="nonzero" '
+                     f'transform="translate({f(cx - width / 2)} {f(oy + dy)})"/>')
+    dy, half, fill, sw = spec["rule"]
+    elems.append(f'<rect x="{f(cx - half)}" y="{f(oy + dy - sw / 2)}" '
+                 f'width="{f(2 * half)}" height="{f(sw)}" fill="{fill}"/>')
+
+    trim = f"{f(tw)} × {f(th)} mm"
+    head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{f(fw)}mm" height="{f(fh)}mm" '
+            f'viewBox="0 0 {f(fw)} {f(fh)}">\n'
+            f'<title>Ktemata r5 Meridian - {spec["note"]} sticker, trim {trim}, '
+            f'bleed {f(STICKER_BLEED)} mm</title>\n'
+            f'<desc>1:1 vector artwork, RGB, lettering already converted to outlines. '
+            f'No cut line and no crop marks: contour-cut to {trim} centred, i.e. '
+            f'{f(STICKER_BLEED)} mm inside the artwork on every side. Matte laminate.</desc>\n')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(head + "\n".join(elems) + "\n</svg>\n", encoding="utf-8")
+
+    # PDF is what gets uploaded: vector, sharp at any size, and not the rejected PDF 1.4
+    pdf = path.with_suffix(".pdf")
+    subprocess.run(["rsvg-convert", "-f", "pdf1.7", "-o", str(pdf), str(path)], check=True)
+    png = None
+    if preview:
+        png = path.with_suffix(".png")
+        subprocess.run(["rsvg-convert", "-w", "1400", "--background-color", PAPER, "-o",
+                        str(png), str(path)], check=True)
+    return pdf, png
+
+
 # ---------------------------------------------------------------- main
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
@@ -1059,6 +1211,8 @@ def main() -> None:
     ap.add_argument("--no-png", action="store_true", help="skip the raster previews")
     ap.add_argument("--stencils", action="store_true",
                     help="also cut the chosen scheme (MERIDIAN) into one mask per paint pass")
+    ap.add_argument("--stickers", action="store_true",
+                    help="also write the two MERIDIAN type blocks as print-ready sticker files")
     args = ap.parse_args()
 
     model = Model(probe())
@@ -1084,6 +1238,18 @@ def main() -> None:
                 out = OUT / f"ktemata_stencil_{side}_{group}.svg"
                 stencil(model, cover, group, out, not args.no_png)
                 print(f"{'stencil':<9} {out.relative_to(REPO)}")
+
+    if args.stickers:
+        # one file per block, named with its trim size because the order form asks for it and a
+        # file with a cut line in it is rejected outright
+        for spec in sticker_specs():
+            tw, th = sticker_trim(spec["side"])
+            stem = (f"ktemata_sticker_{spec['side']}_{spec['name']}"
+                    f"_{f(tw)}x{f(th)}mm")
+            out = OUT / f"{stem}_bleed.svg"
+            pdf, png = sticker(model, spec, out, not args.no_png)
+            print(f"{'sticker':<9} {pdf.relative_to(REPO)}   ({f(tw)} × {f(th)} mm trim)"
+                  + (f"   +   {png.name}" if png else ""))
 
 
 if __name__ == "__main__":

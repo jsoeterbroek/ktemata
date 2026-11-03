@@ -12,6 +12,7 @@ happen to share a palette.
 python3 cad/tools/paint.py                          # all three sheets + contact sheet
 python3 cad/tools/paint.py --scheme 1 --stencils    # Meridian + its cut files
 python3 cad/tools/paint.py --scheme 2               # one scheme
+python3 cad/tools/paint.py --stickers                # the two type blocks as sticker PDFs
 python3 cad/tools/paint.py --no-png                 # SVGs only
 ```
 
@@ -24,6 +25,8 @@ Output lands in `docs/paint/`:
 | `ktemata_paint_3_bearing.svg` / `.png` | **BEARING** — a slate border and one amber trace through the seam |
 | `ktemata_paint_all.png` | the three sheets side by side, for choosing |
 | `ktemata_stencil_{deck,cover}_{ash,amber,seam,bezel}.svg` | **cut files**, one per paint pass, `--stencils` |
+| `ktemata_sticker_deck_wordmark_91x22.4mm_bleed.pdf` | **the deck wordmark sticker**, artwork only, `--stickers` |
+| `ktemata_sticker_cover_motto_113.5x26.4mm_bleed.pdf` | **the lid motto sticker**, artwork only, `--stickers` |
 
 The SVGs are **1:1 in millimetres** and are drawn from the model, so they print as masking
 templates: 400 gsm card or vinyl, cut to the panels, laid on the part. There is a 50 mm scale bar
@@ -65,8 +68,9 @@ rather than drawing a line through a fan.
   hole (x 14..30, y 148..158) and a screw, and the cover's left margin is crossed by the power
   button (x 5.6..28.6, y 152.9..169.1) and by the display well from `x 44.55`.
 - **The lettering blocks are part of the mask.** MERIDIAN's graticule stops at the wordmark and
-  the motto rather than running under them — the blocks are declared in `Model.type_boxes`, so
-  no scheme can paint through them by accident.
+  the motto rather than running under them — the blocks are declared in `Model.type_boxes`,
+  derived from the sticker trim, so no scheme can paint through them by accident and the
+  graticule never ends as a sliver under the vinyl's edge.
 
 ## Paint order and finish
 
@@ -78,25 +82,45 @@ All three use the same process; only the masks change.
    up in an aperture and reads as a burr.
 3. Repeat per colour. The order on each sheet is the order to spray; darkest to lightest, so a
    light slip can be covered and a dark one cannot.
-4. **Matte 2K clear** over everything except the lettering.
-5. Lettering last, through a stencil, un-cleared, so it keeps its edge.
+4. **Matte 2K clear** over everything.
+5. Lettering last: MERIDIAN's two type blocks are **printed stickers** laid on the cleared plate
+   (see below); STRATA and BEARING keep the stencil pass, un-cleared, so it keeps its edge.
 
 ### Palette
 
 Taken from `site/style.css` so the case and the site are the same object:
 
-| Name | Hex | Role |
-|---|---|---|
-| graphite | `#151b21` | `--bg` — base coat, all three |
-| amber | `#c99a63` | `--accent` — the line work that crosses the seam |
-| deep amber | `#8a6234` | `--accent-soft` — the seam rule, shading |
-| slate | `#26313a` | `--panel`, lifted one step so it reads next to graphite at 300 mm |
-| ash | `#7c8993` | secondary line work |
-| light grey | `--muted` `#a9b2bb` | short graticule ticks, chart dots |
-| light amber | `#e2bd8d` | long ticks, the deck wordmark |
-| ivory | `--fg` `#f2ebe0` | the motto |
+| Name | Hex | Role | Pantone (Solid Coated) | Vallejo Model Air |
+|---|---|---|---|---|
+| graphite | `#151b21` | `--bg` — base coat, all three | Black 6 C `#101820` ΔE 1.7 | 71.057 Black ΔE 7.1 |
+| amber | `#c99a63` | `--accent` — the line work that crosses the seam | 7509 C `#d6a461` ΔE 3.9 | 71.348 USAF Tan ΔE 2.9 |
+| deep amber | `#8a6234` | `--accent-soft` — the seam rule, shading | 7575 C `#835d32` ΔE 2.2 | 71.032 Golden Brown ΔE 4.0 |
+| slate | `#26313a` | `--panel`, lifted one step so it reads next to graphite at 300 mm | 7546 C `#253746` ΔE 3.5 | 3 : 1 71.057 Black + 71.087 Steel Blue ΔE 2.4 |
+| ash | `#7c8993` | secondary line work | 430 C `#7c878e` ΔE 1.6 | 71.307 BS Medium Sea Grey ΔE 3.5 |
+| light grey | `--muted` `#a9b2bb` | short graticule ticks, chart dots | 429 C `#a2aaad` ΔE 3.8 | 71.345 Russian AF Grey N.8 ΔE 4.4 |
+| light amber | `#e2bd8d` | long ticks, the deck wordmark | 7508 C `#e1b87f` ΔE 2.4 | 71.074 Radome Tan ΔE 3.6 |
+| ivory | `--fg` `#f2ebe0` | the motto | 7527 C `#d6d2c4` ΔE 6.3 | 71.279 Insignia White ΔE 3.9 |
 
 Every sheet's `PALETTE` strip carries the five colours that scheme actually uses.
+
+**How to read the two mixed columns.** ΔE is CIEDE2000 between the site hex and the matched
+swatch, computed in CIELAB from the sRGB values; **below ~2 is indistinguishable side by side,
+below ~5 reads the same at arm's length in daylight**, and everything in the table is under 5
+except graphite and ivory. Those two are at the ends of the range where neither system has a
+chip: nothing in Model Air is as dark as `#151b21` (71.057 is a half-step lighter, which the matte
+clear mostly hides), and every Pantone chip near `#f2ebe0` is yellower — 7527 C is the closest
+neutral and Pantone has no true off-white. Slate needs the two-pot mix because no single matte
+Model Air matches it; 71.300 Glossy Sea Blue is closer but gloss, which is wrong under the 2K
+clear on a bezel.
+
+The Pantone column is for **checking, not spraying** — Pantone sells no paint. Use the chip at the
+hobby shop to judge a tint under daylight, or to order the same tone from a paint mixer. The
+Vallejo column is the **Model Air** number (the airbrush range, 71.xxx) because every pass here is
+sprayed; Model Color (70.xxx) has hand-brush equivalents that are close but not identical, and
+Model Color is brush-ready, so it will not go through a 0.2 mm nozzle without thinning and has no
+place in these masks. Vallejo publishes no official RGB values — the hexes behind the ΔE numbers
+come from community colour databases, so treat ΔE as a comparison between two approximations of
+each colour, not as a measurement of the bottle in your hand.
 
 ## Cutting the masks
 
@@ -163,8 +187,52 @@ The chosen scheme, in the order the sheet gives:
    seam rule is **two pieces**, not one — the Pi opening cuts it at `x 150..203.4`. That is correct
    and deliberate: the cut file is the authority, and a line that crosses a hole is not a line.
 5. **Slate** pass (cover only): the 7 mm bezel ring.
-6. **Word** stencil: `KTEMATA` and the tagline on the deck, the motto on the cover.
-7. Matte 2K clear over everything except the lettering.
+6. Matte 2K clear over everything.
+7. **Stickers last**: the deck wordmark and the lid motto, on the bare plate the mask reserved.
+   See [Stickers instead of stencilled type](#stickers-instead-of-stencilled-type).
+
+## Stickers instead of stencilled type
+
+The two type blocks — `KTEMATA` / `OFFLINE LIBRARY` on the deck and `κτῆμα ἐς ἀεί` / the
+translation on the cover — are the only place in Meridian where the lettering is not masked
+paint. `--stickers` writes them as print-ready vinyl instead:
+
+| File | Block | Trim (cut size) | Where it goes |
+|---|---|---|---|
+| `ktemata_sticker_deck_wordmark_91x22.4mm_bleed.pdf` | `KTEMATA` + `OFFLINE LIBRARY` | **91 × 22.4 mm** | deck, x 71.25..162.25, y 68.40..90.80 |
+| `ktemata_sticker_cover_motto_113.5x26.4mm_bleed.pdf` | `κτῆμα ἐς ἀεί` + translation | **113.5 × 26.4 mm** | cover, x 60.00..173.50, y 120.65..147.05 |
+
+Upload the **PDF**. It is vector (PDF 1.7, not the 1.4 they reject), all lettering already
+converted to outlines, RGB — they convert to their CMYK profile themselves — and it carries **no
+cut line and no crop marks**, which is what their upload form requires. Each file has 1 mm of
+bleed on all four sides beyond the trim, so the artwork measures 93 × 24.4 mm and
+115.5 × 28.4 mm; order a **contour-cut rectangle at the trim size above**, centred. Matte
+laminate, so it matches the 2K clear it is going under. The trim size is also in the file name
+and the SVG `<title>`, because the order form asks for it as a number and a file name is harder
+to lose than a note.
+
+Why the design survives as a sticker when it would not survive as a stencil:
+
+- The tagline and the translation are 2.4–2.6 mm text. That is a 0.3 mm stroke through a hand-cut
+  vinyl mask — below what a blade holds cleanly, and a slipped stencil cannot be repaired
+  invisibly. Printed, it is just ink.
+- The block is a **filled graphite rectangle**, not a transparent cut-out. A die-cut that follows
+  the lettering is impossible at 0.3 mm, so the lettering needs a carrier. Printing that carrier
+  in the scheme's own `#151b21` means the only visible change is a 2.5 mm graphite margin round
+  the type — a small brand plate, not a white label. The 1 mm bleed is the same graphite, so a
+  cut a fraction off-centre cannot expose white.
+- `type_boxes` in the model is now **derived from the sticker trim** (`sticker_trim()`), so the
+  graticule stops exactly at the vinyl's edge. Resize the sticker and the keep-out in the mask
+  follows; a grid line can never end up a sliver under the edge.
+
+Lay them **after** the 2K clear, not before: the clear is the part's mechanical protection, and a
+sticker under it would have to pass the same wet-coat test the paint does. Press down hard on a
+clean, de-greased clear coat; a vinyl sticker on scuffed PETG without clear under it is the one
+joint that will lift at the corner in a pocket.
+
+Text metrics are measured from the same font (`DejaVu Sans`, cap height 10.5 mm on both blocks)
+that draws the sheets, so the sticker and the painted artwork are the same design, not a
+lookalike.
 
 ## Printing notes
 

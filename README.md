@@ -83,6 +83,7 @@ python3 cad/tools/export.py --r2      # r2/r3 parts (DFR0550 + HAT (E) + Phiston
 python3 cad/tools/export.py --r1      # original r1 set
 python3 cad/tools/export.py --r5      # r5 cassette (tray, deck, lid plate)
 python3 cad/tools/paint.py            # r5 airbrush paint schemes, 1:1 sheets -> docs/paint/
+python3 cad/tools/paint.py --stickers # the two Meridian type blocks as print-ready sticker PDFs
 openscad -D R4=false -o out.png cad/assembly.scad      # r2/r3 assembly preview
 openscad -D R2=false -o out.png cad/assembly.scad      # r1 assembly preview
 ```
