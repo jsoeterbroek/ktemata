@@ -15,7 +15,7 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | # | Part | Qty | Spec / role | ≈ Price |
 |---|---|---|---|---|
 | 1 | Raspberry Pi 5, 4 GB | 1 | 58 × 49 mm. **No 40-pin header** — the UPS HAT sits on the component side. | € 121 |
-| 2 | Raspberry Pi Touch Display 2 – 7" | 1 | 143.4 × 91.46 mm, native portrait. Includes the 22→15 pin FFC, the GPIO J1 power cable and 8× M2.5 screws. | € 44.15 |
+| 2 | Raspberry Pi Touch Display 2 – 7" | 1 | **189.32 × 120.24 × 14.92 mm**, active 154.6 × 86.9, standoffs 168.55 × 99.71. Includes the 22→15 pin FFC, the GPIO J1 power cable and 8× M2.5 screws. r5 hangs it landscape in the lid; r4 uses the 5" (143.4 × 91.46), still selectable with `-D R5=false`. | € 60 |
 | 3 | Display cable, Standard–Mini, 300 mm | 1 | Pi 5 side of the display link. 300 mm is long for a 237 mm case — coil it in the face cavity, don't fold it sharply. | € 2.29 |
 | 4 | Waveshare UPS HAT (B) | 1 | 2S 18650, 5 V / 5 A out, **8.4 V / 2 A barrel input**, INA219 at 0x42. Cells not included; its 8.4 V / 2 A supply is. In future Waveshare UPS module 3S when available.| € 27.82 |
 | 5 | 18650 Li-ion cells, flat-top, unprotected, matched pair | 2 | Same batch, ≤ 67 mm long, 3.0–3.5 Ah. | € 5 ea |
@@ -37,6 +37,7 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | 21 | USB-A → USB-C data cable, 20–30 cm | 1 | FireBeetle ↔ Pi serial. **Data-only** (VBUS disconnected) — the FireBeetle is powered from the UPS. | € 5 |
 | 22 | USB-A → 2-pin 5 V lead (JST-XH / dupont) | 1 | UPS USB-A 5 V → FireBeetle 5 V/GND; keeps the OLED alive with the Pi off. | € 5 |
 | 23 | M3 × 10 screws | 7 | r5 deck screws. Display and Pi screws come with the display. | € 12 (set) |
+| 23a | 16 mm IP67 metal panel button (momentary NO) | 1 | r5 power button, on the deck's right rail (`R5_BTN_D`). Two leads to the Pi 5's **J2** pads. A centred 7" panel leaves no latch band for it on the lid. | € 8 |
 | 24 | Fuse + holder, 3–5 A | 1 | On the 2S pack lead. | € 4 |
 | 25 | Silicone O-ring / gasket assortment | 1 | Case seam, DC socket, button. | € 10 |
 | 26 | Filament, PETG/PLA + TPU | ≈ 500 g | The r4 shells or the r5 cassette; the TPU is only for the charge plug. | € 15 + € 20 |
@@ -63,13 +64,16 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
 
 ## Notes
 
-1. **Display.** The Touch Display 2 is **143.4 mm wide in landscape**, so the r4 case grows to 172 × 237 mm,
-   the panel runs landscape, and the case gets 14.92 mm of display depth (6.42 mm panel + 8.5 mm standoffs) —
-   the face part is 14.4 mm tall and the split plane sits at the Pi pcb. It powers from the GPIO header (3-pin
-   J1 cable, included) and is auto-detected by Pi OS; no driver work.
-   *One consequence:* the TD2's **inner** Pi hole pattern is 51 × 49 mm (the Pi is 58 × 49), so the Pi is held
-   by the case posts and the display by its own **outer** standoffs (122.74 × 72.96 mm). Check
-   [`R4.md`](R4.md) before printing.
+1. **Display.** Two panels, one BOM line. The **7"** is the r5 build: module 189.32 × 120.24, active
+   154.6 × 86.9, standoffs 168.55 × 99.71, 14.92 mm deep (6.42 panel + 8.5 standoffs), 2.4 W. It runs
+   landscape in the host lid because 189.32 mm is longer than the 233.5 × 178.1 cassette, and it is
+   centred in both axes, which is why the power button sits on the deck instead of the lid.
+   The **5"** (143.4 × 91.46, standoffs 122.74 × 72.96, 1.4 W) is the r4 target; the r4 case is
+   172 × 237 mm and the panel runs landscape in the face. Both power from the GPIO header (3-pin J1
+   cable) and are auto-detected by Pi OS; no driver work.
+   *One consequence (r4 only):* the 5" TD2's **inner** Pi hole pattern is 51 × 49 mm (the Pi is 58 × 49),
+   so the Pi is held by the case posts and the display by its own **outer** standoffs (122.74 × 72.96 mm).
+   Check [`R4.md`](R4.md) before printing that variant.
 2. **UPS.** The UPS HAT (B) is a different power architecture from the HAT (E), not a drop-in swap:
    - **2× 18650 in 2S** (7.4 V nominal, ≈ 23 Wh) instead of 4× 21700 (≈ 70 Wh). Expect **≈ 2–2.5 h** of Pi 5
      use rather than ≈ 6–7 h.

@@ -518,19 +518,40 @@ R5_FB_HOLE_H  = 10;                                     // ... and its length (1
 R5_RTC_X = 40; R5_RTC_Y = 104;                          // DS3231, turned 90 deg (22 along x)
 R5_MPPT_X = 40; R5_MPPT_Y = 150;                        // 26 x 20 tray, below the RTC
 
-// ---- host lid: display plate ----
-// The display's back (panel 6.42 + its own 8.5 standoffs) faces the lid, the glass faces the
-// base. A 2 mm plate screws into the display's standoffs and is taped to the lid, so the host
-// stays sealed (no holes through it).
+// ---- r5 display: Touch Display 2, 7" ----
+// r5 hangs the 7" TD2 in the host lid, not the 5" of r4. Raspberry Pi's 7" brief (RP-010429):
+//   189.32 x 120.24 mm module, corners R8, glass = module outline
+//   active area 154.6 (along 189.32) x 86.9, so a 17.4 / 16.7 mm glass border all round
+//   standoffs 168.55 x 99.71, insets 10.385 / 10.265 (drawing: 10.265 +/-0.5 and 18.21+6.45)
+//   8.5 mm standoffs + 6.42 mm body = 14.92 mm deep, exactly the 5" stack
+//   backlight 2.4 W (the 5" is 1.4 W), same 720 x 1280, same J1 + FFC cabling
+// The 189.32 mm axis MUST run along x: 189.32 alone is more than the 178.1 mm cassette length,
+// so a portrait mount cannot fit any accepted host. The panel therefore sits landscape, as r4's
+// does, with the 120.24 mm axis across the cassette.
+R5_PANEL        = [189.32, 120.24, 8];                  // w (along x), h (along y), corner R
+R5_PANEL_ACTIVE = [154.6, 86.9];                        // lit area, same axes
+R5_PANEL_HOLES  = [168.55, 99.71];                      // standoff pattern, same axes
+// The display's back (6.42 body + its own 8.5 standoffs) faces the lid, the glass faces the base.
 R5_LID_T = 2;
-R5_DISP_DEEP = R5_LID_T + 8.5 + 6.42;                   // 16.92 mm from the lid wall to the glass
-R5_DISP_X0 = (R5_W - DISP_W)/2;
-R5_DISP_Y0 = 8;                                         // hinge end of the lid
-R5_LID_PLATE = [DISP_W + 12, DISP_H + 12];              // 155.4 x 103.5
-R5_DISP_HOLE_IX = (DISP_W - 122.74)/2;                  // outer standoffs 122.74 x 72.96
-R5_DISP_HOLE_IY = (DISP_H - 72.96)/2;
-R5_DISP_HOLES = [for (dx=[R5_DISP_HOLE_IX, R5_DISP_HOLE_IX + 122.74])
-                 for (dy=[R5_DISP_HOLE_IY, R5_DISP_HOLE_IY + 72.96]) [dx, dy]];
+R5_DISP_DEEP = R5_LID_T + DISP_POST + DISP_T_R2;        // 16.92 mm from the lid wall to the glass
+// Centred in both axes. The lid has no hardware left to dodge: the 7" panel eats the latch band
+// the 16 mm power button needed, so the button moved to the deck (see R5_BTN_* below).
+R5_DISP_X0 = (R5_W - R5_PANEL[0])/2;                    // 22.09
+R5_DISP_Y0 = (R5_L - R5_PANEL[1])/2;                    // 28.93
+R5_LID_PLATE = [R5_PANEL[0] + 12, R5_PANEL[1] + 12];    // 201.32 x 132.24, 6 mm border
+R5_DISP_HOLE_IX = (R5_PANEL[0] - R5_PANEL_HOLES[0])/2;  // 10.385
+R5_DISP_HOLE_IY = (R5_PANEL[1] - R5_PANEL_HOLES[1])/2;  // 10.265
+R5_DISP_HOLES = [for (dx=[R5_DISP_HOLE_IX, R5_DISP_HOLE_IX + R5_PANEL_HOLES[0]])
+                 for (dy=[R5_DISP_HOLE_IY, R5_DISP_HOLE_IY + R5_PANEL_HOLES[1]]) [dx, dy]];
+// The DSI/GPIO leads leave the panel's hinge-side long edge and have to turn down into the base,
+// so the cover and the plate are notched there, through plate and bezel wall together. The notch
+// is R5_CABLE_W wide, R5_CABLE_W/2 of it each side of R5_CABLE_X (measured from the panel's own
+// left edge), so moving the connector is one number. Verify against your panel before printing:
+// the 7" drawing puts the FFC at one end of that edge, and a notch at the wrong end leaves the
+// ribbon with no way out.
+R5_CABLE_W  = 46;                                        // covers the DSI + GPIO sockets
+R5_CABLE_X  = R5_CABLE_W/2;                              // notch centre, from the panel's left edge
+R5_CABLE_X0 = R5_CABLE_X - R5_CABLE_W/2;                 // its left edge, in panel coords
 
 // deck screws: on the straight wall runs only (a boss in a 14 mm corner would break the
 // outer radius). Each is a Ø9 column whose centre sits 2.5 mm inside the inner face, so it
@@ -603,6 +624,27 @@ assert(R5_KB_WELL_BOT - R5_KB_SEAT > R5_FLOOR,
        str("the seat ledge reaches down to ", R5_KB_WELL_BOT - R5_KB_SEAT,
            ", at or through the tray floor (", R5_FLOOR, ")"));
 
+// The 7" panel must fit the cassette plan and the cassette must still fit the host: the glass is
+// 189.32 x 120.24 against a 233.5 x 178.1 cassette, so there is 22.09 / 28.93 a side, not much -
+// check it rather than trust it, since R5_W/R5_L move with HOST. 20 mm of cassette either side is
+// the floor: a 7 mm bezel, the 8 mm tape border round it and the 5 mm of wall the panel's own
+// standoff screws need.
+assert(!R5 || R5_W - R5_PANEL[0] >= 20 && R5_L - R5_PANEL[1] >= 20,
+       str("host ", HOST, ": the 7\" panel (", R5_PANEL[0], " x ", R5_PANEL[1],
+           ") leaves only ", (R5_W - R5_PANEL[0])/2, " / ", (R5_L - R5_PANEL[1])/2,
+           " mm a side in the ", R5_W, " x ", R5_L, " cassette, needs 10"));
+// The power button is 16 mm IP67: bore plus nut, plus the plate that has to survive round it.
+assert(R5_BTN_X - R5_BTN_BODY/2 > R5_KB_X0 + R5_KB_POCKET[0] + R5_KB_WALL,
+       str("the power button nut (", R5_BTN_BODY, " mm) reaches x ",
+           R5_BTN_X - R5_BTN_BODY/2, ", into the keyboard skirt at ",
+           R5_KB_X0 + R5_KB_POCKET[0] + R5_KB_WALL));
+assert(R5_BTN_X + R5_BTN_BODY/2 < R5_W - R5_WALL,
+       str("the power button nut reaches x ", R5_BTN_X + R5_BTN_BODY/2,
+           ", past the tray's inner wall at ", R5_W - R5_WALL));
+assert(R5_BTN_Y + R5_BTN_BODY/2 < R5_L - 2.5,
+       str("the power button nut reaches y ", R5_BTN_Y + R5_BTN_BODY/2,
+           ", off the deck's latch edge (", R5_L, ")"));
+
 
 // ---------------- r5 lid cover (r5_lid_cover.scad) ----------------
 // Params live here, not in r5_lid_cover.scad, because assembly_r5.scad `use`s that file: `use`
@@ -621,25 +663,25 @@ COVER_L = HOST_W - 2*HOST_CLR;
 COVER_GLASS_Z = COVER_T + DISP_POST + DISP_T_R2;
 COVER_RIM_H   = DISP_POST + DISP_T_R2 + COVER_PROUD;    // bezel height above the plate
 
-// panel centred in x, pushed to the hinge in y, leaving a band at the latch end for the button
-PANEL_X = (COVER_W - DISP_W) / 2;
-PANEL_Y = COVER_FRAME;
-COVER_BAND = COVER_L - PANEL_Y - DISP_H - COVER_FRAME;
+// The 7" panel, centred in both axes - the operator's call, and the lid has nothing left to
+// dodge now that the power button is on the deck. Margins: 15.09 mm of plate outside the bezel
+// in x, 21.93 in y; 22.09 / 28.93 from the panel module itself.
+PANEL_X = (COVER_W - R5_PANEL[0]) / 2;
+PANEL_Y = (COVER_L - R5_PANEL[1]) / 2;
 
-// Power button: the deck's 12 mm PBS-33B is not IP-rated, and the lid is outside a sealed case,
-// so the 16 mm IP67 metal button is the right part. COVER_BTN_D takes either - both are a hole.
-COVER_BTN_D    = 16.2;    // 16 mm IP67 panel button, 0.2 clearance
-COVER_BTN_BODY = 19;      // nut/body diameter, counterbored on the lid side
-COVER_BTN_EDGE = 9;       // centre distance from the cover edge
-COVER_BTN_NUT  = 3;       // nut recess depth, cut from the interior face (bed stays flat)
-COVER_BTN_WALL = 3;       // material around the button boss
-COVER_BTN_BOSS = 0.6;     // ... and how far the boss stands proud, so the nut seats
-COVER_BTN_X = COVER_BTN_EDGE + COVER_BTN_D/2;
-COVER_BTN_Y = COVER_L - COVER_BTN_EDGE - COVER_BTN_D/2;
-
-// 720 x 1280 on a 5.0" diagonal: the image is smaller than the glass, which is what lets the
-// bezel sit over the glass border instead of over the picture.
-COVER_ACTIVE = [110.7, 62.3];
+// Power button: 16 mm IP67 panel button, moved from the lid to the deck's right rail. A centred
+// 7" panel leaves 28.93 mm of latch band and the button needs 16.2 + 2*9 = 34.2 mm, so the two
+// cannot share a 178.1 mm lid. On the deck it is reachable with the case open, and its two leads
+// reach the Pi's J2 pads (external power button) under the plate.
+// Placed at the latch end of the right rail, on free floor: the boards and cells all end at
+// y 101, and the rail's own deck screws are at (207.5, 5.1), (228.4, 40) and (228.4, 138.1).
+// 9.5 mm of half-nut keeps it 11.4 mm inside the right edge and 18.1 mm off the latch edge,
+// clear of the keyboard skirt (ends x 194.35) by 9.2 mm. R5_BTN_BODY is the nut.
+R5_BTN_D       = 16.2;   // 16 mm IP67 panel button, 0.2 clearance
+R5_BTN_BODY    = 19;     // nut/body diameter - what has to clear the rail and the screw heads
+R5_BTN_BODY_H  = 8;      // nut + thread length below the plate (16 mm button: ~7 mm thread)
+R5_BTN_X    = (R5_KB_X0 + R5_KB_POCKET[0] + R5_W)/2;    // 213.0, the rail's centre
+R5_BTN_Y    = R5_L - 18;                                // 160.1, past the boards
 
 // ---------------- r5 deck cooling (r5_deck.scad) ----------------
 // The deck is the plate between the Pi stack and the keyboard. The old cooling was a bank of

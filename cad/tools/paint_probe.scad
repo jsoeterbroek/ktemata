@@ -43,24 +43,29 @@ echo(P_C_FRAME = COVER_FRAME);
 echo(P_C_GAP = COVER_GAP);
 echo(P_PANEL_X = PANEL_X);
 echo(P_PANEL_Y = PANEL_Y);
-echo(P_DISP_W = DISP_W);
-echo(P_DISP_H = DISP_H);
-echo(P_DISP_R = DISP_R);
-echo(P_BTN_X = COVER_BTN_X);
-echo(P_BTN_Y = COVER_BTN_Y);
-echo(P_BTN_D = COVER_BTN_D);
-echo(P_BTN_BODY = COVER_BTN_BODY);
-echo(P_SLOT_A = COVER_W - 46);
-echo(P_SLOT_B = COVER_W - 24);
-echo(P_SLOT_Y = COVER_L - COVER_BTN_EDGE);
+echo(P_DISP_W = R5_PANEL[0]);
+echo(P_DISP_H = R5_PANEL[1]);
+echo(P_DISP_R = R5_PANEL[2]);
+echo(P_ACTIVE_W = R5_PANEL_ACTIVE[0]);
+echo(P_ACTIVE_H = R5_PANEL_ACTIVE[1]);
+// the button is on the deck now, so it is a deck feature, not a cover one
+echo(P_BTN_X = R5_BTN_X);
+echo(P_BTN_Y = R5_BTN_Y);
+echo(P_BTN_D = R5_BTN_D);
+echo(P_BTN_BODY = R5_BTN_BODY);
+echo(P_SLOT_A = COVER_FRAME + 11);
+echo(P_SLOT_B = COVER_W - COVER_FRAME - 11);
+echo(P_SLOT_Y = COVER_L - COVER_FRAME - 5);
 
 echo(P_DH_IX = R5_DISP_HOLE_IX);
 echo(P_DH_IY = R5_DISP_HOLE_IY);
-echo(P_DH_SPAN_X = 122.74);
-echo(P_DH_SPAN_Y = 72.96);
-echo(P_CABLE_X = PANEL_X - COVER_GAP);
-echo(P_CABLE_W = 46);
-echo(P_CABLE_H = COVER_FRAME + COVER_GAP + 1.01);
+echo(P_DH_SPAN_X = R5_PANEL_HOLES[0]);
+echo(P_DH_SPAN_Y = R5_PANEL_HOLES[1]);
+// the DSI notch: from the cover's hinge edge to the panel, through bezel wall and plate
+echo(P_CABLE_X = PANEL_X + R5_CABLE_X0);
+echo(P_CABLE_Y = 0);
+echo(P_CABLE_W = R5_CABLE_W);
+echo(P_CABLE_H = PANEL_Y - COVER_GAP);
 
 echo(P_S0 = R5_SCREWS[0][0]); echo(P_S0Y = R5_SCREWS[0][1]);
 echo(P_S1 = R5_SCREWS[1][0]); echo(P_S1Y = R5_SCREWS[1][1]);

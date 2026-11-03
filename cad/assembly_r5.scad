@@ -16,9 +16,9 @@ use <r5_lid_cover.scad>
 EXPLODE = 0;
 SECTION = false;
 SHOW_HOST = is_undef(SHOW_HOST) ? true : SHOW_HOST;   // -D SHOW_HOST=false for the cassette alone
-// Which lid part to show: the flat plate (r5_lid_plate, the shipped one) or the bezelled cover
-// with the power button (r5_lid_cover). -D LID="cover" to check the new part in place.
-LID = is_undef(LID) ? "plate" : LID;
+// Which lid part to show: the flat plate (r5_lid_plate) or the bezelled cover with the 7" panel
+// well (r5_lid_cover, the shipped one). -D LID="plate" to check the simpler part in place.
+LID = is_undef(LID) ? "cover" : LID;
 SECTION_Y = R5_L/2;
 
 // ---- host hard case: interior envelope + lid, at their published depths ----
@@ -93,12 +93,13 @@ module c_display() {
     // on the lid: the plate is taped to the lid ceiling, so its back sits R5_DISP_DEEP below
     // z = HOST_BOT + HOST_LID; the display hangs down from there, glass towards the base
     z = HOST_BOT + HOST_LID - R5_DISP_DEEP;
-    r5_at(R5_DISP_X0, R5_DISP_Y0 + DISP_H, z + R5_LID_T + 8.5) linear_extrude(6.42) rrect(DISP_W, DISP_H, 5);
-    r5_at(R5_DISP_X0 - 6, R5_DISP_Y0 + DISP_H + 6, z) linear_extrude(R5_LID_T)
-        rrect(R5_LID_PLATE[0], R5_LID_PLATE[1], 5);
+    r5_at(R5_DISP_X0, R5_DISP_Y0 + R5_PANEL[1], z + R5_LID_T + DISP_POST)
+        linear_extrude(DISP_T_R2) rrect(R5_PANEL[0], R5_PANEL[1], R5_PANEL[2]);
+    r5_at(R5_DISP_X0 - 6, R5_DISP_Y0 + R5_PANEL[1] + 6, z) linear_extrude(R5_LID_T)
+        rrect(R5_LID_PLATE[0], R5_LID_PLATE[1], 8);
     // the display's own standoffs
     for (p=R5_DISP_HOLES) r5_at(R5_DISP_X0 + p[0], R5_DISP_Y0 + p[1], z + R5_LID_T)
-        cylinder(d=4.5, h=8.5, $fn=6);
+        cylinder(d=4.5, h=DISP_POST, $fn=6);
 }
 // The lid cover, in place: taped to the lid ceiling with its well facing the base. Modelled
 // with z = 0 on the lid face, so it is flipped about x and dropped so that z = 0 lands on the
@@ -106,6 +107,18 @@ module c_display() {
 module c_lid_cover() {
     translate([0, R5_L, HOST_BOT + HOST_LID]) rotate([180, 0, 0])
         translate([0, -COVER_L, 0]) r5_lid_cover();
+}
+
+// The 16 mm IP67 power button on the deck: the thread through the bore and the nut under the
+// plate. Both are needed for the sweep to mean anything - the nut alone is a tangent disc on the
+// plate's underside (a zero-volume contact, which is what a seated nut is), while the thread spans
+// the plate, so any overlap there is the bore being missing or misplaced. Its leads go to the
+// Pi's J2 pads (external power button), which is why it sits over free floor.
+module c_button() {
+    r5_at(R5_BTN_X, R5_BTN_Y, R5_DECK_Z - R5_BTN_BODY_H)
+        cylinder(d=R5_BTN_BODY, h=R5_BTN_BODY_H);                       // nut, under the plate
+    r5_at(R5_BTN_X, R5_BTN_Y, R5_DECK_Z)
+        cylinder(d=R5_BTN_D, h=R5_DECK_T);                              // thread, through the bore
 }
 
 module c_floor() {
@@ -119,6 +132,7 @@ module components() {
     color("green") c_pi(); color("blue") c_ups(); color("orange") c_cells();
     color("darkgreen") c_keyboard(); color("purple") c_oled();
     color("black") c_display(); color("teal") c_floor();
+    color("#b0b6bc") c_button();
 }
 
 module all() {
@@ -137,9 +151,16 @@ else if (SECTION) intersection() { all(); translate([-1, R5_L - SECTION_Y, -100]
 else all();
 
 module part(n) {
-    if (n=="tray") r5_tray(); if (n=="deck") r5_deck(); if (n=="lid") r5_at(R5_DISP_X0 - 6, R5_DISP_Y0 + DISP_H + 6, HOST_BOT + HOST_LID - R5_DISP_DEEP)
+    if (n=="tray") r5_tray(); if (n=="deck") r5_deck();
+    if (n=="lid") r5_at(R5_DISP_X0 - 6, R5_DISP_Y0 + R5_PANEL[1] + 6,
+                        HOST_BOT + HOST_LID - R5_DISP_DEEP)
         translate([0, -R5_LID_PLATE[1], 0]) r5_lid_plate();
+    // the cover is the shipped lid part, so it has to be sweepable against the cassette. It is
+    // NOT checked against "display": the display hangs off whichever lid part is fitted, and
+    // c_display() draws the plate too, so that pair would always intersect by construction.
+    if (n=="cover") c_lid_cover();
     if (n=="pi") c_pi(); if (n=="ups") c_ups(); if (n=="cells") c_cells();
     if (n=="keyboard") c_keyboard(); if (n=="oled") c_oled(); if (n=="display") c_display();
+    if (n=="button") c_button();
     if (n=="floor") c_floor();
 }

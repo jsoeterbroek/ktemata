@@ -15,9 +15,9 @@ hinge, latch end at y = R5_L).  Paint that crosses the centre line therefore con
 printed part into the other - the three schemes are built on that.
 
 Two facts drive the artwork and are enforced in code, not by eye:
-  * the cover's display well is 145.4 x 93.46 mm (only 0.5 mm of clearance round the glass), so it
+  * the cover's display well is 190.32 x 121.24 mm (only 0.5 mm of clearance round the glass), so it
     eats the cover's whole frame.  Anything continuous across the hinge has to leave the cover at
-    |x - w/2| > 73 mm - the 30 mm latch band and the 44 mm side margins of the bezel;
+    |x - w/2| > 95 mm - the 28 mm latch band and the 14.6 mm side margins outside the bezel;
   * the deck's own free fields are the 40.95 mm side rails, the strip between the OLED and the
     keyboard (y 72.2..102.5) and the 30 mm along the latch edge.
 """
@@ -112,9 +112,12 @@ class Model:
         self.panel = (g("P_PANEL_X"), g("P_PANEL_Y"), g("P_DISP_W"), g("P_DISP_H"), g("P_DISP_R"))
         px, py, pw, ph, pr = self.panel
         self.well = (px - self.gap, py - self.gap, pw + 2 * self.gap, ph + 2 * self.gap, pr)
+        self.active = (g("P_ACTIVE_W"), g("P_ACTIVE_H"))
+        # the button is on the DECK now (a centred 7" panel leaves no latch band for it)
         self.btn = (g("P_BTN_X"), g("P_BTN_Y"), g("P_BTN_D"))
+        self.btn_body = g("P_BTN_BODY")
         self.slots = [(g("P_SLOT_A"), g("P_SLOT_Y")), (g("P_SLOT_B"), g("P_SLOT_Y"))]
-        self.cable = (g("P_CABLE_X"), 0.0, g("P_CABLE_W"), g("P_CABLE_H"))
+        self.cable = (g("P_CABLE_X"), g("P_CABLE_Y"), g("P_CABLE_W"), g("P_CABLE_H"))
 
         # ---- the type blocks are part of the mask, not something painted over ----
         # A grid line or a band running under a wordmark reads as a printing error, and no
@@ -124,7 +127,19 @@ class Model:
         # baseline in the 35.6 mm strip between the OLED window (ends y 66.9) and the keyboard
         # (starts y 102.5): 4 mm clear above the cap, 4 mm below the small line
         self.deck_text_y = g("P_OLED_Y0") + g("P_OLED_H") + 4.0 + 10.5
-        self.cover_text_y = 133.0             # latch band, below the display well (ends 99.0)
+        # The cover block sits in the band between the bottom of the display well and the part's
+        # latch edge. With the 7" panel that band is 28.9 mm (the 5" left 82.6), and the well is
+        # centred, so the band's top is fixed by the panel and its bottom by the part edge.
+        self.cover_band_y0 = py + ph + self.gap
+        self.cover_band = self.l - self.cover_band_y0
+        # Pick the largest cap whose block, trim and both margins fit the band. Done here, before
+        # any box is built, because the sticker, the reserved plate and the sheet all read it.
+        self.cover_cap = next((c for c in COVER_CAPS
+                               if self._cover_block_h(c) + 2 * (STICKER_MARGIN + 2.0)
+                               <= self.cover_band), COVER_CAPS[-1])
+        _bx0, _by0, _bx1, _by1 = _sticker_box(self.cover_spec())
+        # the block's own top edge sits 2 mm below the well, so its baseline follows from that
+        self.cover_text_y = self.cover_band_y0 + 2.0 + (STICKER_MARGIN + _by1)
         # drawing y grows hinge -> latch, so a glyph stands ABOVE its baseline at smaller y on
         # the deck (unflipped) and at larger y on the cover (drawn flipped to keep the hinge at
         # the seam).  Build each block in the part's own frame.
@@ -135,9 +150,8 @@ class Model:
         # moves the keep-out with it.
         boxes = {}
         for side, base in (("deck", self.deck_text_y), ("cover", self.cover_text_y)):
-            tw, th = sticker_trim(side)
-            bx0, by0, _bx1, by1 = _sticker_box(next(s for s in sticker_specs()
-                                                     if s["side"] == side))
+            tw, th = sticker_trim(side, self.cover_cap)
+            bx0, by0, _bx1, by1 = _sticker_box(self.spec_for(side))
             # the deck is drawn upright, so artwork "above the baseline" is at smaller part y;
             # the cover is drawn mirrored, so the same ink sits at larger y there
             y0 = (base - by1 - STICKER_MARGIN) if side == "cover" else (base + by0 - STICKER_MARGIN)
@@ -147,10 +161,13 @@ class Model:
         # ---- free fields, derived and checked ----
         self.rail_l = x                       # deck free rail, 40.95
         self.rail_r = self.w - (x + bw)       # 40.95
-        self.band_x0 = px - self.gap          # 44.55: cover margin left of the display well
-        self.band_x1 = px + pw + self.gap      # 188.95
-        assert self.band_x0 >= 30.0 and self.w - self.band_x1 >= 30.0, \
-            "the cover margins are too narrow for a continuous rail"
+        # the cover's free plate outside the bezel ring: the 7" panel and its 7 mm bezel take
+        # 203.3 of 233.5, so 15.1 mm each side - not the 44.55 of the 5" layout
+        self.cover_margin = px - self.gap - self.frame
+        self.band_x0 = px - self.gap          # 21.59: cover margin left of the display well
+        self.band_x1 = px + pw + self.gap      # 211.51
+        assert self.cover_margin >= 10.0, \
+            f"only {self.cover_margin:.1f} mm of cover plate outside the bezel"
 
         # The lettering must sit on clean plate, and its block must not swallow a feature - a
         # wordmark that has to dodge a fan is a wordmark in the wrong place.  Only the features
@@ -161,11 +178,26 @@ class Model:
                                 (self.well, self.cable))):
             for h in own:
                 assert not _overlaps(box, h), f"the {name} lettering runs into {h}"
-            assert not any(_overlaps(box, (sx - 3.6, sy - 3.6, 7.2, 7.2))
-                           for sx, sy in self.screws), \
-                f"the {name} lettering runs into a deck screw"
+            near = self.slots if name == "cover" else self.screws
+            assert not any(_overlaps(box, (sx - 6.0, sy - 6.0, 12.0, 12.0))
+                           for sx, sy in near), \
+                f"the {name} lettering runs into a {'finger slot' if name == 'cover' else 'deck screw'}"
             assert 2.0 < box[1] and box[1] + box[3] < self.l - 2.0, \
                 f"the {name} lettering runs off the part: {box}"
+
+
+    # ---- derived type metrics ----
+    def cover_spec(self) -> dict:
+        return next(s for s in sticker_specs(self.cover_cap) if s["side"] == "cover")
+
+    def _cover_block_h(self, cap: float) -> float:
+        """Block height for one cap, in mm, before the sticker margin."""
+        spec = dict(sticker_specs(cap)[1])
+        bx0, by0, bx1, by1 = _sticker_box(spec)
+        return by1 - by0
+
+    def spec_for(self, side: str) -> dict:
+        return self.cover_spec() if side == "cover" else sticker_specs()[0]
 
 
 # ---------------------------------------------------------------- svg primitives
@@ -258,7 +290,14 @@ STICKER_BLEED = 1.0      # print past the cut line, per the printer's spec
 STICKER_CAP = 10.5       # matches brand_deck's cap
 
 
-def sticker_specs() -> list[dict]:
+# The motto block has to live in whatever band the panel leaves at the latch end, and the 7"
+# panel leaves 28.9 mm where the 5" left 82.6.  Shrinking the block is the only option: the
+# band is set by the display, and moving the display off centre is what the operator asked
+# not to do.  Model.cover_cap() picks the largest cap that fits; sticker_specs() takes it.
+COVER_CAPS = [10.5, 10.0, 9.5, 9.0, 8.5, 8.0, 7.5, 7.0, 6.5, 6.0]
+
+
+def sticker_specs(cover_cap: float = STICKER_CAP) -> list[dict]:
     cap = STICKER_CAP
     return [
         dict(side="deck", name="wordmark",
@@ -267,9 +306,9 @@ def sticker_specs() -> list[dict]:
              rule=(3.0, text_w("KTEMATA", cap, cap * 0.28) / 2, AMBER, 0.8),
              note="KTEMATA wordmark, deck top face"),
         dict(side="cover", name="motto",
-             lines=[("κτῆμα ἐς ἀεί", cap, 0.0, True, IVORY, 0.0),
+             lines=[("κτῆμα ἐς ἀεί", cover_cap, 0.0, True, IVORY, 0.0),
                     ("KTEMATA  ·  A POSSESSION FOR ALL TIME", 2.4, 1.1, False, GREY_L, 9.8)],
-             rule=(5.2, text_w("κτῆμα ἐς ἀεί", cap, 0.0, True) / 2 + 8.0, AMBER, 0.8),
+             rule=(5.2, text_w("κτῆμα ἐς ἀεί", cover_cap, 0.0, True) / 2 + 8.0, AMBER, 0.8),
              note="motto, lid cover bezel face"),
     ]
 
@@ -288,14 +327,15 @@ def _sticker_box(spec: dict) -> tuple[float, float, float, float]:
             max(x1, half), max(y1, dy + sw / 2))
 
 
-def sticker_trim(side: str) -> tuple[float, float]:
+def sticker_trim(side: str, cover_cap: float = STICKER_CAP) -> tuple[float, float]:
     """Trim size of the sticker for one part: ink + margin, rounded up to 0.1 mm.
 
     The order form wants whole numbers and the die is placed by eye against a ruler, so a
     sub-0.1 mm trim is false precision. Rounding UP keeps the declared margin instead of eating
     into it.
     """
-    bx0, by0, bx1, by1 = _sticker_box(next(s for s in sticker_specs() if s["side"] == side))
+    bx0, by0, bx1, by1 = _sticker_box(next(s for s in sticker_specs(cover_cap)
+                                            if s["side"] == side))
     up = lambda v: math.ceil(v * 10.0 - 1e-9) / 10.0  # noqa: E731
     return (up(bx1 - bx0 + 2 * STICKER_MARGIN), up(by1 - by0 + 2 * STICKER_MARGIN))
 
@@ -482,15 +522,15 @@ def deck_holes_d(m: Model) -> list[str]:
          rrect_d(px, py, pw - px, ph, 0.0), rrect_d(bx, by, bw, bh, 0.8),
          circle_d(fx, fy, fd / 2)]
     d += [circle_d(sx, sy, 3.1) for sx, sy in m.screws]
+    # the 16 mm power button lives on the deck now
+    d.append(circle_d(m.btn[0], m.btn[1], m.btn[2] / 2))
     return d
 
 
 def cover_holes_d(m: Model) -> list[str]:
     wx, wy, ww, wh, wr = m.well
     cx, cy, cw, ch = m.cable
-    bx, by, bd = m.btn
-    d = [rrect_d(wx, wy, ww, wh, wr), rrect_d(cx, cy, cw, ch, 0.0),
-         circle_d(bx, by, bd / 2)]
+    d = [rrect_d(wx, wy, ww, wh, wr), rrect_d(cx, cy, cw, ch, 0.0)]
     d += [circle_d(sx, sy, 5.0) for sx, sy in m.slots]
     return d
 
@@ -499,20 +539,20 @@ def deck_hit(m: Model, px, py, pad=0.0) -> bool:
     """True where the deck's top face is interrupted, or is reserved for the lettering."""
     x0, _, x1, depth = m.port
     fx, fy, fd = m.fan
+    bx, by, bd = m.btn
     return (_off_plate(px, py, m.w, m.l, m.deck_r)
             or _in_rect(px, py, m.type_boxes["deck"], pad)
             or _in_rect(px, py, m.kb, pad) or _in_rect(px, py, m.oled, pad)
             or _in_rect(px, py, (x0, 0, x1 - x0, depth), pad)
             or _in_rect(px, py, m.fb, pad) or _in_circle(px, py, fx, fy, fd / 2, pad)
+            or _in_circle(px, py, bx, by, bd / 2 + 3.0, pad)
             or any(_in_circle(px, py, sx, sy, 3.7, pad) for sx, sy in m.screws))
 
 
 def cover_hit(m: Model, px, py, pad=0.0) -> bool:
-    bx, by, bd = m.btn
     return (_off_plate(px, py, m.w, m.l, m.cover_r)
             or _in_rect(px, py, m.type_boxes["cover"], pad)
             or _in_rect(px, py, m.well, pad) or _in_rect(px, py, m.cable, pad)
-            or _in_circle(px, py, bx, by, bd / 2 + 3.0, pad)
             or any(_in_circle(px, py, sx, sy, 5.5, pad) for sx, sy in m.slots))
 
 
@@ -667,7 +707,7 @@ def scheme_meridian(p: Surface, cover: bool) -> None:
     for mk in meridian_marks(m, cover):
         p.path(mk.d(p.y), mk.fill, rule=mk.rule, opacity=mk.opacity, group=mk.group)
     if cover:
-        brand_cover(p, 10.5)
+        brand_cover(p, m.cover_cap)
     else:
         brand_deck(p, "OFFLINE  LIBRARY", 10.5)
 
@@ -679,8 +719,9 @@ def scheme_strata(p: Surface, cover: bool) -> None:
     w, l = m.w, m.l
     p.rect(0, 0, w, l, BASE, m.cover_r if cover else m.deck_r)
 
-    # 32 mm of bands per rail: inside the deck's 40.95 mm rail and the cover's 44.55 mm margin,
-    # so one stack serves both and the U closes across the seam
+    # 32 mm of bands per rail: inside the deck's 40.95 mm rail, but NOT the cover's 14.6 mm
+    # margin outside the 7" bezel - Strata is kept as a record of the alternatives, and on the
+    # cover it now runs under the bezel ring instead of beside it
     bands = [(8.0, AMBER_D), (5.0, SLATE), (12.0, AMBER), (3.0, GREY), (4.0, BASE)]
     for mirror in (False, True):
         x = 0.0
@@ -695,7 +736,7 @@ def scheme_strata(p: Surface, cover: bool) -> None:
     p.rect(0, 5.2, w, 0.6, INK, opacity=0.7)
 
     if cover:
-        brand_cover(p, 10.0)
+        brand_cover(p, m.cover_cap)
     else:
         brand_deck(p, "A  POSSESSION  FOR  ALL  TIME", 10.5)
         p.text("r5", 2.8, w / 2, l - 6.5, GREY, track=1.4, anchor="middle")
@@ -754,7 +795,7 @@ def scheme_bearing(p: Surface, cover: bool) -> None:
     p.rect(tx - 4.0, 0.0, 8.0, 8.0, AMBER)
 
     if cover:
-        brand_cover(p, 10.0)
+        brand_cover(p, m.cover_cap)
     else:
         brand_deck(p, "OFFLINE  LIBRARY", 10.5)
 
@@ -794,10 +835,10 @@ SCHEMES = [
             "5  stencil wordmark and motto; matte 2K clear, lettering last",
         ],
         note="Continuity: the stack is keyed to x, not to y, so each rail runs dead straight from the "
-             "cover into the deck and the U closes across the hinge. 32 mm of bands fits inside the "
-             "deck's 40.95 mm rail and the cover's 44.55 mm margin, so one set of masks serves both "
-             "parts. The bands are interrupted only where the deck is cut (fan, screws, Pi opening) "
-             "and where the cover's display well takes over - both masked, never touched up.",
+             "cover into the deck and the U closes across the hinge. 32 mm of bands fills the deck's "
+             "40.95 mm rail, but the 7\" bezel leaves only 14.6 mm of cover plate beside it, so on "
+             "the cover the outer bands now run under the bezel ring instead of beside it. Kept as "
+             "the record of an alternative: on the 7\" layout Meridian is the scheme that works.",
     ),
     dict(
         slug="3_bearing", name="BEARING", sub="a slate border and one amber trace through the seam",
@@ -869,6 +910,14 @@ def deck_features(p: Surface) -> None:
         p.circle(sx, sy, 3.1, "#151d25", layer="features", stroke="#48545f", sw=0.6)
         p.circle(sx, sy, 1.7, INK, layer="features")
 
+    # 16 mm IP67 power button, moved off the lid when the panel grew to 7"
+    bx, by, bd = m.btn
+    p.circle(bx, by, bd / 2 + 3.4, "none", layer="features", stroke="#48545f", sw=0.8)
+    p.circle(bx, by, bd / 2, "#111820", layer="features", stroke="#6a7784", sw=1.0)
+    p.circle(bx, by, bd / 2 - 2.0, "none", layer="features", stroke=AMBER_D, sw=1.2)
+    p.text("POWER", 1.9, bx, by + bd / 2 + 6.0, LABEL, layer="features",
+           track=0.9, anchor="middle")
+
 
 
 def cover_features(p: Surface) -> None:
@@ -877,28 +926,25 @@ def cover_features(p: Surface) -> None:
     p.rect(wx, wy, ww, wh, "#06090c", wr, layer="features", stroke="#48545f", sw=1.0)
     px, py, pw, ph, pr = m.panel
     p.rect(px, py, pw, ph, "#0a0f14", pr, layer="features", stroke="#333f4a", sw=0.9)
-    p.rect(px + (pw - 110.7) / 2, py + (ph - 62.3) / 2, 110.7, 62.3, "none", 0.8,
+    aw, ah = m.active
+    p.rect(px + (pw - aw) / 2, py + (ph - ah) / 2, aw, ah, "none", 0.8,
            layer="features", stroke="#2b353e", sw=0.6, dash="3 2")
-    p.text("TOUCH  DISPLAY  2", 2.8, m.w / 2, m.l / 2 - 3.4, LABEL,
+    p.text("TOUCH  DISPLAY  2  ·  7\"", 2.8, m.w / 2, py + ph / 2 - 3.4, LABEL,
            layer="features", track=1.5, anchor="middle")
-    p.text("143.4 × 91.46  ·  image 110.7 × 62.3", 2.1, m.w / 2, m.l / 2 + 3.0,
-           LABEL, layer="features", anchor="middle")
+    p.text(f"{f(pw)} × {f(ph)}  ·  image {f(aw)} × {f(ah)}", 2.1, m.w / 2,
+           py + ph / 2 + 3.0, LABEL, layer="features", anchor="middle")
     # the panel line, inside the well: the one place on this part that is never painted
-    p.text(f"WELL {f(ww)} × {f(wh)}   ·   BEZEL {f(m.frame)}   ·   POWER {f(m.btn[2])}",
-           1.9, m.w / 2, wy + 8.0, LABEL, layer="features", track=0.5, anchor="middle")
-
-    bx, by, bd = m.btn
-    p.circle(bx, by, bd / 2 + 3.4, "none", layer="features", stroke="#48545f", sw=0.8)
-    p.circle(bx, by, bd / 2, "#111820", layer="features", stroke="#6a7784", sw=1.0)
-    p.circle(bx, by, bd / 2 - 2.0, "none", layer="features", stroke=AMBER_D, sw=1.2)
+    p.text(f"WELL {f(ww)} × {f(wh)}   ·   BEZEL {f(m.frame)}   ·   POWER ON THE DECK",
+           1.9, m.w / 2, py + ph / 2 + 9.0, LABEL, layer="features", track=0.5,
+           anchor="middle")
 
     for sx, sy in m.slots:
         p.circle(sx, sy, 5.0, INK, layer="features", stroke="#48545f", sw=0.8)
 
     cx, cy, cw, ch = m.cable
     p.rect(cx, cy, cw, ch, INK, layer="features")
-    p.line([(cx, ch), (cx + cw, ch)], "#48545f", 0.8, layer="features")
-    p.text("DSI", 1.8, cx + 6.5, ch / 2 + 0.7, LABEL, layer="features", anchor="middle")
+    p.line([(cx, cy + ch), (cx + cw, cy + ch)], "#48545f", 0.8, layer="features")
+    p.text("DSI", 1.8, cx + 6.5, cy + ch / 2 + 0.7, LABEL, layer="features", anchor="middle")
 
 
 
@@ -1163,7 +1209,7 @@ def sticker(model: Model, spec: dict, path: Path, preview: bool) -> tuple[Path, 
     that is what the order form asks for.
     """
     bx0, by0, bx1, by1 = _sticker_box(spec)
-    tw, th = sticker_trim(spec["side"])
+    tw, th = sticker_trim(spec["side"], spec["lines"][0][1])
     fw, fh = tw + 2 * STICKER_BLEED, th + 2 * STICKER_BLEED
     # block coords -> file coords: the ink is centred in the trim, so the margin is symmetric even
     # where the 0.1 mm round-up gives a little more than STICKER_MARGIN on one axis
@@ -1242,8 +1288,8 @@ def main() -> None:
     if args.stickers:
         # one file per block, named with its trim size because the order form asks for it and a
         # file with a cut line in it is rejected outright
-        for spec in sticker_specs():
-            tw, th = sticker_trim(spec["side"])
+        for spec in sticker_specs(model.cover_cap):
+            tw, th = sticker_trim(spec["side"], spec["lines"][0][1])
             stem = (f"ktemata_sticker_{spec['side']}_{spec['name']}"
                     f"_{f(tw)}x{f(th)}mm")
             out = OUT / f"{stem}_bleed.svg"

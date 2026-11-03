@@ -203,6 +203,18 @@ module fan_grille() {
     }
 }
 
+// ---- power button ----
+// The 16 mm IP67 panel button moved here from the lid: a centred 7" panel leaves 28.93 mm of
+// latch band and the button needs 34.2 mm, so the lid cannot carry both (see common.scad,
+// R5_BTN_*). The deck's right rail is 40.95 mm of plate over free floor at the latch end - the
+// boards and cells all stop at y 101 - so the plate is the whole mount: a plain hole, and the
+// nut seats on the deck's underside. No boss, because anything hanging into the tray cavity
+// there would foul the leads to the Pi's J2 pads.
+//
+// Printed top-face down, the button's hole is a vertical wall in the plate and prints clean.
+module button_cut() r5_at(R5_BTN_X, R5_BTN_Y, R5_DECK_Z - 1)
+    cylinder(d=R5_BTN_D, h=R5_DECK_T + 2);
+
 module r5_deck() union() {
     difference() {
         union() {
@@ -215,6 +227,7 @@ module r5_deck() union() {
         openings();
         fan_holes();
         kb_plate_cut();
+        button_cut();
     }
     // the grille goes in after the cut: the bars occupy the plate's own volume inside the
     // opening, so they can only exist as a union on top of an already-cut plate

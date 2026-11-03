@@ -54,19 +54,25 @@ These are the constraints the artwork obeys, and `cad/tools/paint_probe.scad` fe
 generator straight from `common.scad`. Change a part and the sheets follow; the assertions fail
 rather than drawing a line through a fan.
 
-- **The cover's display well is 144.4 × 92.46 mm** (`DISP_W/H` + 0.5 clearance), with only 7 mm of
-  bezel round it. It takes the whole hinge-side frame: from `x 44.55` to `188.95`. Anything that
-  has to be continuous across the seam on the cover must therefore live in the **latch band**
-  (`y > 99`; the button is at `y 152.9..169.1`, the finger slots at `y 164.1..178.1`) or in the
-  **44.55 mm side margins**.
+- **The cover's display well is 190.32 × 121.24 mm** (`R5_PANEL` + 0.5 clearance), with 7 mm of
+  bezel round it, and the 7" panel is **centred**: the well runs `x 21.59..211.91`, `y 28.43..149.67`.
+  That leaves only **14.6 mm of plate outside the bezel in x** and a **28.4 mm latch band**, so the
+  cover's usable paint is the flat ring round the bezel, not the rails the 5" layout had. Anything
+  that has to be continuous across the seam on the cover must therefore live in that **latch band**
+  (`y > 149.7`; the finger slots are at `y 161..171`) or in the **14.6 mm side margins**.
 - **The deck's free fields** are the **40.95 mm side rails**, the **35.6 mm strip** between the OLED
   window (ends `y 66.9`) and the keyboard pocket (starts `y 102.5`), and the **16 mm** between the
   keyboard pocket (ends `y 162.1`) and the latch edge.
 - **Only one vertical lane is clear on both parts at once** across their whole length:
   **x 216.5 .. 223.0**. That is why BEARING's trace runs there and not up the more obvious left
   rail — the deck's left rail is crossed by the fan (x 25..63, y 19..57), the FireBeetle access
-  hole (x 14..30, y 148..158) and a screw, and the cover's left margin is crossed by the power
-  button (x 5.6..28.6, y 152.9..169.1) and by the display well from `x 44.55`.
+  hole (x 14..30, y 148..158), a screw and now the **power button** (Ø16.2 at 213.0, 160.1), and
+  the cover's left margin is crossed by the display well from `x 21.59`.
+
+  The power button is why the deck now has a hole where the 5" layout had clean rail: it moved
+  off the lid when the panel grew to 7", and the rail at x 213 is the only place on the deck that
+  is both clear of the keyboard pocket and clear of every board underneath. Its Ø19 nut needs
+  9.2 mm of clearance to the keyboard skirt, which is exactly what the rail gives.
 - **The lettering blocks are part of the mask.** MERIDIAN's graticule stops at the wordmark and
   the motto rather than running under them — the blocks are declared in `Model.type_boxes`,
   derived from the sticker trim, so no scheme can paint through them by accident and the
