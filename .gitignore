@@ -27,4 +27,12 @@ work/*
 zim/*.zim
 
 .shopping.md
-site/pdf/*.pdf
+
+# PDFs are not source: they are either rebuilt by a generator or downloaded, so a new one is a
+# working file by default (see "do not include pdf's").  The exceptions are files a reader needs
+# from a clean clone - the wiring diagram, and the two sticker upload files that
+# `paint.py --stickers` writes.  A tracked PDF is never dropped by these rules; the exceptions
+# exist so a future, broader PDF rule cannot sweep the deliverables away.
+*.pdf
+!docs/ktemata_r3_wiring.pdf
+!docs/paint/ktemata_sticker_*.pdf
