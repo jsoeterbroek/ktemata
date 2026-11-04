@@ -26,7 +26,7 @@ Output lands in `docs/paint/`:
 | `ktemata_paint_all.png` | the three sheets side by side, for choosing |
 | `ktemata_stencil_{deck,cover}_{ash,amber,seam,bezel}.svg` | **cut files**, one per paint pass, `--stencils` |
 | `ktemata_sticker_deck_wordmark_91x22.4mm_bleed.pdf` | **the deck wordmark sticker**, artwork only, `--stickers` |
-| `ktemata_sticker_cover_motto_113.5x26.4mm_bleed.pdf` | **the lid motto sticker**, artwork only, `--stickers` |
+| `ktemata_sticker_cover_motto_82.1x17.3mm_bleed.pdf` | **the lid motto sticker**, artwork only, `--stickers` |
 
 The SVGs are **1:1 in millimetres** and are drawn from the model, so they print as masking
 templates: 400 gsm card or vinyl, cut to the panels, laid on the part. There is a 50 mm scale bar
@@ -139,6 +139,10 @@ each colour, not as a measurement of the bottle in your hand.
 | `ktemata_stencil_deck_seam.svg` | deep amber | the seam rule at the hinge, the end stop at the latch edge |
 | `ktemata_stencil_cover_*.svg` | as above, plus `bezel` | the same on the lid cover; `bezel` is the slate ring |
 
+The same masks are also printable as rigid 1.2 mm panels (`stl/stencil_*.stl`, one file per pass)
+for anyone who would rather not cut vinyl — see **Printed masks** below. The sheets and the STLs
+come from the same mark data, so they cannot disagree.
+
 Black is the sheet you lay on the part; white is what the blade removes. Three practical points,
 because they decide whether the mask survives being handled:
 
@@ -156,6 +160,42 @@ because they decide whether the mask survives being handled:
 
 The registration crosses in the margins align the passes: lay pass 1, spray, lift, lay pass 2 on
 the same crosses. The part outline is the datum, so each mask lands without measuring.
+
+## Printed masks
+
+```bash
+python3 cad/tools/stencil_stl.py                  # five masks, 1.2 mm thick
+python3 cad/tools/stencil_stl.py --part cover      # one part
+python3 cad/tools/stencil_stl.py --thickness 2.0   # stiffer
+```
+
+Writes `stl/stencil_{deck,cover}_{amber,seam}.stl` and `stl/stencil_cover_bezel.stl`: the part
+outline with that pass's slots cut straight through, no handling margin, 233.5 × 178.1 mm. They
+land on the part with their own outline as the datum, exactly like the sheets.
+
+**The ash pass is not printed, and cannot be.** A mask is the sheet minus its slots, so it holds
+together only if the slots do not close a loop. The graticule does: 8 horizontal rows and 10
+vertical columns on the deck, which divides the panel into ~80 cells. Measured on the deck's ash
+mask: 23 separate solids with no ligament, 11 at 0.8 mm, and still 11 at 4.0 mm — the cuts meet
+each other in the middle of the plate, so the split is inherent to the artwork rather than to the
+tie width. Ash therefore stays vinyl: 0.5 mm pinstripe tape on a 17.81 mm pitch, as the note above
+already suggests. `--include-vinyl` will emit it anyway if you want to see the strips.
+
+**The cover is two planes, and the masks respect that.** Its plate's painted face is at z 4.0 and
+its bezel stands 7.92 mm above it. A flat 1.2 mm mask cannot bridge a step that size, so the
+plate-level masks have the bezel's footprint cut away and lie on the plate with the ring poking
+through, while `stencil_cover_bezel` is a ring-shaped mask that sits on the bezel's top face.
+`cover_hit()` enforces the same rule for the artwork, so no mark crosses the step.
+
+Two corrections came out of building these, both in the sheet output rather than the STLs:
+
+- **The cover's apertures were not mirrored with its marks.** The cover is drawn mirrored in y on
+  the open-flat sheet, so that its hinge edge meets the deck's at the seam, and the marks were
+  flipped while the cut-outs were not — the DSI notch appeared at the latch end and both finger
+  slots at the hinge. Apertures are now one `Aperture` shape rendered for both consumers.
+- **The motto sat on the raised bezel.** Its block was centred in the band below the display well
+  rather than below the bezel, so 5 mm of it lay on a surface 7.92 mm higher. The flat band is
+  21.4 mm, the block is scaled into it (cap 6.0, trim 82.1 × 17.3 mm) and centred.
 
 ## Reading a sheet
 
@@ -206,13 +246,13 @@ paint. `--stickers` writes them as print-ready vinyl instead:
 | File | Block | Trim (cut size) | Where it goes |
 |---|---|---|---|
 | `ktemata_sticker_deck_wordmark_91x22.4mm_bleed.pdf` | `KTEMATA` + `OFFLINE LIBRARY` | **91 × 22.4 mm** | deck, x 71.25..162.25, y 68.40..90.80 |
-| `ktemata_sticker_cover_motto_113.5x26.4mm_bleed.pdf` | `κτῆμα ἐς ἀεί` + translation | **113.5 × 26.4 mm** | cover, x 60.00..173.50, y 120.65..147.05 |
+| `ktemata_sticker_cover_motto_82.1x17.3mm_bleed.pdf` | `κτῆμα ἐς ἀεί` + translation | **82.1 × 17.3 mm** | cover, x 75.70..157.80, y 158.73..176.03 — the 21.4 mm flat band below the raised bezel |
 
 Upload the **PDF**. It is vector (PDF 1.7, not the 1.4 they reject), all lettering already
 converted to outlines, RGB — they convert to their CMYK profile themselves — and it carries **no
 cut line and no crop marks**, which is what their upload form requires. Each file has 1 mm of
-bleed on all four sides beyond the trim, so the artwork measures 93 × 24.4 mm and
-115.5 × 28.4 mm; order a **contour-cut rectangle at the trim size above**, centred. Matte
+bleed on all four sides beyond the trim, so the artwork measures 93 × 24.4 mm and 84.1 × 19.3 mm;
+order a **contour-cut rectangle at the trim size above**, centred. Matte
 laminate, so it matches the 2K clear it is going under. The trim size is also in the file name
 and the SVG `<title>`, because the order form asks for it as a number and a file name is harder
 to lose than a note.

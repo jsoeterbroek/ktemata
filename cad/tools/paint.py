@@ -109,9 +109,13 @@ class Model:
 
         self.gap = g("P_C_GAP")
         self.frame = g("P_C_FRAME")
+        # the raised bezel's footprint on the plate: panel outline + COVER_GAP + COVER_FRAME
+        self.bezel_d = g("P_C_GAP") + g("P_C_FRAME")
         self.panel = (g("P_PANEL_X"), g("P_PANEL_Y"), g("P_DISP_W"), g("P_DISP_H"), g("P_DISP_R"))
         px, py, pw, ph, pr = self.panel
         self.well = (px - self.gap, py - self.gap, pw + 2 * self.gap, ph + 2 * self.gap, pr)
+        d = self.bezel_d
+        self.bezel_ring = (px - d, py - d, pw + 2 * d, ph + 2 * d, pr + d)
         self.active = (g("P_ACTIVE_W"), g("P_ACTIVE_H"))
         # the button is on the DECK now (a centred 7" panel leaves no latch band for it)
         self.btn = (g("P_BTN_X"), g("P_BTN_Y"), g("P_BTN_D"))
@@ -130,16 +134,23 @@ class Model:
         # The cover block sits in the band between the bottom of the display well and the part's
         # latch edge. With the 7" panel that band is 28.9 mm (the 5" left 82.6), and the well is
         # centred, so the band's top is fixed by the panel and its bottom by the part edge.
-        self.cover_band_y0 = py + ph + self.gap
+        # the flat plate below the raised bezel, not merely below the well: the type block is a
+        # vinyl sticker and a sticker cannot bridge the 16.4 mm step either
+        self.cover_band_y0 = py + ph + self.bezel_d
         self.cover_band = self.l - self.cover_band_y0
         # Pick the largest cap whose block, trim and both margins fit the band. Done here, before
         # any box is built, because the sticker, the reserved plate and the sheet all read it.
         self.cover_cap = next((c for c in COVER_CAPS
-                               if self._cover_block_h(c) + 2 * (STICKER_MARGIN + 2.0)
-                               <= self.cover_band), COVER_CAPS[-1])
+                               if sticker_trim("cover", c)[1] + 2 * 2.0 <= self.cover_band),
+                              COVER_CAPS[-1])
+        # The block is CENTRED in the flat band, not hung off its top edge: the cap is fitted to
+        # the band, so a 2 mm offset from one edge would leave the other margin short.
+        # In the cover's mirrored frame the sticker box's top edge is at (baseline - by1 -
+        # STICKER_MARGIN), so place that edge where the centring wants it and solve for baseline.
         _bx0, _by0, _bx1, _by1 = _sticker_box(self.cover_spec())
-        # the block's own top edge sits 2 mm below the well, so its baseline follows from that
-        self.cover_text_y = self.cover_band_y0 + 2.0 + (STICKER_MARGIN + _by1)
+        _th = sticker_trim("cover", self.cover_cap)[1]
+        _top = self.cover_band_y0 + (self.cover_band - _th) / 2
+        self.cover_text_y = _top + _by1 + STICKER_MARGIN
         # drawing y grows hinge -> latch, so a glyph stands ABOVE its baseline at smaller y on
         # the deck (unflipped) and at larger y on the cover (drawn flipped to keep the hinge at
         # the seam).  Build each block in the part's own frame.
@@ -294,7 +305,7 @@ STICKER_CAP = 10.5       # matches brand_deck's cap
 # panel leaves 28.9 mm where the 5" left 82.6.  Shrinking the block is the only option: the
 # band is set by the display, and moving the display off centre is what the operator asked
 # not to do.  Model.cover_cap() picks the largest cap that fits; sticker_specs() takes it.
-COVER_CAPS = [10.5, 10.0, 9.5, 9.0, 8.5, 8.0, 7.5, 7.0, 6.5, 6.0]
+COVER_CAPS = [10.5, 10.0, 9.5, 9.0, 8.5, 8.0, 7.5, 7.0, 6.5, 6.0, 5.5, 5.0, 4.5]
 
 
 def sticker_specs(cover_cap: float = STICKER_CAP) -> list[dict]:
@@ -305,10 +316,18 @@ def sticker_specs(cover_cap: float = STICKER_CAP) -> list[dict]:
                     ("OFFLINE  LIBRARY", 2.6, 1.5, False, GREY_L, 6.8)],
              rule=(3.0, text_w("KTEMATA", cap, cap * 0.28) / 2, AMBER, 0.8),
              note="KTEMATA wordmark, deck top face"),
+        # The cover block is SCALED, not merely re-capped: its band is the 21.4 mm of flat plate
+        # below the raised bezel, and a block whose tagline sits at a fixed 9.8 mm under the
+        # baseline cannot shrink into it however small the Greek is set. Every vertical offset
+        # is therefore a fraction of the cap (0.495 for the rule, 0.933 for the tagline - the
+        # ratios the original 10.5 mm block had), so the whole block scales as one.
         dict(side="cover", name="motto",
              lines=[("κτῆμα ἐς ἀεί", cover_cap, 0.0, True, IVORY, 0.0),
-                    ("KTEMATA  ·  A POSSESSION FOR ALL TIME", 2.4, 1.1, False, GREY_L, 9.8)],
-             rule=(5.2, text_w("κτῆμα ἐς ἀεί", cover_cap, 0.0, True) / 2 + 8.0, AMBER, 0.8),
+                    ("KTEMATA  ·  A POSSESSION FOR ALL TIME", max(1.9, cover_cap * 0.229),
+                     max(0.6, cover_cap * 0.105), False, GREY_L, cover_cap * 0.933)],
+             rule=(cover_cap * 0.495,
+                   text_w("κτῆμα ἐς ἀεί", cover_cap, 0.0, True) / 2 + cover_cap * 0.76,
+                   AMBER, 0.8),
              note="motto, lid cover bezel face"),
     ]
 
@@ -511,28 +530,84 @@ def _in_circle(px, py, cx, cy, r, pad=0.0) -> bool:
     return (px - cx) ** 2 + (py - cy) ** 2 < (r + pad) ** 2
 
 
-def deck_holes_d(m: Model) -> list[str]:
-    """The deck's apertures, as mask geometry: paint cannot land where the plate is cut."""
+# ---------------------------------------------------------------- apertures, as shapes
+# Apertures are emitted as data first and rendered twice: to SVG path data for the cut sheets and
+# to OpenSCAD solids for the printed masks (cad/tools/stencil_stl.py).  Keeping the two renderings
+# off one shape list is what stops the sheet and the STL from disagreeing about where a hole is -
+# they did, because the cover's marks are mirrored into the sheet's frame and its apertures were
+# not, which put the DSI notch and both finger slots on the wrong half of the drawing.
+class Aperture:
+    """One opening in the part: a rounded rectangle or a circle, in drawing coordinates."""
+    __slots__ = ("kind", "x", "y", "w", "h", "r")
+
+    def __init__(self, kind, x, y, w, h, r=0.0):
+        self.kind, self.x, self.y, self.w, self.h, self.r = kind, x, y, w, h, r
+
+    @staticmethod
+    def rrect(x, y, w, h, r=0.0):
+        return Aperture("rrect", x, y, w, h, r)
+
+    @staticmethod
+    def circle(cx, cy, d):
+        return Aperture("circle", cx, cy, d, d, d / 2)
+
+    def d(self, fy=lambda y: y) -> str:
+        """SVG path data. `fy` is a pure mirror of ONE y coordinate (y -> l - y), never a
+        rectangle's translation: the height is applied here, once, so a flipped rectangle's top
+        edge is fy(y + h)."""
+        if self.kind == "circle":
+            return circle_d(self.x, fy(self.y), self.r)
+        return rrect_d(self.x, fy(self.y + self.h), self.w, self.h, self.r)
+
+    def rect(self) -> tuple[float, float, float, float]:
+        """Axis-aligned bounds (x, y, w, h) in drawing coordinates."""
+        if self.kind == "circle":
+            return (self.x - self.r, self.y - self.r, 2 * self.r, 2 * self.r)
+        return (self.x, self.y, self.w, self.h)
+
+
+def deck_apertures(m: Model) -> list[Aperture]:
+    """The deck's openings: paint cannot land where the plate is cut."""
     kx, ky, kw, kh, kr = m.kb
     ox, oy, ow, oh = m.oled
     px, py, pw, ph = m.port
     fx, fy, fd = m.fan
     bx, by, bw, bh = m.fb
-    d = [rrect_d(kx, ky, kw, kh, kr), rrect_d(ox, oy, ow, oh, 0.8),
-         rrect_d(px, py, pw - px, ph, 0.0), rrect_d(bx, by, bw, bh, 0.8),
-         circle_d(fx, fy, fd / 2)]
-    d += [circle_d(sx, sy, 3.1) for sx, sy in m.screws]
+    out = [Aperture.rrect(kx, ky, kw, kh, kr), Aperture.rrect(ox, oy, ow, oh, 0.8),
+           Aperture.rrect(px, py, pw - px, ph, 0.0), Aperture.rrect(bx, by, bw, bh, 0.8),
+           Aperture.circle(fx, fy, fd)]
+    out += [Aperture.circle(sx, sy, 2 * 3.1) for sx, sy in m.screws]
     # the 16 mm power button lives on the deck now
-    d.append(circle_d(m.btn[0], m.btn[1], m.btn[2] / 2))
-    return d
+    out.append(Aperture.circle(m.btn[0], m.btn[1], m.btn[2]))
+    return out
+
+
+def cover_apertures(m: Model) -> list[Aperture]:
+    wx, wy, ww, wh, wr = m.well
+    cx, cy, cw, ch = m.cable
+    out = [Aperture.rrect(wx, wy, ww, wh, wr), Aperture.rrect(cx, cy, cw, ch, 0.0)]
+    out += [Aperture.circle(sx, sy, 2 * 5.0) for sx, sy in m.slots]
+    return out
+
+
+def apertures(m: Model, cover: bool) -> list[Aperture]:
+    return cover_apertures(m) if cover else deck_apertures(m)
+
+
+def deck_holes_d(m: Model) -> list[str]:
+    return [a.d() for a in deck_apertures(m)]
 
 
 def cover_holes_d(m: Model) -> list[str]:
-    wx, wy, ww, wh, wr = m.well
-    cx, cy, cw, ch = m.cable
-    d = [rrect_d(wx, wy, ww, wh, wr), rrect_d(cx, cy, cw, ch, 0.0)]
-    d += [circle_d(sx, sy, 5.0) for sx, sy in m.slots]
-    return d
+    """Apertures in the SHEET's frame.
+
+    The cover is drawn mirrored in y so its hinge edge meets the deck's at the seam, and its
+    MARKS are mirrored to match.  Its apertures were not, which put the DSI notch at the latch
+    end and both finger slots at the hinge (see docs/PAINT.md).  A rectangle's flipped top edge
+    is l - (y + h); a circle's centre is simply mirrored.
+    """
+    l = m.l
+    return [a.d(lambda y: l - y) for a in cover_apertures(m)]
 
 
 def deck_hit(m: Model, px, py, pad=0.0) -> bool:
@@ -550,8 +625,21 @@ def deck_hit(m: Model, px, py, pad=0.0) -> bool:
 
 
 def cover_hit(m: Model, px, py, pad=0.0) -> bool:
+    """True where the cover cannot be painted: off the plate, in an aperture, under the type, or
+    on the RAISED BEZEL.
+
+    The bezel is 16.4 mm above the plate's painted face - `COVER_T - 0.8` to
+    `COVER_T - 0.8 + COVER_RIM_H` - so it is a step, not a surface.  A sprayed pass laid flat on
+    the plate cannot climb it, and a rigid mask certainly cannot, so nothing crosses the ring:
+    the graticule stops at its outer edge and the latch band below it is a separate field.  The
+    previous 5" layout got away with treating the whole cover as one plane because its bezel
+    stood at the very edge, outside every mark; the centred 7" ring lands among them and 25 of
+    the 39 graticule marks crossed it.
+    """
+    px0, py0, pw, ph = m.bezel_ring[:4]
     return (_off_plate(px, py, m.w, m.l, m.cover_r)
             or _in_rect(px, py, m.type_boxes["cover"], pad)
+            or _in_rect(px, py, (px0, py0, pw, ph), pad)
             or _in_rect(px, py, m.well, pad) or _in_rect(px, py, m.cable, pad)
             or any(_in_circle(px, py, sx, sy, 5.5, pad) for sx, sy in m.slots))
 

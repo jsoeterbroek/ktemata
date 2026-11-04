@@ -64,6 +64,7 @@ openscad -D 'CHECK="bottom:pi"' -o /tmp/x.stl cad/assembly.scad   # single inter
 openscad -D R4=false -o /tmp/r2.stl cad/assembly.scad              # r2/r3 assembly (R2=false for r1)
 openscad -o out.png --render --imgsize=1400,1100 --camera=75,90,17,60,0,35,430 cad/assembly.scad  # render preview
 python3 cad/tools/paint.py --stencils    # r5 paint: Meridian (chosen) + mask cut files -> docs/paint/
+python3 cad/tools/stencil_stl.py          # the same masks as printable 1.2 mm panels -> stl/stencil_*.stl
 ```
 
 `bad edges: 0` from export.py means the mesh is manifold (no open edges, no edges shared by >2 faces, which slicers flag as non-manifold). Touching-but-not-overlapping solids (tangent bosses, flush faces) are the usual cause: overlap them by ≥0.5 mm. Any other value is a regression. In check.sh (r4 by default, `R4=0` for r2/r3, `R1=1` for r1), a "HIT" whose bbox is flat in one axis (or that throws an empty-bbox traceback) is a zero-volume contact and is expected. Only volumetric bboxes are real collisions.
