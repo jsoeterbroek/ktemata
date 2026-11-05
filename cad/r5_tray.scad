@@ -5,8 +5,9 @@
 //   - two 18650 cell cradles that locate the HAT (B) + Pi stack laterally (the stack rests on
 //     the cells: Waveshare's holders hold the cells, its 6 mm standoffs hold the Pi),
 //   - the FireBeetle 2, DS3231 and charger module on shallow floor pads,
-//   - the bulkhead charge socket bracket,
 //   - seven M3 insert bosses for the deck (r5_deck.scad).
+// The 8.4 V charge socket is on the DECK, not here (the host is never drilled): the tray wall it
+// used to carry is now free for windows.
 //
 // Print floor down. Every wall is vertical, no supports, nothing overhangs the bed face.
 include <common.scad>
@@ -82,20 +83,6 @@ module rtc_tray() tray_pad(R5_RTC_X, R5_RTC_Y, RTC_W + 4, RTC_H + 4);
 
 module mppt_tray() tray_pad(R5_MPPT_X, R5_MPPT_Y, MPPT_W + 4, MPPT_H + 4);
 
-// ---- charge socket: bulkhead 5.5 x 2.1 DC jack in the host's right wall ----
-// The host wall carries the sealed socket (its own gasket, drilled by the builder); this
-// bracket holds the socket's body and keeps its lead away from the cells.
-module charge_bracket() {
-    r5_box(R5_W - R5_WALL - 12, R5_CHG_Y - 11, R5_W - R5_WALL, R5_CHG_Y + 11, R5_FLOOR, 5);
-    for (dy=[-11, 11])
-        r5_box(R5_W - R5_WALL - 12, R5_CHG_Y + dy - 2, R5_W - R5_WALL, R5_CHG_Y + dy + 2,
-               R5_FLOOR + 5, 11);
-}
-module charge_cut() {
-    // clearance through the wall for the socket barrel and its nut
-    r5_box(R5_W - R5_WALL - 8, R5_CHG_Y - 6, R5_W + 1, R5_CHG_Y + 6, CHG_Z_R5 - 6, 12);
-}
-
 // ---- wall windows: take the middle band out of the four free wall runs ----
 // The walls do three jobs only: locate the cassette in the host, carry the seven deck bosses and
 // close the side of the tray. The stack's weight goes through the floor (cells, HAT and Pi all
@@ -161,17 +148,16 @@ module win_row_y(y0, y1, ax0, ax1) {
 }
 
 // The four wall runs, in drawing coordinates. Each starts 6 mm inside the 14 mm corner (the
-// tangent point is at y=14), ends WIN_BOSS short of a deck boss, and — on the right wall — keeps
-// out of the charge-socket bracket (y 107..129, solid against the wall) with a rib's margin.
+// tangent point is at y=14) and ends WIN_BOSS short of a deck boss.
 module wall_windows() {
     // left wall: boss at y=40, the long free span, boss at y=R5_L-40
     win_row_x(0, R5_WALL, 20, 40 - WIN_BOSS);
     win_row_x(0, R5_WALL, 40 + WIN_BOSS, R5_L - 40 - WIN_BOSS);
     win_row_x(0, R5_WALL, R5_L - 40 + WIN_BOSS, R5_L - 20);
-    // right wall: same bosses, but the bracket leaves only 46.5..101 free in the middle (the
-    // 3.1 mm between the bracket and the lower boss is not worth a window and stays solid)
+    // right wall: same bosses. It used to be interrupted by the charge-socket bracket (y
+    // 107..129); with the socket on the deck the middle run is as long as anywhere else
     win_row_x(R5_W - R5_WALL, R5_W, 20, 40 - WIN_BOSS);
-    win_row_x(R5_W - R5_WALL, R5_W, 40 + WIN_BOSS, R5_CHG_Y - 17);
+    win_row_x(R5_W - R5_WALL, R5_W, 40 + WIN_BOSS, R5_L - 40 - WIN_BOSS);
     win_row_x(R5_W - R5_WALL, R5_W, R5_L - 40 + WIN_BOSS, R5_L - 20);
     // hinge and keyboard ends: the boss pair sits at x 26 / R5_W-26 (see R5_SCREWS), so each end
     // gets one long run between the two boards' post rows plus a short one at each corner.
@@ -214,7 +200,6 @@ module r5_tray() difference() {
         for (p=R5_CELL_POS) for (dy=[-CELL_L/2 + 8, CELL_L/2 - 8])
             cell_cradle(p[0], p[1] + dy);
         firebeetle_tray(); rtc_tray(); mppt_tray();
-        charge_bracket();
         ups_posts(); pi_posts();
     }
     for (p=R5_SCREWS) boss_cut(p);
@@ -222,7 +207,6 @@ module r5_tray() difference() {
     // bore each saddle, not the whole span: the gap between the pair is the cell's free length
     for (p=R5_CELL_POS) for (dy=[-CELL_L/2 + 8, CELL_L/2 - 8])
         r5_at(p[0], p[1] + dy - 4, CELL_ZC_R5) rotate([90, 0, 0]) cylinder(d=CELL_D + 1.2, h=8);
-    charge_cut();
     if (WIN) wall_windows();
     vents();
     rim_notch();

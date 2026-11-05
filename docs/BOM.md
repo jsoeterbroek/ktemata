@@ -19,7 +19,7 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | 3 | Display cable, Standard–Mini, 300 mm | 1 | Pi 5 side of the display link. 300 mm is long for a 237 mm case — coil it in the face cavity, don't fold it sharply. | € 2.29 |
 | 4 | Waveshare UPS HAT (B) | 1 | 2S 18650, 5 V / 5 A out, **8.4 V / 2 A barrel input**, INA219 at 0x42. Cells not included; its 8.4 V / 2 A supply is. In future Waveshare UPS module 3S when available.| € 27.82 |
 | 5 | 18650 Li-ion cells, flat-top, unprotected, matched pair | 2 | Same batch, ≤ 67 mm long, 3.0–3.5 Ah. | € 5 ea |
-| 6 | Sealed DC panel socket, 5.5 × 2.1 mm | 1 | Panel-mount with gasket; the CAD hole is **Ø9.5 mm** (`CHG_W`). | € 6 |
+| 6 | DC panel socket, 5.5 × 2.1 mm | 1 | Panel-mount; the CAD hole is **Ø9.5 mm** (`CHG_W` in r4's printed wall, `R5_CHG_D` in r5's deck). r5 needs **no hole in the bought host**. | € 6 |
 | 7 | Rii K06 keyboard | 1 | 151 × 59 × 11 mm, touchpad, 2.4 GHz + Bluetooth. Fits the 172 mm width and the 11 mm pocket. | € 40 |
 | 8 | Seeed PCIe-to-M.2 BASE (103110063) | 1 | NVMe carrier, 2230–2280. Back-mounted under the Pi; **no bay in the CAD yet** — see note 7. | € 6.40 |
 | 9 | WD SN740 512 GB, M.2 2242 | 1 | 2.38 mm single-sided, 4.7 W max, 300 TBW. Mount at the **42 mm** hole; the bundled 2280 bracket is unused. | € 40–60 |
@@ -77,9 +77,10 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
 2. **UPS.** The UPS HAT (B) is a different power architecture from the HAT (E), not a drop-in swap:
    - **2× 18650 in 2S** (7.4 V nominal, ≈ 23 Wh) instead of 4× 21700 (≈ 70 Wh). Expect **≈ 2–2.5 h** of Pi 5
      use rather than ≈ 6–7 h.
-   - **Charge input is 8.4 V / 2 A on a DC barrel jack**, not USB-C PD. The case therefore has a
-     **5.5 × 2.1 mm sealed DC socket**, and any internal solar/crank module must output **8.4 V**. A PD
-     panel cannot feed this HAT directly.
+   - **Charge input is 8.4 V / 2 A on a DC barrel jack**, not USB-C PD. r4's printed case carries a
+     **5.5 × 2.1 mm DC socket** through its top wall; **r5 mounts the same socket in the deck**, so the
+     bought Peli needs no hole (charging is done with the lid open). Any internal solar/crank module must
+     output **8.4 V**; a PD panel cannot feed this HAT directly.
    - The gauge is an **INA219 at 0x42** (not the BQ4050 at 0x2D), so the firmware driver is
      `firmware/src/ups_hat_b.cpp`. It reports pack voltage/current/power; **no per-cell data and no
      capacity percentage** — the percentage is derived from the 2S pack voltage.
@@ -95,8 +96,9 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
 5. **Storage and clocks.** The M.2 BASE + SN740 and the ML-2020 are r4/r5 parts. The 512 GB drive is a
    deliberate stopgap: it holds the OS, Wikipedia, the maps and the small references, **not** the whole
    833 GiB library (note 7). The DS3231 still needs its CR1220.
-6. **The HAT (B) includes its 8.4 V / 2 A supply.** The case still needs the **sealed panel socket** for the
-   wall, and the solar/crank module if you build that path. A 5 V / USB-C or 5.5 × 2.5 mm bench adapter does
+6. **The HAT (B) includes its 8.4 V / 2 A supply.** r4's case still needs the **panel socket** through its
+   wall; r5's is the deck-mounted one and needs no host hole. Either build needs the solar/crank module if
+   you build that path. A 5 V / USB-C or 5.5 × 2.5 mm bench adapter does
    **not** substitute: the HAT needs 8.4 V on a 5.5 × 2.1 mm barrel, and the Pi 5 itself has no barrel input
    at all — it takes USB-C only.
 7. **The NVMe board has no home in the CAD yet.** `cad/` contains no NVMe geometry: the UPS HAT (B) owns the

@@ -316,6 +316,16 @@ function host_dims(m) =
     assert(false, str("unknown r5 host \"", m, "\": use 1200 or 1400 (see docs/R5.md)")) [0, 0, 0, 0];
 HOST_I = host_dims(HOST);
 HOST_L = HOST_I[0]; HOST_W = HOST_I[1]; HOST_LID = HOST_I[2]; HOST_BOT = HOST_I[3];
+// The published interior is the cavity at the FLOOR; the moulded walls flare towards the seal.
+// Measured across the open mouth of the received Peli 1200 (tape, 2026-11): 250 x 193 mm against
+// the published 236.5 x 181.1. The mouth is 26 mm above the deck's underside (R5_PAD 8 + R5_DECK_Z
+// 40.4), so a plate cut to 250 x 193 would jam on the flare long before it reached the tray rim -
+// and even at the mouth it would be flush with the wall. The cavity is interpolated linearly
+// between the two known sections (published floor, measured mouth); a host without a measurement
+// falls back to the published interior. See R5_DECK_* below for what the deck is cut to.
+HOST_TOP = is_undef(HOST_TOP) ? (HOST == "1200" ? [250, 193] : [HOST_L, HOST_W]) : HOST_TOP;
+function host_cavity(z) = [HOST_L + (HOST_TOP[0] - HOST_L) * z / HOST_BOT,
+                           HOST_W + (HOST_TOP[1] - HOST_W) * z / HOST_BOT];   // z from the floor
 HOST_CLR = 1.5;                    // cassette -> host wall, per side
 R5_W = HOST_L - 2*HOST_CLR;        // cassette width  (x, across the display)
 R5_L = HOST_W - 2*HOST_CLR;        // cassette length (y, y = 0 at the hinge)
@@ -327,8 +337,6 @@ R5_DECK_T = 4.5;                   // was 3: +1.5 mm of plate, and it goes on th
                                    // Pi keep-out and every pocket keep their own depths. A 3 mm
                                    // plate over a 151 x 59 mm opening is what felt wobbly.
 R5_PAD = 8;                        // closed-cell foam under the tray
-CHG_Z_R5 = 18;                     // charge socket centre height above the cassette floor
-R5_CHG_Y = 118;                    // ... and its position along the right wall
 
 // ---- r5 board layout: both assemblies BOLT TO THE FLOOR, side by side ----
 // r5 no longer stacks the Pi on the HAT (B) with pogo pins: power now runs from the HAT to the
@@ -400,6 +408,28 @@ assert(R5_PI_TOP_HDR - R5_FLOOR <= R5_PI_H_MAX + 1,
            "envelope is ", R5_PI_H_MAX, ": shorten R5_M2_GAP (standoffs) or R5_M2_CLR"));
 R5_DECK_Z  = R5_H_BOT;
 R5_DECK_TOP = R5_DECK_Z + R5_DECK_T;
+// The plate is bigger than the cassette. The tray is sized to the published floor section
+// (R5_W x R5_L) and fills it with 1.5 mm a side; the host's cavity widens with height, so the deck
+// - which only has to pass down to the tray rim - can also widen, and that is what closes the
+// visible gap round the top. It is cut to the cavity at the height it lands at (its underside, the
+// narrowest section it has to pass), less a printing clearance. Everything cut into the plate
+// (seven M3s, keyboard, OLED, fan, button) keeps its absolute position, so the screw pattern and
+// every component relationship are unchanged; only the rim moves out.
+R5_DECK_CLR = 1;                                        // plate -> host wall, per side
+R5_DECK_H_Z = R5_PAD + R5_DECK_Z;                       // 48.4 above the host's floor
+R5_DECK_W   = host_cavity(R5_DECK_H_Z)[0] - 2*R5_DECK_CLR;   // 243.3 for the measured 1200
+R5_DECK_L   = host_cavity(R5_DECK_H_Z)[1] - 2*R5_DECK_CLR;   // 186.8
+R5_DECK_X0  = (R5_W - R5_DECK_W)/2;                     // negative: overhangs the tray wall
+R5_DECK_Y0  = (R5_L - R5_DECK_L)/2;
+// The corner follows the cassette's own R5_R, grown by the plate's own overhang: that is what a
+// uniform offset of the host's floor section gives, and the taper model below says the host's
+// corner radius grows with its walls.  Anything rounder would cut inside the tray's rim at the
+// corners; anything sharper would not clear the host.  Every deck screw stays in the straight run
+// (the hinge pair is 26 mm from the tray wall, i.e. 31 from the plate's edge).
+R5_DECK_R   = R5_R + min((R5_DECK_W - R5_W)/2, (R5_DECK_L - R5_L)/2);   // 18.37
+assert(R5_DECK_W > R5_W && R5_DECK_L > R5_L,
+       str("the deck (", R5_DECK_W, " x ", R5_DECK_L, ") does not reach past the cassette (",
+           R5_W, " x ", R5_L, "): check HOST_TOP / host_cavity()"));
 // The deck has no opening over the 40-pin header: it is a plain plate there. That is only safe
 // because the header is well below it - nothing clamps the Pi any more, so the deck is a lid and
 // not a clamp. This assert is what keeps the slot from ever being needed again; if the Pi
@@ -460,26 +490,29 @@ R5_KB_TOP = R5_DECK_TOP;                               // keys finish level with
 // pocket of the pcb's size in the underside (dropped in from below, flush with the underside)
 // and a window in the top face over the glass. Sizing one opening to the pcb, as it was before,
 // left the board's edge in view all round the panel.
-// The plate ring between the two openings is the bezel and the seat: it covers the pcb's edge, so
-// the board is never in view. What you see through the window is the glass and its own black
-// border - 2.5 mm either side and 4.2 mm at the ends - round the 29.42 x 14.7 lit area.
+// Both cuts carry 1 mm of extra fitting tolerance a side (they were 0.4 and 0.15): 0.15 mm round
+// the glass is less than the glass slab's own tolerance, and the module has to drop in from
+// below with the plate printed to a few tenths.
+// What you see through the window is now the glass, its black border and - across the 0.65 mm
+// where the window is wider than the pcb - the board's own black edge. The plate ring between the
+// two cuts is still the bezel and the seat.
 R5_OLED_BOARD  = [35.5, 33.7, 1.2];                     // pcb
 R5_OLED_GLASS  = [34.5, 23.0, 1.45];                    // glass slab on the pcb
 R5_OLED_ACTIVE = [29.42, 14.7];                        // lit area inside the glass border
 // The glass is centred on the pcb in both axes: 34.5 against the pcb's 35.5 leaves 0.5 mm a side,
 // and its 23 mm against the pcb's 33.7 leaves (33.7 - 23)/2 = 5.35 mm to each edge, which is the
 // ~5 mm the window's border has to be. Relative to the BOARD, not the pocket: the pocket carries a
-// clearance, so centring on it would put 0.4 mm more plate at one end than the other. (It sat at
+// clearance, so centring on it would put 1.4 mm more plate at one end than the other. (It sat at
 // 1.0 mm from the hinge-side edge, i.e. 9.7 mm at the far edge, which put the window 4.75 mm too
 // far towards the hinge. Measure yours and adjust.)
-R5_OLED_PCB_CLR = 0.4;                                 // pocket clearance, per side
-R5_OLED_WIN_CLR = 0.15;                                // window clearance around the glass
+R5_OLED_PCB_CLR = 1.4;                                 // pocket clearance, per side (was 0.4)
+R5_OLED_WIN_CLR = 1.15;                                // window clearance around the glass (was 0.15)
 R5_OLED_MIN_SEAT = 0.3;                                // least plate the pcb rests on
-R5_OLED_PCB = [R5_OLED_BOARD[0] + 2*R5_OLED_PCB_CLR,
-               R5_OLED_BOARD[1] + 2*R5_OLED_PCB_CLR];
+R5_OLED_PCB = [R5_OLED_BOARD[0] + 2*R5_OLED_PCB_CLR,   // 38.3
+               R5_OLED_BOARD[1] + 2*R5_OLED_PCB_CLR];  // 36.5
 R5_OLED_GLASS_Y = (R5_OLED_BOARD[1] - R5_OLED_GLASS[1])/2; // 5.35, centred on the pcb
-R5_OLED_WIN = [R5_OLED_GLASS[0] + 2*R5_OLED_WIN_CLR,
-               R5_OLED_GLASS[1] + 2*R5_OLED_WIN_CLR];
+R5_OLED_WIN = [R5_OLED_GLASS[0] + 2*R5_OLED_WIN_CLR,   // 36.8
+               R5_OLED_GLASS[1] + 2*R5_OLED_WIN_CLR];  // 25.3
 // centred between the keyboard pocket and the hinge-side edge: the keyboard owns y > R5_KB_Y0,
 // so the free band is the 100 mm strip between the Pi keep-out and the pocket
 R5_OLED_X0 = (R5_W - R5_OLED_PCB[0])/2;
@@ -490,18 +523,20 @@ R5_OLED_WIN_Y0 = R5_OLED_Y0 + R5_OLED_PCB_CLR + R5_OLED_GLASS_Y - R5_OLED_WIN_CL
 R5_OLED_SEAT = R5_DECK_Z + R5_OLED_BOARD[2];
 // How much plate the pcb actually lands on, per edge: the ring of plate at the seat plane runs
 // from the window's edge to the pocket's wall, but the board's own edge stops a clearance short
-// of that wall, so the clearance is dead width and subtracts. (The pcb is only 0.5 mm wider than
-// its glass either side, so the sides carry 0.35 mm and the ends - 5.2 mm each now that the window
-// is centred - are what really hold the module up. Thin sides are the hardware's doing, not a
-// choice: see docs/R5.md.)
-R5_OLED_SEAT_X  = (R5_OLED_PCB[0] - R5_OLED_WIN[0])/2 - R5_OLED_PCB_CLR;
+// of that wall, so the clearance is dead width and subtracts. The 1 mm window tolerance spends the
+// side seat outright: the window is 36.8 wide against a 35.5 pcb, so the sides carry nothing and
+// the ends - (33.7 - 25.3)/2 = 4.2 mm each, the board's own ~5 mm glass border - are what hold the
+// module up. It cannot fall through: the window is 25.3 across the board's 33.7 mm length.
+R5_OLED_SEAT_X  = (R5_OLED_PCB[0] - R5_OLED_WIN[0])/2 - R5_OLED_PCB_CLR;   // -0.65: no side seat
 R5_OLED_SEAT_Y0 = R5_OLED_WIN_Y0 - R5_OLED_Y0 - R5_OLED_PCB_CLR;
 R5_OLED_SEAT_Y1 = R5_OLED_Y0 + R5_OLED_PCB[1] - (R5_OLED_WIN_Y0 + R5_OLED_WIN[1])
                   - R5_OLED_PCB_CLR;
-assert(min(R5_OLED_SEAT_X, R5_OLED_SEAT_Y0, R5_OLED_SEAT_Y1) >= R5_OLED_MIN_SEAT,
-       str("the OLED would rest on ", min(R5_OLED_SEAT_X, R5_OLED_SEAT_Y0, R5_OLED_SEAT_Y1),
-           " mm of plate at the narrowest (sides ", R5_OLED_SEAT_X, ", ends ", R5_OLED_SEAT_Y0,
-           " / ", R5_OLED_SEAT_Y1, "): cut R5_OLED_WIN_CLR or widen R5_OLED_PCB_CLR"));
+assert(R5_OLED_SEAT_Y0 >= R5_OLED_MIN_SEAT && R5_OLED_SEAT_Y1 >= R5_OLED_MIN_SEAT,
+       str("the OLED would rest on ", R5_OLED_SEAT_Y0, " / ", R5_OLED_SEAT_Y1,
+           " mm of plate at the ends (sides ", R5_OLED_SEAT_X, "), the lit area needs ",
+           "the ends to hold the module: cut R5_OLED_WIN_CLR"));
+assert(R5_OLED_WIN[0] < R5_OLED_BOARD[0] || R5_OLED_WIN[1] < R5_OLED_BOARD[1],
+       "the OLED window is larger than the pcb in both axes: the module would fall through");
 assert(R5_OLED_WIN[0] >= R5_OLED_ACTIVE[0] && R5_OLED_WIN[1] >= R5_OLED_ACTIVE[1],
        "the OLED window is smaller than the lit area");
 assert(R5_DECK_T - R5_OLED_BOARD[2] - R5_OLED_GLASS[2] >= 0.5,
@@ -741,6 +776,47 @@ assert(R5_OPEN_D >= R5_PI_Y,
        str("the hinge opening is ", R5_OPEN_D, " mm deep, the Pi's connectors need ", R5_PI_Y));
 assert(R5_SCREWS[5][0] - M3_HEAD/2 >= R5_OPEN_X1,
        "the hinge opening runs into deck screw 5's counterbore");
+
+// ---- charge socket: 5.5 x 2.1 DC jack through the deck's right rail ----
+// The host stays sealed: the 8.4 V charge lead ends in a panel socket in the deck's top face
+// instead of a hole through the Peli wall. The socket is the r4 part (CHG_W's 9.5 mm barrel), so
+// its plug goes in from above and charging is done with the lid open; with the plug out only
+// the bezel stands proud, well inside the 4.6 mm between the deck and the display glass.
+//
+// The barrel drops through the hole into the channel between the Pi's port edge (x 208) and the
+// tray wall (x 230.9), which is empty floor: the nut and the tags land there. The position
+// clears the Pi's USB/Ethernet plugs, which project ~19 mm out of the pcb at y 26.2..76.4, and
+// the right-rail screws at (207.5, 40) / (228.4, 40) / (228.4, 138.1); it sits between the hinge
+// opening and the keyboard pocket. Turn the tags towards the Pi: 5 mm of lug past a 14 mm nut
+// still clears the wall, 5 mm the other way does not.
+// The socket's plug cannot be fitted with the lid shut - by design; see docs/R5.md.
+R5_CHG_X = 216;                        // right rail centre, on free floor
+R5_CHG_Y = 90;                         // between the Pi's ports and the keyboard pocket
+R5_CHG_D = 9.5;                        // barrel hole, the same socket as r4's CHG_W
+R5_CHG_NUT_D = 14;                     // nut/bezel envelope, the clearance that matters
+assert(R5_CHG_X - R5_CHG_NUT_D/2 >= R5_PI_X + R5_PI_W,
+       str("the charge socket (", R5_CHG_X, ") overlaps the Pi pcb edge (", R5_PI_X + R5_PI_W, ")"));
+assert(R5_CHG_Y - R5_CHG_NUT_D/2
+       >= R5_PI_Y + max([for (p=PI_PORTS) p[0] + p[1]]) + 2,
+       str("the charge socket reaches y ", R5_CHG_Y - R5_CHG_NUT_D/2,
+           ", into the Pi's USB/Ethernet plugs (they end at ",
+           R5_PI_Y + max([for (p=PI_PORTS) p[0] + p[1]]), ")"));
+assert(R5_CHG_X + R5_CHG_NUT_D/2 + 5 <= R5_W - R5_WALL,
+       str("the charge socket's tags reach the tray wall: ",
+           R5_CHG_X + R5_CHG_NUT_D/2 + 5, " vs ", R5_W - R5_WALL));
+assert(R5_CHG_Y + R5_CHG_NUT_D/2 <= R5_KB_Y0,
+       "the charge socket runs into the keyboard pocket");
+assert(R5_CHG_Y - R5_CHG_NUT_D/2 > R5_OPEN_D,
+       "the charge socket runs into the hinge opening");
+assert(min([for (p=R5_SCREWS) sqrt((p[0]-R5_CHG_X)^2 + (p[1]-R5_CHG_Y)^2)]) 
+       >= M3_HEAD/2 + R5_CHG_NUT_D/2 + 1,
+       "the charge socket runs into a deck screw counterbore");
+assert(min([for (c=DECK_FAN_CTRL) sqrt((c[0]-R5_CHG_X)^2 + (c[1]-R5_CHG_Y)^2)])
+       >= DECK_FAN_D/2 + R5_CHG_NUT_D/2 + 1,
+       "the charge socket runs into a fan opening");
+assert(sqrt((R5_BTN_X-R5_CHG_X)^2 + (R5_BTN_Y-R5_CHG_Y)^2)
+       >= R5_BTN_BODY/2 + R5_CHG_NUT_D/2 + 2,
+       "the charge socket runs into the power button nut");
 
 // base chamfered rectangle (in real XY, origin bottom-left)
 module chamfer_rect(w, l, c) {

@@ -21,20 +21,25 @@ SHOW_HOST = is_undef(SHOW_HOST) ? true : SHOW_HOST;   // -D SHOW_HOST=false for 
 LID = is_undef(LID) ? "cover" : LID;
 SECTION_Y = R5_L/2;
 
-// ---- host hard case: interior envelope + lid, at their published depths ----
-// drawn flipped (lid below the base) because the cassette's z=0 is where the base starts and
-// the display hangs off the lid: closing means bringing them together.
+// ---- host hard case: the mouth section, at the published depths ----
+// The stand-in shows the LARGEST section - the measured mouth, HOST_TOP - because that is what
+// both the cassette and the deck (243.3 x 186.8) have to fit; the real cavity tapers in below it
+// (see host_cavity() and docs/R5.md).  Drawn as a schematic stack, base below and lid above,
+// because the cassette's z = 0 is its floor and closing brings the lid down onto it.
 module host_case() {
+    mw = HOST_TOP[0]; ml = HOST_TOP[1];
+    ox = (R5_W - mw) / 2; oy = (R5_L - ml) / 2;
     color("#9aa4ad", 0.25) difference() {
-        translate([-HOST_CLR, -HOST_CLR, -HOST_BOT]) cube([HOST_L, HOST_W, HOST_BOT + HOST_LID]);
-        translate([0, 0, -HOST_BOT]) cube([HOST_L, HOST_W, HOST_BOT]);
-        translate([0, 0, 0]) cube([HOST_L, HOST_W, HOST_LID]);
+        translate([ox - HOST_CLR, oy - HOST_CLR, -HOST_BOT])
+            cube([mw + 2*HOST_CLR, ml + 2*HOST_CLR, HOST_BOT + HOST_LID]);
+        translate([ox, oy, -HOST_BOT]) cube([mw, ml, HOST_BOT]);
+        translate([ox, oy, 0]) cube([mw, ml, HOST_LID]);
     }
-    // lid cavity, lid wall down: drawn as the same envelope with its floor at z = 0
-    color("#9aa4ad", 0.18) translate([0, 0, 0]) difference() {
-        translate([-HOST_CLR, -HOST_CLR, 0]) cube([HOST_L, HOST_W, HOST_LID]);
-        translate([HOST_L/2, HOST_W/2, HOST_LID/2])
-            cube([HOST_L - 2*HOST_CLR, HOST_W - 2*HOST_CLR, HOST_LID], center=true);
+    // lid cavity, lid wall down: the same envelope with its floor at z = 0
+    color("#9aa4ad", 0.18) translate([ox, oy, 0]) difference() {
+        translate([-HOST_CLR, -HOST_CLR, 0])
+            cube([mw + 2*HOST_CLR, ml + 2*HOST_CLR, HOST_LID]);
+        cube([mw, ml, HOST_LID + 1]);
     }
 }
 
@@ -121,6 +126,13 @@ module c_button() {
         cylinder(d=R5_BTN_D, h=R5_DECK_T);                              // thread, through the bore
 }
 
+// The 5.5 x 2.1 mm charge socket through the deck's right rail: barrel and nut below the plate,
+// tags towards the Pi. The plug is not drawn - it is only fitted with the lid open.
+module c_charger() {
+    r5_at(R5_CHG_X, R5_CHG_Y, R5_DECK_Z - 14) cylinder(d=R5_CHG_D - 0.2, h=14);
+    r5_at(R5_CHG_X, R5_CHG_Y, R5_DECK_Z - 2.1) cylinder(d=R5_CHG_NUT_D, h=2.0);
+}
+
 module c_floor() {
     r5_box(R5_FB_X + 2, R5_FB_Y + 2, R5_FB_X + 2 + FB_W, R5_FB_Y + 2 + FB_H, R5_FLOOR + 3.4, 7);
     r5_box(R5_RTC_X + 2, R5_RTC_Y + 2, R5_RTC_X + 2 + RTC_W, R5_RTC_Y + 2 + RTC_H, R5_FLOOR + 3.4, RTC_T);
@@ -132,7 +144,7 @@ module components() {
     color("green") c_pi(); color("blue") c_ups(); color("orange") c_cells();
     color("darkgreen") c_keyboard(); color("purple") c_oled();
     color("black") c_display(); color("teal") c_floor();
-    color("#b0b6bc") c_button();
+    color("#b0b6bc") c_button(); color("#b0b6bc") c_charger();
 }
 
 module all() {
@@ -162,5 +174,6 @@ module part(n) {
     if (n=="pi") c_pi(); if (n=="ups") c_ups(); if (n=="cells") c_cells();
     if (n=="keyboard") c_keyboard(); if (n=="oled") c_oled(); if (n=="display") c_display();
     if (n=="button") c_button();
+    if (n=="charger") c_charger();
     if (n=="floor") c_floor();
 }

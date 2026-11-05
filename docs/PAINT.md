@@ -34,10 +34,13 @@ on each sheet to check the printer did not rescale.
 
 ## The rule the three schemes share
 
-The case opens flat into one 233.5 × 356.2 mm face. Both panels are measured **from the hinge**
-(`y = 0`), exactly as `common.scad` does, and they share **one x axis**. So a mark at `x = 214`
-is 19.5 mm from the right edge on the cover *and* on the deck, and a mark at `y = 40` is 40 mm
-from the seam on whichever half you are looking at.
+The case opens flat into one face: the cover's 233.5 × 178.1 panel, and the deck's 243.3 × 186.8
+plate, which is larger because it fills the host's cavity at its own height (see R5.md, "Your
+host's actual interior"). Both are measured **from the hinge** (`y = 0`), exactly as `common.scad`
+does, and they share **one x axis**. So a mark at `x = 214` is 19.5 mm from the right edge on the
+cover *and* on the deck, and a mark at `y = 40` is 40 mm from the seam on whichever half you are
+looking at. The deck's plate starts 4.4 mm before the seam and ends 4.4 mm past the cassette's
+latch edge; that overhang is painted as part of the deck face.
 
 Everything continuous in these designs is keyed to that datum:
 
@@ -62,12 +65,15 @@ rather than drawing a line through a fan.
   (`y > 149.7`; the finger slots are at `y 161..171`) or in the **14.6 mm side margins**.
 - **The deck's free fields** are the **40.95 mm side rails**, the **35.6 mm strip** between the OLED
   window (ends `y 66.9`) and the keyboard pocket (starts `y 102.5`), and the **16 mm** between the
-  keyboard pocket (ends `y 162.1`) and the latch edge.
-- **Only one vertical lane is clear on both parts at once** across their whole length:
-  **x 216.5 .. 223.0**. That is why BEARING's trace runs there and not up the more obvious left
-  rail — the deck's left rail is crossed by the fan (x 25..63, y 19..57), the FireBeetle access
-  hole (x 14..30, y 148..158), a screw and now the **power button** (Ø16.2 at 213.0, 160.1), and
-  the cover's left margin is crossed by the display well from `x 21.59`.
+  keyboard pocket (ends `y 162.1`) and the latch edge. The right rail carries the power button
+  (`213.0, 160.1`) and the charge socket (`216.0, 90.0`).
+- **Only one vertical lane is clear on both parts at once**: **x 216.5 .. 223.0**. That is why
+  BEARING's trace runs there and not up the more obvious left rail — the deck's left rail is
+  crossed by the fan (x 25..63, y 19..57), the FireBeetle access hole (x 14..30, y 148..158), a
+  screw and the **power button** (Ø16.2 at 213.0, 160.1), and the cover's left margin is crossed
+  by the display well from `x 21.59`. That lane now also carries the **charge socket** (Ø14
+  envelope at 216.0, 90.0): the graticule stops at it, and BEARING's trace is interrupted there.
+  If that scheme were revived the trace would have to jog around the socket, x 209..223.
 
   The power button is why the deck now has a hole where the 5" layout had clean rail: it moved
   off the lid when the panel grew to 7", and the rail at x 213 is the only place on the deck that
@@ -170,8 +176,9 @@ python3 cad/tools/stencil_stl.py --thickness 2.0   # stiffer
 ```
 
 Writes `stl/stencil_{deck,cover}_{amber,seam}.stl` and `stl/stencil_cover_bezel.stl`: the part
-outline with that pass's slots cut straight through, no handling margin, 233.5 × 178.1 mm. They
-land on the part with their own outline as the datum, exactly like the sheets.
+outline with that pass's slots cut straight through and no handling margin — 243.3 × 186.8 mm for
+the deck, 233.5 × 178.1 mm for the cover. They land on the part with their own outline as the
+datum, exactly like the sheets. The deck mask still fits a 256 mm bed (6 mm a side to spare).
 
 **The ash pass is not printed, and cannot be.** A mask is the sheet minus its slots, so it holds
 together only if the slots do not close a loop. The graticule does: 8 horizontal rows and 10
@@ -196,6 +203,11 @@ Two corrections came out of building these, both in the sheet output rather than
 - **The motto sat on the raised bezel.** Its block was centred in the band below the display well
   rather than below the bezel, so 5 mm of it lay on a surface 7.92 mm higher. The flat band is
   21.4 mm, the block is scaled into it (cap 6.0, trim 82.1 × 17.3 mm) and centred.
+- **The deck's apertures were drawn one height too low.** `Aperture.d()` applied the mirror
+  unconditionally: right for the cover (drawn flipped) and wrong for the deck, so the keyboard hole
+  landed at the latch edge and the Pi opening 20 mm inside the plate instead of on it. The STL
+  masks, which cut at the aperture's own coordinates, were always right; the SVG sheets were not.
+  The rectangle's two y edges are now both mapped and drawn from the smaller one.
 
 ## Reading a sheet
 
@@ -206,7 +218,7 @@ Two corrections came out of building these, both in the sheet output rather than
 │  │  painted artwork, clipped by the mask  │  │
 │  └────────────────────────────────────────┘  │
 ├──────────── HINGE (dashed) ───────────────────┤  the seam: paint crosses it
-│ DECK · top face              233.5 × 178.1   │  the deck, hinge edge at the TOP
+│ DECK · top face              243.3 × 186.8   │  the deck, hinge edge at the TOP
 │  ┌────────────────────────────────────────┐  │
 │  └────────────────────────────────────────┘  │
 └──────────────────────────────────────────────┘

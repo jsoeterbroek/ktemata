@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Ktemata r5 - the Meridian stencils as printable STL masks.
 
-The SVG cut files in docs/paint/ are 261.5 x 234.1 mm sheets: the part (233.5 x 178.1) plus a
-14 mm handling margin for the title, the caption and the registration crosses.  That is right for
-a blade and a sheet of vinyl, and it is 5.5 mm too wide for a 256 mm printer bed.  These files are
-the same masks as solid panels that land on the part with their own outline as the datum - no
-margin, no measuring, no rescaling.
+The SVG cut files in docs/paint/ are 261.5 x 234.1 mm (cover) and 271.3 x 242.8 mm (deck) sheets:
+the part plus a 14 mm handling margin for the title, the caption and the registration crosses.
+That is right for a blade and a sheet of vinyl, and the deck's is 15.3 mm too wide for a 256 mm
+printer bed.  These files are the same masks as solid panels that land on the part with their own
+outline as the datum - no margin, no measuring, no rescaling.  The deck's plate is 243.3 x 186.8
+(the host's cavity at deck height, R5_DECK_* in common.scad), so it still fits the bed.
 
     python3 cad/tools/stencil_stl.py                   # every pass, both parts
     python3 cad/tools/stencil_stl.py --part deck        # one part
@@ -91,13 +92,17 @@ def circle_solid(cx, cy, d, z, tz) -> str:
 def mask_source(m: "paint.Model", cover: bool, group: str,
                 thickness: float) -> tuple[str, str]:
     """OpenSCAD source for one mask, plus a one-line description of what it is."""
-    w, l = m.w, m.l
-    r = m.cover_r if cover else m.deck_r
+    if cover:
+        x0, y0, w, l, r = 0.0, 0.0, m.w, m.l, m.cover_r
+    else:
+        x0, y0, w, l, r = m.deck              # the deck's plate, larger than the cassette
     # The parts are modelled with the hinge at y = 0 and the latch end at y = l, in a frame whose
     # y grows towards the latch.  A printed mask just has to match the part it lies on, so it is
     # emitted in the SAME frame as the part - no mirroring: paint.py mirrors only for the sheet,
-    # where the cover is drawn above the deck to make one open-flat picture.
-    solids = [f"linear_extrude({thickness:.4f}) " + rrect_2d(0.0, 0.0, w, l, r)]
+    # where the cover is drawn above the deck to make one open-flat picture.  The deck's outline
+    # starts at (x0, y0) (it overhangs the tray); the finished mask is shifted to the origin so it
+    # prints as a plain w x l panel.
+    solids = [f"linear_extrude({thickness:.4f}) " + rrect_2d(x0, y0, w, l, r)]
     cuts: list[str] = []
 
     for mk in paint.meridian_marks(m, cover):
@@ -143,6 +148,8 @@ def mask_source(m: "paint.Model", cover: bool, group: str,
         cuts.append(rrect_solid(bx, by, bw, bh, br, -1.0, thickness + 2.0))
 
     body = "difference() { union() { " + " ".join(solids) + " } " + " ".join(cuts) + " }"
+    if x0 or y0:
+        body = f"translate([{-x0:.4f}, {-y0:.4f}]) " + body
 
     if cover and group == "bezel":
         # the bezel mask is the ring's top face and nothing else: it is placed on the raised
@@ -192,7 +199,9 @@ def main() -> None:
     args = ap.parse_args()
 
     m = paint.Model(paint.probe())
-    print(f"part {m.w} x {m.l} mm  (deck R{m.deck_r}, cover R{m.cover_r}), mask {args.thickness} mm")
+    dx0, dy0, dw, dl, dr = m.deck
+    print(f"cassette {m.w} x {m.l} mm, deck {dw} x {dl} mm (R{dr}), cover R{m.cover_r}, "
+          f"mask {args.thickness} mm")
     OUT.mkdir(parents=True, exist_ok=True)
     made = []
     for cover, side in ((False, "deck"), (True, "cover")):

@@ -6,7 +6,13 @@ assert(R5, "the paint schemes are r5: use -D R5=true");
 
 echo(P_W = R5_W);
 echo(P_L = R5_L);
-echo(P_DECK_R = R5_R);
+// the deck's plate is larger than the cassette (HOST_TOP / R5_DECK_* in common.scad): its own
+// outline, centred on the cassette, in the cassette frame (so x0/y0 are negative)
+echo(P_DECK_W = R5_DECK_W);
+echo(P_DECK_L = R5_DECK_L);
+echo(P_DECK_X0 = R5_DECK_X0);
+echo(P_DECK_Y0 = R5_DECK_Y0);
+echo(P_DECK_R = R5_DECK_R);
 echo(P_DECK_T = R5_DECK_T);
 
 echo(P_KB_X0 = R5_KB_X0);
@@ -53,6 +59,10 @@ echo(P_BTN_X = R5_BTN_X);
 echo(P_BTN_Y = R5_BTN_Y);
 echo(P_BTN_D = R5_BTN_D);
 echo(P_BTN_BODY = R5_BTN_BODY);
+echo(P_CHG_X = R5_CHG_X);
+echo(P_CHG_Y = R5_CHG_Y);
+echo(P_CHG_D = R5_CHG_D);
+echo(P_CHG_NUT_D = R5_CHG_NUT_D);
 echo(P_SLOT_A = COVER_FRAME + 11);
 echo(P_SLOT_B = COVER_W - COVER_FRAME - 11);
 echo(P_SLOT_Y = COVER_L - COVER_FRAME - 5);

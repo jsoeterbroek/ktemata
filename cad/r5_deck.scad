@@ -1,9 +1,9 @@
 // Ktemata r5 - deck (keyboard / OLED / Pi clamp)
 //
 // Sits on the tray rim (r5_tray) and is fixed with seven M3 x 10 into heat-set inserts. It carries the
-// Rii K06 keyboard and the status OLED on top, and clamps the Pi + HAT (B) stack below with
-// four pillars. The display is not here: it hangs on the lid (r5_lid_plate.scad), so the deck
-// is what you see when the host case is open.
+// Rii K06 keyboard, the status OLED, the power button and the 8.4 V charge socket on top, and
+// clears the Pi + HAT (B) stack below. The display is not here: it hangs on the lid
+// (r5_lid_plate.scad), so the deck is what you see when the host case is open.
 //
 // PRINT TOP FACE DOWN, not plate down. The keyboard recess hangs below the plate (see kb_well
 // below), so printed plate-down that recess would be a floating island. Flipped, the deck's top
@@ -14,8 +14,13 @@ include <common.scad>
 
 assert(R5, "r5 parts need -D R5=true");
 
-module plate2d(d=0) offset(delta=d) rrect(R5_W, R5_L, R5_R);
-module deck_slab() translate([0, 0, R5_DECK_Z]) linear_extrude(R5_DECK_T) plate2d();
+// The plate overhangs the cassette: R5_DECK_* (common.scad) is the host's cavity at the height the
+// plate lands at, centred on the cassette, with a corner radius big enough to clear the host's
+// moulded corners. Every cut below is placed in absolute coordinates, so growing the rim leaves
+// the seven screws, the keyboard, the OLED, the fan and the button exactly where they were.
+module deck2d() translate([R5_DECK_X0, R5_DECK_Y0])
+    rrect(R5_DECK_W, R5_DECK_L, R5_DECK_R);
+module deck_slab() translate([0, 0, R5_DECK_Z]) linear_extrude(R5_DECK_T) deck2d();
 
 // span drawing y0..y1 at x0..x1
 // r5_at puts the box's min-y corner at y1 in drawing coords, and a cube grows towards +y,
@@ -139,8 +144,10 @@ module openings() {
     // reachable, the M.2 FPC has to drop through to the BASE, and the display FFC leaves through
     // here on its way to the lid. Bounds and why they are not simply "over the Pi": common.scad,
     // R5_OPEN_X0/X1/D - the right end stops 1 mm short of deck screw 5 and 1 mm below the right
-    // fan, so the screw keeps its head seat and the two openings stay separate.
-    dbox(R5_OPEN_X0, 0, R5_OPEN_X1, R5_OPEN_D, R5_DECK_Z - 1, R5_DECK_T + 2);
+    // fan, so the screw keeps its head seat and the two openings stay separate. The cut starts at
+    // the PLATE's edge, not the tray's: the plate overhangs the tray by R5_DECK_Y0, and a cut that
+    // stopped at drawing y 0 would leave a 4.4 mm lip over the Pi's hinge-edge connectors.
+    dbox(R5_OPEN_X0, R5_DECK_Y0, R5_OPEN_X1, R5_OPEN_D, R5_DECK_Z - 1, R5_DECK_T + 2);
     // FireBeetle 2: gives its USB-C port access for flashing and lets its OLED / button leads
     // rise to the deck. The module sits under the deck, so without this hole it is sealed in.
     // R5_FB_HOLE_Y0 places it 44 mm along the module (was 30): at 30 the hole abutted the left
@@ -151,11 +158,11 @@ module openings() {
     //  underside, so its 4-pin header looks straight into the tray cavity where the FireBeetle
     //  is. The old slot would be a 16 x 4 mm hole in the visible top face for nothing.)
     // (the right-wall opening that used to be here is gone: it was cut for "DS3231 and charger
-    //  module leads", but the DS3231 (y 26-52), the MPPT charger (y 62-86) and the charge socket
-    //  (y 107-129) all sit BELOW the deck - the lowest is at z 2.4 and the deck underside is
-    //  z 45.95 - so none of their leads cross it. Measured, not assumed: the opening's only
-    //  overlap with anything was 3.1 x 24 mm of the MPPT pad's outer edge. A 12 mm hole that
-    //  opened the deck's edge for nothing was 12 mm of lost stiffness.)
+    //  module leads", but the DS3231 (y 26-52) and the MPPT charger (y 62-86) sit BELOW the deck
+    //  - the lowest is at z 2.4 and the deck underside is z 40.4 - so neither lead crosses it.
+    //  Measured, not assumed: the opening's only overlap with anything was 3.1 x 24 mm of the
+    //  MPPT pad's outer edge. A 12 mm hole that opened the deck's edge for nothing was 12 mm of
+    //  lost stiffness. The 8.4 V charge socket is in the deck now, not below it.)
 }
 
 // ---- cooling: one round fan opening in the free top-left corner, with a grille over it ----
@@ -203,6 +210,16 @@ module fan_grille() {
     }
 }
 
+// ---- charge socket: 5.5 x 2.1 DC jack through the right rail ----
+// The host stays sealed: the 8.4 V charge lead ends here instead of through a hole in the Peli
+// wall. The socket goes in from the TOP - bezel on the painted face, nut on the underside - and
+// its plug is fitted with the lid open (the display is only 4.6 mm above this face when shut).
+// R5_CHG_* in common.scad derives the position and guards it against the Pi's plugs, the right
+// rail's screws, the keyboard pocket, the fan and the button. Printed top-face down, the hole is
+// a vertical wall in the plate and needs no support.
+module charge_cut() r5_at(R5_CHG_X, R5_CHG_Y, R5_DECK_Z - 1)
+    cylinder(d=R5_CHG_D, h=R5_DECK_T + 2);
+
 // ---- power button ----
 // The 16 mm IP67 panel button moved here from the lid: a centred 7" panel leaves 28.93 mm of
 // latch band and the button needs 34.2 mm, so the lid cannot carry both (see common.scad,
@@ -228,6 +245,7 @@ module r5_deck() union() {
         fan_holes();
         kb_plate_cut();
         button_cut();
+        charge_cut();
     }
     // the grille goes in after the cut: the bars occupy the plate's own volume inside the
     // opening, so they can only exist as a union on top of an already-cut plate

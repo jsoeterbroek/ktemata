@@ -33,7 +33,8 @@ Hardware, design and build stay simple.
 - Allowed exceptions, each with a job: the status OLED with its button (battery state without booting the
   Pi), the BME688 (r4 only; r5 dropped it), the K06's 2.4 GHz dongle, and the library hotspot — a local
   access point with no uplink (`ipv4.ip-forward 0`), installed by `post-install.sh --hotspot`.
-- Charging is one sealed input fed by mains, solar or the external hand crank.
+- Charging is one input fed by mains, solar or the external hand crank (r5: a socket in the deck,
+  so the host is never drilled and the case is open while charging).
 - Everything else — extra USB/GPIO add-ons, boards, switches, radios — is out. Complexity is a failure mode:
   a nice-to-have is a point of failure that has to be debugged in the field. Do not add one without deleting
   something else.

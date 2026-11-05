@@ -175,3 +175,6 @@ same constants, so `--site` keeps <https://ktemata.org/power.html> in step as we
   65–90 W. The daily figures assume idle-dominated use, which is what a library server is.
 - **r5's thermal limit is a time limit.** In the sealed host the Pi 5 throttles under sustained
   load, so a NOMAD-style always-busy workload is not something r5 could do even at its wattage.
+- **r5 cannot charge with the case shut.** Its 8.4 V socket is in the deck (the bought host is
+  never drilled), so the 24/7 solar row assumes the lid is open while charging, or a sealed
+  bulkhead socket added through the host wall.

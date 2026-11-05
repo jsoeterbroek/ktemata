@@ -97,11 +97,18 @@ class Model:
     def __init__(self, v: dict[str, object]) -> None:
         g = lambda k: float(v[k])  # noqa: E731
         self.w, self.l = g("P_W"), g("P_L")
-        self.deck_r, self.cover_r = g("P_DECK_R"), g("P_COVER_R")
+        # the deck's own plate: (x0, y0, w, l, r) in the cassette frame, so x0/y0 are negative
+        # where the plate overhangs the tray.  Everything the artwork and the masks do for the
+        # deck is still in cassette coordinates; only the outline (and the port, which starts at
+        # the plate's hinge edge, not the tray's) moves.
+        self.deck = (g("P_DECK_X0"), g("P_DECK_Y0"), g("P_DECK_W"), g("P_DECK_L"),
+                     g("P_DECK_R"))
+        self.cover_r = g("P_COVER_R")
 
         self.kb = (g("P_KB_X0"), g("P_KB_Y0"), g("P_KB_W"), g("P_KB_H"), g("P_KB_R"))
         self.oled = (g("P_OLED_X0"), g("P_OLED_Y0"), g("P_OLED_W"), g("P_OLED_H"))
-        self.port = (g("P_OPEN_X0"), 0.0, g("P_OPEN_X1"), g("P_OPEN_D"))
+        # the hinge opening runs from the PLATE's edge to R5_OPEN_D (not from y = 0)
+        self.port = (g("P_OPEN_X0"), self.deck[1], g("P_OPEN_X1"), g("P_OPEN_D"))
         self.fb = (g("P_FB_X"), g("P_FB_Y"), g("P_FB_W"), g("P_FB_H"))
         self.fan = (g("P_FAN_X"), g("P_FAN_Y"), g("P_FAN_D"))
         self.fan_bars, self.fan_bar = int(v["P_FAN_BARS"]), g("P_FAN_BAR")
@@ -120,6 +127,8 @@ class Model:
         # the button is on the DECK now (a centred 7" panel leaves no latch band for it)
         self.btn = (g("P_BTN_X"), g("P_BTN_Y"), g("P_BTN_D"))
         self.btn_body = g("P_BTN_BODY")
+        # 8.4 V charge socket through the deck's right rail: hole + the bezel/nut envelope
+        self.chg = (g("P_CHG_X"), g("P_CHG_Y"), g("P_CHG_D"), g("P_CHG_NUT_D"))
         self.slots = [(g("P_SLOT_A"), g("P_SLOT_Y")), (g("P_SLOT_B"), g("P_SLOT_Y"))]
         self.cable = (g("P_CABLE_X"), g("P_CABLE_Y"), g("P_CABLE_W"), g("P_CABLE_H"))
 
@@ -553,17 +562,26 @@ class Aperture:
 
     def d(self, fy=lambda y: y) -> str:
         """SVG path data. `fy` is a pure mirror of ONE y coordinate (y -> l - y), never a
-        rectangle's translation: the height is applied here, once, so a flipped rectangle's top
-        edge is fy(y + h)."""
+        rectangle's translation: the rectangle's two y edges are mapped here, once, and drawn
+        from the smaller of the two.  (This used to assume every caller flipped, so an unflipped
+        deck drew every aperture one height too low: the keyboard hole landed at the latch edge
+        and the Pi opening 20 mm inside the plate instead of on it.)"""
         if self.kind == "circle":
             return circle_d(self.x, fy(self.y), self.r)
-        return rrect_d(self.x, fy(self.y + self.h), self.w, self.h, self.r)
+        ya, yb = fy(self.y), fy(self.y + self.h)
+        return rrect_d(self.x, min(ya, yb), self.w, abs(yb - ya), self.r)
 
     def rect(self) -> tuple[float, float, float, float]:
         """Axis-aligned bounds (x, y, w, h) in drawing coordinates."""
         if self.kind == "circle":
             return (self.x - self.r, self.y - self.r, 2 * self.r, 2 * self.r)
         return (self.x, self.y, self.w, self.h)
+
+
+def part_box(m: Model, cover: bool) -> tuple[float, float, float, float, float]:
+    """The part's painted plate: (x0, y0, w, l, r).  The deck's is larger than the cassette and
+    starts at a negative x/y; the cover's is the cassette rectangle."""
+    return (0.0, 0.0, m.w, m.l, m.cover_r) if cover else m.deck
 
 
 def deck_apertures(m: Model) -> list[Aperture]:
@@ -574,11 +592,12 @@ def deck_apertures(m: Model) -> list[Aperture]:
     fx, fy, fd = m.fan
     bx, by, bw, bh = m.fb
     out = [Aperture.rrect(kx, ky, kw, kh, kr), Aperture.rrect(ox, oy, ow, oh, 0.8),
-           Aperture.rrect(px, py, pw - px, ph, 0.0), Aperture.rrect(bx, by, bw, bh, 0.8),
+           Aperture.rrect(px, py, pw - px, ph - py, 0.0), Aperture.rrect(bx, by, bw, bh, 0.8),
            Aperture.circle(fx, fy, fd)]
     out += [Aperture.circle(sx, sy, 2 * 3.1) for sx, sy in m.screws]
-    # the 16 mm power button lives on the deck now
+    # the 16 mm power button lives on the deck now, and so does the charge socket
     out.append(Aperture.circle(m.btn[0], m.btn[1], m.btn[2]))
+    out.append(Aperture.circle(m.chg[0], m.chg[1], m.chg[2]))
     return out
 
 
@@ -612,15 +631,18 @@ def cover_holes_d(m: Model) -> list[str]:
 
 def deck_hit(m: Model, px, py, pad=0.0) -> bool:
     """True where the deck's top face is interrupted, or is reserved for the lettering."""
-    x0, _, x1, depth = m.port
+    dx0, dy0, dw, dl, dr = m.deck
+    x0, y0, x1, y1 = m.port
     fx, fy, fd = m.fan
     bx, by, bd = m.btn
-    return (_off_plate(px, py, m.w, m.l, m.deck_r)
+    cx, cy, cd, cnut = m.chg
+    return (_off_plate(px - dx0, py - dy0, dw, dl, dr)
             or _in_rect(px, py, m.type_boxes["deck"], pad)
             or _in_rect(px, py, m.kb, pad) or _in_rect(px, py, m.oled, pad)
-            or _in_rect(px, py, (x0, 0, x1 - x0, depth), pad)
+            or _in_rect(px, py, (x0, y0, x1 - x0, y1 - y0), pad)
             or _in_rect(px, py, m.fb, pad) or _in_circle(px, py, fx, fy, fd / 2, pad)
             or _in_circle(px, py, bx, by, bd / 2 + 3.0, pad)
+            or _in_circle(px, py, cx, cy, cnut / 2 + 2.0, pad)
             or any(_in_circle(px, py, sx, sy, 3.7, pad) for sx, sy in m.screws))
 
 
@@ -791,7 +813,8 @@ def meridian_marks(m: Model, cover: bool) -> list[Mark]:
 def scheme_meridian(p: Surface, cover: bool) -> None:
     """MERIDIAN - a chart graticule, ruled from the hinge; one amber seam line."""
     m = p.m
-    p.rect(0, 0, m.w, m.l, BASE, m.cover_r if cover else m.deck_r)
+    x0, y0, bw, bl, br = part_box(m, cover)
+    p.rect(x0, y0, bw, bl, BASE, br)
     for mk in meridian_marks(m, cover):
         p.path(mk.d(p.y), mk.fill, rule=mk.rule, opacity=mk.opacity, group=mk.group)
     if cover:
@@ -805,7 +828,8 @@ def scheme_strata(p: Surface, cover: bool) -> None:
     """STRATA - five bands in the side rails, keyed to x so they cross the hinge dead straight."""
     m = p.m
     w, l = m.w, m.l
-    p.rect(0, 0, w, l, BASE, m.cover_r if cover else m.deck_r)
+    x0, y0, bw, bl, br = part_box(m, cover)
+    p.rect(x0, y0, bw, bl, BASE, br)
 
     # 32 mm of bands per rail: inside the deck's 40.95 mm rail, but NOT the cover's 14.6 mm
     # margin outside the 7" bezel - Strata is kept as a record of the alternatives, and on the
@@ -835,8 +859,8 @@ def scheme_bearing(p: Surface, cover: bool) -> None:
     """BEARING - slate border, chart dots, and one amber trace that leaves the hinge."""
     m = p.m
     w, l = m.w, m.l
-    r = m.cover_r if cover else m.deck_r
-    p.rect(0, 0, w, l, BASE, r)
+    x0, y0, bw, bl, r = part_box(m, cover)
+    p.rect(x0, y0, bw, bl, BASE, r)
 
     # the field: within 34 mm of the edge, one even-odd path - no clipping needed.  The trace at
     # x = 215.5 lies inside this border (the field ends at 199.5), so the amber sits on slate.
@@ -982,11 +1006,12 @@ def deck_features(p: Surface) -> None:
             p.circle(fx + dx, fy + dy, 1.7, INK, layer="features", stroke="#43505b", sw=0.5)
 
 
-    x0, _, x1, depth = m.port
-    p.rect(x0, 0, x1 - x0, depth, INK, layer="features")
-    p.line([(x0, depth), (x1, depth)], "#48545f", 0.9, layer="features")
-    p.line([(x0, 0), (x0, depth)], "#48545f", 0.9, layer="features")
-    p.line([(x1, 0), (x1, depth)], "#48545f", 0.9, layer="features")
+    # the opening runs from the PLATE's hinge edge (negative), not the tray's y = 0
+    x0, y0, x1, y1 = m.port
+    p.rect(x0, y0, x1 - x0, y1 - y0, INK, layer="features")
+    p.line([(x0, y1), (x1, y1)], "#48545f", 0.9, layer="features")
+    p.line([(x0, y0), (x0, y1)], "#48545f", 0.9, layer="features")
+    p.line([(x1, y0), (x1, y1)], "#48545f", 0.9, layer="features")
     p.text("PI  ·  USB-C  HDMI ×2  DSI", 2.1, (x0 + x1) / 2, 11.0, LABEL,
            layer="features", anchor="middle")
 
@@ -1005,6 +1030,13 @@ def deck_features(p: Surface) -> None:
     p.circle(bx, by, bd / 2 - 2.0, "none", layer="features", stroke=AMBER_D, sw=1.2)
     p.text("POWER", 1.9, bx, by + bd / 2 + 6.0, LABEL, layer="features",
            track=0.9, anchor="middle")
+
+    # 8.4 V charge socket: the host is never drilled, so it sits on the deck's right rail
+    cx, cy, cd, cnut = m.chg
+    p.circle(cx, cy, cnut / 2, "none", layer="features", stroke="#48545f", sw=0.8)
+    p.circle(cx, cy, cd / 2, "#111820", layer="features", stroke="#6a7784", sw=0.9)
+    p.text("CHARGE  8.4 V", 1.9, cx, cy - cnut / 2 - 5.0, LABEL,
+           layer="features", track=0.8, anchor="middle")
 
 
 
@@ -1045,8 +1077,12 @@ NOTES = 112.0
 
 def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path | None]:
     w, l = model.w, model.l
-    sw = 2 * M + w
-    sh = M - 6 + TITLE + l + GAP + l + NOTES + M
+    dw, dl = model.deck[2], model.deck[3]
+    sw = 2 * M + max(w, dw)
+    # the deck's plate is bigger than the cover's, and it is drawn in the cassette frame, so the
+    # sheet has to hold the plate's own bottom edge (y0 + l below the cassette origin)
+    deck_bottom = model.deck[1] + dl
+    sh = M - 6 + TITLE + l + GAP + deck_bottom + NOTES + M
 
     cover, deck = Surface(model, flipped=True), Surface(model)
     sc["draw"](cover, True)
@@ -1071,12 +1107,13 @@ def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path
     hinge_y = y_cover + l + GAP / 2
     clip_defs: list[str] = []
 
-    def emit(surf: Surface, top: float, radius: float, ident: str, holes: list[str],
-             flip: bool) -> None:
+    def emit(surf: Surface, top: float, box: tuple[float, ...], ident: str,
+             holes: list[str], flip: bool) -> None:
         # outer outline + every aperture, even-odd: this is the physical mask. A painted line
         # that runs into the fan or the power button stops there, the way tape would stop it.
+        x0, y0, bw, bl, br = box
         clip_defs.append(f'<clipPath id="{ident}" clipPathUnits="userSpaceOnUse">'
-                         f'<path d="{rrect_d(0, 0, w, l, radius)} {" ".join(holes)}" '
+                         f'<path d="{rrect_d(x0, y0, bw, bl, br)} {" ".join(holes)}" '
                          f'fill-rule="evenodd"/></clipPath>')
         # flipping is already in the coordinates (Surface.y), so this is a plain translation
         place = f'translate({f(M)} {f(top)})'
@@ -1084,17 +1121,18 @@ def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path
         elems.append(f'<g transform="{place}">'
                      f'<g clip-path="url(#{ident})">' + "".join(surf.paint) + "</g>"
                      + "".join(surf.features)
-                     + f'<path d="{rrect_d(0, 0, w, l, radius)}" fill="none" '
+                     + f'<path d="{rrect_d(x0, y0, bw, bl, br)}" fill="none" '
                        f'stroke="#3b4650" stroke-width="0.8"/></g>')
 
-    emit(cover, y_cover, model.cover_r, "coverclip", cover_holes_d(model), True)
-    emit(deck, y_deck, model.deck_r, "deckclip", deck_holes_d(model), False)
+    emit(cover, y_cover, (0, 0, w, l, model.cover_r), "coverclip",
+         cover_holes_d(model), True)
+    emit(deck, y_deck, model.deck, "deckclip", deck_holes_d(model), False)
     elems.insert(1, "<defs>" + "".join(clip_defs) + "</defs>")
 
     # the hinge line: the continuity datum
-    elems.append(f'<line x1="{f(M - 9)}" y1="{f(hinge_y)}" x2="{f(M + w + 9)}" '
-                 f'y2="{f(hinge_y)}" stroke="{PAPER_INK}" stroke-width="0.5" '
-                 f'stroke-dasharray="6 3"/>')
+    elems.append(f'<line x1="{f(M + min(0, model.deck[0]) - 9)}" y1="{f(hinge_y)}" '
+                 f'x2="{f(M + max(w, dw) + 9)}" y2="{f(hinge_y)}" stroke="{PAPER_INK}" '
+                 f'stroke-width="0.5" stroke-dasharray="6 3"/>')
     elems.append(tspan("HINGE  ·  the pattern crosses this line", 2.6, M + w / 2, hinge_y - 3.4,
                        PAPER_MUTED, track=1.3, anchor="middle"))
 
@@ -1103,16 +1141,18 @@ def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path
     elems.append(tspan(f"{f(w)} × {f(l)} mm", 2.6, M + w, y_cover - 5.0, PAPER_MUTED,
                        anchor="end"))
     elems.append(tspan("DECK  ·  top face", 3.0, M, hinge_y + 9.0, PAPER_MUTED, track=1.3))
-    elems.append(tspan(f"{f(w)} × {f(l)} mm", 2.6, M + w, hinge_y + 9.0, PAPER_MUTED,
-                       anchor="end"))
-    for top in (y_cover, y_deck):
-        for cx, cy, dx, dy in ((M, top, -1, -1), (M + w, top, 1, -1),
-                               (M, top + l, -1, 1), (M + w, top + l, 1, 1)):
+    elems.append(tspan(f"{f(dw)} × {f(dl)} mm", 2.6, M + dw + model.deck[0], hinge_y + 9.0,
+                       PAPER_MUTED, anchor="end"))
+    for top, (x0, y0, bw, bl, _r) in ((y_cover, (0, 0, w, l, model.cover_r)),
+                                      (y_deck, model.deck)):
+        for cx, cy, dx, dy in ((M + x0, top + y0, -1, -1), (M + x0 + bw, top + y0, 1, -1),
+                               (M + x0, top + y0 + bl, -1, 1),
+                               (M + x0 + bw, top + y0 + bl, 1, 1)):
             elems.append(f'<path d="M{f(cx + dx * 6)} {f(cy)} H{f(cx)} V{f(cy + dy * 6)}" '
                          f'fill="none" stroke="{PAPER_INK}" stroke-width="0.3" opacity="0.5"/>')
 
     # notes
-    ny = y_deck + l + 26.0
+    ny = y_deck + deck_bottom + 26.0
     elems.append(f'<line x1="{f(M)}" y1="{f(ny - 8)}" x2="{f(sw - M)}" y2="{f(ny - 8)}" '
                  f'stroke="{PAPER_INK}" stroke-width="0.35" opacity="0.5"/>')
     elems.append(tspan("PALETTE", 2.6, M, ny, PAPER_MUTED, track=1.8))
@@ -1216,8 +1256,10 @@ def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool) ->
     crosses sit in the handling margin so the passes stack on the same datum without putting a
     hole in the mask itself.
     """
-    w, l = model.w, model.l
-    r = model.cover_r if cover else model.deck_r
+    if cover:
+        x0, y0, w, l, r = 0.0, 0.0, model.w, model.l, model.cover_r
+    else:
+        x0, y0, w, l, r = model.deck          # the deck's plate, larger than the cassette
     pad = 14.0
     sw, sh = 2 * pad + w, 2 * pad + l + 28.0
 
@@ -1234,10 +1276,12 @@ def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool) ->
     # interior, because even-odd counts every subpath crossing.  Black is laid out first, the
     # cut-outs are painted over it, and the whole thing is clipped to the part outline so a mark
     # that runs past the edge cannot leak outside the mask.
+    # the deck's outline sits at (x0, y0) in the cassette frame, so the whole group is shifted to
+    # put it on the paper at (pad, pad); the cover's outline is already at the origin
     elems.append(f'<defs><clipPath id="part" clipPathUnits="userSpaceOnUse">'
-                 f'<path d="{rrect_d(0, 0, w, l, r)}"/></clipPath></defs>')
-    elems.append(f'<g transform="translate({f(pad)} {f(pad)})">'
-                 f'<path d="{rrect_d(0, 0, w, l, r)}" fill="{PAPER_INK}"/>'
+                 f'<path d="{rrect_d(x0, y0, w, l, r)}"/></clipPath></defs>')
+    elems.append(f'<g transform="translate({f(pad - x0)} {f(pad - y0)})">'
+                 f'<path d="{rrect_d(x0, y0, w, l, r)}" fill="{PAPER_INK}"/>'
                  f'<g clip-path="url(#part)">'
                  + "".join(f'<path d="{mk.d(fy)}" fill="{PAPER}" fill-rule="evenodd"/>'
                            for mk in marks)

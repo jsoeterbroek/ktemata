@@ -198,6 +198,10 @@ carries over unchanged. These are the differences:
 | Cells | **2× 18650, 2S** in the HAT's own holders | No printed tray. Matched pair, fuse the positive lead. |
 | Pi RTC | ML-2020 → Pi J5 | Unchanged (`dtparam=rtc_bbat_vchg=3000000`). |
 
+> **r5:** the 8.4 V socket is in the deck (`R5_CHG_*`), not the host wall. No case hole; the
+> socket's lead runs to the HAT's barrel jack with a service loop (the deck lifts off), and the
+> plug is fitted with the lid open.
+
 ### Data
 
 | Link | r4 connection | Notes |
