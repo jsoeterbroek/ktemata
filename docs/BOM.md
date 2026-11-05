@@ -36,7 +36,7 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | 20 | Dupont jumpers, female–female, 20 cm | 1 set | UPS INA219 I²C (0x42) + 5 V to the FireBeetle. | € 5 |
 | 21 | USB-A → USB-C data cable, 20–30 cm | 1 | FireBeetle ↔ Pi serial. **Data-only** (VBUS disconnected) — the FireBeetle is powered from the UPS. | € 5 |
 | 22 | USB-A → 2-pin 5 V lead (JST-XH / dupont) | 1 | UPS USB-A 5 V → FireBeetle 5 V/GND; keeps the OLED alive with the Pi off. | € 5 |
-| 23 | M3 × 10 screws | 7 | r5 deck screws. Display and Pi screws come with the display. | € 12 (set) |
+| 23 | M3 × 10 **countersunk** screws | 7 | DIN 7991 / ISO 10642, for the r5 deck's countersunk seats (a button head no longer fits). Display and Pi screws come with the display. | € 12 (set) |
 | 23a | 16 mm IP67 metal panel button (momentary NO) | 1 | r5 power button, on the deck's right rail (`R5_BTN_D`). Two leads to the Pi 5's **J2** pads. A centred 7" panel leaves no latch band for it on the lid. | € 8 |
 | 24 | Fuse + holder, 3–5 A | 1 | On the 2S pack lead. | € 4 |
 | 25 | Silicone O-ring / gasket assortment | 1 | Case seam, DC socket, button. | € 10 |

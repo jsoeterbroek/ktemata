@@ -598,7 +598,8 @@ R5_CABLE_X0 = R5_CABLE_X - R5_CABLE_W/2;                 // its left edge, in pa
 // Ø7 (BOSS_D, still right for the board posts and the case) to Ø9, which leaves 2.4 mm of wall
 // round the insert. The four board posts keep their Ø8 and M2.5 pilots - those screws go in once.
 M3_CLR   = 3.4;                                        // clearance hole through the deck
-M3_HEAD  = 6.2;                                        // counterbore: Ø5.7 button head + 0.5
+M3_HEAD  = 6.2;                                        // countersink at the top face: Ø6.0 flat head + 0.2
+M3_CSK_T = (M3_HEAD - M3_CLR)/2;                       // 1.4, i.e. 90 deg
 M3_INS_D = 4.2;                                        // heat-set insert hole: 4.6 OD - 0.4 melt
 M3_INS_H = 6.0;                                        // insert depth: 5.7 mm insert + margin
 R5_BOSS_D = 9;                                         // deck boss (2.4 mm wall round the insert)
@@ -752,7 +753,7 @@ DECK_GRILL_RIB = 1.0;                                   // bars sit flush, this 
 // cable under plate.
 //
 // Both ends are bounded by real hardware, which the previous 150..210 span ignored:
-//   - right: deck screw 5 at (207.5, 5.1) with a Ø6.2 counterbore, so the cut must stop short of
+//   - right: deck screw 5 at (207.5, 5.1) with a Ø6.2 countersink, so the cut must stop short of
 //            x 204.4 or that boss has no head seat,
 //   - right: with DECK_FANS=2 the right fan reaches down to y 19, so the cut must stay shallower
 //            than that or the two merge into one ragged outline. With DECK_FANS=1 (the default)
@@ -775,7 +776,7 @@ assert(R5_OPEN_X0 <= R5_PI_HINGE_CONN[0] && R5_OPEN_X1 >= R5_PI_HINGE_CONN[1],
 assert(R5_OPEN_D >= R5_PI_Y,
        str("the hinge opening is ", R5_OPEN_D, " mm deep, the Pi's connectors need ", R5_PI_Y));
 assert(R5_SCREWS[5][0] - M3_HEAD/2 >= R5_OPEN_X1,
-       "the hinge opening runs into deck screw 5's counterbore");
+       "the hinge opening runs into deck screw 5's countersink");
 
 // ---- charge socket: 5.5 x 2.1 DC jack through the deck's right rail ----
 // The host stays sealed: the 8.4 V charge lead ends in a panel socket in the deck's top face
@@ -810,7 +811,7 @@ assert(R5_CHG_Y - R5_CHG_NUT_D/2 > R5_OPEN_D,
        "the charge socket runs into the hinge opening");
 assert(min([for (p=R5_SCREWS) sqrt((p[0]-R5_CHG_X)^2 + (p[1]-R5_CHG_Y)^2)]) 
        >= M3_HEAD/2 + R5_CHG_NUT_D/2 + 1,
-       "the charge socket runs into a deck screw counterbore");
+       "the charge socket runs into a deck screw countersink");
 assert(min([for (c=DECK_FAN_CTRL) sqrt((c[0]-R5_CHG_X)^2 + (c[1]-R5_CHG_Y)^2)])
        >= DECK_FAN_D/2 + R5_CHG_NUT_D/2 + 1,
        "the charge socket runs into a fan opening");

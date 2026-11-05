@@ -27,13 +27,16 @@ module deck_slab() translate([0, 0, R5_DECK_Z]) linear_extrude(R5_DECK_T) deck2d
 // which is why no extra flip is needed here.
 module dbox(x0, y0, x1, y1, z, h) r5_at(x0, y1, z) cube([x1 - x0, y1 - y0, h]);
 
-// ---- screw seats: Ø3.4 clearance + Ø6.2 x 1.8 counterbore for an M3 button head ----
+// ---- screw seats: Ø3.4 clearance + a 90 deg countersink for an M3 flat head ----
 // M3, not M2.5: the deck comes off for every service, and the insert in the tray boss below is
-// what survives that. 1.8 mm of counterbore keeps the head just under the deck's top face, which
-// is the surface the keyboard and the closed lid sit on.
+// what survives that. Countersunk, not counterbored: the deck prints top-face down, so a
+// counterbore's flat ceiling is a 6.2 mm bridge inside a 1.8 mm well that the slicer cannot put
+// support into (the seven "unsupported overhang" regions). A 45 deg cone prints clean and still
+// leaves the flat head flush with the painted face - use DIN 7991 / ISO 10642 M3 x 10.
 module screw_cut(p) {
     r5_at(p[0], p[1], R5_DECK_Z - 1) cylinder(d=M3_CLR, h=R5_DECK_T + 2);
-    r5_at(p[0], p[1], R5_DECK_TOP - 1.8) cylinder(d=M3_HEAD, h=1.81);
+    r5_at(p[0], p[1], R5_DECK_TOP - M3_CSK_T - 0.01)
+        cylinder(d1=M3_CLR, d2=M3_HEAD, h=M3_CSK_T + 0.02);
 }
 
 // ---- keyboard recess ----
@@ -192,11 +195,11 @@ module fan_holes() {
     }
 }
 
-// Bars across each opening, FLUSH with the deck's top face. The deck now prints top-face down,
-// so anything standing proud of that face would be pressed into the bed; the bars are recessed to
-// sit level instead, which also keeps the face flat for the lid's display. They span the hole and
-// sink 0.8 mm into the plate at both ends so they fuse to it (a tangent contact exports as a
-// separate solid).
+// Bars across each opening, FLUSH with the deck's top face. The deck prints top-face down, so a
+// flush bar starts on the bed and needs no support; a bar left 0.5 mm proud of the bed was a
+// 38 mm bridge over the fan hole and one of the slicer's "unsupported overhang" regions. The top
+// face stays flat for the lid's display, and the bars span the hole and sink 1.5 mm into the
+// plate at both ends so they fuse to it (a tangent contact exports as a separate solid).
 module fan_grille() {
     for (i=[0:DECK_FANS-1]) {
         c = DECK_FAN_CTRL[i];
@@ -205,7 +208,7 @@ module fan_grille() {
             half = sqrt(max(0, (DECK_FAN_D/2)*(DECK_FAN_D/2) - (b*(DECK_FAN_D/(DECK_GRILL_BARS+0.5)))^2));
             dbox(c[0] - half - 1.5, y - DECK_GRILL_BAR/2,
                  c[0] + half + 1.5, y + DECK_GRILL_BAR/2,
-                 R5_DECK_TOP - DECK_GRILL_RIB - 0.8, DECK_GRILL_RIB + 0.3);
+                 R5_DECK_TOP - DECK_GRILL_RIB, DECK_GRILL_RIB);
         }
     }
 }
