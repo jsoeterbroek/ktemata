@@ -124,7 +124,7 @@ Its output feeds the same sealed charge port as the solar panel (see `WIRING.md`
 ## Shopping list / BOM
 
 See [`docs/BOM.md`](docs/BOM.md) for the parts list: the r4/r5 electronics and display, the r5 Peli case,
-the nice-to-haves (environment sensor, solar/crank path, inserts), and the r2/r3 parts for the older build.
+the nice-to-haves (solar/crank path, inserts), and the r2/r3 parts for the older build.
 It also flags the NVMe mounting and display-fit caveats.
 
 ## Hardware alternatives
@@ -173,8 +173,8 @@ adds PlatformIO, its `intelhex` runtime dependency and ruff. The export/render h
 
 `firmware/` is a PlatformIO project for the DFRobot FireBeetle 2 ESP32-UE
 (N16R2, DFR1140). It drives the 1.3" 4-pin I2C OLED (SH1106/SSD1306), reads the
-BME688, DS3231 and Waveshare UPS HAT (B) (INA219 at `0x42`) over I2C, and
-sends telemetry to the Pi over USB serial. See `firmware/README.md` for the
+DS3231 and the Waveshare UPS HAT (B) (INA219 at `0x42`) over I2C, and sends
+telemetry to the Pi over USB serial. See `firmware/README.md` for the
 pinout, serial protocol and current limitations.
 
 ```bash
@@ -189,8 +189,7 @@ pio device monitor      # 115200 baud
 at `0x3C`; the display shows time/date, and the UPS HAT (B) at `0x42` supplies
 `BAT` (a full 2S pack reports 100 %; ≥99 % snaps to 100 so the linear voltage
 model does not flicker). I2C is SDA **GPIO21** / SCL **GPIO22** — the pins
-marked `21/SDA` and `22/SCL`. Still to wire: DS3231 `0x68`, BME688
-`0x76/0x77`, and the PBS-33B button GPIO4→GND. The Pi-side sender for time and
+marked `21/SDA` and `22/SCL`. Still to wire: DS3231 `0x68` and the PBS-33B button GPIO4→GND. The Pi-side sender for time and
 storage is `work/scripts/status-oled.py`, installed as
 `ktemata-status-oled.service` by `work/scripts/post-install.sh`; it pushes UTC
 at start and hourly and the library free space every 60 s, and re-syncs after
@@ -230,8 +229,7 @@ r1 pull-switch slot, side cutout and battery button are not used in r2/r3/r4; th
 
 Hardware choices, design and build stay simple. The core is the Pi 5 4 GB, the Touch Display 2, the K06
 keyboard, the UPS HAT (B) with 2× 18650, the NVMe SSD and the RTC. Everything else in the tables below is an
-exception with a job: the status OLED and its button (battery state with the Pi off), the BME688 (r4 only;
-r5 drops it), the K06's 2.4 GHz dongle, and the library hotspot — a local AP with no uplink, off by default
+exception with a job: the status OLED and its button (battery state with the Pi off), the K06's 2.4 GHz dongle, and the library hotspot — a local AP with no uplink, off by default
 and installed with `post-install.sh --hotspot`. Charging is one input fed by mains, solar or the external
 hand crank (r5's socket is in the deck, so the case is open while charging; no host hole). Extra USB or GPIO add-ons, boards, switches and radios are out: each one is a point of
 failure that has to be debugged in the field. Add a nice-to-have only by deleting something else.
@@ -248,8 +246,7 @@ Project N.O.M.A.D. (custom ARM64 build)
 - Raspberry PI 5 4 GB
 - 7" sunlight-readable LCD (DSI)
 - wired USB keyboard (no Bluetooth)
-- nice to have: extra small OLED screen (FireBeetle 2 ESP32-UE) for the environment readings and warnings, and battery status (important); cycles through at least 4 screens: time (default), battery power, environment data, storage %; auto-switches to the relevant screen when a threshold is passed
-- BME688 (successor of BME680) Breakout - Air Quality, Temperature, Pressure, Humidity Sensor
+- nice to have: extra small OLED screen (FireBeetle 2 ESP32-UE) for battery status and warnings (important); cycles through 3 screens: time (default), battery power, storage %; auto-switches to the relevant screen when a threshold is passed
 - 512 GB SSD storage (NVMe 2242 fitted; 1 TB as the later upgrade, SATA possible)
 - rubber seals for openings (not cooling)
 - no sound
@@ -268,14 +265,13 @@ Project N.O.M.A.D. (custom ARM64 build)
 | Hand crank (backup, nice to have) | **Separate** crank generator with rectifier + buffer capacitor, feeding the **same charger input** as solar, into the one sealed charge port | Emergency top-up for night and clouds, not a main source. Rough estimate: 10–20 W of arm effort gives about 5–10 W into the battery after losses, so 1 minute of cranking ≈ 1 minute of use, and a full charge (about 23 Wh on r4, 70 Wh on r2) would take roughly 3–5 h (r4) or 7–14 h (r2). Sellers' "20 W" ratings are peaks. Kept outside the case: there's no room next to the 21700 cells, you can't hold the device steady against the crank torque, a shaft would break the seal, and it would add weight all the time. Build options: the 3D-printed axial-flux design in the separate [handcrank](https://github.com/jsoeterbroek/handcrank) project (N52 magnets, 8 coils × 350 turns, gearbox, full-bridge rectifier), or a commercial USB-C crank generator. The MPPT/input-voltage regulation matters: without it the input collapses whenever cranking slows (in the video the phone kept showing "USB disconnected"). Later option: a clip-on module on the (not yet modelled) back attachment. A pedal generator gives several times more power. |
 | Solar on case back (nice to have) | Thin ETFE panel (about 5–6 V) through a small solar power manager (MPPT) | The r1 back is 150 × 183 mm, the r2 back 150 × 205 mm, the r4 back 172 × 237 mm, so expect at most about 6–8 W peak (r4) and 2–3 W in practice. That only stretches idle time; it can't power the device while in use. Solar power banks with built-in cells charge just as slowly. |
 | Keyboard | **Rii K06** (ordered): 151 × 59 × 11 mm, 98 g, 2.4 GHz dongle **and** Bluetooth 4.0, backlit, multi-touch touchpad + IR learning | Its touchpad replaces the r2 Pimoroni trackball (r3 used the Phistone's air mouse). The r4 case opens a 151 × 56.5 mm window over the keys/touchpad and holds the body in a 151 × 59 pocket that sits entirely in the face part (its 11 mm back is above the 38.55 mm split plane). **No side cutout**, so set its 2.4G/BT switch and charge it before closing the case. **r2** remains a wired USB/Pico keyboard; **r3** the Phistone Mini Keyboard (134 × 74 × 12.7). The K06 is a complete body rather than a PCB, so r4 adds `KB_BODY` (151 × 59 × 11) beside the old 137 × 72 `KB_PCB` footprint, and its window includes the touchpad. r2/r3 alternatives (a custom PCB on the 137 × 72 footprint, the Solder Party **BBQ20KBD** — sold out since Jan 2026 — or the Phistone) still apply to that build; on r4 the K06's cramped Ctrl/punctuation layout is the same trade-off as the Phistone's and should be tested before committing. |
-| Environment sensor | **Pimoroni BME688** (temp, RH, pressure, VOC/gas index; I2C) | No CO2 or particulates. For those, use Sensirion **SEN66** (PM1–10, CO2, VOC, NOx, T, RH; 55.5 × 25.6 × 21.5 mm, about 90 mA, I2C 0x6B; Adafruit SEN6x breakout). Mount it in a vented pocket on the outer wall with a membrane vent, away from Pi heat, or temperature/RH read high. The SEN66 needs real airflow (inlet + outlet). |
 | Storage | **WD SN740 512 GB, M.2 2242** (ordered) on the **Seeed PCIe-to-M.2 BASE** | 4.7 W max, 2.38 mm single-sided, 300 TBW; runs at the Pi's Gen2 link (≈390 MB/s measured against this drive family). Mount at the 42 mm hole, ignore the bundled 2280 bracket. Capacity is a stopgap: the drive formats to ≈477 GiB and the full library is 833 GiB, so Wikipedia + maps + the small references fit, Gutenberg and Khan Academy do not (see [`docs/BOM.md`](docs/BOM.md)). A 1 TB 2242 or 2.5" SATA SSD (via the Waveshare SATA HAT+) remains the upgrade path; M.2 **SATA** drives do not work on NVMe boards. **The BASE has no bay in the CAD yet** — the UPS HAT (B) owns the Pi's underside. |
 | Clock | Pi 5 built-in RTC + **Panasonic ML-2020** rechargeable cell on the J5 battery connector | Needed because the normal case is no network and no NTP (the hotspot is an AP, not an uplink). Enable trickle charging: `dtparam=rtc_bbat_vchg=3000000` in `/boot/firmware/config.txt`. |
-| Status OLED | **DFRobot FireBeetle 2 ESP32-UE (N16R2, DFR1140) with a 1.3" 4-pin I2C OLED (SH1106/SSD1306)** (ESP32-WROOM-32UE-N16R2, 16 MB flash, 2 MB PSRAM, 25.4 × 60 mm; the external antenna is not needed; the OLED is a 35.5 × 33.7 pcb with a 34.5 × 23 × 1.45 glass and a 29.42 × 14.7 lit area) running the custom PlatformIO firmware in `firmware/` | Shows **battery status** (charge %, voltage, charging/discharging, input present, estimated time left) and the environment readings, with warnings (low battery, high temperature, poor air) on screen. Works with the Pi off, so the battery level can be checked without booting. The ESP32 is the I2C master for the sensors (BME688, optional SEN66) and for the UPS HAT (E) battery monitor (I2C 0x2D, reachable by cable; Waveshare documents voltage, current, power, capacity % and USB-C input state; check the register manual). Powered from the UPS 5 V. It sends all readings to the Pi over internal USB (serial), so the Pi doesn't need its own I2C link to them. Its Wi-Fi/Bluetooth stay off in the firmware. |
+| Status OLED | **DFRobot FireBeetle 2 ESP32-UE (N16R2, DFR1140) with a 1.3" 4-pin I2C OLED (SH1106/SSD1306)** (ESP32-WROOM-32UE-N16R2, 16 MB flash, 2 MB PSRAM, 25.4 × 60 mm; the external antenna is not needed; the OLED is a 35.5 × 33.7 pcb with a 34.5 × 23 × 1.45 glass and a 29.42 × 14.7 lit area) running the custom PlatformIO firmware in `firmware/` | Shows **battery status** (charge %, pack voltage/current, `OL`/`OB`/`LB`, load %, runtime), with warnings (low battery, storage full) on screen. Works with the Pi off, so the battery level can be checked without booting. The ESP32 is the I2C master for the UPS HAT (B) INA219 gauge at `0x42` and the DS3231 at `0x68`; its Wi-Fi/Bluetooth stay off in the firmware. |
 | Status button | **TinyTronics PBS-33B** 12 mm panel-mount momentary NO pushbutton ([black](https://www.tinytronics.nl/en/switches/manual-switches/push-buttons-and-switches/black-push-button-12mm-reset-pbs-33b)) | Fits the modelled 12.2 mm `OLED_BTN_D` hole. One terminal to GPIO4, the other to GND (`INPUT_PULLUP`). Not IP-rated; add a rubber boot for the sealed build, or use a 16 mm IP67 metal button and enlarge the top-wall hole. Short press = next screen, long press = acknowledge. |
 | Wi-Fi / Bluetooth | **The Pi 5's dual-band radio is used for the library hotspot**, off by default and enabled with `--hotspot` in [`work/scripts/post-install.sh`](work/scripts/post-install.sh). For a build that must not transmit at all, **`--no-radio`** is the real off switch: it disables the on-board radios in the firmware (`dtoverlay=disable-wifi-pi5`/`disable-bt-pi5` on a Pi 5, the unsuffixed pair on older boards), which is persistent and survives a reflash of the OS. The FireBeetle's radios stay off. | The hotspot is the same function the commercial Prepper Disk ships with and costs about **0.4 W** (estimated) — see [`docs/POST_INSTALL.md`](docs/POST_INSTALL.md). It serves the ZIM library to phones, laptops and e-readers on a private AP (`10.10.10.1:8080`) with no routing off the box. Note the distinction: `--no-hotspot` only declines to create an AP (the radio stays up and `kiwix-serve` still binds all interfaces), while `--no-radio` disables the hardware at boot. The two flags are mutually exclusive. Earlier revisions disabled Wi-Fi/Bluetooth outright; that is no longer the default, but it is one flag away. |
 
-Check I2C address collisions before wiring: BME688 0x76/0x77, SEN66 0x6B, plus the UPS fuel gauge. The Pimoroni trackball (0x0A) is an **r2-only optional** part; **r3 drops it** because the Phistone keyboard's air mouse and the touchscreen provide pointer input. With the FireBeetle option the sensors and the UPS gauge (**0x42** on r4, 0x2D on r2/r3) move to its I2C bus (its OLED is at 0x3C, SDA GPIO21, SCL GPIO22). Don't connect them to both the Pi and the FireBeetle; two I2C masters on one bus cause trouble.
+Check I2C address collisions before wiring: the UPS fuel gauge and the DS3231. The Pimoroni trackball (0x0A) is an **r2-only optional** part; **r3 drops it** because the Phistone keyboard's air mouse and the touchscreen provide pointer input. With the FireBeetle the UPS gauge (**0x42** on r4, 0x2D on r2/r3) and RTC move to its I2C bus (its OLED is at 0x3C, SDA GPIO21, SCL GPIO22). Don't connect them to both the Pi and the FireBeetle; two I2C masters on one bus cause trouble.
 
 ### Considered and rejected (r2/r3/r4)
 
@@ -285,33 +281,26 @@ Check I2C address collisions before wiring: BME688 0x76/0x77, SEN66 0x6B, plus t
 
 ### Status OLED: screens and alerts
 
-At least four screens, cycled with a button. The **time** screen is the default.
+Three screens, cycled with a button (or the 25 s auto-cycle until it is fitted). The **time** screen is the default.
 
 | # | Screen | Content | Source |
 |---|---|---|---|
 | 1 | **Time** (default) | HH:MM, date, weekday; small battery % and alert icons | ESP32 clock, set from the Pi over USB when it runs; the Pi sends UTC and the firmware applies `TIMEZONE` (default **Europe/Amsterdam**, including DST); a **DS3231 RTC** (I2C 0x68) on the FireBeetle keeps UTC after a full power loss with the Pi off |
 | 2 | **Battery power** | charge %, voltage, current (charging/discharging), `OL`/`OB`/`LB` flags, load % of the 5 V/5 A output, estimated time left | UPS gauge: INA219 0x42 (r4), BQ4050 0x2D (r2/r3); load is valid on battery only |
-| 3 | **Environment** | temperature, humidity, pressure + 3 h trend (falling fast = weather warning), VOC/air-quality index; CO2 and PM2.5 if the SEN66 is fitted | BME688 / SEN66 |
-| 4 | **Storage** | % used and free GB of the 512 GB SSD | Pi over USB; with the Pi off, shows the last value and its age |
+| 3 | **Storage** | % used and free GB of the 512 GB SSD | Pi over USB; with the Pi off, shows the last value and its age |
 
-**Navigation:** one 12 mm panel button on the case (TinyTronics PBS-33B; add a rubber boot for sealing), wired to ESP32 GPIO4. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert. Until the button is fitted the build sets `AUTO_CYCLE_MS=25000UL`, so the four screens cycle every 25 s (alerts still take over); set it to `0UL` when the button is wired.
+**Navigation:** one 12 mm panel button on the case (TinyTronics PBS-33B; add a rubber boot for sealing), wired to ESP32 GPIO4. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert. Until the button is fitted the build sets `AUTO_CYCLE_MS=25000UL`, so the three screens cycle every 25 s (alerts still take over); set it to `0UL` when the button is wired.
 
-**Auto-switch on thresholds:** when a value passes a threshold, the OLED jumps to that screen and marks the value (inverted/blinking). It stays there until the condition clears or the alert is acknowledged, then returns to the time screen. An acknowledged alert comes back only if it gets worse (warning → critical). With several alerts at once, priority is battery > environment > storage. Thresholds use hysteresis so a value hovering at the limit doesn't flap. Thresholds are stored in the ESP32 (NVS) and can be changed from the Pi over USB.
+**Auto-switch on thresholds:** when a value passes a threshold, the OLED jumps to that screen and marks the value (inverted/blinking). It stays there until the condition clears or the alert is acknowledged, then returns to the time screen. An acknowledged alert comes back only if it gets worse (warning → critical). With several alerts at once, priority is battery > storage. Thresholds use hysteresis so a value hovering at the limit doesn't flap. Thresholds are stored in the ESP32 (NVS) and can be changed from the Pi over USB.
 
 Starting thresholds (tune them in use):
 
 | Value | Warning | Critical |
 |---|---|---|
 | Battery charge | ≤ 20 % | ≤ 10 % (the Pi also does a safe shutdown) |
-| Ambient temperature | > 35 °C or < 0 °C | > 45 °C |
-| Humidity | > 85 % RH | |
-| Pressure | falls > 3 hPa in 3 h | falls > 6 hPa in 3 h |
-| Air quality (BME688 IAQ/VOC index) | > 200 | > 300 |
-| CO2 (SEN66) | > 1500 ppm | > 2500 ppm |
-| PM2.5 (SEN66) | > 35 µg/m³ | > 75 µg/m³ |
 | Storage used | ≥ 90 % | ≥ 97 % |
 
-**Power and OLED care:** the ESP32 runs all the time from the UPS. Awake with the screen on, it draws roughly 0.3–0.5 W, which is about 10 % of the battery per day. So it sleeps between readings (light sleep, sensor reads about once a minute) and turns the OLED off after about 1 min idle; a button press or an alert wakes it. Small pixel shifts on the time screen reduce OLED burn-in.
+**Power and OLED care:** the ESP32 runs all the time from the UPS. Awake with the screen on, it draws roughly 0.3–0.5 W, which is about 10 % of the battery per day. So it sleeps between readings (light sleep, UPS reads about once a minute) and turns the OLED off after about 1 min idle; a button press or an alert wakes it. Small pixel shifts on the time screen reduce OLED burn-in.
 
 ### r4 CAD implementation
 

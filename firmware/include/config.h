@@ -25,8 +25,6 @@
 #ifndef OLED_ROTATION
 #define OLED_ROTATION 0
 #endif
-#define I2C_ADDR_BME688_A 0x76
-#define I2C_ADDR_BME688_B 0x77
 #define I2C_ADDR_DS3231 0x68
 // r4: Waveshare UPS HAT (B) - INA219 gauge. 0x2D was the old HAT (E) address.
 #define I2C_ADDR_UPS 0x42
@@ -67,9 +65,7 @@
 // ---------------------------------------------------------------------------
 // Sampling / reporting
 // ---------------------------------------------------------------------------
-#define SENSOR_PERIOD_MS 5000UL
-#define PRESSURE_SAMPLE_PERIOD_MS 60000UL
-#define PRESSURE_HISTORY_SLOTS 181  // 181 minutes = 3 h at one sample/minute
+#define UPS_PERIOD_MS 5000UL
 #define TELEMETRY_PERIOD_MS 10000UL
 #define SERIAL_LINE_MAX 192
 
@@ -83,24 +79,6 @@
 constexpr float ALERT_BATT_WARN = 20.0f;   // %
 constexpr float ALERT_BATT_CRIT = 10.0f;   // %
 constexpr float ALERT_BATT_HYST = 2.0f;    // %
-
-constexpr float ALERT_TEMP_HIGH_WARN = 35.0f;  // deg C
-constexpr float ALERT_TEMP_HIGH_CRIT = 45.0f;  // deg C
-constexpr float ALERT_TEMP_LOW_WARN = 0.0f;    // deg C
-constexpr float ALERT_TEMP_HYST = 1.0f;        // deg C
-
-constexpr float ALERT_RH_WARN = 85.0f;  // %RH
-constexpr float ALERT_RH_HYST = 3.0f;   // %RH
-
-constexpr float ALERT_PRESS_DROP_WARN = 3.0f;  // hPa in 3 h
-constexpr float ALERT_PRESS_DROP_CRIT = 6.0f;  // hPa in 3 h
-constexpr float ALERT_PRESS_HYST = 0.3f;       // hPa
-
-// Placeholder air-quality index derived from BME688 gas resistance until
-// Bosch BSEC2 is integrated. Lower resistance = more reducing/VOC gases.
-constexpr float ALERT_IAQ_WARN = 200.0f;
-constexpr float ALERT_IAQ_CRIT = 300.0f;
-constexpr float ALERT_IAQ_HYST = 10.0f;
 
 constexpr float ALERT_STORAGE_WARN = 90.0f;  // % used
 constexpr float ALERT_STORAGE_CRIT = 97.0f;  // % used

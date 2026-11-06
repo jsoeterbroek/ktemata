@@ -5,10 +5,10 @@
  *        ESP32-WROOM-32UE-N16R2 (ESP32-D0WDR2-V3, 2 MB PSRAM)
  *
  * Responsibilities (see README.md, "Status OLED"):
- *   - 1.3" 128x64 I2C OLED (SH1106 default, SSD1306 optional), four screens:
- *     time, battery, environment, storage
+ *   - 1.3" 128x64 I2C OLED (SH1106 default, SSD1306 optional), three screens:
+ *     time, battery, storage
  *   - one sealed push button: short press = next screen, long press = ack alert
- *   - BME688 and DS3231 on the internal I2C bus
+ *   - DS3231 on the internal I2C bus
  *   - Waveshare UPS HAT (B) INA219 gauge at 0x42 (2S 18650)
  *   - newline-delimited JSON over USB CDC to/from the Raspberry Pi
  *
@@ -21,7 +21,6 @@
 #include <ArduinoJson.h>
 #include <RTClib.h>
 #include <Wire.h>
-#include <bme68xLibrary.h>
 #include <esp_log.h>
 #include <math.h>
 #include <stdlib.h>
@@ -64,12 +63,10 @@ void oledPower(bool on) {
 }
 
 RTC_DS3231 rtc;
-Bme68x bme;
 UpsHatB ups(Wire, I2C_ADDR_UPS);
 
 bool oledOk = false;
 bool rtcOk = false;
-bool bmeOk = false;
 bool upsOk = false;
 
 // ---------------------------------------------------------------------------
@@ -78,8 +75,7 @@ bool upsOk = false;
 enum ScreenId : uint8_t {
   SCREEN_TIME = 0,
   SCREEN_BATTERY = 1,
-  SCREEN_ENVIRONMENT = 2,
-  SCREEN_STORAGE = 3,
+  SCREEN_STORAGE = 2,
 };
 
 enum AlertLevel : uint8_t {
@@ -90,23 +86,13 @@ enum AlertLevel : uint8_t {
 
 enum AlertId : uint8_t {
   ALERT_BATTERY = 0,
-  ALERT_ENVIRONMENT = 1,
-  ALERT_STORAGE = 2,
-  ALERT_COUNT = 3,
+  ALERT_STORAGE = 1,
+  ALERT_COUNT = 2,
 };
 
 struct AlertState {
   AlertLevel level = LEVEL_OK;
   AlertLevel ackedAt = LEVEL_OK;
-};
-
-struct EnvReading {
-  bool valid = false;
-  float temperatureC = NAN;
-  float humidityPct = NAN;
-  float pressureHpa = NAN;
-  float gasKohm = NAN;
-  float gasIndex = NAN;  // placeholder until BSEC2 is integrated
 };
 
 struct StorageReading {
@@ -116,19 +102,9 @@ struct StorageReading {
   uint32_t updatedMs = 0;
 };
 
-struct EnvAlertLevels {
-  AlertLevel temperatureHigh = LEVEL_OK;
-  AlertLevel temperatureLow = LEVEL_OK;
-  AlertLevel humidity = LEVEL_OK;
-  AlertLevel pressure = LEVEL_OK;
-  AlertLevel gas = LEVEL_OK;
-};
-
 UpsStatus upsData;
-EnvReading env;
 StorageReading storage;
 AlertState alerts[ALERT_COUNT];
-EnvAlertLevels envAlertLevels;
 
 ScreenId screen = SCREEN_TIME;
 bool screenOn = true;
@@ -141,18 +117,7 @@ uint32_t buildTimeEpoch = 0;
 bool clockFromHost = false;
 int64_t clockBaseEpoch = 0;  // Unix epoch at millis() == 0
 
-// BME68x forced-mode state machine (avoids blocking on the measurement).
-bool bmeMeasuring = false;
-uint32_t bmeMeasureStartMs = 0;
-uint32_t lastSensorTickMs = 0;
-uint32_t bmeMeasureDurationUs = 0;
-
-// Pressure history for the 3 h trend, one sample per minute.
-float pressureHistory[PRESSURE_HISTORY_SLOTS];
-uint32_t pressureHistoryMs[PRESSURE_HISTORY_SLOTS];
-uint8_t pressureHead = 0;
-uint8_t pressureCount = 0;
-uint32_t lastPressureSampleMs = 0;
+uint32_t lastUpsTickMs = 0;
 
 uint32_t lastTelemetryMs = 0;
 
@@ -230,86 +195,8 @@ void scanI2C() {
 }
 
 // ---------------------------------------------------------------------------
-// Sensor initialisation and polling
+// UPS polling
 // ---------------------------------------------------------------------------
-void initBme688() {
-  const uint8_t candidates[] = {I2C_ADDR_BME688_A, I2C_ADDR_BME688_B};
-  for (uint8_t address : candidates) {
-    if (!i2cPresent(address)) {
-      continue;
-    }
-    bme.begin(address, Wire);
-    if (bme.checkStatus() != BME68X_ERROR) {
-      bme.setTPH(BME68X_OS_2X, BME68X_OS_16X, BME68X_OS_1X);
-      bme.setHeaterProf(300, 100);  // 300 deg C for 100 ms
-      bmeOk = true;
-      Serial.printf(
-          "{\"type\":\"log\",\"msg\":\"BME688 found\",\"addr\":%u}\n", address);
-      return;
-    }
-  }
-  bmeOk = false;
-  Serial.println("{\"type\":\"log\",\"msg\":\"BME688 not found\"}");
-}
-
-float gasResistanceToIndex(float ohms) {
-  // Placeholder index, not Bosch BSEC. Clean air on a BME688 is typically
-  // several hundred kOhm; reducing/VOC gases pull the resistance down.
-  // 1 MOhm -> 125, 100 kOhm -> 250, 10 kOhm -> 375, 1 kOhm -> 500.
-  if (!(ohms > 0.0f)) {
-    return NAN;
-  }
-  const float index = 500.0f - 125.0f * log10f(ohms / 1000.0f);
-  return constrain(index, 0.0f, 500.0f);
-}
-
-void startBmeMeasurement(uint32_t now) {
-  if (!bmeOk || bmeMeasuring) {
-    return;
-  }
-  bme.setOpMode(BME68X_FORCED_MODE);
-  bmeMeasureDurationUs = bme.getMeasDur();
-  if (bmeMeasureDurationUs < 1000) {
-    bmeMeasureDurationUs = 200000;
-  }
-  bmeMeasureStartMs = now;
-  bmeMeasuring = true;
-}
-
-bool finishBmeMeasurement(uint32_t now) {
-  if (!bmeMeasuring) {
-    return false;
-  }
-  const uint32_t elapsedUs = (now - bmeMeasureStartMs) * 1000UL;
-  if (elapsedUs + 1000UL < bmeMeasureDurationUs) {
-    return false;
-  }
-
-  bmeMeasuring = false;
-  bme68xData data;
-  if (bme.fetchData() > 0) {
-    bme.getData(data);
-    env.valid = true;
-    env.temperatureC = data.temperature;
-    env.humidityPct = data.humidity;
-    env.pressureHpa = data.pressure / 100.0f;
-    env.gasKohm = data.gas_resistance / 1000.0f;
-    env.gasIndex = gasResistanceToIndex(data.gas_resistance);
-
-    if (now - lastPressureSampleMs >= PRESSURE_SAMPLE_PERIOD_MS) {
-      pressureHistory[pressureHead] = env.pressureHpa;
-      pressureHistoryMs[pressureHead] = now;
-      pressureHead = (pressureHead + 1) % PRESSURE_HISTORY_SLOTS;
-      if (pressureCount < PRESSURE_HISTORY_SLOTS) {
-        ++pressureCount;
-      }
-      lastPressureSampleMs = now;
-    }
-    return true;
-  }
-  return false;
-}
-
 uint32_t lastUpsProbeMs = 0;
 
 void pollUps() {
@@ -332,34 +219,6 @@ void pollUps() {
   } else {
     upsOk = false;
   }
-}
-
-// Returns true when a usable ~3 h trend exists. Positive delta = rising.
-bool pressureTrend3h(float& deltaHpa) {
-  if (pressureCount < 2 || !env.valid) {
-    return false;
-  }
-
-  const uint32_t now = millis();
-  const uint32_t minAgeMs = 150UL * 60UL * 1000UL;  // need at least 2.5 h
-  int oldestIndex = -1;
-
-  for (uint8_t i = 0; i < pressureCount; ++i) {
-    const int index =
-        (pressureHead + PRESSURE_HISTORY_SLOTS - pressureCount + i) %
-        PRESSURE_HISTORY_SLOTS;
-    const uint32_t age = now - pressureHistoryMs[index];
-    if (age >= minAgeMs) {
-      oldestIndex = index;
-      break;  // chronological scan: first match is the oldest enough
-    }
-  }
-
-  if (oldestIndex < 0) {
-    return false;
-  }
-  deltaHpa = env.pressureHpa - pressureHistory[oldestIndex];
-  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -403,8 +262,6 @@ ScreenId screenForAlert(AlertId id) {
   switch (id) {
     case ALERT_BATTERY:
       return SCREEN_BATTERY;
-    case ALERT_ENVIRONMENT:
-      return SCREEN_ENVIRONMENT;
     case ALERT_STORAGE:
       return SCREEN_STORAGE;
     default:
@@ -412,56 +269,10 @@ ScreenId screenForAlert(AlertId id) {
   }
 }
 
-AlertLevel envAlertLevel() {
-  if (!env.valid) {
-    envAlertLevels = EnvAlertLevels();
-    return LEVEL_OK;
-  }
-
-  // Each metric keeps its own hysteresis state; otherwise a warning from one
-  // metric would keep an unrelated metric latched.
-  envAlertLevels.temperatureHigh = levelHigh(
-      env.temperatureC, ALERT_TEMP_HIGH_WARN, ALERT_TEMP_HIGH_CRIT,
-      ALERT_TEMP_HYST, envAlertLevels.temperatureHigh);
-  // Low temperature only warns (the README has no critical low threshold).
-  envAlertLevels.temperatureLow =
-      levelLow(env.temperatureC, ALERT_TEMP_LOW_WARN, -100.0f, ALERT_TEMP_HYST,
-               envAlertLevels.temperatureLow);
-  envAlertLevels.humidity =
-      levelHigh(env.humidityPct, ALERT_RH_WARN, 200.0f, ALERT_RH_HYST,
-                envAlertLevels.humidity);
-
-  float pressureDelta = 0.0f;
-  if (pressureTrend3h(pressureDelta)) {
-    // A falling trend is the warning: use the negated delta.
-    envAlertLevels.pressure =
-        levelHigh(-pressureDelta, ALERT_PRESS_DROP_WARN, ALERT_PRESS_DROP_CRIT,
-                  ALERT_PRESS_HYST, envAlertLevels.pressure);
-  } else {
-    envAlertLevels.pressure = LEVEL_OK;
-  }
-
-  if (!isnan(env.gasIndex)) {
-    envAlertLevels.gas =
-        levelHigh(env.gasIndex, ALERT_IAQ_WARN, ALERT_IAQ_CRIT, ALERT_IAQ_HYST,
-                  envAlertLevels.gas);
-  } else {
-    envAlertLevels.gas = LEVEL_OK;
-  }
-
-  AlertLevel level = LEVEL_OK;
-  level = max(level, envAlertLevels.temperatureHigh);
-  level = max(level, envAlertLevels.temperatureLow);
-  level = max(level, envAlertLevels.humidity);
-  level = max(level, envAlertLevels.pressure);
-  level = max(level, envAlertLevels.gas);
-  return level;
-}
-
 void requestAlertScreen(bool newEvent = false) {
   alertScreenActive = true;
   for (uint8_t id = 0; id < ALERT_COUNT; ++id) {
-    // Array order is the priority order: battery > environment > storage.
+    // Array order is the priority order: battery > storage.
     if (alerts[id].level > LEVEL_OK && alerts[id].level > alerts[id].ackedAt) {
       screen = screenForAlert(static_cast<AlertId>(id));
       // The periodic refresh (newEvent == false) must not wake a blanked
@@ -518,7 +329,6 @@ void updateAlerts() {
           : LEVEL_OK;
 
   applyAlert(ALERT_BATTERY, batteryLevel);
-  applyAlert(ALERT_ENVIRONMENT, envAlertLevel());
   applyAlert(ALERT_STORAGE, storageLevel);
 
   // If the alert that owns the screen cleared, fall back to the next one or
@@ -537,7 +347,7 @@ void acknowledgeActiveAlert() {
       break;
     }
   }
-  // Show the next unacknowledged alert (battery > environment > storage), or
+  // Show the next unacknowledged alert (battery > storage), or
   // fall back to the time screen when none are left.
   alertScreenActive = true;
   requestAlertScreen(true);
@@ -554,9 +364,6 @@ AlertLevel overallAlertLevel() {
 const char* activeAlertText() {
   if (alerts[ALERT_BATTERY].level != LEVEL_OK) {
     return "! BATTERY LOW";
-  }
-  if (alerts[ALERT_ENVIRONMENT].level != LEVEL_OK) {
-    return "! ENVIRONMENT";
   }
   if (alerts[ALERT_STORAGE].level != LEVEL_OK) {
     return "! STORAGE FULL";
@@ -789,49 +596,8 @@ void renderBatteryScreen() {
   }
 }
 
-void renderEnvironmentScreen() {
-  drawHeader("ENVIRONMENT");
-  char buf[40];
-
-  if (!env.valid) {
-    bodyCursor(0, 20);
-    display.print("BME688 not found");
-    bodyCursor(0, 34);
-    display.print("check 0x76 / 0x77");
-    return;
-  }
-
-  bodyCursor(0, 12);
-  snprintf(buf, sizeof(buf), "%5.1f C    %4.1f %%RH", env.temperatureC,
-           env.humidityPct);
-  display.print(buf);
-
-  float delta = 0.0f;
-  const bool trendOk = pressureTrend3h(delta);
-  bodyCursor(0, 22);
-  if (trendOk) {
-    snprintf(buf, sizeof(buf), "%7.1f hPa %+4.1f/3h", env.pressureHpa, delta);
-  } else {
-    snprintf(buf, sizeof(buf), "%7.1f hPa   --/3h", env.pressureHpa);
-  }
-  display.print(buf);
-
-  bodyCursor(0, 32);
-  snprintf(buf, sizeof(buf), "gas %6.1f kOhm", env.gasKohm);
-  display.print(buf);
-
-  bodyCursor(0, 42);
-  if (!isnan(env.gasIndex)) {
-    snprintf(buf, sizeof(buf), "IAQ %3.0f (estimate)", env.gasIndex);
-    display.print(buf);
-  }
-
-  bodyCursor(0, 52);
-  display.print(alerts[ALERT_ENVIRONMENT].level != LEVEL_OK ? "ALERT" : "ok");
-}
-
 void renderStorageScreen() {
-  drawHeader("STORAGE (from Pi)");
+  drawHeader("STORAGE");
   char buf[40];
 
   if (!storage.valid) {
@@ -882,9 +648,6 @@ void render() {
     case SCREEN_BATTERY:
       renderBatteryScreen();
       break;
-    case SCREEN_ENVIRONMENT:
-      renderEnvironmentScreen();
-      break;
     case SCREEN_STORAGE:
       renderStorageScreen();
       break;
@@ -910,7 +673,7 @@ void wakeScreen() {
 
 void nextScreen() {
   wakeScreen();
-  screen = static_cast<ScreenId>((static_cast<uint8_t>(screen) + 1) % 4);
+  screen = static_cast<ScreenId>((static_cast<uint8_t>(screen) + 1) % 3);
   alertScreenActive = false;
   lastRenderMs = 0;
 }
@@ -987,14 +750,6 @@ void sendTelemetry() {
   battery["remaining_mah"] = upsData.remainingMah;
   battery["charge_min"] = upsData.chargeMin;
 
-  JsonObject environment = doc["environment"].to<JsonObject>();
-  environment["present"] = env.valid;
-  environment["temperature_c"] = env.temperatureC;
-  environment["humidity_pct"] = env.humidityPct;
-  environment["pressure_hpa"] = env.pressureHpa;
-  environment["gas_kohm"] = env.gasKohm;
-  environment["gas_index"] = env.gasIndex;
-
   JsonObject disk = doc["storage"].to<JsonObject>();
   disk["present"] = storage.valid;
   disk["used_pct"] = storage.usedPct;
@@ -1003,7 +758,6 @@ void sendTelemetry() {
 
   JsonArray alertArray = doc["alerts"].to<JsonArray>();
   alertArray.add(static_cast<uint8_t>(alerts[ALERT_BATTERY].level));
-  alertArray.add(static_cast<uint8_t>(alerts[ALERT_ENVIRONMENT].level));
   alertArray.add(static_cast<uint8_t>(alerts[ALERT_STORAGE].level));
 
   serializeJson(doc, Serial);
@@ -1038,7 +792,7 @@ void handleSerialLine(char* line) {
     acknowledgeActiveAlert();
   } else if (strcmp(cmd, "screen") == 0) {
     const int index = doc["index"] | -1;
-    if (index >= 0 && index < 4) {
+    if (index >= 0 && index < 3) {
       screen = static_cast<ScreenId>(index);
       alertScreenActive = false;
       wakeScreen();
@@ -1142,7 +896,6 @@ void setup() {
         rtc.lostPower() ? "true" : "false");
   }
 
-  initBme688();
   if (i2cPresent(I2C_ADDR_UPS)) {
     upsOk = ups.begin();
   }
@@ -1166,7 +919,7 @@ void setup() {
                                   : buildLocal.unixtime();
 
   lastInteractionMs = millis();
-  lastPressureSampleMs = millis();
+  lastUpsTickMs = millis();
   lastTelemetryMs = millis();
 
   // Do not light the OLED forever on the bench; start on the time screen.
@@ -1180,17 +933,9 @@ void loop() {
   pollButton();
   pollSerial();
 
-  bool newData = false;
-  if (now - lastSensorTickMs >= SENSOR_PERIOD_MS) {
-    lastSensorTickMs = now;
+  if (now - lastUpsTickMs >= UPS_PERIOD_MS) {
+    lastUpsTickMs = now;
     pollUps();
-    startBmeMeasurement(now);
-    newData = true;
-  }
-  if (finishBmeMeasurement(now)) {
-    newData = true;
-  }
-  if (newData) {
     updateAlerts();
   }
 
@@ -1201,7 +946,7 @@ void loop() {
     lastRenderMs = 0;
   }
 #else
-  // No panel button yet: walk the four screens (and show the UPS statistics on the way).
+  // No panel button yet: walk the three screens (and show the UPS statistics on the way).
   // Alerts still take over while active. Any wake (button, serial screen command, alert)
   // resets lastInteractionMs, so the next advance is 25 s after that.
   if (!alertScreenActive && now - lastInteractionMs >= AUTO_CYCLE_MS) {
