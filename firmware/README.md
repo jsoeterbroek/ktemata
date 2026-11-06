@@ -177,6 +177,29 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
 
 Thresholds live in `include/config.h` and match the README table.
 
+### Fonts
+
+The UI uses **Roboto** as Adafruit_GFX bitmap fonts in `include/fonts/`:
+
+| File | Use | Metrics |
+|---|---|---|
+| `Roboto5pt7b.h` | headers, labels, all body text | 7 px ascent, 10 px line pitch, tabular digits (6 px) |
+| `Roboto18pt7b.h` | the clock on the time screen | 24 px digit ascent, `12:34` is 84 px wide |
+
+They are generated from the Roboto variable font in
+[google/fonts](https://github.com/google/fonts/tree/main/ofl/roboto) (SIL OFL 1.1,
+`include/fonts/OFL.txt`) with Adafruit's `fontconvert`, which renders at 141 dpi:
+
+```bash
+fontconvert "Roboto[wdth,wght].ttf" 5  > include/fonts/Roboto5pt7b.h
+fontconvert "Roboto[wdth,wght].ttf" 18 > include/fonts/Roboto18pt7b.h
+```
+
+A custom GFX font puts the cursor on the **baseline**, not the top-left; `bodyCursor()`,
+`bodyCentered()` and `clockCentered()` in `src/main.cpp` take the top of the line and add the
+ascent (7 px body, 24 px clock). Sizes are chosen so the existing 10 px row pitch still fits five
+lines in 64 px; do not raise the body size without re-checking the layout.
+
 ### Serial protocol
 
 Pi → ESP32 (one JSON object per line):

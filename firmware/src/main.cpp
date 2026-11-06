@@ -28,6 +28,8 @@
 #include <time.h>
 
 #include "config.h"
+#include "fonts/Roboto18pt7b.h"
+#include "fonts/Roboto5pt7b.h"
 #include "ups_hat_b.h"
 
 // ---------------------------------------------------------------------------
@@ -564,10 +566,55 @@ const char* activeAlertText() {
 // ---------------------------------------------------------------------------
 // UI
 // ---------------------------------------------------------------------------
-void drawHeader(const char* title) {
+// Roboto (Adafruit_GFX bitmap fonts in include/fonts/). The cursor of a custom
+// font is on the baseline, not the top-left, so these helpers take the top of
+// the line and add the ascent of Roboto5pt7b (7 px) or the clock digits (24 px).
+constexpr int BODY_ASCENT = 7;
+constexpr int CLOCK_ASCENT = 24;
+
+void bodyFont() {
+  display.setFont(&Roboto5pt7b);
   display.setTextSize(1);
+}
+
+void bodyCursor(int x, int top) {
+  bodyFont();
+  display.setCursor(x, top + BODY_ASCENT);
+}
+
+// Ink box of the text at the current font; callers use it to centre.
+int textWidth(const char* text) {
+  int16_t x1, y1;
+  uint16_t w, h;
+  display.getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
+  return static_cast<int>(w);
+}
+
+int textLeft(const char* text) {
+  int16_t x1, y1;
+  uint16_t w, h;
+  display.getTextBounds(text, 0, 0, &x1, &y1, &w, &h);
+  return static_cast<int>(x1);
+}
+
+void bodyCentered(int top, const char* text) {
+  bodyFont();
+  const int left = (SCREEN_WIDTH - textWidth(text)) / 2 - textLeft(text);
+  display.setCursor(left, top + BODY_ASCENT);
+  display.print(text);
+}
+
+void clockCentered(int baseline, const char* text) {
+  display.setFont(&Roboto18pt7b);
+  display.setTextSize(1);
+  const int left = (SCREEN_WIDTH - textWidth(text)) / 2 - textLeft(text);
+  display.setCursor(left, baseline);
+  display.print(text);
+}
+
+void drawHeader(const char* title) {
   display.setTextColor(OLED_WHITE);
-  display.setCursor(0, 0);
+  bodyCursor(0, 0);
   display.print(title);
   display.drawFastHLine(0, 9, SCREEN_WIDTH, OLED_WHITE);
 }
@@ -582,9 +629,8 @@ void drawAlertBar() {
   display.fillRect(0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, 10,
                    critical ? OLED_WHITE : OLED_BLACK);
   display.drawRect(0, SCREEN_HEIGHT - 10, SCREEN_WIDTH, 10, OLED_WHITE);
-  display.setTextSize(1);
   display.setTextColor(critical ? OLED_BLACK : OLED_WHITE);
-  display.setCursor(2, SCREEN_HEIGHT - 8);
+  bodyCursor(2, SCREEN_HEIGHT - 8);
   display.print(text);
 }
 
@@ -597,17 +643,13 @@ void renderTimeScreen() {
   char buf[40];
 
   snprintf(buf, sizeof(buf), "%02d:%02d", local.tm_hour, local.tm_min);
-  display.setTextSize(3);
   display.setTextColor(OLED_WHITE);
-  display.setCursor(19, 12);
-  display.print(buf);
+  clockCentered(CLOCK_ASCENT + 1, buf);   // 24 px digits, 1 px top margin
 
   snprintf(buf, sizeof(buf), "%s %02d %s %04d",
            WEEKDAYS[local.tm_wday], local.tm_mday, MONTHS[local.tm_mon],
            local.tm_year + 1900);
-  display.setTextSize(1);
-  display.setCursor((SCREEN_WIDTH - static_cast<int>(strlen(buf)) * 6) / 2, 38);
-  display.print(buf);
+  bodyCentered(31, buf);
 
   if (upsOk) {
     snprintf(buf, sizeof(buf), "BAT %3u%%%s", upsData.percent,
@@ -615,11 +657,11 @@ void renderTimeScreen() {
   } else {
     snprintf(buf, sizeof(buf), "BAT --");
   }
-  display.setCursor(4, 50);
+  bodyCursor(4, 44);
   display.print(buf);
 
   if (overallAlertLevel() != LEVEL_OK) {
-    display.setCursor(SCREEN_WIDTH - 8, 50);
+    bodyCursor(SCREEN_WIDTH - 8, 44);
     display.print("!");
   }
 }
@@ -629,25 +671,25 @@ void renderBatteryScreen() {
   char buf[40];
 
   if (!upsOk) {
-    display.setCursor(0, 20);
+    bodyCursor(0, 20);
     display.print("UPS HAT (B) not found");
-    display.setCursor(0, 34);
+    bodyCursor(0, 34);
     display.print("check 0x42 on I2C");
     return;
   }
 
-  display.setCursor(0, 12);
+  bodyCursor(0, 12);
   snprintf(buf, sizeof(buf), "%3u %%       %4.1f V", upsData.percent,
            upsData.batteryMv / 1000.0f);
   display.print(buf);
 
-  display.setCursor(0, 22);
+  bodyCursor(0, 22);
   snprintf(buf, sizeof(buf), "%+5.2f A    %+5.2f W",
            upsData.batteryMa / 1000.0f,
            (upsData.batteryMv / 1000.0f) * (upsData.batteryMa / 1000.0f));
   display.print(buf);
 
-  display.setCursor(0, 32);
+  bodyCursor(0, 32);
   if (upsData.charging) {
     display.print("charging");
   } else if (upsData.batteryMa < -20) {
@@ -658,12 +700,12 @@ void renderBatteryScreen() {
   snprintf(buf, sizeof(buf), "  %s", UpsHatB::chargeStateName(upsData.chargeState));
   display.print(buf);
 
-  display.setCursor(0, 42);
+  bodyCursor(0, 42);
   snprintf(buf, sizeof(buf), "in %4.1f V %s", upsData.vbusMv / 1000.0f,
            upsData.vbusPresent ? "present" : "absent");
   display.print(buf);
 
-  display.setCursor(0, 52);
+  bodyCursor(0, 52);
   if (upsData.dischargeMin > 0 && upsData.dischargeMin < 6000) {
     snprintf(buf, sizeof(buf), "~%uh%02um left", upsData.dischargeMin / 60,
              upsData.dischargeMin % 60);
@@ -682,21 +724,21 @@ void renderEnvironmentScreen() {
   char buf[40];
 
   if (!env.valid) {
-    display.setCursor(0, 20);
+    bodyCursor(0, 20);
     display.print("BME688 not found");
-    display.setCursor(0, 34);
+    bodyCursor(0, 34);
     display.print("check 0x76 / 0x77");
     return;
   }
 
-  display.setCursor(0, 12);
+  bodyCursor(0, 12);
   snprintf(buf, sizeof(buf), "%5.1f C    %4.1f %%RH", env.temperatureC,
            env.humidityPct);
   display.print(buf);
 
   float delta = 0.0f;
   const bool trendOk = pressureTrend3h(delta);
-  display.setCursor(0, 22);
+  bodyCursor(0, 22);
   if (trendOk) {
     snprintf(buf, sizeof(buf), "%7.1f hPa %+4.1f/3h", env.pressureHpa, delta);
   } else {
@@ -704,17 +746,17 @@ void renderEnvironmentScreen() {
   }
   display.print(buf);
 
-  display.setCursor(0, 32);
+  bodyCursor(0, 32);
   snprintf(buf, sizeof(buf), "gas %6.1f kOhm", env.gasKohm);
   display.print(buf);
 
-  display.setCursor(0, 42);
+  bodyCursor(0, 42);
   if (!isnan(env.gasIndex)) {
     snprintf(buf, sizeof(buf), "IAQ %3.0f (estimate)", env.gasIndex);
     display.print(buf);
   }
 
-  display.setCursor(0, 52);
+  bodyCursor(0, 52);
   display.print(alerts[ALERT_ENVIRONMENT].level != LEVEL_OK ? "ALERT" : "ok");
 }
 
@@ -723,23 +765,23 @@ void renderStorageScreen() {
   char buf[40];
 
   if (!storage.valid) {
-    display.setCursor(0, 20);
+    bodyCursor(0, 20);
     display.print("no storage data yet");
-    display.setCursor(0, 34);
+    bodyCursor(0, 34);
     display.print("waiting for Pi JSON");
     return;
   }
 
-  display.setCursor(0, 12);
+  bodyCursor(0, 12);
   snprintf(buf, sizeof(buf), "%5.1f %% used", storage.usedPct);
   display.print(buf);
 
-  display.setCursor(0, 24);
+  bodyCursor(0, 24);
   snprintf(buf, sizeof(buf), "%6.1f GB free", storage.freeGb);
   display.print(buf);
 
   const uint32_t ageSeconds = (millis() - storage.updatedMs) / 1000UL;
-  display.setCursor(0, 38);
+  bodyCursor(0, 38);
   if (ageSeconds < 120) {
     snprintf(buf, sizeof(buf), "updated %lus ago",
              static_cast<unsigned long>(ageSeconds));
@@ -749,7 +791,7 @@ void renderStorageScreen() {
   }
   display.print(buf);
 
-  display.setCursor(0, 52);
+  bodyCursor(0, 52);
   if ((millis() - storage.updatedMs) > STORAGE_STALE_MS) {
     display.print("stale: Pi not sending");
   } else if (storage.usedPct >= 90.0f) {
