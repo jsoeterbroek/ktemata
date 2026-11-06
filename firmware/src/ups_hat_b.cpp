@@ -113,6 +113,10 @@ bool UpsHatB::read(UpsStatus& out) {
   float pct = (static_cast<float>(busMv) - PACK_EMPTY_MV) * 100.0f / (PACK_FULL_MV - PACK_EMPTY_MV);
   if (pct < 0.0f) pct = 0.0f;
   if (pct > 100.0f) pct = 100.0f;
+  // Near full a 2S pack sits within one INA219 LSB (4 mV) of 8.4 V, and the linear
+  // 6.0-8.4 V model is not accurate to 1 % there, so 99/100 would flicker. Treat >=99 %
+  // as full; 1 % at the top is 24 mV, well inside the measurement and charger tolerance.
+  if (pct >= 99.0f) pct = 100.0f;
   out.percent = static_cast<uint16_t>(pct + 0.5f);
 
   const float remaining = CAPACITY_MAH * (pct / 100.0f);

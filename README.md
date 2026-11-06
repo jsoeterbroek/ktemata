@@ -186,10 +186,11 @@ pio device monitor      # 115200 baud
 ```
 
 **Bring-up status:** the FireBeetle and 1.3" 4-pin SH1106 OLED are **working**
-at `0x3C`; the display shows time/date and `BAT --` until the UPS HAT is
-connected. I2C is SDA **GPIO21** / SCL **GPIO22** — the pins marked `21/SDA`
-and `22/SCL`. Still to wire: DS3231 `0x68`, BME688 `0x76/0x77`, UPS HAT (B)
-`0x42`, and the PBS-33B button GPIO4→GND. The Pi-side sender for time and
+at `0x3C`; the display shows time/date, and the UPS HAT (B) at `0x42` supplies
+`BAT` (a full 2S pack reports 100 %; ≥99 % snaps to 100 so the linear voltage
+model does not flicker). I2C is SDA **GPIO21** / SCL **GPIO22** — the pins
+marked `21/SDA` and `22/SCL`. Still to wire: DS3231 `0x68`, BME688
+`0x76/0x77`, and the PBS-33B button GPIO4→GND. The Pi-side sender for time and
 storage is `work/scripts/status-oled.py`, installed as
 `ktemata-status-oled.service` by `work/scripts/post-install.sh`; it pushes UTC
 at start and hourly and the library free space every 60 s, and re-syncs after

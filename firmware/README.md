@@ -41,7 +41,7 @@ time/date screen renders correctly. The clock uses the `TIMEZONE` setting
 | 1.3" 4-pin OLED | **working** at 0x3C, default SH1106 build; time/date renders in `TIMEZONE` |
 | DS3231 RTC | not fitted; the clock starts from the build timestamp |
 | BME688 | not fitted; the environment screen reports it missing |
-| UPS HAT (B) | not fitted; the battery line shows `BAT --` |
+| UPS HAT (B) | **working** at 0x42 on the FireBeetle bus; a full 2S pack reads ~8.4 V, ~40 mA and 100 % (≥99 % snaps to 100) |
 | Panel button (PBS-33B) | selected/ordered, not fitted; screens can still be changed with `{"cmd":"screen","index":N}` |
 | OLED idle blanking | disabled in the current build (`-DSCREEN_OFF_MS=0UL`); enable `60000UL` once the button is wired |
 | Pi → ESP time and storage | **sender written**: `work/scripts/status-oled.py`, installed and enabled as `ktemata-status-oled.service` by `work/scripts/post-install.sh`; see "Pi-side sender" below |
@@ -52,7 +52,6 @@ Suggested bring-up order:
 2. Wire the PBS-33B from GPIO4 to GND, check short/long press, then set `-DSCREEN_OFF_MS=60000UL` and reflash to re-enable idle blanking.
 3. Fit the DS3231 and set the time once from the Pi; the service then keeps it corrected hourly.
 4. Fit the BME688 and check the environment screen — r4 only; r5 has no sensor.
-5. Connect the UPS HAT (B) and check pack voltage/current/percent (derived from the 2S pack voltage).
 
 ## Why a custom board definition
 
