@@ -121,18 +121,22 @@ hciconfig -a 2>/dev/null           # nothing
 | 1 | Platform check: Debian/Ubuntu derivative, warns on untested arch | — |
 | 2 | **Hardware checks** — see below; runs *before* anything is changed | `--no-hwtest`, `--hwtest-only`, `--strict` |
 | 3 | **System update**: `apt-get update` then a non-interactive `full-upgrade` (keeps existing conffiles) | `--no-update` |
-| 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app; `librsvg2-bin` + `imagemagick` for the artwork, `i2c-tools` for the hardware report | `--no-gui`, `--no-splash`/`--no-wallpaper` |
+| 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app and `i2c-tools` for the hardware report | `--no-gui` |
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | — |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service` |
 | 6b | **Write and enable `ktemata-status-oled.service`**: UTC + library free space to the FireBeetle over USB serial — see below | `--no-oled`, `--oled-port DEV` |
 | 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
 | 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
 | 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
-| 11 | Replaces the early boot splash with the logo | `--no-splash`, `--splash [FILE]` |
 | 12 | Optionally sets `camera_auto_detect=0` in `config.txt` | `--no-camera-autodetect` |
 | 12b | **Optionally disables the Wi-Fi and Bluetooth radios in the firmware** — see below | `--no-radio` |
 | 13 | **Optionally serves the library over its own Wi-Fi AP** — see below | `--hotspot` |
 | 14 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
+
+The desktop wallpaper and the early boot splash are **not** installed here. Applying the wallpaper needs the
+desktop user's session bus, and running that from a text console is what used to hang this script. Do it after
+this install, from the running desktop (runlevel 5), with
+[`work/scripts/desktop-artwork.sh`](../work/scripts/desktop-artwork.sh) — see [ARTWORK.md](ARTWORK.md).
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
 not get a Kiwix build that is already superseded.
@@ -237,65 +241,20 @@ It only changes the wording of an undervoltage hint — USB-C points at the 27 W
 at the pogo pins and the 8.4 V input. On the 27 W supply an undervoltage flag should never appear; if it does,
 suspect the cable or the connector rather than the PSU.
 
-## Desktop background
+## Desktop artwork
 
-The Ktemata mark on black, from [`docs/ktemata-wallpaper.svg`](../docs/ktemata-wallpaper.svg) — a plain
-1920×1080 black field, the open-book mark at 18 % opacity, the `KTEMATA` wordmark and `κτῆμα ἐς ἀεί`.
-
-It is installed to `/usr/local/share/ktemata/ktemata-wallpaper.png` and a per-user copy under
-`~/.local/share/ktemata/`, then applied through whichever stack the desktop uses:
-
-| Desktop | Mechanism |
-|---|---|
-| Raspberry Pi OS (labwc/pcmanfm) | `~/.config/pcmanfm/LXDE-pi/desktop-items-0.conf` (`wallpaper=`, `wallpaper_mode=crop`, `desktop_bg=#000000`) + `pcmanfm --set-wallpaper` for the live session |
-| GNOME | `gsettings org.gnome.desktop.background picture-uri` **and** `picture-uri-dark` (a dark theme otherwise keeps its own image), `picture-options=scaled` |
-| minimal X11 | `feh --bg-fill` from an autostart entry |
+The wallpaper and the early boot splash were split out into
+[`work/scripts/desktop-artwork.sh`](../work/scripts/desktop-artwork.sh), run **after** this
+script from the desktop session (runlevel 5 / `graphical.target`):
 
 ```bash
-sudo ./work/scripts/post-install.sh --wallpaper            # default logo
-sudo ./work/scripts/post-install.sh --wallpaper mine.png   # your own image
-sudo ./work/scripts/post-install.sh --no-wallpaper
+sudo ./work/scripts/desktop-artwork.sh
 ```
 
-## Boot splash
-
-Raspberry Pi OS shows two splashes; this replaces the **early firmware one**. The supported mechanism is
-Raspberry Pi's [rpi-splash-screen-support](https://github.com/raspberrypi/rpi-splash-screen-support), and its
-constraints are strict: a **24-bit TGA**, at most **1920 × 1080**, at most **224 colours**.
-
-The script renders [`docs/ktemata-splash.svg`](../docs/ktemata-splash.svg) at install time — `rsvg-convert`
-then ImageMagick (7's `magick` on Debian, 6's `convert` on Ubuntu) — quantises to 224 colours, and writes a
-24-bit RGB TGA, so an updated logo propagates without committing a 6 MB bitmap.
-
-Both packages are installed by the script when either artwork step is enabled (`librsvg2-bin`,
-`imagemagick`, plus `file` to verify the TGA); with `--no-splash --no-wallpaper` they are not pulled in at all.
-It then:
-
-1. copies the TGA to `/lib/firmware/logo.tga` and installs the initramfs hook, rebuilding the initramfs
-2. adds `fullscreen_logo=1 fullscreen_logo_name=logo.tga vt.global_cursor_default=0` to `cmdline.txt`
-   (idempotent, single line, `.ktemata.bak` kept once)
-3. uses `/usr/bin/configure-splash` directly when that package is installed
-
-```bash
-sudo ./work/scripts/post-install.sh --splash                         # default logo (landscape)
-sudo ./work/scripts/post-install.sh --splash --splash-orientation portrait
-sudo ./work/scripts/post-install.sh --splash logo.tga                # your own TGA
-sudo ./work/scripts/post-install.sh --no-splash
-```
-
-**Orientation.** `configure-splash` rejects either axis above 1080, so a portrait splash cannot be
-1080×1920; portrait renders at **608×1080** from
-[`docs/ktemata-splash-portrait.svg`](../docs/ktemata-splash-portrait.svg), a separate file with an upright
-layout (rotating the landscape artwork leaves the text sideways). The Touch Display 2 is natively 720×1280,
-so if the splash appears rotated relative to the case, switch to `--splash-orientation portrait`.
-
-Notes:
-
-- The **rainbow square** before the firmware logo is separate: add `disable_splash=1` to
-  `/boot/firmware/config.txt` to hide it (the script only hints at this).
-- **Plymouth** draws the second splash and keeps its own theme background.
-- Only the early splash is a static image; the console rotation from `--rotate` applies after it.
-- Nothing changes on a machine with no `/boot/firmware/cmdline.txt`.
+It is a separate script because applying the wallpaper goes through the desktop user's D-Bus
+session; from an SSH text console that call can block, which is what made post-install appear to
+hang. The script bounds every external command and only writes the config when no session bus is
+reachable. Details, options and what was verified: [ARTWORK.md](ARTWORK.md).
 
 ## Project NOMAD images
 
@@ -540,15 +499,11 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --hwtest-only      run the hardware checks and exit
     --strict           non-zero exit when a hardware check fails (not on warnings)
     --power usbc|hat   supply in use, for the diagnostic hints (default usbc)
-    --no-wallpaper     leave the desktop background alone
-    --wallpaper [FILE] set it (default), optionally from FILE
-    --no-splash        leave the boot splash alone
     --no-nomad         do not pull the NOMAD images
     --nomad-version V  NOMAD tag to pull (default 1.35.1)
     --nomad-registry R registry/namespace (default ghcr.io/jsoeterbroek)
     --no-camera-autodetect
                        set camera_auto_detect=0 in config.txt (opt-in)
-    --splash [FILE]    replace the boot splash, optionally from a 24-bit TGA
     --no-autologin     leave the GDM login screen
     --autologin-user N account to log in automatically (default ktemata)
 -h, --help / -V, --version
@@ -572,7 +527,7 @@ The hardware report was tested inside the same container (correct SKIPs for a no
 Pi-only branches forced in a harness: a fake Pi model PASSes, a missing `vcgencmd` SKIPs, an unset RTC FAILs
 ("cell flat or unset"), a sane `/dev/rtc0` PASSes, an empty ZIM library FAILs and a populated one reports
 `1 archive(s), 4.5M`. Step order was confirmed from the `==>` lines: Platform → Hardware → System update →
-Packages → Library → Service → Rotation → Kiosk.
+Packages → Library → Service → Status OLED → Rotation → Kiosk.
 
 Autologin was tested against real-shaped configs in a container. **LightDM** (the Pi OS path): the commented
 `#autologin-user=` in a stock `[Seat:*]` block is enabled in place, `greeter-session` and
@@ -593,19 +548,8 @@ The `config.txt` edit was tested against the actual Pi 5 file: the diff is exact
 second run reports "already disabled", the commented and absent forms both end with one live line, a
 dry run changes nothing, and a default (no-flag) run leaves the file byte-identical.
 
-Both orientations were run through the real script: landscape gives `RGB 1920 x 1080 x 24` (104 colours),
-portrait `RGB 608 x 1080 x 24` (102 colours), and a bad value is rejected before any work starts. The rendered
-TGA was converted back to PNG and inspected — the artwork is centred with upright text in both.
-
-From a clean `debian:trixie` container the script installs its own dependencies and completes both artwork
-steps: wallpaper rendered at 1920×1080, splash `RGB 1920 x 1080 x 24`. Package selection was checked for each
-flag combination — default pulls librsvg2-bin/imagemagick/file, `--no-splash` still pulls them for the
-wallpaper, `--no-splash --no-wallpaper` pulls neither.
-
-The wallpaper and splash steps were run end-to-end on both **Debian 13** and **Ubuntu 24.04** containers: the
-pcmanfm config points at the per-user PNG with `desktop_bg=#000000`; the splash comes out as
-`Targa image data - RGB 1920 x 1080 x 24` with 102 colours; `cmdline.txt` stays one line and holds both the
-rotation and the splash parameters after two consecutive runs with no duplicates.
+The artwork steps now live in `desktop-artwork.sh`; their verification is recorded in
+[ARTWORK.md](ARTWORK.md), including the container runs that produced the PNG and TGA.
 
 The Chromium start was reproduced with `HOME` unset in a Debian container: after the fix the profile and
 crash directories are created and Chromium launches (the only remaining complaint there is the container's
@@ -622,7 +566,7 @@ unless `-v` is given, an unplug is logged and recovered from, and SIGTERM stops 
 unit was inspected with and without `--oled-port` and with a space in the ZIM path. The serial check reports
 SKIP on a host with no FireBeetle; on the Pi the board enumerates as
 `/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0`, which is the name the check and the sender prefer. The firmware change (silenced core
-logger) builds for the DFR1140 (`pio run`), but has not been flashed and rechecked on the board yet.**
+logger) builds for the DFR1140 (`pio run`), but has not been flashed and rechecked on the board yet.
 
 **On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
 holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no

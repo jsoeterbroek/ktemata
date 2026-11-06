@@ -64,11 +64,6 @@ KIOSK_USER=${KIOSK_USER:-${SUDO_USER:-}}   # whose session autostarts the kiosk
 # desktop session separate from the admin user you ssh in as.
 AUTOLOGIN_USER=${AUTOLOGIN_USER:-ktemata}
 WITH_AUTOLOGIN=true
-WITH_WALLPAPER=true
-WALLPAPER_DONE=false
-WALLPAPER_IMG=""
-WALLPAPER_WHY="not applied"
-WITH_SPLASH=true
 WITH_NOCAMERA=false     # opt-in: only edit config.txt when asked
 # Project NOMAD management images. On ARM these must come from a multi-arch fork,
 # because upstream publishes amd64 only. Empty NOMAD_STACK disables the step.
@@ -91,8 +86,6 @@ RADIO_STATE="unchanged"                 # what the config.txt step actually did
 NOMAD_REGISTRY=${NOMAD_REGISTRY:-ghcr.io/jsoeterbroek}
 NOMAD_VERSION=${NOMAD_VERSION:-1.35.1}
 NOMAD_COMPOSE_DIR=${NOMAD_COMPOSE_DIR:-/opt/project-nomad}
-SPLASH_ORIENTATION=${SPLASH_ORIENTATION:-landscape}
-WALLPAPER_SRC=${WALLPAPER_SRC:-}       # optional override; default installs the repo artwork
 
 # ---------------- output ----------------
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -137,9 +130,6 @@ ${C_BOLD}OPTIONS${C_OFF}
       --strict           Exit non-zero if a hardware check fails.
       --power usbc|hat   How the Pi is powered, for the diagnostic hints (default: usbc).
       --no-autologin     Do not enable GDM automatic login.
-      --no-wallpaper     Do not set the desktop background.
-      --wallpaper [FILE] Set the background (default), or use this image instead of the logo.
-      --no-splash        Do not change the boot splash screen.
       --no-camera-autodetect
                          Set camera_auto_detect=0 in config.txt (no CSI camera in this
                          build). Touches config.txt, so it is opt-in.
@@ -161,12 +151,6 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-nomad         Do not pull the Project NOMAD images.
       --nomad-version V  NOMAD image tag to pull (default 1.35.1).
       --nomad-registry R Image registry/namespace (default ghcr.io/jsoeterbroek).
-      --splash [FILE]    Enable the boot splash (default), or use this 24-bit TGA
-                         (<=1920x1080, <=224 colours).
-      --splash-orientation WHAT
-                         landscape (default) or portrait. The Touch Display 2 is natively
-                         720x1280, so the firmware may draw the splash rotated relative to
-                         the case; try portrait if that happens.
       --autologin-user N Account to log in automatically (default: ktemata).
   -h, --help             This message.
   -V, --version          Print the version.
@@ -186,11 +170,12 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   8. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
   9. optionally installs the kiosk autostart (--kiosk)
  10. enables GDM automatic login (unless --no-autologin)
- 11. sets the Ktemata logo as the desktop background (unless --no-wallpaper)
- 12. replaces the early boot splash with the logo (unless --no-splash)
- 13. optionally serves the library over its own Wi-Fi access point (--hotspot)
- 14. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
- 15. verifies the server answers
+ 11. optionally serves the library over its own Wi-Fi access point (--hotspot)
+ 12. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
+ 13. verifies the server answers
+
+The desktop wallpaper and the boot splash are not part of this script: applying the wallpaper
+needs the desktop session bus, so run ./desktop-artwork.sh from the desktop afterwards.
 EOF
 }
 
@@ -852,17 +837,6 @@ install_packages() {
     fi
     # the hardware report uses i2cdetect/vcgencmd; harmless if a package is unavailable
     $WITH_HWTEST && pkgs+=(i2c-tools)
-    # The splash is built from an SVG into a 24-bit TGA: rsvg-convert renders it, ImageMagick
-    # quantises and converts. Without either, the step falls back (bundled PNG) or skips, so
-    # these are only pulled in when a splash is wanted.
-    if $WITH_SPLASH; then
-        pkgs+=(librsvg2-bin imagemagick file)
-    fi
-    # the wallpaper is rendered from the same SVG; rsvg-convert is what renders it, so the
-    # splash branch above usually covers this, but a --no-splash run still wants a wallpaper
-    if $WITH_WALLPAPER && ! $WITH_SPLASH; then
-        pkgs+=(librsvg2-bin imagemagick)
-    fi
 
     log_info "installing: ${pkgs[*]}"
     # with --no-update the package lists were not refreshed yet
@@ -1021,280 +995,6 @@ autologin_gdm() {
     esac
 }
 
-
-install_wallpaper() {
-    $WITH_WALLPAPER || { log_stage "Wallpaper"; log_info "skipped (--no-wallpaper)"; return 0; }
-    log_stage "Wallpaper"
-
-    local dir home user_img
-    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-
-    # target user: the autologin account is the one whose desktop is actually shown
-    local owner=${KIOSK_USER:-$AUTOLOGIN_USER}
-    id -u "$owner" >/dev/null 2>&1 || {
-        WALLPAPER_WHY="not applied (no user $owner)"; log_warn "no user $owner; skipping wallpaper"; return 0; }
-    home=$(getent passwd "$owner" | cut -d: -f6)
-    [ -d "$home" ] || {
-        WALLPAPER_WHY="not applied (no home for $owner)"; log_warn "no home for $owner; skipping"; return 0; }
-
-    install -d -m 0755 /usr/local/share/ktemata
-    user_img="$home/.local/share/ktemata/ktemata-wallpaper.png"
-
-    if $DRY_RUN; then
-        printf '%s  [dry-run]%s render/install wallpaper to /usr/local/share/ktemata\n' "$C_YELLOW" "$C_OFF"
-    else
-        if [ -n "$WALLPAPER_SRC" ]; then
-            [ -r "$WALLPAPER_SRC" ] || die "cannot read --wallpaper $WALLPAPER_SRC"
-            install -m 0644 "$WALLPAPER_SRC" /usr/local/share/ktemata/ktemata-wallpaper.png
-            log_ok "using $WALLPAPER_SRC"
-        elif has_command rsvg-convert && [ -r "$dir/../../docs/ktemata-wallpaper.svg" ]; then
-            # render at 1920x1080: larger than any panel we support, scaled to fit anyway
-            rsvg-convert -w 1920 -h 1080 "$dir/../../docs/ktemata-wallpaper.svg" \
-                -o /usr/local/share/ktemata/ktemata-wallpaper.png
-            chmod 0644 /usr/local/share/ktemata/ktemata-wallpaper.png
-            log_ok "rendered from docs/ktemata-wallpaper.svg"
-        elif [ -r "$dir/ktemata-wallpaper.png" ]; then
-            install -m 0644 "$dir/ktemata-wallpaper.png" /usr/local/share/ktemata/ktemata-wallpaper.png
-            log_ok "installed the pre-rendered PNG"
-        else
-            WALLPAPER_WHY="not applied (no source image; apt install librsvg2-bin)"
-            log_warn "no wallpaper source (need rsvg-convert, or --wallpaper FILE); skipping"
-            return 0
-        fi
-    fi
-
-    local img=/usr/local/share/ktemata/ktemata-wallpaper.png
-    install -d -m 0755 "$(dirname "$user_img")"
-    $DRY_RUN || install -m 0644 "$img" "$user_img"
-    chown -R "$owner":"$(id -gn "$owner")" "$(dirname "$user_img")" 2>/dev/null || true
-
-    # 1. GNOME
-    if has_command gsettings && gsettings list-schemas 2>/dev/null | grep -qx 'org.gnome.desktop.background'; then
-        if $DRY_RUN; then
-            printf '%s  [dry-run]%s gsettings set org.gnome.desktop.background picture-uri\n' "$C_YELLOW" "$C_OFF"
-        else
-            sudo -u "$owner" -H dbus-run-session -- gsettings set org.gnome.desktop.background picture-uri \
-                "file://$user_img" 2>/dev/null \
-            || sudo -u "$owner" -H gsettings set org.gnome.desktop.background picture-uri \
-                "file://$user_img" 2>/dev/null || true
-            # GNOME 42+ needs the dark variant too, or a dark theme keeps its own image
-            sudo -u "$owner" -H dbus-run-session -- gsettings set org.gnome.desktop.background picture-uri-dark \
-                "file://$user_img" 2>/dev/null || true
-            sudo -u "$owner" -H dbus-run-session -- gsettings set org.gnome.desktop.background picture-options \
-                'scaled' 2>/dev/null || true
-            log_ok "GNOME background set for $owner"
-        fi
-    fi
-
-    # 2. Raspberry Pi OS: pcmanfm desktop preferences + the live apply command
-    local pcdir="$home/.config/pcmanfm/LXDE-pi"
-    local pcfile="$pcdir/desktop-items-0.conf"
-    if has_command pcmanfm || has_command labwc; then
-        if $DRY_RUN; then
-            printf '%s  [dry-run]%s write %s (wallpaper=%s)\n' "$C_YELLOW" "$C_OFF" "$pcfile" "$user_img"
-        else
-            install -d -m 0755 -o "$owner" -g "$(id -gn "$owner")" "$pcdir"
-            if [ -f "$pcfile" ] && grep -q '^wallpaper=' "$pcfile"; then
-                sed -i "s#^wallpaper=.*#wallpaper=$user_img#" "$pcfile"
-            elif [ -f "$pcfile" ]; then
-                sed -i "/^\[Desktop\]/a wallpaper=$user_img" "$pcfile"
-            else
-                # pcmanfm's own defaults; only the keys it needs are written
-                cat >"$pcfile" <<EOF
-[*]
-wallpaper_mode=crop
-wallpaper_common=1
-wallpaper=$user_img
-desktop_bg=#000000
-desktop_shadow=none
-desktop_font=PibotoLt 12
-show_wm_menu=0
-show_documents=0
-show_trash=0
-show_mounts=0
-EOF
-            fi
-            # 'crop' keeps the logo centred; stretch would distort on an odd panel
-            sed -i "s#^wallpaper_mode=.*#wallpaper_mode=crop#" "$pcfile" 2>/dev/null || true
-            chown "$owner":"$(id -gn "$owner")" "$pcfile"
-            # apply now if a session is running; harmless (and silent) if not
-            sudo -u "$owner" -H DISPLAY=${DISPLAY:-:0} pcmanfm --set-wallpaper="$user_img" \
-                >/dev/null 2>&1 || true
-            log_ok "pcmanfm desktop set for $owner ($pcfile)"
-        fi
-    fi
-
-    # 3. minimal X11 (no pcmanfm, no GNOME): feh at session start
-    if ! has_command pcmanfm && ! has_command labwc; then
-        local autostart="$home/.config/autostart"
-        if $DRY_RUN; then
-            printf '%s  [dry-run]%s write %s/ktemata-wallpaper.desktop\n' "$C_YELLOW" "$C_OFF" "$autostart"
-        else
-            install -d -m 0755 -o "$owner" -g "$(id -gn "$owner")" "$autostart"
-            cat >"$autostart/ktemata-wallpaper.desktop" <<EOF
-[Desktop Entry]
-Type=Application
-Name=Ktemata wallpaper
-Exec=/bin/sh -c "command -v feh >/dev/null && feh --no-fehbg --bg-fill $user_img"
-Terminal=false
-X-GNOME-Autostart-enabled=true
-EOF
-            chown "$owner":"$(id -gn "$owner")" "$autostart/ktemata-wallpaper.desktop"
-            log_ok "feh autostart entry for $owner"
-        fi
-    fi
-
-    WALLPAPER_DONE=true
-    WALLPAPER_IMG=$img
-    log_info "image: $img"
-}
-
-# Replace the early boot splash (the firmware/Plymouth logo) with the Ktemata mark.
-#
-# Raspberry Pi OS shows two splashes: the firmware's early logo, then Plymouth. The supported
-# way to change the first is Raspberry Pi's own rpi-splash-screen-support: a 24-bit TGA,
-# at most 1920x1080, at most 224 colours, installed as /lib/firmware/logo.tga with a hook
-# that copies it into the initramfs, plus three cmdline.txt parameters.
-#
-# The image is derived from the repo SVG at install time (ImageMagick), so an updated logo
-# propagates without committing a 6 MB bitmap.
-install_splash() {
-    $WITH_SPLASH || { log_stage "Boot splash"; log_info "skipped (--no-splash)"; return 0; }
-    log_stage "Boot splash"
-
-    local cmdline="${CMDLINE_FILE:-/boot/firmware/cmdline.txt}"
-    if [ ! -f "$cmdline" ]; then
-        log_info "no $cmdline: not a Raspberry Pi boot partition, skipping"
-        return 0
-    fi
-
-    local dir tga
-    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-    tga=/usr/local/share/ktemata/ktemata-splash.tga
-
-    if $DRY_RUN; then
-        printf '%s  [dry-run]%s build %s and run configure-splash\n' "$C_YELLOW" "$C_OFF" "$tga"
-        printf '%s  [dry-run]%s set fullscreen_logo=1, fullscreen_logo_name=logo.tga, vt.global_cursor_default=0\n' "$C_YELLOW" "$C_OFF"
-        return 0
-    fi
-
-    install -d -m 0755 /usr/local/share/ktemata
-
-    if [ -n "${SPLASH_SRC:-}" ]; then
-        [ -r "$SPLASH_SRC" ] || die "cannot read --splash $SPLASH_SRC"
-        install -m 0644 "$SPLASH_SRC" "$tga"
-        log_ok "using $SPLASH_SRC"
-    else
-        # ImageMagick 7 is `magick`, 6 (Ubuntu 24.04) is `convert`; both take the same args.
-        local im=""
-        if has_command magick; then im=magick
-        elif has_command convert; then im=convert
-        fi
-        if [ -z "$im" ]; then
-            log_warn "need ImageMagick to build the TGA; skipping splash"
-            log_info "  apt install imagemagick librsvg2-bin"
-            return 0
-        fi
-        local src
-        # configure-splash rejects anything larger than 1920x1080 in EITHER axis, so a
-        # portrait splash has to fit in 1080 height: 608x1080 is the 9:16 equivalent.
-        local w h
-        case $SPLASH_ORIENTATION in
-            portrait) w=608;  h=1080 ;;
-            *)        w=1920; h=1080 ;;
-        esac
-        # There are two source SVGs rather than one rotated at build time: rotating the
-        # landscape artwork leaves the text sideways. The portrait file lays the same content
-        # out upright for a 9:16 panel.
-        local svg="$dir/../../docs/ktemata-splash.svg"
-        [ "$SPLASH_ORIENTATION" = portrait ] && svg="$dir/../../docs/ktemata-splash-portrait.svg"
-        if has_command rsvg-convert && [ -r "$svg" ]; then
-            src="$tga.png"
-            rsvg-convert -w "$w" -h "$h" "$svg" -o "$src"
-            log_ok "rendered from $(basename "$svg") ($SPLASH_ORIENTATION ${w}x${h})"
-        elif [ -r "$dir/ktemata-splash.png" ]; then
-            src="$dir/ktemata-splash.png"
-            log_ok "using the bundled splash PNG"
-        else
-            log_warn "no splash source; skipping"
-            return 0
-        fi
-        # 224 colours is the firmware palette limit; 24-bit RGB is the required TGA depth
-        "$im" "$src" -strip -colors 224 -type TrueColor -depth 8 \
-            -define tga:compression=none "$tga" || {
-            log_warn "could not build the TGA; skipping splash"; return 0; }
-        [ "$src" = "$tga.png" ] && rm -f "$src"
-        chmod 0644 "$tga"
-    fi
-
-    # the firmware only accepts TGA, 24-bit, <=1920x1080
-    local dims
-    dims=$(file -b "$tga")
-    case $dims in
-        *"Targa image data - RGB"*"x 24"*)
-            # configure-splash also rejects >1920x1080, so check rather than find out at boot
-            local pw ph
-            pw=$(echo "$dims" | sed -n 's/.*[[:space:]]\([0-9][0-9]*\) x \([0-9][0-9]*\) x 24.*/\1/p')
-            ph=$(echo "$dims" | sed -n 's/.*[[:space:]]\([0-9][0-9]*\) x \([0-9][0-9]*\) x 24.*/\2/p')
-            if [ -n "$pw" ] && { [ "$pw" -gt 1920 ] || [ "$ph" -gt 1080 ]; }; then
-                log_warn "splash is ${pw}x${ph}; the firmware accepts at most 1920x1080"
-                log_warn "use --splash-orientation portrait (608x1080) for a portrait panel"
-                return 0
-            fi
-            ;;
-        *) log_warn "generated splash is not a 24-bit RGB TGA: $dims"
-           log_warn "leaving cmdline.txt alone"; return 0 ;;
-    esac
-
-    # Use Raspberry Pi's supported path when it is installed
-    if [ -x /usr/bin/configure-splash ]; then
-        configure-splash "$tga" >/dev/null 2>&1 && log_ok "configure-splash applied" \
-            || log_warn "configure-splash failed; falling back to the manual steps"
-    fi
-
-    # Ensure the kernel parameters are present (idempotent; also covers the manual case)
-    local want="fullscreen_logo=1 fullscreen_logo_name=logo.tga vt.global_cursor_default=0"
-    local cur
-    cur=$(tr -d '\n' <"$cmdline")
-    local param missing=""
-    for param in $want; do
-        case " $cur " in *" $param "*) ;; *) missing="$missing $param" ;; esac
-    done
-
-    if [ -z "$missing" ]; then
-        log_ok "cmdline.txt already enables the splash"
-    else
-        [ -f "$cmdline.ktemata.bak" ] || cp -a "$cmdline" "$cmdline.ktemata.bak"
-        # cmdline.txt must stay a single line
-        printf '%s%s\n' "$cur" "$missing" >"$cmdline"
-        log_ok "added:$missing"
-    fi
-
-    # install the logo + initramfs hook if configure-splash did not do it
-    if [ -d /etc/initramfs-tools/hooks ] && [ ! -f /lib/firmware/logo.tga ]; then
-        install -m 0644 "$tga" /lib/firmware/logo.tga
-        if [ -r /usr/share/rpi-splash-screen-support/default-hook.sh ]; then
-            install -m 0755 /usr/share/rpi-splash-screen-support/default-hook.sh \
-                /etc/initramfs-tools/hooks/splash-screen-hook.sh
-            sed -i "s|splash-image-path|logo.tga|" /etc/initramfs-tools/hooks/splash-screen-hook.sh
-        fi
-        has_command update-initramfs && update-initramfs -k all -u >/dev/null 2>&1 \
-            && log_ok "initramfs rebuilt" || log_warn "initramfs not rebuilt"
-    fi
-
-    # Plymouth draws the second splash; give it our colour so there is no white flash
-    local ptheme=/usr/share/plymouth/themes/pix/pix.script
-    if [ -f "$ptheme" ]; then
-        log_info "Plymouth theme found; it keeps its own background"
-    fi
-
-    # the firmware rainbow square shows before anything else; optional to remove
-    if [ -f /boot/firmware/config.txt ] && ! grep -q '^disable_splash=1' /boot/firmware/config.txt; then
-        log_info "hint: add disable_splash=1 to /boot/firmware/config.txt to also hide the rainbow"
-    fi
-
-    log_info "splash: $tga (takes effect on the next boot)"
-}
 
 # Turn off the firmware's CSI-camera probe. The build has no camera, so this only removes
 # a boot-time scan. Opt-in: config.txt can make the board unbootable, so nothing here runs
@@ -2086,14 +1786,7 @@ summary() {
     if $WITH_AUTOLOGIN; then
         printf '  autologin %s (GDM)\n' "$AUTOLOGIN_USER"
     fi
-    if $WITH_WALLPAPER && [ "${WALLPAPER_DONE:-false}" = true ]; then
-        printf '  wallpaper %s\n' "$WALLPAPER_IMG"
-    elif $WITH_WALLPAPER; then
-        printf '  wallpaper %s\n' "${WALLPAPER_WHY:-not applied}"
-    fi
-    if $WITH_SPLASH; then
-        printf '  splash    /usr/local/share/ktemata/ktemata-splash.tga (next boot)\n'
-    fi
+    printf '  artwork   sudo ./work/scripts/desktop-artwork.sh  (from the desktop / runlevel 5)\n'
     if $WITH_KIOSK; then
         printf '  kiosk     %s autostarts kiwix-kiosk on login\n' "$KIOSK_USER"
     fi
@@ -2125,11 +1818,6 @@ main() {
             --strict)        STRICT=true ;;
             --power)         POWER_SOURCE=${2:?--power takes usbc or hat}; shift ;;
             --no-autologin)  WITH_AUTOLOGIN=false ;;
-            --no-wallpaper)  WITH_WALLPAPER=false ;;
-            --wallpaper)
-                if [ $# -ge 2 ] && [ -f "$2" ]; then WALLPAPER_SRC=$2; shift; else WALLPAPER_SRC=""; fi
-                WITH_WALLPAPER=true ;;
-            --no-splash)     WITH_SPLASH=false ;;
             --no-camera-autodetect) WITH_NOCAMERA=true ;;
             --hotspot)       WITH_HOTSPOT=true ;;
             --no-hotspot)    WITH_HOTSPOT=false ;;
@@ -2142,12 +1830,6 @@ main() {
             --no-nomad)      NOMAD_STACK=off ;;
             --nomad-version) NOMAD_VERSION=${2:?--nomad-version needs a tag}; shift ;;
             --nomad-registry) NOMAD_REGISTRY=${2:?--nomad-registry needs a registry}; shift ;;
-            --splash-orientation)
-                SPLASH_ORIENTATION=${2:?--splash-orientation takes landscape or portrait}; shift ;;
-            # bare --splash just means "enable it" (the default image); a path is an override
-            --splash)
-                if [ $# -ge 2 ] && [ -f "$2" ]; then SPLASH_SRC=$2; shift; else SPLASH_SRC=""; fi
-                WITH_SPLASH=true ;;
             --autologin-user) AUTOLOGIN_USER=${2:?--autologin-user needs a name}; shift ;;
             --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
             --rotate)        ROTATE=${2:?--rotate needs normal|left|right|inverted}; shift ;;
@@ -2166,8 +1848,6 @@ main() {
     # fail fast on a bad --rotate instead of halfway through the install
     [ -z "$ROTATE" ] || rotation_degrees "$ROTATE" >/dev/null
     case ${POWER_SOURCE:-usbc} in usbc|hat) ;; *) die "--power takes usbc or hat" ;; esac
-    case $SPLASH_ORIENTATION in landscape|portrait) ;;
-        *) die "--splash-orientation takes landscape or portrait" ;; esac
     case $HOTSPOT_BAND in auto|2.4|5) ;; *) die "--hotspot-band takes auto, 2.4 or 5" ;; esac
     # a disabled radio cannot host an access point: refuse rather than install both and have
     # the AP fail at boot with "no wlan0"
@@ -2205,8 +1885,6 @@ main() {
     install_status_oled
     setup_rotation
     install_autologin
-    install_wallpaper
-    install_splash
     set_camera_autodetect_off
     set_radio_off
     setup_hotspot
