@@ -506,11 +506,15 @@ writes nothing but the board's JSON.
 ```bash
 systemctl status ktemata-status-oled
 journalctl -u ktemata-status-oled -f
-python3 work/scripts/status-oled.py --once -v     # one manual sync, echo the board's lines
+sudo systemctl stop ktemata-status-oled
+sudo python3 work/scripts/status-oled.py --once -v   # one manual sync, echo the board's lines
+sudo systemctl start ktemata-status-oled
 ```
 
 Opening a CH340 port can pulse the ESP32 reset line; expect the OLED to restart once per service
-start, after which the sender sees the boot banner and re-syncs.
+start, after which the sender sees the boot banner and re-syncs. The sender holds an exclusive lock:
+running it by hand while the service runs is refused, because two readers on one tty split the
+board's replies (one of them then never sees `time synced`).
 
 ## Where the ZIMs come from
 

@@ -259,6 +259,10 @@ retrying instead of exiting. The unit therefore needs no device dependency. `use
 `free_gb` use `df` semantics (`f_bavail`), so the number matches what the Pi reports. Lines that
 are not JSON (the boot ROM's log) are ignored unless `-v` is given.
 
+It takes an **exclusive lock** on the port. Stop `ktemata-status-oled.service` before running it
+by hand: two readers on one tty split the incoming bytes, so one process can miss the board's
+`time synced` acknowledgement and report "never confirmed" while the other sees it.
+
 The manual one-liner still works for a one-off (stop the service or the serial monitor first):
 
 ```bash

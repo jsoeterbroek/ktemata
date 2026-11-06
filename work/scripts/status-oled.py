@@ -18,9 +18,12 @@ the port is absent and reopens it after an unplug, so systemd can keep it runnin
 
 Opening the CH340 port pulses the ESP32 reset line on some boards, so the sender
 waits two seconds before its first command, re-sends until the board confirms with
-`time synced`, and ignores non-JSON lines (the boot ROM writes free text).
+`time synced`, and ignores non-JSON lines (the boot ROM writes free text). It holds
+an exclusive lock: stop ktemata-status-oled.service before running it by hand, or the
+two readers split the board's replies between them.
 """
 import argparse
+import fcntl
 import glob
 import json
 import os
@@ -60,6 +63,13 @@ class Link:
     def __init__(self, path):
         self.path = path
         self.fd = os.open(path, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+        try:
+            # One reader only: two processes on a tty split the incoming bytes between
+            # them, so the board's acknowledgements would reach only one of them.
+            fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            os.close(self.fd)
+            raise OSError(f"another sender is using {path}") from None
         try:
             attrs = termios.tcgetattr(self.fd)
             attrs[0] = 0                                        # iflag: raw
@@ -229,6 +239,8 @@ def run_forever(port, path, args):
                         if kind == "log" and name == BOOT_BANNER:
                             restart = True     # the board rebooted: clock and storage are cold
                         elif kind == "log" and name == TIME_ACK:
+                            if not time_confirmed:
+                                log("clock synced")
                             time_confirmed = True
                             time_tries = 0
                             next_time = time.monotonic() + args.time_period
