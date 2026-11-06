@@ -1,6 +1,7 @@
 // Ktemata r5 - deck (keyboard / OLED / Pi clamp)
 //
-// Sits on the tray rim (r5_tray) and is fixed with seven M3 x 10 into heat-set inserts. It carries the
+// Sits on the tray rim (r5_tray) and is fixed with seven countersunk M3 x 10 (DIN 7991 / ISO 10642)
+// into heat-set inserts; a button head does not seat in the 90 deg countersinks. It carries the
 // Rii K06 keyboard, the status OLED, the power button and the 8.4 V charge socket on top, and
 // clears the Pi + HAT (B) stack below. The display is not here: it hangs on the lid
 // (r5_lid_plate.scad), so the deck is what you see when the host case is open.
