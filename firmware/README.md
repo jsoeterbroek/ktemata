@@ -153,7 +153,9 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
 ## What the firmware does
 
 - Four screens, in this order: **time** (default), **battery**,
-  **environment**, **storage**. **r5 has no BME688**, so there the
+  **environment**, **storage**. The time screen draws a 9×9 clock icon beside
+  the date and an 11×7 battery icon whose fill follows the pack percentage.
+  **r5 has no BME688**, so there the
   environment screen reports the absence and its alert never fires; nothing else changes
   (see `docs/R5.md`).
 - Short button press cycles screens and wakes the OLED. A long press

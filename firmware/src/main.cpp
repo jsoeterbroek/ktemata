@@ -612,6 +612,44 @@ void clockCentered(int baseline, const char* text) {
   display.print(text);
 }
 
+// 9x9 clock and 11x7 battery, drawn with primitives so no extra bitmap is needed.
+void drawClockIcon(int x, int top) {
+  const int cx = x + 4;
+  const int cy = top + 4;
+  display.drawCircle(cx, cy, 4, OLED_WHITE);
+  display.drawLine(cx, cy, cx, cy - 3, OLED_WHITE);   // hour hand
+  display.drawLine(cx, cy, cx + 2, cy, OLED_WHITE);   // minute hand
+}
+
+void drawBatteryIcon(int x, int top, int percent) {
+  display.drawRect(x, top, 9, 7, OLED_WHITE);
+  display.fillRect(x + 9, top + 2, 2, 3, OLED_WHITE);  // terminal
+  if (percent < 0) percent = 0;
+  if (percent > 100) percent = 100;
+  const int fill = (percent * 7 + 50) / 100;
+  if (fill > 0) {
+    display.fillRect(x + 1, top + 1, fill, 5, OLED_WHITE);
+  }
+}
+
+void dateLine(int top, const char* text) {
+  bodyFont();
+  const int icon = 9, gap = 4;
+  const int left = (SCREEN_WIDTH - (icon + gap + textWidth(text))) / 2;
+  drawClockIcon(left, top);
+  display.setCursor(left + icon + gap - textLeft(text), top + BODY_ASCENT);
+  display.print(text);
+}
+
+void batteryLine(int top, const char* text, int percent) {
+  bodyFont();
+  const int icon = 11, gap = 4;
+  const int left = (SCREEN_WIDTH - (icon + gap + textWidth(text))) / 2;
+  drawBatteryIcon(left, top, percent);
+  display.setCursor(left + icon + gap - textLeft(text), top + BODY_ASCENT);
+  display.print(text);
+}
+
 void drawHeader(const char* title) {
   display.setTextColor(OLED_WHITE);
   bodyCursor(0, 0);
@@ -646,10 +684,12 @@ void renderTimeScreen() {
   display.setTextColor(OLED_WHITE);
   clockCentered(CLOCK_ASCENT + 1, buf);   // 24 px digits, 1 px top margin
 
-  snprintf(buf, sizeof(buf), "%s %02d %s %04d",
+  // No leading zero on the day; two spaces separate the date blocks so the proportional
+  // font does not run them together.
+  snprintf(buf, sizeof(buf), "%s   %d %s   %04d",
            WEEKDAYS[local.tm_wday], local.tm_mday, MONTHS[local.tm_mon],
            local.tm_year + 1900);
-  bodyCentered(31, buf);
+  dateLine(31, buf);
 
   if (upsOk) {
     snprintf(buf, sizeof(buf), "BAT %3u%%%s", upsData.percent,
@@ -657,8 +697,7 @@ void renderTimeScreen() {
   } else {
     snprintf(buf, sizeof(buf), "BAT --");
   }
-  bodyCursor(4, 44);
-  display.print(buf);
+  batteryLine(44, buf, upsOk ? static_cast<int>(upsData.percent) : 0);
 
   if (overallAlertLevel() != LEVEL_OK) {
     bodyCursor(SCREEN_WIDTH - 8, 44);
