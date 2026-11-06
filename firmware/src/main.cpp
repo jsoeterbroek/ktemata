@@ -1194,11 +1194,20 @@ void loop() {
     updateAlerts();
   }
 
+#if AUTO_CYCLE_MS == 0
   if (!alertScreenActive && screen != SCREEN_TIME &&
       now - lastInteractionMs >= RETURN_TO_TIME_MS) {
     screen = SCREEN_TIME;
     lastRenderMs = 0;
   }
+#else
+  // No panel button yet: walk the four screens (and show the UPS statistics on the way).
+  // Alerts still take over while active. Any wake (button, serial screen command, alert)
+  // resets lastInteractionMs, so the next advance is 25 s after that.
+  if (!alertScreenActive && now - lastInteractionMs >= AUTO_CYCLE_MS) {
+    nextScreen();
+  }
+#endif
 
 #if SCREEN_OFF_MS > 0
   if (screenOn && now - lastInteractionMs >= SCREEN_OFF_MS) {

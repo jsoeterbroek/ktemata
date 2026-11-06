@@ -294,7 +294,7 @@ At least four screens, cycled with a button. The **time** screen is the default.
 | 3 | **Environment** | temperature, humidity, pressure + 3 h trend (falling fast = weather warning), VOC/air-quality index; CO2 and PM2.5 if the SEN66 is fitted | BME688 / SEN66 |
 | 4 | **Storage** | % used and free GB of the 512 GB SSD | Pi over USB; with the Pi off, shows the last value and its age |
 
-**Navigation:** one 12 mm panel button on the case (TinyTronics PBS-33B; add a rubber boot for sealing), wired to ESP32 GPIO4. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert.
+**Navigation:** one 12 mm panel button on the case (TinyTronics PBS-33B; add a rubber boot for sealing), wired to ESP32 GPIO4. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert. Until the button is fitted the build sets `AUTO_CYCLE_MS=25000UL`, so the four screens cycle every 25 s (alerts still take over); set it to `0UL` when the button is wired.
 
 **Auto-switch on thresholds:** when a value passes a threshold, the OLED jumps to that screen and marks the value (inverted/blinking). It stays there until the condition clears or the alert is acknowledged, then returns to the time screen. An acknowledged alert comes back only if it gets worse (warning → critical). With several alerts at once, priority is battery > environment > storage. Thresholds use hysteresis so a value hovering at the limit doesn't flap. Thresholds are stored in the ESP32 (NVS) and can be changed from the Pi over USB.
 
