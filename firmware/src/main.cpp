@@ -632,6 +632,14 @@ void drawBatteryIcon(int x, int top, int percent) {
   }
 }
 
+// 6x7 plug: two prongs, body, lead. Shown when the pack is not discharging.
+void drawPlugIcon(int x, int top) {
+  display.drawFastVLine(x + 1, top, 2, OLED_WHITE);
+  display.drawFastVLine(x + 4, top, 2, OLED_WHITE);
+  display.drawRect(x, top + 2, 6, 3, OLED_WHITE);
+  display.drawFastVLine(x + 3, top + 5, 2, OLED_WHITE);
+}
+
 void dateLine(int top, const char* text) {
   bodyFont();
   const int icon = 9, gap = 4;
@@ -641,13 +649,18 @@ void dateLine(int top, const char* text) {
   display.print(text);
 }
 
-void batteryLine(int top, const char* text, int percent) {
+void batteryLine(int top, const char* text, int percent, bool mains) {
   bodyFont();
-  const int icon = 11, gap = 4;
-  const int left = (SCREEN_WIDTH - (icon + gap + textWidth(text))) / 2;
+  const int icon = 11, gap = 4, plug = 6;
+  const int w = textWidth(text);
+  const int extra = mains ? gap + plug : 0;
+  const int left = (SCREEN_WIDTH - (icon + gap + w + extra)) / 2;
   drawBatteryIcon(left, top, percent);
   display.setCursor(left + icon + gap - textLeft(text), top + BODY_ASCENT);
   display.print(text);
+  if (mains) {
+    drawPlugIcon(left + icon + gap + w + gap, top + 1);
+  }
 }
 
 void drawHeader(const char* title) {
@@ -697,7 +710,8 @@ void renderTimeScreen() {
   } else {
     snprintf(buf, sizeof(buf), "BAT --");
   }
-  batteryLine(44, buf, upsOk ? static_cast<int>(upsData.percent) : 0);
+  batteryLine(44, buf, upsOk ? static_cast<int>(upsData.percent) : 0,
+              upsOk && upsData.mains);
 
   if (overallAlertLevel() != LEVEL_OK) {
     bodyCursor(SCREEN_WIDTH - 8, 44);
@@ -729,19 +743,14 @@ void renderBatteryScreen() {
   display.print(buf);
 
   bodyCursor(0, 32);
-  if (upsData.charging) {
-    display.print("charging");
-  } else if (upsData.batteryMa < -20) {
-    display.print("discharging");
+  if (upsData.mains) {
+    display.print(upsData.charging ? "charging" : "on mains");
   } else {
-    display.print("idle");
+    display.print("on battery");
   }
-  snprintf(buf, sizeof(buf), "  %s", UpsHatB::chargeStateName(upsData.chargeState));
-  display.print(buf);
 
   bodyCursor(0, 42);
-  snprintf(buf, sizeof(buf), "in %4.1f V %s", upsData.vbusMv / 1000.0f,
-           upsData.vbusPresent ? "present" : "absent");
+  snprintf(buf, sizeof(buf), "pack %4.1f V", upsData.batteryMv / 1000.0f);
   display.print(buf);
 
   bodyCursor(0, 52);
@@ -930,6 +939,7 @@ void sendTelemetry() {
   battery["mv"] = upsData.batteryMv;
   battery["ma"] = upsData.batteryMa;
   battery["charging"] = upsData.charging;
+  battery["mains"] = upsData.mains;
   battery["fast"] = upsData.fastCharging;
   battery["vbus"] = upsData.vbusPresent;
   battery["vbus_mv"] = upsData.vbusMv;

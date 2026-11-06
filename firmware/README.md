@@ -154,7 +154,9 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
 
 - Four screens, in this order: **time** (default), **battery**,
   **environment**, **storage**. The time screen draws a 9×9 clock icon beside
-  the date and an 11×7 battery icon whose fill follows the pack percentage.
+  the date and an 11×7 battery icon whose fill follows the pack percentage; a
+  6×7 plug appears beside it when external power is attached, and `CHG` is
+  appended while current flows into the pack.
   **r5 has no BME688**, so there the
   environment screen reports the absence and its alert never fires; nothing else changes
   (see `docs/R5.md`).
@@ -167,7 +169,11 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
   The current bring-up build sets `-DSCREEN_OFF_MS=0UL` so the panel stays on
   until the PBS-33B button is fitted. Change it to `60000UL` to enable blanking.
 - BME688 forced-mode measurement every 5 s, pressure history for the 3 h
-  trend, UPS registers polled every 5 s.
+  trend, UPS registers polled every 5 s. Mains presence is derived from the
+  pack current: < −10 mA means the pack is discharging (battery only),
+  anything else means the charger is attached. A full pack on charge reads
+  near zero because the charger supplies the load, so the current sign is a
+  better "mains present" test than the charge percentage.
 - Telemetry JSON every 10 s over USB serial; commands from the Pi are
   newline-delimited JSON as well. The Arduino core logger is compiled out
   (`-DCORE_DEBUG_LEVEL=0`) and the ESP-IDF logger is set to `ESP_LOG_NONE`,
@@ -224,7 +230,7 @@ ESP32 → Pi every 10 s (and after `status`):
 ```json
 {"type":"telemetry","ms":123456,"time":1780000000,
  "battery":{"present":true,"percent":78,"mv":7660,"ma":-420,
-            "charging":false,"fast":false,"vbus":false,
+            "charging":false,"mains":false,"fast":false,"vbus":false,
             "vbus_mv":7660,"remaining_mah":2500,
             "discharge_min":350,"charge_min":0},
  "environment":{"present":true,"temperature_c":24.3,"humidity_pct":45.1,

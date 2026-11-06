@@ -21,8 +21,8 @@ struct UpsStatus {
 
   bool charging = false;       // current into the pack, and the pack is not full
   bool fastCharging = false;   // always false on the HAT (B) - no PD telemetry
-  bool vbusPresent = false;    // charger attached (approximated: pack current > 0)
-  uint8_t chargeState = 0;     // 0 = idle, 1 = charging, 2 = full
+  bool mains = false;          // external supply attached (pack current is not flowing out)
+  bool vbusPresent = false;    // kept for the telemetry/UI; now the same as mains
 
   uint16_t vbusMv = 0;         // pack voltage (INA219 bus voltage)
   int16_t vbusMa = 0;          // pack current, same sign as batteryMa (kept for the UI)
@@ -48,7 +48,6 @@ class UpsHatB {
   bool read(UpsStatus& out);
 
   // Human-readable state, matching the HAT (E) strings the UI already prints.
-  static const char* chargeStateName(uint8_t state);
 
   // Pack model: 2S 18650, configurable capacity for the time estimates.
   static constexpr float CAPACITY_MAH = 3200.0f;

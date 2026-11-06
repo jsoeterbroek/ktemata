@@ -123,12 +123,16 @@ bool UpsHatB::read(UpsStatus& out) {
   out.remainingMah = static_cast<uint16_t>(remaining);
 
   // Sign convention: the HAT sources current into the Pi, so a discharging pack reads
-  // negative here. Charging means current flowing into the pack.
+  // negative here. Charging means current flowing into the pack. The INA219 sees only the
+  // pack branch: with the charger attached and the pack full it reads near zero (the
+  // charger feeds the load), while on battery the ESP32 alone already draws ~30 mA, so
+  // "not discharging" is a reliable mains-present test.
   const bool currentIntoPack = out.batteryMa > 20;
+  const bool currentOutOfPack = out.batteryMa < -10;
+  out.mains = !currentOutOfPack;
   out.charging = currentIntoPack && out.percent < 99;
-  out.vbusPresent = currentIntoPack;
+  out.vbusPresent = out.mains;
   out.fastCharging = false;
-  out.chargeState = out.percent >= 99 ? 2 : (out.charging ? 1 : 0);
 
   const float amps = fabsf(static_cast<float>(out.batteryMa)) / 1000.0f;
   if (amps > 0.05f) {
@@ -152,15 +156,3 @@ bool UpsHatB::read(UpsStatus& out) {
   return true;
 }
 
-const char* UpsHatB::chargeStateName(uint8_t state) {
-  switch (state) {
-    case 0:
-      return "discharging";
-    case 1:
-      return "charging";
-    case 2:
-      return "full";
-    default:
-      return "?";
-  }
-}
