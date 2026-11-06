@@ -34,9 +34,9 @@ struct UpsStatus {
   uint8_t loadPct = 0;         // load as % of the 5 V / 5 A (25 W) output, on battery only
   bool loadValid = false;      // false on mains: the charger feeds the load, not the pack
   uint16_t remainingMah = 0;   // derived from percent x capacity
-  uint16_t dischargeMin = 0;   // derived from remaining capacity / current
   uint16_t chargeMin = 0;      // derived from missing capacity / current
-  uint16_t cellMv[4] = {0, 0, 0, 0};  // cellMv[0]/[1] = pack/2 estimate; 2S has no cell data
+  uint32_t runtimeSec = 0;     // NUT battery.runtime: seconds left on battery at the current load
+  bool runtimeValid = false;   // false on mains or when the current is too small to estimate
   uint8_t swRevision = 0;      // unused on the HAT (B)
 
   uint32_t lastReadMs = 0;

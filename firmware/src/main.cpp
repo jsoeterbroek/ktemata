@@ -768,17 +768,25 @@ void renderBatteryScreen() {
   }
 
   bodyCursor(0, 52);
-  if (upsData.dischargeMin > 0 && upsData.dischargeMin < 6000) {
-    snprintf(buf, sizeof(buf), "~%uh%02um left", upsData.dischargeMin / 60,
-             upsData.dischargeMin % 60);
+  if (upsData.runtimeValid) {
+    if (upsData.runtimeSec < 60UL) {
+      snprintf(buf, sizeof(buf), "~%lus left", static_cast<unsigned long>(upsData.runtimeSec));
+    } else if (upsData.runtimeSec < 3600UL) {
+      snprintf(buf, sizeof(buf), "~%lum left", static_cast<unsigned long>(upsData.runtimeSec / 60));
+    } else {
+      const uint32_t minutes = upsData.runtimeSec / 60UL;
+      snprintf(buf, sizeof(buf), "~%luh%02lum left",
+               static_cast<unsigned long>(minutes / 60UL),
+               static_cast<unsigned long>(minutes % 60UL));
+    }
+    display.print(buf);
   } else if (upsData.chargeMin > 0 && upsData.chargeMin < 6000) {
     snprintf(buf, sizeof(buf), "~%uh%02um to full", upsData.chargeMin / 60,
              upsData.chargeMin % 60);
+    display.print(buf);
   } else {
-    snprintf(buf, sizeof(buf), "cell %u.%02u V",
-             upsData.cellMv[0] / 1000, (upsData.cellMv[0] % 1000) / 10);
+    display.print("runtime --");
   }
-  display.print(buf);
 }
 
 void renderEnvironmentScreen() {
@@ -968,11 +976,15 @@ void sendTelemetry() {
   } else {
     battery["load_pct"] = nullptr;
   }
+  if (upsData.runtimeValid) {
+    battery["runtime_s"] = upsData.runtimeSec;
+  } else {
+    battery["runtime_s"] = nullptr;
+  }
   battery["fast"] = upsData.fastCharging;
   battery["vbus"] = upsData.vbusPresent;
   battery["vbus_mv"] = upsData.vbusMv;
   battery["remaining_mah"] = upsData.remainingMah;
-  battery["discharge_min"] = upsData.dischargeMin;
   battery["charge_min"] = upsData.chargeMin;
 
   JsonObject environment = doc["environment"].to<JsonObject>();

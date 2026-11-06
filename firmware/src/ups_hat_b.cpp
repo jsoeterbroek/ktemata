@@ -148,22 +148,25 @@ bool UpsHatB::read(UpsStatus& out) {
     out.loadPct = 0;
   }
 
+  // Runtime follows the measured pack current, not the nominal load: on battery that is
+  // what the Pi and its peripherals actually draw. On mains the pack current is charge
+  // current, so there is no runtime to report (NUT calls this field battery.runtime).
   const float amps = fabsf(static_cast<float>(out.batteryMa)) / 1000.0f;
-  if (amps > 0.05f) {
-    const float hours = (out.charging ? (CAPACITY_MAH - remaining) : remaining) / (amps * 1000.0f);
-    const uint16_t minutes = static_cast<uint16_t>(hours * 60.0f);
-    if (out.charging) {
-      out.chargeMin = minutes;
-    } else {
-      out.dischargeMin = minutes;
+  out.chargeMin = 0;
+  out.runtimeSec = 0;
+  out.runtimeValid = false;
+  if (amps >= 0.02f) {
+    const float hours =
+        (currentIntoPack ? (CAPACITY_MAH - remaining) : remaining) / (amps * 1000.0f);
+    const uint32_t seconds = static_cast<uint32_t>(hours * 3600.0f);
+    if (currentIntoPack) {
+      const uint32_t minutes = seconds / 60UL;
+      out.chargeMin = static_cast<uint16_t>(minutes > 65535UL ? 65535UL : minutes);
+    } else if (currentOutOfPack) {
+      out.runtimeSec = seconds;
+      out.runtimeValid = true;
     }
   }
-
-  // No per-cell telemetry on the HAT (B): report the pack split evenly.
-  out.cellMv[0] = busMv / 2;
-  out.cellMv[1] = busMv / 2;
-  out.cellMv[2] = 0;
-  out.cellMv[3] = 0;
 
   out.present = true;
   out.lastReadMs = millis();

@@ -233,7 +233,7 @@ ESP32 → Pi every 10 s (and after `status`):
             "charging":false,"mains":false,"ol":false,"ob":true,"lb":false,
             "status":"OB","load_pct":11,"fast":false,"vbus":false,
             "vbus_mv":7660,"remaining_mah":2500,
-            "discharge_min":350,"charge_min":0},
+            "runtime_s":21000,"charge_min":0},
  "environment":{"present":true,"temperature_c":24.3,"humidity_pct":45.1,
                 "pressure_hpa":1013.2,"gas_kohm":123.4,"gas_index":145},
  "storage":{"present":true,"used_pct":42.5,"free_gb":580.2,"age_s":12},
@@ -248,6 +248,12 @@ ESP32 → Pi every 10 s (and after `status`):
 5 A (25 W) output, assuming 88 % buck efficiency. The INA219 sits on the **pack**
 branch, so the load is only measurable while the pack supplies it; on mains the
 charger feeds the regulator and `load_pct` is `null` (the OLED shows `load --`).
+
+`runtime_s` is NUT's `battery.runtime`: seconds left at the measured discharge
+current, from the voltage-derived remaining capacity (3200 mAh constant) divided
+by that current. It is `null` on mains, or when the current is below 20 mA, and
+the battery screen then shows `runtime --`. The estimate follows the load and the
+(voltage-based) percentage, so it moves; it is not a fuel-gauge measurement.
 
 Without a DS3231 the clock is lost on reset. The Pi-side sender
 (`work/scripts/status-oled.py`) covers that: it pushes UTC at start and hourly (and again when
