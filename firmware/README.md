@@ -230,7 +230,8 @@ ESP32 → Pi every 10 s (and after `status`):
 ```json
 {"type":"telemetry","ms":123456,"time":1780000000,
  "battery":{"present":true,"percent":78,"mv":7660,"ma":-420,
-            "charging":false,"mains":false,"fast":false,"vbus":false,
+            "charging":false,"mains":false,"ol":false,"ob":true,"lb":false,
+            "status":"OB","load_pct":11,"fast":false,"vbus":false,
             "vbus_mv":7660,"remaining_mah":2500,
             "discharge_min":350,"charge_min":0},
  "environment":{"present":true,"temperature_c":24.3,"humidity_pct":45.1,
@@ -241,6 +242,12 @@ ESP32 → Pi every 10 s (and after `status`):
 
 `alerts` is `[battery, environment, storage]` with 0 = ok, 1 = warning,
 2 = critical. Values that are not available are serialized as `null`.
+
+`status` uses NUT's flags: `OL` = on utility power, `OB` = on battery, with
+`LB` appended below 10 %. `load_pct` is the load relative to the HAT's 5 V /
+5 A (25 W) output, assuming 88 % buck efficiency. The INA219 sits on the **pack**
+branch, so the load is only measurable while the pack supplies it; on mains the
+charger feeds the regulator and `load_pct` is `null` (the OLED shows `load --`).
 
 Without a DS3231 the clock is lost on reset. The Pi-side sender
 (`work/scripts/status-oled.py`) covers that: it pushes UTC at start and hourly (and again when

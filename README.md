@@ -290,7 +290,7 @@ At least four screens, cycled with a button. The **time** screen is the default.
 | # | Screen | Content | Source |
 |---|---|---|---|
 | 1 | **Time** (default) | HH:MM, date, weekday; small battery % and alert icons | ESP32 clock, set from the Pi over USB when it runs; the Pi sends UTC and the firmware applies `TIMEZONE` (default **Europe/Amsterdam**, including DST); a **DS3231 RTC** (I2C 0x68) on the FireBeetle keeps UTC after a full power loss with the Pi off |
-| 2 | **Battery power** | charge %, voltage, current (charging/discharging), input present (solar/crank), estimated time left | UPS gauge: INA219 0x42 (r4), BQ4050 0x2D (r2/r3) |
+| 2 | **Battery power** | charge %, voltage, current (charging/discharging), `OL`/`OB`/`LB` flags, load % of the 5 V/5 A output, estimated time left | UPS gauge: INA219 0x42 (r4), BQ4050 0x2D (r2/r3); load is valid on battery only |
 | 3 | **Environment** | temperature, humidity, pressure + 3 h trend (falling fast = weather warning), VOC/air-quality index; CO2 and PM2.5 if the SEN66 is fitted | BME688 / SEN66 |
 | 4 | **Storage** | % used and free GB of the 512 GB SSD | Pi over USB; with the Pi off, shows the last value and its age |
 

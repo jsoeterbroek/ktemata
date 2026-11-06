@@ -134,6 +134,20 @@ bool UpsHatB::read(UpsStatus& out) {
   out.vbusPresent = out.mains;
   out.fastCharging = false;
 
+  // Load is only observable while the pack supplies it. On mains the charger feeds the
+  // 5 V regulator and the INA219 sees the charge current instead, so report it as invalid.
+  // 25 W = the HAT's 5 V / 5 A rating; allow ~12 % for the buck (estimate).
+  out.loadValid = !out.mains;
+  if (out.loadValid) {
+    const float loadW = (fabsf(static_cast<float>(out.batteryMa)) / 1000.0f) *
+                        (static_cast<float>(out.batteryMv) / 1000.0f) * 0.88f;
+    float loadPct = loadW * 100.0f / 25.0f;
+    if (loadPct > 100.0f) loadPct = 100.0f;
+    out.loadPct = static_cast<uint8_t>(loadPct + 0.5f);
+  } else {
+    out.loadPct = 0;
+  }
+
   const float amps = fabsf(static_cast<float>(out.batteryMa)) / 1000.0f;
   if (amps > 0.05f) {
     const float hours = (out.charging ? (CAPACITY_MAH - remaining) : remaining) / (amps * 1000.0f);

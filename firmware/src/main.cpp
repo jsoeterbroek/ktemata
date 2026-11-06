@@ -720,9 +720,14 @@ void renderTimeScreen() {
   }
 }
 
+bool lowBattery() {
+  return upsOk && upsData.percent <= static_cast<uint16_t>(ALERT_BATT_CRIT);
+}
+
 void renderBatteryScreen() {
   drawHeader("BATTERY");
   char buf[40];
+  char load[8];
 
   if (!upsOk) {
     bodyCursor(0, 20);
@@ -744,15 +749,23 @@ void renderBatteryScreen() {
   display.print(buf);
 
   bodyCursor(0, 32);
-  if (upsData.mains) {
-    display.print(upsData.charging ? "charging" : "on mains");
+  if (upsData.loadValid) {
+    snprintf(load, sizeof(load), "%u%%", upsData.loadPct);
   } else {
-    display.print("on battery");
+    snprintf(load, sizeof(load), "--");
   }
+  snprintf(buf, sizeof(buf), "%s%s  load %s", upsData.mains ? "OL" : "OB",
+           lowBattery() ? " LB" : "", load);
+  display.print(buf);
 
   bodyCursor(0, 42);
-  snprintf(buf, sizeof(buf), "pack %4.1f V", upsData.batteryMv / 1000.0f);
-  display.print(buf);
+  if (!upsData.mains) {
+    display.print("discharging");
+  } else if (upsData.charging) {
+    display.print("charging");
+  } else {
+    display.print("full");
+  }
 
   bodyCursor(0, 52);
   if (upsData.dischargeMin > 0 && upsData.dischargeMin < 6000) {
@@ -941,6 +954,20 @@ void sendTelemetry() {
   battery["ma"] = upsData.batteryMa;
   battery["charging"] = upsData.charging;
   battery["mains"] = upsData.mains;
+  battery["ol"] = upsOk && upsData.mains;
+  battery["ob"] = upsOk && !upsData.mains;
+  battery["lb"] = lowBattery();
+  if (upsOk) {
+    battery["status"] = upsData.mains ? (lowBattery() ? "OL LB" : "OL")
+                                      : (lowBattery() ? "OB LB" : "OB");
+  } else {
+    battery["status"] = nullptr;
+  }
+  if (upsData.loadValid) {
+    battery["load_pct"] = upsData.loadPct;
+  } else {
+    battery["load_pct"] = nullptr;
+  }
   battery["fast"] = upsData.fastCharging;
   battery["vbus"] = upsData.vbusPresent;
   battery["vbus_mv"] = upsData.vbusMv;

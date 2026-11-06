@@ -31,6 +31,8 @@ struct UpsStatus {
   uint16_t batteryMv = 0;      // pack voltage, millivolts
   int16_t batteryMa = 0;       // + into the pack (charging), - out of the pack
   uint16_t percent = 0;        // derived from batteryMv
+  uint8_t loadPct = 0;         // load as % of the 5 V / 5 A (25 W) output, on battery only
+  bool loadValid = false;      // false on mains: the charger feeds the load, not the pack
   uint16_t remainingMah = 0;   // derived from percent x capacity
   uint16_t dischargeMin = 0;   // derived from remaining capacity / current
   uint16_t chargeMin = 0;      // derived from missing capacity / current
