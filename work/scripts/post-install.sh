@@ -3,8 +3,9 @@
 #
 # Installs Kiwix (the offline library reader the device is built around), sets up the ZIM
 # library directory, and enables kiwix-serve as a systemd service so the library is reachable
-# from a browser on the device or over USB tethering. Also enables the status OLED sender, which
-# pushes UTC and the library free space to the FireBeetle over USB serial.
+# from a browser on the device or over USB tethering. --library nomad skips that stack and
+# leaves the library to Project NOMAD. Also enables the status OLED sender, which pushes UTC and
+# the library free space to the FireBeetle over USB serial.
 #
 #   sudo ./work/scripts/post-install.sh                 # update, install, enable the service
 #   sudo ./work/scripts/post-install.sh --sample        # also fetch one small ZIM to test with
@@ -30,6 +31,13 @@ ZIM_DIR=${ZIM_DIR:-/srv/kiwix/zim}
 SERVICE_PORT=${SERVICE_PORT:-8080}
 SERVICE_NAME=kiwix
 SERVICE_USER=${SERVICE_USER:-kiwix}
+# Which library front end: "host" installs kiwix-serve here; "nomad" leaves the library to
+# the Project NOMAD stack (admin on :8080, its Kiwix container on :8090, ZIMs under
+# $NOMAD_STORAGE_PATH/zim). The two cannot share :8080, so choose one.
+LIBRARY=${LIBRARY:-host}                    # host | nomad
+NOMAD_STORAGE_PATH=${NOMAD_STORAGE_PATH:-/opt/project-nomad/storage}
+HOST_LIBRARY=true                           # derived from LIBRARY after argument parsing
+LIBRARY_DIR=$ZIM_DIR                        # the path the status OLED reports
 
 # a small, genuinely useful ZIM for the smoke test (4.4 MB, wikiHow-style civil defence)
 SAMPLE_ZIM=${SAMPLE_ZIM:-wikiciv_en_all_maxi_2025-11.zim}
@@ -117,9 +125,13 @@ ${C_BOLD}USAGE${C_OFF}
 ${C_BOLD}OPTIONS${C_OFF}
   -y, --yes              Do not ask for confirmation.
   -n, --dry-run          Print the commands instead of running them (no root needed).
-      --sample           Download one small ZIM so kiwix-serve has something to serve.
+      --sample           Download one small ZIM so the host Kiwix has something to serve
+                         (host library only).
       --zim-dir DIR      Library directory (default: $ZIM_DIR).
       --port PORT        kiwix-serve port (default: $SERVICE_PORT).
+      --library WHAT     host (default) installs kiwix-serve here; nomad leaves the
+                         library to Project NOMAD (admin :8080, Kiwix :8090, ZIMs in
+                         $NOMAD_STORAGE_PATH/zim) and installs no host Kiwix.
       --no-service       Install the packages only; do not create/enable the service.
       --no-oled          Do not install the status OLED sender (FireBeetle over USB serial).
       --oled-port DEV    Serial device for the FireBeetle (default: autodetect the CH340).
@@ -147,8 +159,8 @@ ${C_BOLD}OPTIONS${C_OFF}
                          disable-bt-pi5 on a Pi 5). No AP, no client association, no
                          Bluetooth: the device cannot transmit at all. Persistent, and
                          takes effect on the next boot. Cannot be combined with --hotspot.
-                         Note that kiwix-serve still binds all interfaces, so a USB or
-                         Ethernet link that is up can still reach the library.
+                         Note that the library front end still binds all interfaces, so a
+                         USB or Ethernet link that is up can still reach it.
       --hotspot-ssid N   Network name (default: Ktemata).
       --hotspot-pass P   WPA2 password, 8+ characters (default: open network).
       --hotspot-open     Explicitly leave the network open, even if a password was set.
@@ -162,16 +174,16 @@ ${C_BOLD}OPTIONS${C_OFF}
   -V, --version          Print the version.
 
 ${C_BOLD}ENVIRONMENT${C_OFF}
-  ZIM_DIR, SERVICE_PORT, SERVICE_USER, NO_COLOR, OLED_PORT,
+  ZIM_DIR, SERVICE_PORT, SERVICE_USER, LIBRARY, NOMAD_STORAGE_PATH, NO_COLOR, OLED_PORT,
   HOTSPOT_SSID, HOTSPOT_PASS, HOTSPOT_ADDR, HOTSPOT_CIDR, HOTSPOT_BAND
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
   1. checks it is running as root on a Debian derivative
   2. runs the hardware checks (Pi model, display, I2C, UPS gauge, RTC, storage, network)
   3. updates the system (apt update + full-upgrade) unless --no-update
-  4. installs kiwix-tools (+ kiwix desktop app unless --no-gui)
-  5. creates the ZIM library directory
-  6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)
+  4. installs kiwix-tools (+ kiwix desktop app unless --no-gui)   [--library host]
+  5. creates the ZIM library directory                            [--library host]
+  6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)  [--library host]
   7. writes and enables $OLED_SERVICE.service: UTC + free space to the status OLED
   8. writes and enables $ARTWORK_SERVICE.service: wallpaper + boot splash at graphical.target
   9. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
@@ -179,7 +191,7 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
  11. enables GDM automatic login (unless --no-autologin)
  12. optionally serves the library over its own Wi-Fi access point (--hotspot)
  13. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
- 14. verifies the server answers
+ 14. verifies the server answers (or the NOMAD containers with --library nomad)
 
 The artwork itself runs in $ARTWORK_SERVICE.service at the next boot, once the desktop user's
 session bus exists; to apply it immediately, run ./desktop-artwork.sh from the desktop.
@@ -246,7 +258,7 @@ check_platform() {
 
     log_ok "${PRETTY_NAME:-$ID} ($arch)"
 
-    if $WITH_SERVICE && ! have_systemd; then
+    if $WITH_SERVICE && $HOST_LIBRARY && ! have_systemd; then
         log_warn "systemd not running (container?); the service will be written but not enabled"
     fi
 }
@@ -624,13 +636,13 @@ hw_storage() {
     fi
 
     # the ZIM library wants its own space; report it when it exists
-    if [ -d "$ZIM_DIR" ]; then
+    if [ -d "$LIBRARY_DIR" ]; then
         local zims
-        zims=$(find "$ZIM_DIR" -maxdepth 1 -name '*.zim' | wc -l)
+        zims=$(find "$LIBRARY_DIR" -maxdepth 1 -name '*.zim' | wc -l)
         local zsize
-        zsize=$(du -sh "$ZIM_DIR" 2>/dev/null | awk '{print $1}')
+        zsize=$(du -sh "$LIBRARY_DIR" 2>/dev/null | awk '{print $1}')
         if [ "$zims" -eq 0 ]; then
-            hw_fail "ZIM library $ZIM_DIR is empty (kiwix-serve will not start)"
+            hw_fail "ZIM library $LIBRARY_DIR is empty (the library will have no content)"
         else
             hw_pass "ZIM library: $zims archive(s), $zsize"
         fi
@@ -649,9 +661,17 @@ hw_network() {
 
     # the kiosk only needs loopback, so this is informational
     if ss -ltn 2>/dev/null | grep -q ":$SERVICE_PORT "; then
-        hw_pass "port $SERVICE_PORT listening"
+        if $HOST_LIBRARY; then
+            hw_pass "port $SERVICE_PORT listening"
+        else
+            hw_pass "port $SERVICE_PORT listening (NOMAD admin)"
+        fi
     else
-        hw_note "hint: port $SERVICE_PORT not listening yet (service starts once a ZIM exists)"
+        if $HOST_LIBRARY; then
+            hw_note "hint: port $SERVICE_PORT not listening yet (service starts once a ZIM exists)"
+        else
+            hw_note "hint: NOMAD not started yet (admin :8080, Kiwix :8090)"
+        fi
     fi
 }
 
@@ -822,10 +842,13 @@ rotate_desktop() {
 install_packages() {
     log_stage "Packages"
 
-    local pkgs=(kiwix-tools curl ca-certificates)
+    local pkgs=(curl ca-certificates)
+    $HOST_LIBRARY && pkgs+=(kiwix-tools)
     # the status OLED sender is stdlib-only Python 3, already present on the Pi image
     $WITH_OLED && pkgs+=(python3)
-    $WITH_GUI && pkgs+=(kiwix)
+    if $WITH_GUI && $HOST_LIBRARY; then
+        pkgs+=(kiwix)
+    fi
     # desktop rotation is done with wlr-randr; only needed when a rotation was requested
     if [ -n "$ROTATE" ] && $WITH_GUI; then
         pkgs+=(wlr-randr)
@@ -850,13 +873,18 @@ install_packages() {
     $WITH_UPDATE || run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
     run env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${pkgs[@]}"
 
-    if ! $DRY_RUN; then
+    if $HOST_LIBRARY && ! $DRY_RUN; then
         has_command kiwix-serve || die "kiwix-serve is still missing after install"
         log_ok "$(kiwix-serve --version 2>&1 | head -1)"
     fi
 }
 
 setup_library() {
+    if ! $HOST_LIBRARY; then
+        log_stage "Library"
+        log_info "skipped (--library nomad; NOMAD serves $LIBRARY_DIR)"
+        return 0
+    fi
     log_stage "Library"
     log_info "ZIM directory: $ZIM_DIR"
 
@@ -1453,6 +1481,11 @@ prepare_nomad_images() {
         sed -i -E "s#($NOMAD_REGISTRY/project-nomad)(-sidecar-updater|-disk-collector)?:[^ \"]*#\1\2:$NOMAD_VERSION#g" "$compose"
         log_ok "rewrote image refs in $compose (backup: .ktemata.bak)"
     fi
+
+    if $HOST_LIBRARY && [ -f "$compose" ]; then
+        log_warn "host kiwix-serve uses :8080, the same port as NOMAD's admin;"
+        log_warn "re-run with --library nomad to leave the library to the NOMAD stack"
+    fi
 }
 
 install_kiosk() {
@@ -1552,6 +1585,11 @@ rebuild_library() {
 }
 
 install_service() {
+    if ! $HOST_LIBRARY; then
+        log_stage "Service"
+        log_info "skipped (--library nomad; NOMAD's Kiwix container serves the library)"
+        return 0
+    fi
     $WITH_SERVICE || { log_stage "Service"; log_info "skipped (--no-service)"; return 0; }
     log_stage "Service"
 
@@ -1735,11 +1773,11 @@ install_status_oled() {
         log_warn "$src not found; skipping the sender (run this from the repository checkout)"
         return 0
     fi
-    log_info "storage: $ZIM_DIR${OLED_PORT:+, port $OLED_PORT}"
+    log_info "storage: $LIBRARY_DIR${OLED_PORT:+, port $OLED_PORT}"
 
     if $DRY_RUN; then
         printf '%s  [dry-run]%s install %s -> %s\n' "$C_YELLOW" "$C_OFF" "$src" "$dest"
-        printf '%s  [dry-run]%s write %s (UTC + %s free space)\n' "$C_YELLOW" "$C_OFF" "$unit" "$ZIM_DIR"
+        printf '%s  [dry-run]%s write %s (UTC + %s free space)\n' "$C_YELLOW" "$C_OFF" "$unit" "$LIBRARY_DIR"
         printf '%s  [dry-run]%s systemctl enable --now %s.service\n' "$C_YELLOW" "$C_OFF" "$OLED_SERVICE"
         return 0
     fi
@@ -1759,7 +1797,7 @@ ConditionPathExists=$dest
 [Service]
 Type=simple
 # root only to open the serial device; the script writes nothing but the board's JSON
-ExecStart=/usr/bin/python3 $dest --storage "$ZIM_DIR"$port_arg
+ExecStart=/usr/bin/python3 $dest --storage "$LIBRARY_DIR"$port_arg
 Restart=always
 RestartSec=5
 NoNewPrivileges=true
@@ -1778,7 +1816,7 @@ EOF
     if have_systemd; then
         run systemctl daemon-reload
         run systemctl enable --now "$OLED_SERVICE.service"
-        log_ok "enabled; the OLED keeps time and shows free space in $ZIM_DIR"
+        log_ok "enabled; the OLED keeps time and shows free space in $LIBRARY_DIR"
     else
         log_warn "systemd not running here: start it later with"
         log_warn "  sudo systemctl enable --now $OLED_SERVICE.service"
@@ -1786,6 +1824,11 @@ EOF
 }
 
 download_sample() {
+    if ! $HOST_LIBRARY; then
+        log_stage "Sample ZIM"
+        log_info "skipped (--library nomad; add content in the NOMAD Command Center)"
+        return 0
+    fi
     log_stage "Sample ZIM"
     local dest="$ZIM_DIR/$SAMPLE_ZIM"
 
@@ -1813,42 +1856,51 @@ verify() {
         return 0
     fi
 
-    has_command kiwix-serve || die "kiwix-serve missing"
-    log_ok "$(kiwix-serve --version 2>&1 | head -1)"
+    if $HOST_LIBRARY; then
+        has_command kiwix-serve || die "kiwix-serve missing"
+        log_ok "$(kiwix-serve --version 2>&1 | head -1)"
 
-    # a served ZIM is the only proof the whole chain works; do it without touching the service
-    local zim
-    zim=$(find "$ZIM_DIR" -maxdepth 1 -name '*.zim' -print -quit 2>/dev/null || true)
-    if [ -n "$zim" ]; then
-        local port=$((SERVICE_PORT + 1000))
-        if has_command curl; then
-            if ! $WITH_SERVICE || ! have_systemd; then
-                log_info "starting a throwaway kiwix-serve on :$port"
-                kiwix-serve --port="$port" "$zim" >/dev/null 2>&1 &
-                local pid=$!
-                local ok=false
-                for _ in 1 2 3 4 5 6 7 8 9 10; do
-                    if curl -fsS -o /dev/null "http://127.0.0.1:$port/" 2>/dev/null; then ok=true; break; fi
-                    sleep 0.4
-                done
-                kill "$pid" 2>/dev/null || true
-                wait "$pid" 2>/dev/null || true
-                $ok && log_ok "kiwix-serve answered on :$port" \
-                    || log_warn "kiwix-serve did not answer on :$port"
+        # a served ZIM is the only proof the whole chain works; do it without touching the service
+        local zim
+        zim=$(find "$ZIM_DIR" -maxdepth 1 -name '*.zim' -print -quit 2>/dev/null || true)
+        if [ -n "$zim" ]; then
+            local port=$((SERVICE_PORT + 1000))
+            if has_command curl; then
+                if ! $WITH_SERVICE || ! have_systemd; then
+                    log_info "starting a throwaway kiwix-serve on :$port"
+                    kiwix-serve --port="$port" "$zim" >/dev/null 2>&1 &
+                    local pid=$!
+                    local ok=false
+                    for _ in 1 2 3 4 5 6 7 8 9 10; do
+                        if curl -fsS -o /dev/null "http://127.0.0.1:$port/" 2>/dev/null; then ok=true; break; fi
+                        sleep 0.4
+                    done
+                    kill "$pid" 2>/dev/null || true
+                    wait "$pid" 2>/dev/null || true
+                    $ok && log_ok "kiwix-serve answered on :$port" \
+                        || log_warn "kiwix-serve did not answer on :$port"
+                fi
             fi
+        else
+            log_warn "no ZIM in $ZIM_DIR yet; drop some in and the service will start"
+        fi
+
+        if $WITH_SERVICE && have_systemd; then
+            local state
+            state=$(systemctl is-active "$SERVICE_NAME.service" 2>/dev/null || true)
+            case $state in
+                active) log_ok "$SERVICE_NAME.service active" ;;
+                inactive) log_warn "$SERVICE_NAME.service inactive (add a ZIM to $ZIM_DIR, then systemctl restart $SERVICE_NAME)" ;;
+                *) log_warn "$SERVICE_NAME.service: ${state:-unknown}" ;;
+            esac
         fi
     else
-        log_warn "no ZIM in $ZIM_DIR yet; drop some in and the service will start"
-    fi
-
-    if $WITH_SERVICE && have_systemd; then
-        local state
-        state=$(systemctl is-active "$SERVICE_NAME.service" 2>/dev/null || true)
-        case $state in
-            active) log_ok "$SERVICE_NAME.service active" ;;
-            inactive) log_warn "$SERVICE_NAME.service inactive (add a ZIM to $ZIM_DIR, then systemctl restart $SERVICE_NAME)" ;;
-            *) log_warn "$SERVICE_NAME.service: ${state:-unknown}" ;;
-        esac
+        log_info "library: NOMAD (admin :8080, Kiwix :8090, $LIBRARY_DIR)"
+        if has_command docker && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx nomad_admin; then
+            log_ok "NOMAD admin container running"
+        else
+            log_warn "NOMAD is not running yet; install it with its own installer, then add content in the Command Center"
+        fi
     fi
 
     if $WITH_OLED && have_systemd; then
@@ -1863,15 +1915,24 @@ verify() {
 
 summary() {
     log_stage "Done"
-    printf '  library   %s\n' "$ZIM_DIR"
-    if $WITH_SERVICE; then
-        printf '  service   %s.service (port %s)\n' "$SERVICE_NAME" "$SERVICE_PORT"
-        printf '  check     systemctl status %s\n' "$SERVICE_NAME"
+    if $HOST_LIBRARY; then
+        printf '  library   %s\n' "$ZIM_DIR"
+        if $WITH_SERVICE; then
+            printf '  service   %s.service (port %s)\n' "$SERVICE_NAME" "$SERVICE_PORT"
+            printf '  check     systemctl status %s\n' "$SERVICE_NAME"
+        fi
+    else
+        printf '  library   NOMAD (%s)\n' "$LIBRARY_DIR"
+        printf '  service   NOMAD containers (admin :8080, Kiwix :8090)\n'
     fi
     if $WITH_OLED; then
-        printf '  OLED      %s.service (UTC + %s free space)\n' "$OLED_SERVICE" "$ZIM_DIR"
+        printf '  OLED      %s.service (UTC + %s free space)\n' "$OLED_SERVICE" "$LIBRARY_DIR"
     fi
-    printf '  next      drop *.zim files into %s, then: sudo systemctl restart %s\n' "$ZIM_DIR" "$SERVICE_NAME"
+    if $HOST_LIBRARY; then
+        printf '  next      drop *.zim files into %s, then: sudo systemctl restart %s\n' "$ZIM_DIR" "$SERVICE_NAME"
+    else
+        printf '  next      add content in the NOMAD Command Center (%s)\n' "$LIBRARY_DIR"
+    fi
     if [ -n "$ROTATE" ]; then
         printf '  display   rotated (%s); reboot to apply console rotation\n' "$ROTATE"
     fi
@@ -1891,8 +1952,10 @@ summary() {
     if $WITH_HWTEST; then
         printf '  hardware  %d checks, %d failed, %d warning(s)\n' "$HW_CHECKS" "$HW_FAILS" "$HW_WARNS"
     fi
-    printf '  desktop   kiwix (or "kiwix-desktop" if your release names it that way)\n'
-    printf '  list      %s\n' "${SAMPLE_URL%/*}/"
+    if $HOST_LIBRARY; then
+        printf '  desktop   kiwix (or "kiwix-desktop" if your release names it that way)\n'
+        printf '  list      %s\n' "${SAMPLE_URL%/*}/"
+    fi
 }
 
 # ---------------- arguments ----------------
@@ -1903,6 +1966,7 @@ main() {
             -n|--dry-run)    DRY_RUN=true ;;
             --sample)        WITH_SAMPLE=true ;;
             --no-service)    WITH_SERVICE=false ;;
+            --library)       LIBRARY=${2:?--library takes host or nomad}; shift ;;
             --no-oled)       WITH_OLED=false ;;
             --no-artwork)    WITH_ARTWORK=false ;;
             --oled-port)     OLED_PORT=${2:?--oled-port needs a device}; shift ;;
@@ -1939,6 +2003,18 @@ main() {
     done
 
     case $ZIM_DIR in /*) ;; *) die "--zim-dir must be an absolute path" ;; esac
+    case $LIBRARY in host|nomad) ;; *) die "--library takes host or nomad" ;; esac
+    if [ "$LIBRARY" = nomad ]; then
+        HOST_LIBRARY=false
+        case $NOMAD_STORAGE_PATH in /*) ;; *) die "NOMAD_STORAGE_PATH must be an absolute path" ;; esac
+        LIBRARY_DIR="$NOMAD_STORAGE_PATH/zim"
+    else
+        HOST_LIBRARY=true
+        LIBRARY_DIR=$ZIM_DIR
+    fi
+    if ! $HOST_LIBRARY && [ "$ZIM_DIR" != /srv/kiwix/zim ]; then
+        log_warn "--zim-dir is ignored with --library nomad; NOMAD uses $LIBRARY_DIR"
+    fi
     [ -z "$OLED_PORT" ] || case $OLED_PORT in /*) ;; *) die "--oled-port must be an absolute path" ;; esac
     case $SERVICE_PORT in ''|*[!0-9]*) die "--port must be a number" ;; esac
     # fail fast on a bad --rotate instead of halfway through the install

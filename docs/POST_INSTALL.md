@@ -121,9 +121,9 @@ hciconfig -a 2>/dev/null           # nothing
 | 1 | Platform check: Debian/Ubuntu derivative, warns on untested arch | — |
 | 2 | **Hardware checks** — see below; runs *before* anything is changed | `--no-hwtest`, `--hwtest-only`, `--strict` |
 | 3 | **System update**: `apt-get update` then a non-interactive `full-upgrade` (keeps existing conffiles) | `--no-update` |
-| 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app and `i2c-tools` for the hardware report | `--no-gui` |
-| 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | — |
-| 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service` |
+| 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app and `i2c-tools` for the hardware report | `--no-gui`; `--library nomad` skips the Kiwix packages |
+| 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | `--library nomad` skips this |
+| 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service`; `--library nomad` skips it |
 | 6b | **Write and enable `ktemata-status-oled.service`**: UTC + library free space to the FireBeetle over USB serial — see below | `--no-oled`, `--oled-port DEV` |
 | 6c | **Write and enable `ktemata-artwork.service`**: wallpaper + boot splash at `graphical.target` — see [ARTWORK.md](ARTWORK.md) | `--no-artwork` |
 | 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
@@ -139,6 +139,11 @@ The wallpaper and the early boot splash are installed as a **one-shot unit at `g
 from a text console is what used to hang this script. `ktemata-artwork.service` runs at the next boot and
 waits for the session, or apply it immediately from the desktop with
 [`work/scripts/desktop-artwork.sh`](../work/scripts/desktop-artwork.sh) — see [ARTWORK.md](ARTWORK.md).
+
+With **`--library nomad`** the Kiwix packages, `/srv/kiwix/zim`, `kiwix.service` and `--sample` are
+skipped: the library belongs to the Project NOMAD stack. The OLED sender and the hardware report
+follow the active library directory (`${NOMAD_STORAGE_PATH}/zim` in that mode). See
+[Host Kiwix or NOMAD](#host-kiwix-or-nomad).
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
 not get a Kiwix build that is already superseded.
@@ -199,7 +204,7 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | **I2C devices** | one line naming the build's chips: `0x3c (OLED), 0x42 (UPS INA219), 0x68 (DS3231)` | unknown addresses are only **counted**, not listed; SKIP when nothing replies (the **FireBeetle** is the I2C master). Buses that answer for nearly every address are **ignored** and named |
 | **UPS gauge** | INA219 at 0x42 visible | SKIP on the Pi itself; the gauge is read by the ESP32 |
 | **Pi RTC** | `/dev/rtc0` with a sane epoch | FAIL if the cell is flat/unset; hints at `dtparam=rtc_bbat_vchg=3000000` |
-| **Storage** | ≥ 2 GB free on `/`, and the ZIM library not empty | FAIL on an empty library, because `kiwix-serve` will not start |
+| **Storage** | ≥ 2 GB free on `/`, and the active ZIM library not empty | `$ZIM_DIR` with `--library host`, `${NOMAD_STORAGE_PATH}/zim` with `nomad` |
 | **Status OLED** | the FireBeetle's CH340 found on `/dev/serial/by-id` or `/dev/ttyUSB*` | SKIP when the board is not connected; `ttyACM*` is accepted too (a native-USB ESP32) |
 | **Network** | any interface `up` | SKIP when none — normal, Wi-Fi/LAN are off |
 | **Port** | 8080 listening | informational only. It is not listening on a fresh install because there is no `library.xml` until a ZIM exists |
@@ -406,10 +411,39 @@ What it does on start:
 A missing server is **not** fatal: the browser shows an error page and the log says why, which beats a
 window that never appears.
 
+## Host Kiwix or NOMAD
+
+Choose **one** library front end:
+
+| `--library` | What runs | Library path | Ports |
+|---|---|---|---|
+| `host` (default) | `kiwix.service` on the Pi; `kiwix-tools` + desktop app installed | `/srv/kiwix/zim` | `8080` |
+| `nomad` | nothing on the host; the NOMAD stack serves it | `${NOMAD_STORAGE_PATH}/zim` (default `/opt/project-nomad/storage/zim`) | NOMAD admin `8080`, Kiwix `8090` |
+
+Facts about the NOMAD side (checked against the fork's service seeder): `nomad_admin` publishes
+**:8080**; NOMAD's Kiwix service is the container `ghcr.io/kiwix/kiwix-serve:3.8.1`, publishes
+**:8090**, binds `${NOMAD_STORAGE_PATH}/zim` as `/data`, and serves `/data/kiwix-library.xml` with
+`--monitorLibrary`. The NOMAD **installer** installs only the Command Center; Kiwix is added from
+the Command Center after setup.
+
+Consequences:
+
+- The host `kiwix-serve` must not run together with NOMAD: both want **:8080**. `--library nomad`
+  avoids the clash by not installing the host stack at all.
+- The two ZIM directories are different. `--library nomad` makes the hardware check and the
+  status OLED report `${NOMAD_STORAGE_PATH}/zim`, not `/srv/kiwix/zim`.
+- `--sample` is skipped in `nomad` mode; add content in the NOMAD Command Center.
+- The kiosk still opens `http://localhost:8080`, which is the NOMAD admin in this mode (the
+  Information Library is a page inside it; the raw Kiwix UI is on :8090).
+
+```bash
+sudo ./work/scripts/post-install.sh --library nomad
+```
+
 ## kiwix-serve
 
-The unit runs as the unprivileged `kiwix` user and is hardened (`NoNewPrivileges`, `ProtectSystem=strict`,
-read-only library).
+Only installed with `--library host` (the default). The unit runs as the unprivileged `kiwix` user
+and is hardened (`NoNewPrivileges`, `ProtectSystem=strict`, read-only library).
 
 It serves through a **library XML**, not a glob:
 
@@ -494,6 +528,7 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --sample           download one small ZIM
     --zim-dir DIR      library directory (default /srv/kiwix/zim)
     --port PORT        kiwix-serve port (default 8080)
+    --library WHAT     host (default) or nomad
     --no-service       packages only
     --no-oled          skip the status OLED sender
     --oled-port DEV    FireBeetle serial device (default: autodetect)
@@ -517,8 +552,8 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
 -h, --help / -V, --version
 ```
 
-`ZIM_DIR`, `SERVICE_PORT`, `SERVICE_USER`, `SAMPLE_ZIM`, `ROTATE`, `NO_COLOR`, `OLED_PORT` and
-`CMDLINE_FILE` (test hook) can be set in the environment.
+`ZIM_DIR`, `SERVICE_PORT`, `SERVICE_USER`, `LIBRARY`, `NOMAD_STORAGE_PATH`, `SAMPLE_ZIM`, `ROTATE`,
+`NO_COLOR`, `OLED_PORT` and `CMDLINE_FILE` (test hook) can be set in the environment.
 
 ## Verified
 
@@ -558,6 +593,12 @@ dry run changes nothing, and a default (no-flag) run leaves the file byte-identi
 
 The artwork steps now live in `desktop-artwork.sh`; their verification is recorded in
 [ARTWORK.md](ARTWORK.md), including the container runs that produced the PNG and TGA.
+
+`--library nomad` was exercised function by function: the package list drops `kiwix-tools` and the
+desktop app, the library and service steps report "skipped", the status OLED unit is written with
+`--storage ${NOMAD_STORAGE_PATH}/zim`, and the hardware storage check reads that directory. The
+verify step reports the NOMAD container state instead of probing `kiwix-serve`. It has not been run
+against a live NOMAD install on the Pi.
 
 The Chromium start was reproduced with `HOME` unset in a Debian container: after the fix the profile and
 crash directories are created and Chromium launches (the only remaining complaint there is the container's
