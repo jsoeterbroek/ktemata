@@ -1,0 +1,280 @@
+#!/usr/bin/env python3
+"""Push time and storage to the Ktemata status OLED (FireBeetle 2 ESP32-UE).
+
+The FireBeetle drives the 1.3" I2C OLED and is the I2C master for the UPS gauge,
+DS3231 and BME688. It has no clock of its own unless the DS3231 is fitted, so the
+Pi sends UTC plus the free space of the library filesystem over the USB serial
+link, and reads the board's telemetry back. Protocol: newline-delimited JSON at
+115200 8N1, see firmware/README.md.
+
+  python3 work/scripts/status-oled.py                  # autodetect, sync every hour
+  python3 work/scripts/status-oled.py --port /dev/ttyUSB0
+  python3 work/scripts/status-oled.py --storage /srv/kiwix/zim --verbose
+  python3 work/scripts/status-oled.py --once            # one sync, echo 2 s, exit
+
+Nothing outside the standard library: the port is driven with termios/select, so
+this runs on a stock Raspberry Pi OS without pyserial. It waits for the board when
+the port is absent and reopens it after an unplug, so systemd can keep it running.
+
+Opening the CH340 port pulses the ESP32 reset line on some boards, so expect the
+OLED to restart once per service start; the sender then re-syncs the clock.
+"""
+import argparse
+import glob
+import json
+import os
+import select
+import signal
+import sys
+import termios
+import time
+
+BAUD = termios.B115200
+CH340_IDS = ("1a86", "ch340", "ch341", "wch")
+TIME_PERIOD = 3600        # UTC is re-sent hourly; the ESP32 millis() clock drifts
+STORAGE_PERIOD = 60
+BOOT_BANNER = "Ktemata r2 status OLED"
+MIN_EPOCH = 1_700_000_000  # the firmware ignores anything earlier (Nov 2023)
+
+
+def log(msg):
+    print(msg, flush=True)
+
+
+class Link:
+    """A serial line to the board, with line-oriented JSON in both directions."""
+
+    def __init__(self, path):
+        self.path = path
+        self.fd = os.open(path, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+        try:
+            attrs = termios.tcgetattr(self.fd)
+            attrs[0] = 0                                        # iflag: raw
+            attrs[1] = 0                                        # oflag: raw
+            attrs[2] = termios.CS8 | termios.CREAD | termios.CLOCAL
+            if hasattr(termios, "HUPCL"):
+                attrs[2] &= ~termios.HUPCL                      # no reset on close
+            attrs[3] = 0                                        # lflag: raw
+            attrs[4] = attrs[5] = BAUD
+            attrs[6][termios.VMIN] = 0
+            attrs[6][termios.VTIME] = 0
+            termios.tcsetattr(self.fd, termios.TCSANOW, attrs)
+        except Exception:
+            os.close(self.fd)
+            raise
+        self.buffer = b""
+
+    def close(self):
+        if self.fd is not None:
+            os.close(self.fd)
+            self.fd = None
+
+    def send(self, obj):
+        data = (json.dumps(obj, separators=(",", ":")) + "\n").encode()
+        while data:
+            try:
+                data = data[os.write(self.fd, data):]
+            except BlockingIOError:
+                select.select([], [self.fd], [], 1.0)
+
+    def lines(self):
+        """Read what is available and yield complete lines (without the newline)."""
+        out = []
+        while True:
+            ready, _, _ = select.select([self.fd], [], [], 0)
+            if not ready:
+                break
+            try:
+                chunk = os.read(self.fd, 4096)
+            except BlockingIOError:
+                break
+            if not chunk:                 # hang-up: the cable or the board went away
+                raise OSError("serial hang-up")
+            self.buffer += chunk
+            while b"\n" in self.buffer:
+                line, self.buffer = self.buffer.split(b"\n", 1)
+                out.append(line.rstrip(b"\r").decode("utf-8", "replace"))
+            if len(self.buffer) > 4096:      # a noisy line without a newline: drop it
+                self.buffer = b""
+        return out
+
+
+def find_port():
+    """Prefer the FireBeetle's CH340 on its stable /dev/serial/by-id name."""
+    candidates = []
+    try:
+        for name in sorted(os.listdir("/dev/serial/by-id")):
+            path = os.path.join("/dev/serial/by-id", name)
+            low = name.lower()
+            rank = 0 if any(k in low for k in CH340_IDS) else 1
+            candidates.append((rank, path))
+    except OSError:
+        pass
+    for path in sorted(glob.glob("/dev/ttyUSB*")) + sorted(glob.glob("/dev/ttyACM*")):
+        candidates.append((2, path))
+    if not candidates:
+        return None
+    return sorted(candidates)[0][1]
+
+
+def storage_stats(path, warn):
+    """Free/used of the filesystem holding the library, in df's terms."""
+    if not os.path.isdir(path):
+        warn(f"storage path {path} is missing; not sending storage data")
+        return None
+    st = os.statvfs(path)
+    frsize = st.f_frsize or st.f_bsize
+    free = st.f_bavail * frsize
+    used = (st.f_blocks - st.f_bfree) * frsize
+    total = used + free
+    pct = (100.0 * used / total) if total else 0.0
+    return round(pct, 1), round(free / 1e9, 1)
+
+
+def sync_time(link, warn):
+    epoch = int(time.time())
+    if epoch < MIN_EPOCH:
+        warn(f"clock reads {epoch} (before Nov 2023); the Pi has no time yet, not sending it")
+        return False
+    link.send({"cmd": "time", "epoch": epoch})
+    return True
+
+
+def sync_storage(link, path, warn):
+    stats = storage_stats(path, warn)
+    if stats is None:
+        return False
+    used_pct, free_gb = stats
+    link.send({"cmd": "storage", "used_pct": used_pct, "free_gb": free_gb})
+    return True
+
+
+def run_once(port, path):
+    link = Link(port)
+    log(f"opened {port}")
+    try:
+        sync_time(link, log)
+        sync_storage(link, path, log)
+        deadline = time.monotonic() + 2.0
+        while time.monotonic() < deadline:
+            for line in link.lines():
+                print(line, flush=True)
+            time.sleep(0.1)
+    except OSError as exc:
+        log(f"{port}: {exc}")
+    finally:
+        link.close()
+
+
+def run_forever(port, path, args):
+    explicit = args.port is not None
+    warned = None
+
+    def warn(msg):
+        nonlocal warned
+        if msg != warned:
+            log(msg)
+            warned = msg
+
+    backoff = 0
+    while True:
+        path_now = port if explicit else (find_port() or port)
+        if path_now is None:
+            warn("no serial port; waiting for the FireBeetle")
+            time.sleep(2)
+            continue
+        try:
+            link = Link(path_now)
+        except OSError as exc:
+            warn(f"cannot open {path_now}: {exc}; retrying")
+            time.sleep(min(2 ** backoff, 30))
+            backoff += 1
+            continue
+        backoff = 0
+        log(f"opened {path_now}")
+        next_time = 0.0          # send immediately after opening
+        next_storage = 0.0
+        last_alerts = None
+        try:
+            while True:
+                try:
+                    restart = False
+                    for line in link.lines():
+                        if not line:
+                            continue
+                        if args.verbose:
+                            log(line)
+                        try:
+                            msg = json.loads(line)
+                        except json.JSONDecodeError:
+                            log(f"unparsed line: {line}")
+                            continue
+                        kind = msg.get("type")
+                        if kind == "log" and msg.get("msg") == BOOT_BANNER:
+                            restart = True     # the board rebooted: clock and storage are cold
+                        elif kind == "error":
+                            detail = f"{msg.get('msg')} {msg.get('detail', '')}".rstrip()
+                            log(f"board rejected a command: {detail}")
+                        alerts = msg.get("alerts")
+                        if kind == "telemetry" and alerts != last_alerts:
+                            last_alerts = alerts
+                            if alerts:
+                                log("alerts "
+                                    f"battery={alerts[0]} environment={alerts[1]} "
+                                    f"storage={alerts[2]}")
+
+                    now = time.monotonic()
+                    if restart:
+                        log("board restarted; re-sending time and storage")
+                        next_time = next_storage = 0.0
+                    if now >= next_time:
+                        next_time = now + (args.time_period if sync_time(link, warn) else 10.0)
+                    if now >= next_storage:
+                        sync_storage(link, path, warn)
+                        next_storage = now + args.storage_period
+                except OSError as exc:
+                    warn(f"{path_now}: {exc}; reopening")
+                    break
+                time.sleep(0.2)
+        finally:
+            link.close()
+        time.sleep(1.0)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Send UTC and free space to the Ktemata status OLED over USB serial.")
+    parser.add_argument("--port", help="serial device; default: autodetect the CH340")
+    parser.add_argument("--storage", default=os.environ.get("ZIM_DIR", "/srv/kiwix/zim"),
+                        help="filesystem to report (default: /srv/kiwix/zim)")
+    parser.add_argument("--time-period", type=float, default=TIME_PERIOD,
+                        help=f"seconds between UTC syncs (default: {TIME_PERIOD})")
+    parser.add_argument("--storage-period", type=float, default=STORAGE_PERIOD,
+                        help=f"seconds between storage updates (default: {STORAGE_PERIOD})")
+    parser.add_argument("--once", action="store_true",
+                        help="sync once, echo the board's lines for 2 s, exit")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="log every line from the board")
+    args = parser.parse_args()
+
+    if args.port is None:
+        args.port = os.environ.get("KTEMATA_OLED_PORT") or None
+    if args.once:
+        port = args.port or find_port()
+        if port is None:
+            sys.exit("no serial port found")
+        try:
+            run_once(port, args.storage)
+        except OSError as exc:
+            sys.exit(f"cannot open {port}: {exc}")
+        return
+    # systemd stops the unit with SIGTERM; unwind so the port is closed without a hang-up
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+    try:
+        run_forever(args.port, args.storage, args)
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    main()

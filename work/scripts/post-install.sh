@@ -3,7 +3,8 @@
 #
 # Installs Kiwix (the offline library reader the device is built around), sets up the ZIM
 # library directory, and enables kiwix-serve as a systemd service so the library is reachable
-# from a browser on the device or over USB tethering.
+# from a browser on the device or over USB tethering. Also enables the status OLED sender, which
+# pushes UTC and the library free space to the FireBeetle over USB serial.
 #
 #   sudo ./work/scripts/post-install.sh                 # update, install, enable the service
 #   sudo ./work/scripts/post-install.sh --sample        # also fetch one small ZIM to test with
@@ -43,6 +44,12 @@ ASSUME_YES=false
 WITH_SAMPLE=false
 WITH_SERVICE=true
 WITH_GUI=true
+# The status OLED (FireBeetle 2 + 1.3" panel) is part of the build: the Pi pushes UTC and the
+# library free space over USB serial. The sender waits for the board, so the unit is harmless
+# on a box without one; --no-oled skips it.
+WITH_OLED=true
+OLED_PORT=${OLED_PORT:-}       # empty: autodetect the CH340
+OLED_SERVICE=ktemata-status-oled
 WITH_UPDATE=true
 WITH_KIOSK=false
 WITH_HWTEST=true
@@ -116,6 +123,8 @@ ${C_BOLD}OPTIONS${C_OFF}
       --zim-dir DIR      Library directory (default: $ZIM_DIR).
       --port PORT        kiwix-serve port (default: $SERVICE_PORT).
       --no-service       Install the packages only; do not create/enable the service.
+      --no-oled          Do not install the status OLED sender (FireBeetle over USB serial).
+      --oled-port DEV    Serial device for the FireBeetle (default: autodetect the CH340).
       --no-gui           Skip the desktop Kiwix app (headless / server installs).
       --no-update        Skip the system upgrade (apt full-upgrade).
       --rotate WHAT      Rotate the display: normal | left | right | inverted,
@@ -163,7 +172,7 @@ ${C_BOLD}OPTIONS${C_OFF}
   -V, --version          Print the version.
 
 ${C_BOLD}ENVIRONMENT${C_OFF}
-  ZIM_DIR, SERVICE_PORT, SERVICE_USER, NO_COLOR,
+  ZIM_DIR, SERVICE_PORT, SERVICE_USER, NO_COLOR, OLED_PORT,
   HOTSPOT_SSID, HOTSPOT_PASS, HOTSPOT_ADDR, HOTSPOT_CIDR, HOTSPOT_BAND
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
@@ -173,14 +182,15 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   4. installs kiwix-tools (+ kiwix desktop app unless --no-gui)
   5. creates the ZIM library directory
   6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)
-  7. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
-  8. optionally installs the kiosk autostart (--kiosk)
-  9. enables GDM automatic login (unless --no-autologin)
- 10. sets the Ktemata logo as the desktop background (unless --no-wallpaper)
- 11. replaces the early boot splash with the logo (unless --no-splash)
- 12. optionally serves the library over its own Wi-Fi access point (--hotspot)
- 13. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
- 14. verifies the server answers
+  7. writes and enables $OLED_SERVICE.service: UTC + free space to the status OLED
+  8. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
+  9. optionally installs the kiosk autostart (--kiosk)
+ 10. enables GDM automatic login (unless --no-autologin)
+ 11. sets the Ktemata logo as the desktop background (unless --no-wallpaper)
+ 12. replaces the early boot splash with the logo (unless --no-splash)
+ 13. optionally serves the library over its own Wi-Fi access point (--hotspot)
+ 14. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
+ 15. verifies the server answers
 EOF
 }
 
@@ -660,6 +670,30 @@ hw_audio() {
     fi
 }
 
+hw_oled_link() {
+    # The FireBeetle 2's CH340 enumerates as ttyUSB* and has no serial number, so report the
+    # stable by-id name when the kernel gives one.
+    local candidate port=""
+    for candidate in /dev/serial/by-id/*; do
+        [ -e "$candidate" ] || continue
+        case ${candidate,,} in
+            *1a86*|*ch34*|*wch*) port=$candidate; break ;;
+        esac
+    done
+    if [ -z "$port" ]; then
+        for candidate in /dev/ttyUSB*; do
+            [ -e "$candidate" ] && { port=$candidate; break; }
+        done
+    fi
+    if [ -n "$port" ]; then
+        hw_pass "status OLED serial: $port (FireBeetle CH340)"
+    elif [ -e /dev/ttyACM0 ]; then
+        hw_pass "status OLED serial: /dev/ttyACM0"
+    else
+        hw_skip "status OLED serial: no FireBeetle on USB (no /dev/ttyUSB*)"
+    fi
+}
+
 run_hw_tests() {
     if ! $WITH_HWTEST; then
         log_stage "Hardware"
@@ -676,6 +710,7 @@ run_hw_tests() {
     hw_storage /
     hw_network
     hw_audio
+    hw_oled_link
 
     printf '\n  %d checks, %d failed, %d warning(s)\n' "$HW_CHECKS" "$HW_FAILS" "$HW_WARNS"
     if [ "$HW_WARNS" -gt 0 ] && ! $HW_WARNS_NOTE; then
@@ -796,6 +831,8 @@ install_packages() {
     log_stage "Packages"
 
     local pkgs=(kiwix-tools curl ca-certificates)
+    # the status OLED sender is stdlib-only Python 3, already present on the Pi image
+    $WITH_OLED && pkgs+=(python3)
     $WITH_GUI && pkgs+=(kiwix)
     # desktop rotation is done with wlr-randr; only needed when a rotation was requested
     if [ -n "$ROTATE" ] && $WITH_GUI; then
@@ -1891,6 +1928,71 @@ HELPER
     fi
 }
 
+install_status_oled() {
+    $WITH_OLED || { log_stage "Status OLED"; log_info "skipped (--no-oled)"; return 0; }
+    log_stage "Status OLED"
+
+    local dir src dest unit port_arg=""
+    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    src="$dir/status-oled.py"
+    dest=/usr/local/lib/ktemata/status-oled.py
+    unit="/etc/systemd/system/$OLED_SERVICE.service"
+    [ -n "$OLED_PORT" ] && port_arg=" --port $OLED_PORT"
+
+    if [ ! -r "$src" ]; then
+        log_warn "$src not found; skipping the sender (run this from the repository checkout)"
+        return 0
+    fi
+    log_info "storage: $ZIM_DIR${OLED_PORT:+, port $OLED_PORT}"
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s install %s -> %s\n' "$C_YELLOW" "$C_OFF" "$src" "$dest"
+        printf '%s  [dry-run]%s write %s (UTC + %s free space)\n' "$C_YELLOW" "$C_OFF" "$unit" "$ZIM_DIR"
+        printf '%s  [dry-run]%s systemctl enable --now %s.service\n' "$C_YELLOW" "$C_OFF" "$OLED_SERVICE"
+        return 0
+    fi
+
+    install -d -m 0755 /usr/local/lib/ktemata
+    install -m 0755 "$src" "$dest"
+    log_ok "$dest"
+
+    cat >"$unit" <<EOF
+[Unit]
+Description=Ktemata status OLED sender (UTC and free space over USB serial)
+Documentation=file:$dest
+# The sender autodetects the port and retries, so there is no device dependency: the unit
+# survives replugging the FireBeetle and a boot that enumerates the CH340 late.
+ConditionPathExists=$dest
+
+[Service]
+Type=simple
+# root only to open the serial device; the script writes nothing but the board's JSON
+ExecStart=/usr/bin/python3 $dest --storage "$ZIM_DIR"$port_arg
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    chmod 0644 "$unit"
+    log_ok "unit written"
+
+    if have_systemd; then
+        run systemctl daemon-reload
+        run systemctl enable --now "$OLED_SERVICE.service"
+        log_ok "enabled; the OLED keeps time and shows free space in $ZIM_DIR"
+    else
+        log_warn "systemd not running here: start it later with"
+        log_warn "  sudo systemctl enable --now $OLED_SERVICE.service"
+    fi
+}
+
 download_sample() {
     log_stage "Sample ZIM"
     local dest="$ZIM_DIR/$SAMPLE_ZIM"
@@ -1956,6 +2058,15 @@ verify() {
             *) log_warn "$SERVICE_NAME.service: ${state:-unknown}" ;;
         esac
     fi
+
+    if $WITH_OLED && have_systemd; then
+        local oled_state
+        oled_state=$(systemctl is-active "$OLED_SERVICE.service" 2>/dev/null || true)
+        case $oled_state in
+            active) log_ok "$OLED_SERVICE.service active" ;;
+            *) log_warn "$OLED_SERVICE.service: ${oled_state:-unknown} (journalctl -u $OLED_SERVICE)" ;;
+        esac
+    fi
 }
 
 summary() {
@@ -1964,6 +2075,9 @@ summary() {
     if $WITH_SERVICE; then
         printf '  service   %s.service (port %s)\n' "$SERVICE_NAME" "$SERVICE_PORT"
         printf '  check     systemctl status %s\n' "$SERVICE_NAME"
+    fi
+    if $WITH_OLED; then
+        printf '  OLED      %s.service (UTC + %s free space)\n' "$OLED_SERVICE" "$ZIM_DIR"
     fi
     printf '  next      drop *.zim files into %s, then: sudo systemctl restart %s\n' "$ZIM_DIR" "$SERVICE_NAME"
     if [ -n "$ROTATE" ]; then
@@ -2001,6 +2115,8 @@ main() {
             -n|--dry-run)    DRY_RUN=true ;;
             --sample)        WITH_SAMPLE=true ;;
             --no-service)    WITH_SERVICE=false ;;
+            --no-oled)       WITH_OLED=false ;;
+            --oled-port)     OLED_PORT=${2:?--oled-port needs a device}; shift ;;
             --no-gui)        WITH_GUI=false ;;
             --no-update)     WITH_UPDATE=false ;;
             --kiosk)         WITH_KIOSK=true ;;
@@ -2045,6 +2161,7 @@ main() {
     done
 
     case $ZIM_DIR in /*) ;; *) die "--zim-dir must be an absolute path" ;; esac
+    [ -z "$OLED_PORT" ] || case $OLED_PORT in /*) ;; *) die "--oled-port must be an absolute path" ;; esac
     case $SERVICE_PORT in ''|*[!0-9]*) die "--port must be a number" ;; esac
     # fail fast on a bad --rotate instead of halfway through the install
     [ -z "$ROTATE" ] || rotation_degrees "$ROTATE" >/dev/null
@@ -2085,6 +2202,7 @@ main() {
     install_packages
     setup_library
     install_service
+    install_status_oled
     setup_rotation
     install_autologin
     install_wallpaper

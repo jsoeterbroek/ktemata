@@ -124,6 +124,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app; `librsvg2-bin` + `imagemagick` for the artwork, `i2c-tools` for the hardware report | `--no-gui`, `--no-splash`/`--no-wallpaper` |
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | — |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service` |
+| 6b | **Write and enable `ktemata-status-oled.service`**: UTC + library free space to the FireBeetle over USB serial — see below | `--no-oled`, `--oled-port DEV` |
 | 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
 | 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
 | 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
@@ -193,6 +194,7 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | **UPS gauge** | INA219 at 0x42 visible | SKIP on the Pi itself; the gauge is read by the ESP32 |
 | **Pi RTC** | `/dev/rtc0` with a sane epoch | FAIL if the cell is flat/unset; hints at `dtparam=rtc_bbat_vchg=3000000` |
 | **Storage** | ≥ 2 GB free on `/`, and the ZIM library not empty | FAIL on an empty library, because `kiwix-serve` will not start |
+| **Status OLED** | the FireBeetle's CH340 found on `/dev/serial/by-id` or `/dev/ttyUSB*` | SKIP when the board is not connected; `ttyACM*` is accepted too (a native-USB ESP32) |
 | **Network** | any interface `up` | SKIP when none — normal, Wi-Fi/LAN are off |
 | **Port** | 8080 listening | informational only. It is not listening on a fresh install because there is no `library.xml` until a ZIM exists |
 
@@ -478,6 +480,35 @@ curl -sI http://localhost:8080/ | head -1
 
 Override the location with `--zim-dir` and the port with `--port`; both are also honoured in the unit.
 
+## Status OLED sender
+
+The FireBeetle 2 in `firmware/` drives the 1.3" panel and has no clock of its own unless a
+DS3231 is fitted, so the Pi pushes UTC and the free space of the library filesystem over the
+USB serial link. This step installs `work/scripts/status-oled.py` to `/usr/local/lib/ktemata/`
+and enables `ktemata-status-oled.service`. It runs as root only to open the serial device and
+writes nothing but the board's JSON.
+
+- Autodetects the CH340 on its stable `/dev/serial/by-id` name, else `ttyUSB*` / `ttyACM*`;
+  `--oled-port` pins the device (the CH340 has no serial number, so with several attached the
+  autodetect can only take the first).
+- Sends `{"cmd":"time","epoch":…}` at start and hourly, and again whenever the board announces
+  a boot. The epoch is **UTC**; the firmware applies `TIMEZONE` when it renders.
+- Sends `{"cmd":"storage","used_pct":…,"free_gb":…}` at start and every 60 s, computed with
+  `df` semantics (`f_bavail`) for `--zim-dir`.
+- Reads the board's telemetry back and logs alert transitions and rejected commands to the
+  journal.
+- Retries when the board is absent or unplugged, so the unit is harmless on a box without one.
+  `--no-oled` skips the step entirely.
+
+```bash
+systemctl status ktemata-status-oled
+journalctl -u ktemata-status-oled -f
+python3 work/scripts/status-oled.py --once -v     # one manual sync, echo the board's lines
+```
+
+Opening a CH340 port can pulse the ESP32 reset line; expect the OLED to restart once per service
+start, after which the sender sees the boot banner and re-syncs.
+
 ## Where the ZIMs come from
 
 <https://download.kiwix.org/zim/> — the same library the device itself carries (see [`../zim/zim.md`](../zim/zim.md)).
@@ -495,6 +526,8 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --zim-dir DIR      library directory (default /srv/kiwix/zim)
     --port PORT        kiwix-serve port (default 8080)
     --no-service       packages only
+    --no-oled          skip the status OLED sender
+    --oled-port DEV    FireBeetle serial device (default: autodetect)
     --no-gui           skip the desktop app
     --no-update        skip the system upgrade
     --rotate WHAT      normal | left | right | inverted (or 0|90|180|270 clockwise)
@@ -518,8 +551,8 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
 -h, --help / -V, --version
 ```
 
-`ZIM_DIR`, `SERVICE_PORT`, `SERVICE_USER`, `SAMPLE_ZIM`, `ROTATE`, `NO_COLOR` and `CMDLINE_FILE` (test hook)
-can be set in the environment.
+`ZIM_DIR`, `SERVICE_PORT`, `SERVICE_USER`, `SAMPLE_ZIM`, `ROTATE`, `NO_COLOR`, `OLED_PORT` and
+`CMDLINE_FILE` (test hook) can be set in the environment.
 
 ## Verified
 
@@ -578,6 +611,12 @@ missing `chromium-sandbox`, which is unrelated).
 The kiosk path was tested the same way: `/usr/local/bin/kiwix-kiosk` installed, the autostart entry written
 with `Exec=/usr/local/bin/kiwix-kiosk --transform 270`, and the launcher's `--selftest` returning 0 against a
 live server and 1 without one.
+
+The status OLED sender was exercised against a pseudo-terminal standing in for the board: the first sync sends
+`time` with a sane UTC epoch and `storage` with `df`-style figures, the boot banner and the periodic timers
+trigger re-syncs, a malformed line is logged and the loop continues, and SIGTERM stops it with status 0. The
+generated unit was inspected with and without `--oled-port` and with a space in the ZIM path. The serial check
+reports SKIP on a host with no FireBeetle. **Neither has run against the real board yet.**
 
 **On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
 holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no

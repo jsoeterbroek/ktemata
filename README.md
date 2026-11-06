@@ -173,9 +173,9 @@ adds PlatformIO, its `intelhex` runtime dependency and ruff. The export/render h
 
 `firmware/` is a PlatformIO project for the DFRobot FireBeetle 2 ESP32-UE
 (N16R2, DFR1140). It drives the 1.3" 4-pin I2C OLED (SH1106/SSD1306), reads the
-BME688, DS3231 and Waveshare UPS HAT (E) over I2C, and sends telemetry to the
-Pi over USB serial. See `firmware/README.md` for the pinout, serial protocol
-and current limitations.
+BME688, DS3231 and Waveshare UPS HAT (B) (INA219 at `0x42`) over I2C, and
+sends telemetry to the Pi over USB serial. See `firmware/README.md` for the
+pinout, serial protocol and current limitations.
 
 ```bash
 source .venv/bin/activate
@@ -188,15 +188,19 @@ pio device monitor      # 115200 baud
 **Bring-up status:** the FireBeetle and 1.3" 4-pin SH1106 OLED are **working**
 at `0x3C`; the display shows time/date and `BAT --` until the UPS HAT is
 connected. I2C is SDA **GPIO21** / SCL **GPIO22** — the pins marked `21/SDA`
-and `22/SCL`. Still to wire: button GPIO4, DS3231 `0x68`, BME688
-`0x76/0x77`, UPS HAT (E) `0x2D`, and the PBS-33B button GPIO4→GND. The Pi-side serial sender for time/storage is
-not written yet. Idle blanking is currently disabled (`-DSCREEN_OFF_MS=0UL`)
+and `22/SCL`. Still to wire: DS3231 `0x68`, BME688 `0x76/0x77`, UPS HAT (B)
+`0x42`, and the PBS-33B button GPIO4→GND. The Pi-side sender for time and
+storage is `work/scripts/status-oled.py`, installed as
+`ktemata-status-oled.service` by `work/scripts/post-install.sh`; it pushes UTC
+at start and hourly and the library free space every 60 s, and re-syncs after
+the board reboots. Idle blanking is currently disabled (`-DSCREEN_OFF_MS=0UL`)
 because the button is not fitted; the earlier blank screen was the OLED
 display-off command, not an ESP32 sleep. Set it to `60000UL` when the button
 works.
 
-Without a DS3231 the clock resets on power loss; set it with (serial monitor
-stopped):
+Without a DS3231 the clock resets on power loss; the service corrects it within
+seconds of the Pi booting or the board restarting. For a one-off with the service
+stopped (or the serial monitor closed):
 
 ```bash
 printf '{"cmd":"time","epoch":%s}\n' "$(date +%s)" > /dev/ttyUSB0

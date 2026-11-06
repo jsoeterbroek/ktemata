@@ -44,15 +44,15 @@ time/date screen renders correctly. The clock uses the `TIMEZONE` setting
 | UPS HAT (B) | not fitted; the battery line shows `BAT --` |
 | Panel button (PBS-33B) | selected/ordered, not fitted; screens can still be changed with `{"cmd":"screen","index":N}` |
 | OLED idle blanking | disabled in the current build (`-DSCREEN_OFF_MS=0UL`); enable `60000UL` once the button is wired |
-| Pi → ESP storage data | firmware ready; the Pi-side sender is not implemented yet |
+| Pi → ESP time and storage | **sender written**: `work/scripts/status-oled.py`, installed and enabled as `ktemata-status-oled.service` by `work/scripts/post-install.sh`; see "Pi-side sender" below |
 
 Suggested bring-up order:
 
-1. Wire the PBS-33B from GPIO4 to GND, check short/long press, then set `-DSCREEN_OFF_MS=60000UL` and reflash to re-enable idle blanking.
-2. Fit the DS3231 and set the time once from the Pi.
-3. Fit the BME688 and check the environment screen — r4 only; r5 has no sensor.
-4. Connect the UPS HAT (B) and check pack voltage/current/percent (derived from the 2S pack voltage).
-5. Add the Pi-side serial sender for time and storage.
+1. Plug the FireBeetle into a Pi USB-A port and run `work/scripts/post-install.sh` (or copy the sender and its unit); the OLED clock and storage screen then update on their own.
+2. Wire the PBS-33B from GPIO4 to GND, check short/long press, then set `-DSCREEN_OFF_MS=60000UL` and reflash to re-enable idle blanking.
+3. Fit the DS3231 and set the time once from the Pi; the service then keeps it corrected hourly.
+4. Fit the BME688 and check the environment screen — r4 only; r5 has no sensor.
+5. Connect the UPS HAT (B) and check pack voltage/current/percent (derived from the 2S pack voltage).
 
 ## Why a custom board definition
 
@@ -191,13 +191,6 @@ POSIX TZ rule. Default `TIMEZONE` is `CET-1CEST,M3.5.0,M10.5.0/3` (Europe/Amster
 `include/config.h` for another zone.
 `screen` index: 0 time, 1 battery, 2 environment, 3 storage.
 
-Without a DS3231 the clock is lost on reset. Set it over USB (stop the serial
-monitor first):
-
-```bash
-printf '{"cmd":"time","epoch":%s}\n' "$(date +%s)" > /dev/ttyUSB0
-```
-
 ESP32 → Pi every 10 s (and after `status`):
 
 ```json
@@ -214,6 +207,32 @@ ESP32 → Pi every 10 s (and after `status`):
 
 `alerts` is `[battery, environment, storage]` with 0 = ok, 1 = warning,
 2 = critical. Values that are not available are serialized as `null`.
+
+Without a DS3231 the clock is lost on reset. The Pi-side sender
+(`work/scripts/status-oled.py`) covers that: it pushes UTC at start and hourly (and again when
+the board announces a boot), so a reset is followed by a re-sync within seconds. It also sends
+the storage figures at start and every 60 s, reads the telemetry back, and logs alert changes.
+`work/scripts/post-install.sh` installs it to `/usr/local/lib/ktemata/status-oled.py` and
+enables `ktemata-status-oled.service`; `--no-oled` skips it and `--oled-port` pins the device.
+
+### Pi-side sender
+
+```bash
+python3 work/scripts/status-oled.py                 # autodetect, sync every hour
+python3 work/scripts/status-oled.py --once -v      # one sync, echo what the board says
+python3 work/scripts/status-oled.py --storage /srv/kiwix/zim --port /dev/ttyUSB0
+```
+
+The port is driven with `termios`, so no `pyserial` is needed. It prefers the CH340's stable
+`/dev/serial/by-id` name, then `ttyUSB*`, then `ttyACM*`; when the board is unplugged it keeps
+retrying instead of exiting. The unit therefore needs no device dependency. `used_pct` and
+`free_gb` use `df` semantics (`f_bavail`), so the number matches what the Pi reports.
+
+The manual one-liner still works for a one-off (stop the service or the serial monitor first):
+
+```bash
+printf '{"cmd":"time","epoch":%s}\n' "$(date +%s)" > /dev/ttyUSB0
+```
 
 ## Known limitations / next steps
 
