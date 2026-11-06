@@ -29,8 +29,13 @@ OWNER=${SUDO_USER:-}
 WALLPAPER_SRC=${WALLPAPER_SRC:-}
 SPLASH_SRC=${SPLASH_SRC:-}
 SPLASH_ORIENTATION=${SPLASH_ORIENTATION:-landscape}
+WAIT=0
 
 SHARE=/usr/local/share/ktemata
+# Written after a run; the graphical.target unit is conditioned on it, so it applies the
+# artwork once rather than re-rendering the TGA on every boot. Manual runs ignore it;
+# delete it to let the unit run again.
+DONE_MARKER="$SHARE/.artwork-applied"
 # Every external call is bounded: a dead session bus or a stalled initramfs must not hang
 # the operator, which is exactly why this step left post-install.
 TIMEOUT=30
@@ -49,6 +54,16 @@ log_stage() { printf '\n%s%s==>%s %s%s\n' "$C_BOLD" "$C_BLUE" "$C_OFF" "$*" "$C_
 die()       { log_warn "$*"; exit 1; }
 
 has_command() { command -v "$1" >/dev/null 2>&1; }
+
+# Assets live beside the checkout (docs/ or work/scripts/) during development and in
+# $SHARE/src on the installed system; look in both.
+find_asset() {
+    local name=$1 candidate
+    for candidate in "$SCRIPT_DIR/../../docs/$name" "$SCRIPT_DIR/$name" "$SHARE/src/$name"; do
+        [ -r "$candidate" ] && { printf '%s' "$candidate"; return 0; }
+    done
+    return 1
+}
 
 usage() {
     cat <<EOF
@@ -71,6 +86,8 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-splash        Leave the boot splash alone.
       --splash-orientation WHAT
                          landscape (default) or portrait (608x1080).
+      --wait SECONDS     Wait up to this long for the desktop user's session bus before
+                         applying the wallpaper (the installed unit uses 120).
   -h, --help             This message.
   -V, --version          Print the version.
 
@@ -81,9 +98,11 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
      it as the firmware logo (configure-splash, /lib/firmware/logo.tga, cmdline.txt)
   3. installs librsvg2-bin/imagemagick/file when missing (apt, root only)
 
-The splash takes effect on the next boot. The wallpaper needs the desktop session: if the
-user has no session bus, this script writes the configuration and says so instead of
-blocking.
+post-install.sh installs this script as /usr/local/lib/ktemata/desktop-artwork.sh and enables
+ktemata-artwork.service at graphical.target (runlevel 5); the unit passes --wait and is
+conditioned on /usr/local/share/ktemata/.artwork-applied, so it runs once. The splash takes
+effect on the next boot. The wallpaper needs the desktop session: if the user has no session
+bus, the configuration is still written and the script says so instead of blocking.
 EOF
 }
 
@@ -96,7 +115,8 @@ run() {
     "$@"
 }
 
-ensure_tools() {
+# Print the apt packages still needed for the enabled steps; return 1 when any is missing.
+missing_tools() {
     local missing=()
     if $WITH_WALLPAPER || $WITH_SPLASH; then
         has_command rsvg-convert || missing+=(librsvg2-bin)
@@ -106,18 +126,30 @@ ensure_tools() {
         has_command file || missing+=(file)
     fi
     [ ${#missing[@]} -eq 0 ] && return 0
+    printf '%s' "${missing[*]}"
+    return 1
+}
+
+ensure_tools() {
+    local missing=""
+    missing=$(missing_tools) || true
+    [ -z "$missing" ] && return 0
 
     if $DRY_RUN; then
-        printf '%s  [dry-run]%s apt-get install %s\n' "$C_YELLOW" "$C_OFF" "${missing[*]}"
+        printf '%s  [dry-run]%s apt-get install %s\n' "$C_YELLOW" "$C_OFF" "$missing"
         return 0
     fi
     if ! has_command apt-get; then
-        log_warn "missing ${missing[*]}; install them to render the artwork"
-        return 0
+        log_warn "missing $missing; install them to render the artwork"
+        return 1
     fi
-    log_info "installing ${missing[*]}"
-    DEBIAN_FRONTEND=noninteractive timeout 300 apt-get install -y --no-install-recommends \
-        "${missing[@]}" || log_warn "could not install ${missing[*]}; continuing"
+    log_info "installing $missing"
+    DEBIAN_FRONTEND=noninteractive timeout 300 apt-get install -y --no-install-recommends $missing \
+        || log_warn "could not install $missing"
+    missing=$(missing_tools) || true
+    [ -z "$missing" ] && return 0
+    log_warn "still missing: $missing"
+    return 1
 }
 
 # Run a command in the desktop user's session, with a bounded wait. sudo resets the
@@ -139,12 +171,30 @@ have_session_bus() {
     [ -S "/run/user/$uid/bus" ] || [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]
 }
 
+# At graphical.target the display manager is up but autologin has not necessarily finished,
+# so the user's bus appears a little later. Poll it; the unit passes --wait 120.
+wait_for_bus() {
+    [ "$WAIT" -gt 0 ] || return 0
+    local uid deadline
+    uid=$(id -u "$OWNER")
+    deadline=$((SECONDS + WAIT))
+    log_info "waiting up to ${WAIT}s for $OWNER's session bus"
+    while ! have_session_bus; do
+        if [ "$SECONDS" -ge "$deadline" ]; then
+            log_warn "no session bus after ${WAIT}s; the config applies at the next login"
+            return 1
+        fi
+        sleep 2
+    done
+    return 0
+}
+
 # ---------------- wallpaper ----------------
 install_wallpaper() {
     $WITH_WALLPAPER || { log_stage "Wallpaper"; log_info "skipped (--no-wallpaper)"; return 0; }
     log_stage "Wallpaper"
 
-    local home user_img
+    local home user_img svg png
     home=$(getent passwd "$OWNER" | cut -d: -f6)
     [ -d "$home" ] || die "no home directory for $OWNER"
 
@@ -157,21 +207,24 @@ install_wallpaper() {
         [ -r "$WALLPAPER_SRC" ] || die "cannot read --wallpaper $WALLPAPER_SRC"
         install -m 0644 "$WALLPAPER_SRC" "$SHARE/ktemata-wallpaper.png"
         log_ok "using $WALLPAPER_SRC"
-    elif has_command rsvg-convert && [ -r "$SCRIPT_DIR/../../docs/ktemata-wallpaper.svg" ]; then
+    elif svg=$(find_asset ktemata-wallpaper.svg) && has_command rsvg-convert; then
         # render at 1920x1080: larger than any panel we support, scaled to fit anyway
         timeout "$TIMEOUT" rsvg-convert -w 1920 -h 1080 \
-            "$SCRIPT_DIR/../../docs/ktemata-wallpaper.svg" -o "$SHARE/ktemata-wallpaper.png"
+            "$svg" -o "$SHARE/ktemata-wallpaper.png"
         chmod 0644 "$SHARE/ktemata-wallpaper.png"
-        log_ok "rendered from docs/ktemata-wallpaper.svg"
-    elif [ -r "$SCRIPT_DIR/ktemata-wallpaper.png" ]; then
-        install -m 0644 "$SCRIPT_DIR/ktemata-wallpaper.png" "$SHARE/ktemata-wallpaper.png"
+        log_ok "rendered from $(basename "$svg")"
+    elif png=$(find_asset ktemata-wallpaper.png); then
+        install -m 0644 "$png" "$SHARE/ktemata-wallpaper.png"
         log_ok "installed the pre-rendered PNG"
     else
-        log_warn "no wallpaper source (need rsvg-convert, or --wallpaper FILE); skipping"
-        return 0
+        log_warn "no wallpaper source (need rsvg-convert, or --wallpaper FILE)"
+        return 1
     fi
 
     local img="$SHARE/ktemata-wallpaper.png"
+    if [ "$WAIT" -gt 0 ] && ! have_session_bus; then
+        wait_for_bus || true
+    fi
     if $DRY_RUN; then
         printf '%s  [dry-run]%s install %s -> %s\n' "$C_YELLOW" "$C_OFF" "$img" "$user_img"
     else
@@ -301,9 +354,9 @@ install_splash() {
         elif has_command convert; then im=convert
         fi
         if [ -z "$im" ]; then
-            log_warn "need ImageMagick to build the TGA; skipping splash"
+            log_warn "need ImageMagick to build the TGA"
             log_info "  apt install imagemagick librsvg2-bin"
-            return 0
+            return 1
         fi
         local src
         # configure-splash rejects anything larger than 1920x1080 in EITHER axis, so a
@@ -316,23 +369,26 @@ install_splash() {
         # There are two source SVGs rather than one rotated at build time: rotating the
         # landscape artwork leaves the text sideways. The portrait file lays the same content
         # out upright for a 9:16 panel.
-        local svg="$SCRIPT_DIR/../../docs/ktemata-splash.svg"
-        [ "$SPLASH_ORIENTATION" = portrait ] && svg="$SCRIPT_DIR/../../docs/ktemata-splash-portrait.svg"
-        if has_command rsvg-convert && [ -r "$svg" ]; then
+        local svg=""
+        if [ "$SPLASH_ORIENTATION" = portrait ]; then
+            svg=$(find_asset ktemata-splash-portrait.svg) || true
+        else
+            svg=$(find_asset ktemata-splash.svg) || true
+        fi
+        if [ -n "$svg" ] && has_command rsvg-convert; then
             src="$tga.png"
             timeout "$TIMEOUT" rsvg-convert -w "$w" -h "$h" "$svg" -o "$src"
             log_ok "rendered from $(basename "$svg") ($SPLASH_ORIENTATION ${w}x${h})"
-        elif [ -r "$SCRIPT_DIR/ktemata-splash.png" ]; then
-            src="$SCRIPT_DIR/ktemata-splash.png"
+        elif src=$(find_asset ktemata-splash.png); then
             log_ok "using the bundled splash PNG"
         else
-            log_warn "no splash source; skipping"
-            return 0
+            log_warn "no splash source"
+            return 1
         fi
         # 224 colours is the firmware palette limit; 24-bit RGB is the required TGA depth
         timeout "$TIMEOUT" "$im" "$src" -strip -colors 224 -type TrueColor -depth 8 \
             -define tga:compression=none "$tga" || {
-            log_warn "could not build the TGA (timed out?); skipping splash"; return 0; }
+            log_warn "could not build the TGA (timed out?)"; return 1; }
         [ "$src" = "$tga.png" ] && rm -f "$src"
         chmod 0644 "$tga"
     fi
@@ -349,11 +405,11 @@ install_splash() {
             if [ -n "$pw" ] && { [ "$pw" -gt 1920 ] || [ "$ph" -gt 1080 ]; }; then
                 log_warn "splash is ${pw}x${ph}; the firmware accepts at most 1920x1080"
                 log_warn "use --splash-orientation portrait (608x1080) for a portrait panel"
-                return 0
+                return 1
             fi
             ;;
         *) log_warn "generated splash is not a 24-bit RGB TGA: $dims"
-           log_warn "leaving cmdline.txt alone"; return 0 ;;
+           log_warn "leaving cmdline.txt alone"; return 1 ;;
     esac
 
     # Use Raspberry Pi's supported path when it is installed
@@ -425,6 +481,8 @@ main() {
                 WITH_SPLASH=true ;;
             --splash-orientation)
                 SPLASH_ORIENTATION=${2:?--splash-orientation takes landscape or portrait}; shift ;;
+            --wait)
+                WAIT=${2:?--wait needs a number of seconds}; shift ;;
             -h|--help)       usage; exit 0 ;;
             -V|--version)    printf '%s %s\n' "$SCRIPT" "$SCRIPT_VERSION"; exit 0 ;;
             *)               log_warn "unknown option: $1"; usage; exit 2 ;;
@@ -434,6 +492,7 @@ main() {
 
     case $SPLASH_ORIENTATION in landscape|portrait) ;;
         *) die "--splash-orientation takes landscape or portrait" ;; esac
+    case $WAIT in ''|*[!0-9]*) die "--wait takes a number of seconds" ;; esac
     $WITH_WALLPAPER || $WITH_SPLASH || { log_info "nothing to do"; exit 0; }
 
     # the default account, when sudo does not name the caller (root shell on the console)
@@ -454,14 +513,32 @@ main() {
     fi
 
     log_stage "Tools"
-    ensure_tools
+    if ! ensure_tools; then
+        log_warn "artwork tools are missing; not marking this run done (the unit retries next boot)"
+        return 0
+    fi
 
-    install_wallpaper
-    install_splash
+    local ok=true wp_ok=true sp_ok=true
+    install_wallpaper || { wp_ok=false; ok=false; }
+    install_splash || { sp_ok=false; ok=false; }
+
+    # The graphical.target unit asks for both steps; only a complete run counts as done, so a
+    # manual --no-splash/--no-wallpaper (or a failed render) leaves the marker absent and the
+    # unit retries at the next boot.
+    if $ok && $WITH_WALLPAPER && $WITH_SPLASH && ! $DRY_RUN; then
+        install -d -m 0755 "$SHARE"
+        : >"$DONE_MARKER"
+    fi
 
     log_stage "Done"
-    $WITH_WALLPAPER && printf '  wallpaper user %s\n' "$OWNER"
-    $WITH_SPLASH && printf '  splash    %s (next boot)\n' "$SHARE/ktemata-splash.tga"
+    if $WITH_WALLPAPER; then
+        $wp_ok && printf '  wallpaper %s\n' "$OWNER" \
+            || printf '  wallpaper not applied (see above)\n'
+    fi
+    if $WITH_SPLASH; then
+        $sp_ok && printf '  splash    %s (next boot)\n' "$SHARE/ktemata-splash.tga" \
+            || printf '  splash    not installed (see above)\n'
+    fi
     $WITH_WALLPAPER && ! have_session_bus && printf '  session   no bus for %s; re-run from the desktop\n' "$OWNER"
     return 0
 }

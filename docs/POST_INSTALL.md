@@ -125,6 +125,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | — |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service` |
 | 6b | **Write and enable `ktemata-status-oled.service`**: UTC + library free space to the FireBeetle over USB serial — see below | `--no-oled`, `--oled-port DEV` |
+| 6c | **Write and enable `ktemata-artwork.service`**: wallpaper + boot splash at `graphical.target` — see [ARTWORK.md](ARTWORK.md) | `--no-artwork` |
 | 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
 | 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
 | 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
@@ -133,9 +134,10 @@ hciconfig -a 2>/dev/null           # nothing
 | 13 | **Optionally serves the library over its own Wi-Fi AP** — see below | `--hotspot` |
 | 14 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 
-The desktop wallpaper and the early boot splash are **not** installed here. Applying the wallpaper needs the
-desktop user's session bus, and running that from a text console is what used to hang this script. Do it after
-this install, from the running desktop (runlevel 5), with
+The wallpaper and the early boot splash are installed as a **one-shot unit at `graphical.target`**
+(runlevel 5), not executed here: applying the wallpaper needs the desktop user's session bus, and doing that
+from a text console is what used to hang this script. `ktemata-artwork.service` runs at the next boot and
+waits for the session, or apply it immediately from the desktop with
 [`work/scripts/desktop-artwork.sh`](../work/scripts/desktop-artwork.sh) — see [ARTWORK.md](ARTWORK.md).
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
@@ -243,18 +245,23 @@ suspect the cable or the connector rather than the PSU.
 
 ## Desktop artwork
 
-The wallpaper and the early boot splash were split out into
-[`work/scripts/desktop-artwork.sh`](../work/scripts/desktop-artwork.sh), run **after** this
-script from the desktop session (runlevel 5 / `graphical.target`):
+The wallpaper and the early boot splash live in
+[`work/scripts/desktop-artwork.sh`](../work/scripts/desktop-artwork.sh). The step installs the
+script and its assets under `/usr/local/` and enables `ktemata-artwork.service` at
+`graphical.target`; it does **not** run it, so a text-console install cannot hang on the
+desktop's D-Bus session.
+
+- Runs once, at the next boot, after the desktop user's session bus appears (`--wait 120`).
+- A completion marker (`/usr/local/share/ktemata/.artwork-applied`) stops it re-rendering every
+  boot. Delete the marker or run the script by hand to apply a changed logo.
+- The splash takes effect on the following boot; the wallpaper applies in the running session.
 
 ```bash
-sudo ./work/scripts/desktop-artwork.sh
+sudo systemctl start ktemata-artwork        # apply now, after the desktop is up
+sudo ./work/scripts/desktop-artwork.sh      # or straight from the checkout
 ```
 
-It is a separate script because applying the wallpaper goes through the desktop user's D-Bus
-session; from an SSH text console that call can block, which is what made post-install appear to
-hang. The script bounds every external command and only writes the config when no session bus is
-reachable. Details, options and what was verified: [ARTWORK.md](ARTWORK.md).
+Details, options and what was verified: [ARTWORK.md](ARTWORK.md).
 
 ## Project NOMAD images
 
@@ -490,6 +497,7 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --no-service       packages only
     --no-oled          skip the status OLED sender
     --oled-port DEV    FireBeetle serial device (default: autodetect)
+    --no-artwork       skip the graphical.target wallpaper/splash unit
     --no-gui           skip the desktop app
     --no-update        skip the system upgrade
     --rotate WHAT      normal | left | right | inverted (or 0|90|180|270 clockwise)

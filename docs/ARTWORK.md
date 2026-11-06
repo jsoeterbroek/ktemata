@@ -2,22 +2,41 @@
 
 [`work/scripts/desktop-artwork.sh`](../work/scripts/desktop-artwork.sh) installs the Ktemata
 wallpaper and the early boot logo. It is a **separate step after**
-[`post-install.sh`](POST_INSTALL.md), run from the **desktop session** — runlevel 5 /
-`graphical.target`:
+[`post-install.sh`](POST_INSTALL.md) and runs at **runlevel 5** — `graphical.target`:
 
 ```bash
-sudo ./work/scripts/desktop-artwork.sh                  # logo + splash
+sudo ./work/scripts/desktop-artwork.sh                  # logo + splash, now
 sudo ./work/scripts/desktop-artwork.sh --no-splash      # wallpaper only
 sudo ./work/scripts/desktop-artwork.sh --no-wallpaper   # splash only
 sudo ./work/scripts/desktop-artwork.sh --user ktemata   # other desktop account
+sudo ./work/scripts/desktop-artwork.sh --wait 120       # wait for the session bus
 ./work/scripts/desktop-artwork.sh --dry-run             # print, change nothing
+```
+
+`post-install.sh` installs the script as `/usr/local/lib/ktemata/desktop-artwork.sh`, copies
+its assets to `/usr/local/share/ktemata/src/`, and enables
+**`ktemata-artwork.service`** (`Type=oneshot`, `WantedBy=graphical.target`,
+`ExecStart=… --user ktemata --wait 120`). It is **enabled, not started**, so the install cannot
+block on the desktop session. The first run happens at the next boot; the unit is conditioned on
+the marker `/usr/local/share/ktemata/.artwork-applied`, which the script writes only after a
+complete run, so the TGA is not re-rendered on every boot. A manual `--no-splash` or
+`--no-wallpaper` run does not write it, so the unit still finishes the other step; a missing
+render tool or a failed conversion also leaves it absent and the unit retries at the next boot.
+
+To apply a changed logo later:
+
+```bash
+sudo rm /usr/local/share/ktemata/.artwork-applied
+sudo systemctl start ktemata-artwork      # or run the script directly, which ignores the marker
 ```
 
 Why it is not in `post-install.sh`: applying the wallpaper goes through the desktop user's
 D-Bus session. Post-install is often run over SSH in a text console, where that `gsettings` call
 can block — which is how it hung. The script therefore:
 
-- refuses to apply the wallpaper without a session bus instead of waiting on one;
+- refuses to apply the wallpaper without a session bus instead of waiting on one; `--wait N`
+  polls the bus first, which is what the unit uses because autologin can lag `graphical.target`
+  by a few seconds;
 - wraps every external command in `timeout` (30 s, 180 s for the initramfs, 300 s for the
   package install);
 - writes the desktop configuration either way, so the next login still picks the image up.
@@ -94,6 +113,7 @@ Notes:
     --splash [FILE]       install the boot splash (default), optionally from a 24-bit TGA
     --no-splash           leave the boot splash alone
     --splash-orientation  landscape (default) or portrait (608x1080)
+    --wait SECONDS        wait for the desktop user's session bus before applying
 -h, --help / -V, --version
 ```
 
@@ -122,7 +142,12 @@ After the split, both paths were exercised against a sandboxed `HOME`/`PATH` (sh
 `timeout`, `sudo`, `pcmanfm`, ImageMagick and `file`): the wallpaper was installed to the
 per-user path and the pcmanfm config written with `wallpaper_mode=crop` and
 `desktop_bg=#000000`; `cmdline.txt` gained the three parameters once, stayed one line, and a
-second run reported "already enables the splash" while keeping a single `.ktemata.bak`.
+second run reported "already enables the splash" while keeping a single `.ktemata.bak`. The
+installed layout was run the same way with only `/usr/local/share/ktemata/src` available, so the
+asset lookup fell back to the installed copy, and the completion marker was written. A
+`--no-splash` run and a run without ImageMagick both left the marker absent, as intended. The
+generated unit was inspected: it is a `graphical.target` oneshot with the marker condition, the
+autologin user and `--wait 120`. It has not been started by systemd on real hardware yet.
 
 The **session-bus path** (the reason for the split) is the one part not exercised on real
 hardware: the container runs used a written pcmanfm config. The live `gsettings`/`pcmanfm` apply

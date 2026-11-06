@@ -50,6 +50,11 @@ WITH_GUI=true
 WITH_OLED=true
 OLED_PORT=${OLED_PORT:-}       # empty: autodetect the CH340
 OLED_SERVICE=ktemata-status-oled
+# The wallpaper and early boot splash run once at graphical.target (runlevel 5), after the
+# desktop user's session bus exists. --no-artwork skips the unit; the script still works
+# when run by hand from the desktop.
+WITH_ARTWORK=true
+ARTWORK_SERVICE=ktemata-artwork
 WITH_UPDATE=true
 WITH_KIOSK=false
 WITH_HWTEST=true
@@ -118,6 +123,7 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-service       Install the packages only; do not create/enable the service.
       --no-oled          Do not install the status OLED sender (FireBeetle over USB serial).
       --oled-port DEV    Serial device for the FireBeetle (default: autodetect the CH340).
+      --no-artwork       Do not install the wallpaper/boot-splash unit at graphical.target.
       --no-gui           Skip the desktop Kiwix app (headless / server installs).
       --no-update        Skip the system upgrade (apt full-upgrade).
       --rotate WHAT      Rotate the display: normal | left | right | inverted,
@@ -167,15 +173,16 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   5. creates the ZIM library directory
   6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)
   7. writes and enables $OLED_SERVICE.service: UTC + free space to the status OLED
-  8. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
-  9. optionally installs the kiosk autostart (--kiosk)
- 10. enables GDM automatic login (unless --no-autologin)
- 11. optionally serves the library over its own Wi-Fi access point (--hotspot)
- 12. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
- 13. verifies the server answers
+  8. writes and enables $ARTWORK_SERVICE.service: wallpaper + boot splash at graphical.target
+  9. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
+ 10. optionally installs the kiosk autostart (--kiosk)
+ 11. enables GDM automatic login (unless --no-autologin)
+ 12. optionally serves the library over its own Wi-Fi access point (--hotspot)
+ 13. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
+ 14. verifies the server answers
 
-The desktop wallpaper and the boot splash are not part of this script: applying the wallpaper
-needs the desktop session bus, so run ./desktop-artwork.sh from the desktop afterwards.
+The artwork itself runs in $ARTWORK_SERVICE.service at the next boot, once the desktop user's
+session bus exists; to apply it immediately, run ./desktop-artwork.sh from the desktop.
 EOF
 }
 
@@ -1628,6 +1635,91 @@ HELPER
     fi
 }
 
+install_artwork_unit() {
+    $WITH_ARTWORK || { log_stage "Artwork unit"; log_info "skipped (--no-artwork)"; return 0; }
+    log_stage "Artwork unit"
+
+    local dir dest share unit
+    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    dest=/usr/local/lib/ktemata/desktop-artwork.sh
+    share=/usr/local/share/ktemata
+    unit="/etc/systemd/system/$ARTWORK_SERVICE.service"
+
+    if [ ! -r "$dir/desktop-artwork.sh" ]; then
+        log_warn "$dir/desktop-artwork.sh not found; skipping the artwork unit"
+        return 0
+    fi
+    if ! id -u "$AUTOLOGIN_USER" >/dev/null 2>&1; then
+        log_warn "no user $AUTOLOGIN_USER (AUTOLOGIN_USER); skipping the artwork unit"
+        return 0
+    fi
+
+    local asset missing=0
+    for asset in \
+        "$dir/../../docs/ktemata-wallpaper.svg" \
+        "$dir/../../docs/ktemata-splash.svg" \
+        "$dir/../../docs/ktemata-splash-portrait.svg" \
+        "$dir/ktemata-wallpaper.png" \
+        "$dir/ktemata-splash.png"; do
+        [ -r "$asset" ] || { log_warn "missing artwork asset: $asset"; missing=1; }
+    done
+    [ "$missing" -eq 0 ] || log_warn "the unit will fall back to whatever is installed in $share/src"
+
+    log_info "artwork for $AUTOLOGIN_USER at graphical.target (next boot)"
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s install %s -> %s (+ assets in %s/src)\n' "$C_YELLOW" "$C_OFF" "$dir/desktop-artwork.sh" "$dest" "$share"
+        printf '%s  [dry-run]%s write %s\n' "$C_YELLOW" "$C_OFF" "$unit"
+        printf '%s  [dry-run]%s systemctl enable %s.service\n' "$C_YELLOW" "$C_OFF" "$ARTWORK_SERVICE"
+        return 0
+    fi
+
+    install -d -m 0755 /usr/local/lib/ktemata "$share/src"
+    install -m 0755 "$dir/desktop-artwork.sh" "$dest"
+    for asset in \
+        "$dir/../../docs/ktemata-wallpaper.svg" \
+        "$dir/../../docs/ktemata-splash.svg" \
+        "$dir/../../docs/ktemata-splash-portrait.svg" \
+        "$dir/ktemata-wallpaper.png" \
+        "$dir/ktemata-splash.png"; do
+        [ -r "$asset" ] && install -m 0644 "$asset" "$share/src/"
+    done
+    log_ok "$dest and assets in $share/src"
+
+    cat >"$unit" <<EOF
+[Unit]
+Description=Ktemata wallpaper and boot splash
+Documentation=file:$dest
+After=systemd-user-sessions.service
+# One successful run is enough: the wallpaper config persists and the splash is a boot file.
+# The script writes this marker; remove it to let the unit run again at the next boot.
+ConditionPathExists=!$share/.artwork-applied
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# At graphical.target the display manager is up, but autologin and its session bus can lag.
+ExecStart=$dest --user $AUTOLOGIN_USER --wait 120
+TimeoutStartSec=900
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=graphical.target
+EOF
+    chmod 0644 "$unit"
+    log_ok "unit written"
+
+    if have_systemd; then
+        run systemctl daemon-reload
+        run systemctl enable "$ARTWORK_SERVICE.service"
+        log_ok "enabled for graphical.target; runs at the next boot"
+    else
+        log_warn "systemd not running here: enable it later with"
+        log_warn "  sudo systemctl enable $ARTWORK_SERVICE.service"
+    fi
+}
+
 install_status_oled() {
     $WITH_OLED || { log_stage "Status OLED"; log_info "skipped (--no-oled)"; return 0; }
     log_stage "Status OLED"
@@ -1786,7 +1878,10 @@ summary() {
     if $WITH_AUTOLOGIN; then
         printf '  autologin %s (GDM)\n' "$AUTOLOGIN_USER"
     fi
-    printf '  artwork   sudo ./work/scripts/desktop-artwork.sh  (from the desktop / runlevel 5)\n'
+    if $WITH_ARTWORK; then
+        printf '  artwork   %s.service (graphical.target; next boot)\n' "$ARTWORK_SERVICE"
+        printf '  now       sudo ./work/scripts/desktop-artwork.sh  (from the desktop)\n'
+    fi
     if $WITH_KIOSK; then
         printf '  kiosk     %s autostarts kiwix-kiosk on login\n' "$KIOSK_USER"
     fi
@@ -1809,6 +1904,7 @@ main() {
             --sample)        WITH_SAMPLE=true ;;
             --no-service)    WITH_SERVICE=false ;;
             --no-oled)       WITH_OLED=false ;;
+            --no-artwork)    WITH_ARTWORK=false ;;
             --oled-port)     OLED_PORT=${2:?--oled-port needs a device}; shift ;;
             --no-gui)        WITH_GUI=false ;;
             --no-update)     WITH_UPDATE=false ;;
@@ -1883,6 +1979,7 @@ main() {
     setup_library
     install_service
     install_status_oled
+    install_artwork_unit
     setup_rotation
     install_autologin
     set_camera_autodetect_off
