@@ -137,7 +137,7 @@ uint32_t lastInteractionMs = 0;
 uint32_t lastRenderMs = 0;
 
 // RTC-less fallback: build time plus elapsed millis, or host-supplied epoch.
-DateTime buildTime;
+uint32_t buildTimeEpoch = 0;
 bool clockFromHost = false;
 int64_t clockBaseEpoch = 0;  // Unix epoch at millis() == 0
 
@@ -187,7 +187,8 @@ DateTime currentTime() {
         static_cast<uint32_t>(clockBaseEpoch + millis() / 1000ULL));
   }
 
-  return buildTime + TimeSpan(static_cast<int32_t>(millis() / 1000ULL));
+  return DateTime(buildTimeEpoch) +
+         TimeSpan(static_cast<int32_t>(millis() / 1000ULL));
 }
 
 uint32_t epochNow() { return currentTime().unixtime(); }
@@ -1056,9 +1057,11 @@ void setup() {
   tzset();
   Serial.printf(
       "{\"type\":\"log\",\"msg\":\"mcu\",\"model\":\"%s\",\"cores\":%u,"
-      "\"flash\":%u,\"psram_found\":%s,\"psram\":%u}\n",
-      ESP.getChipModel(), ESP.getChipCores(), ESP.getFlashChipSize(),
-      psramFound() ? "true" : "false", ESP.getPsramSize());
+      "\"flash\":%lu,\"psram_found\":%s,\"psram\":%lu}\n",
+      ESP.getChipModel(), ESP.getChipCores(),
+      static_cast<unsigned long>(ESP.getFlashChipSize()),
+      psramFound() ? "true" : "false",
+      static_cast<unsigned long>(ESP.getPsramSize()));
 
   Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL, I2C_CLOCK_HZ);
   scanI2C();
@@ -1120,7 +1123,8 @@ void setup() {
   buildTm.tm_sec = buildLocal.second();
   buildTm.tm_isdst = -1;
   const time_t buildEpoch = mktime(&buildTm);
-  buildTime = buildEpoch > 0 ? DateTime(static_cast<uint32_t>(buildEpoch)) : buildLocal;
+  buildTimeEpoch = buildEpoch > 0 ? static_cast<uint32_t>(buildEpoch)
+                                  : buildLocal.unixtime();
 
   lastInteractionMs = millis();
   lastPressureSampleMs = millis();
@@ -1157,14 +1161,15 @@ void loop() {
     lastRenderMs = 0;
   }
 
-  if (SCREEN_OFF_MS > 0 && screenOn &&
-      now - lastInteractionMs >= SCREEN_OFF_MS) {
+#if SCREEN_OFF_MS > 0
+  if (screenOn && now - lastInteractionMs >= SCREEN_OFF_MS) {
     screenOn = false;
     if (oledOk) {
       oledPower(false);
       Serial.println("{\"type\":\"log\",\"msg\":\"OLED blank\"}");
     }
   }
+#endif
 
   if (screenOn && now - lastRenderMs >= SCREEN_REFRESH_MS) {
     render();
