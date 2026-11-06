@@ -22,6 +22,7 @@
 #include <RTClib.h>
 #include <Wire.h>
 #include <bme68xLibrary.h>
+#include <esp_log.h>
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
@@ -950,6 +951,11 @@ void setup() {
   while (!Serial && millis() - serialWait < 1500) {
     delay(10);
   }
+
+  // The Pi parses this port as newline-delimited JSON. The Arduino core logger is compiled out
+  // (-DCORE_DEBUG_LEVEL=0); this also quiets ESP-IDF components that log at runtime. The
+  // firmware's own JSON logs below report absent devices.
+  esp_log_level_set("*", ESP_LOG_NONE);
 
   Serial.println();
   Serial.println("{\"type\":\"log\",\"msg\":\"Ktemata r2 status OLED\"}");

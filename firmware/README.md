@@ -168,7 +168,11 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
 - BME688 forced-mode measurement every 5 s, pressure history for the 3 h
   trend, UPS registers polled every 5 s.
 - Telemetry JSON every 10 s over USB serial; commands from the Pi are
-  newline-delimited JSON as well.
+  newline-delimited JSON as well. The Arduino core logger is compiled out
+  (`-DCORE_DEBUG_LEVEL=0`) and the ESP-IDF logger is set to `ESP_LOG_NONE`,
+  because their free text — the `Wire.cpp` I2C errors when the BME688 or UPS is
+  absent — would corrupt the stream. Missing devices still appear as the JSON
+  `not found` logs below.
 - Wi-Fi and Bluetooth are never initialised.
 
 Thresholds live in `include/config.h` and match the README table.
@@ -210,8 +214,11 @@ ESP32 → Pi every 10 s (and after `status`):
 
 Without a DS3231 the clock is lost on reset. The Pi-side sender
 (`work/scripts/status-oled.py`) covers that: it pushes UTC at start and hourly (and again when
-the board announces a boot), so a reset is followed by a re-sync within seconds. It also sends
-the storage figures at start and every 60 s, reads the telemetry back, and logs alert changes.
+the board announces a boot), so a reset is followed by a re-sync within seconds. Opening the
+port can reset the board, so it waits two seconds before the first line; a send that the board
+does not confirm with `{"type":"log","msg":"time synced"}` is repeated every 5 s (six times, then
+hourly). It also sends the storage figures at start and every 60 s, reads the telemetry back,
+and logs alert changes.
 `work/scripts/post-install.sh` installs it to `/usr/local/lib/ktemata/status-oled.py` and
 enables `ktemata-status-oled.service`; `--no-oled` skips it and `--oled-port` pins the device.
 
@@ -226,7 +233,8 @@ python3 work/scripts/status-oled.py --storage /srv/kiwix/zim --port /dev/ttyUSB0
 The port is driven with `termios`, so no `pyserial` is needed. It prefers the CH340's stable
 `/dev/serial/by-id` name, then `ttyUSB*`, then `ttyACM*`; when the board is unplugged it keeps
 retrying instead of exiting. The unit therefore needs no device dependency. `used_pct` and
-`free_gb` use `df` semantics (`f_bavail`), so the number matches what the Pi reports.
+`free_gb` use `df` semantics (`f_bavail`), so the number matches what the Pi reports. Lines that
+are not JSON (the boot ROM's log) are ignored unless `-v` is given.
 
 The manual one-liner still works for a one-off (stop the service or the serial monitor first):
 

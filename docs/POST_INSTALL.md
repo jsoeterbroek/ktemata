@@ -492,11 +492,14 @@ writes nothing but the board's JSON.
   `--oled-port` pins the device (the CH340 has no serial number, so with several attached the
   autodetect can only take the first).
 - Sends `{"cmd":"time","epoch":…}` at start and hourly, and again whenever the board announces
-  a boot. The epoch is **UTC**; the firmware applies `TIMEZONE` when it renders.
+  a boot. The epoch is **UTC**; the firmware applies `TIMEZONE` when it renders. Opening the
+  port can reset the board, so the first line waits two seconds, and an unconfirmed send is
+  repeated every 5 s until the board logs `time synced` (six tries, then hourly).
 - Sends `{"cmd":"storage","used_pct":…,"free_gb":…}` at start and every 60 s, computed with
   `df` semantics (`f_bavail`) for `--zim-dir`.
 - Reads the board's telemetry back and logs alert transitions and rejected commands to the
-  journal.
+  journal. Lines that are not JSON (the ESP32 boot ROM) are ignored unless `-v` is given; the
+  firmware silences its own core logger so the stream stays JSON.
 - Retries when the board is absent or unplugged, so the unit is harmless on a box without one.
   `--no-oled` skips the step entirely.
 
@@ -612,11 +615,14 @@ The kiosk path was tested the same way: `/usr/local/bin/kiwix-kiosk` installed, 
 with `Exec=/usr/local/bin/kiwix-kiosk --transform 270`, and the launcher's `--selftest` returning 0 against a
 live server and 1 without one.
 
-The status OLED sender was exercised against a pseudo-terminal standing in for the board: the first sync sends
-`time` with a sane UTC epoch and `storage` with `df`-style figures, the boot banner and the periodic timers
-trigger re-syncs, a malformed line is logged and the loop continues, and SIGTERM stops it with status 0. The
-generated unit was inspected with and without `--oled-port` and with a space in the ZIM path. The serial check
-reports SKIP on a host with no FireBeetle. **Neither has run against the real board yet.**
+The status OLED sender was exercised against a pseudo-terminal standing in for the board: nothing is written
+during the two-second reset window, the boot banner and an unconfirmed send both trigger a re-sync, a `bad
+json` reply triggers a retry, `time synced` stops the 5 s retries, non-JSON lines stay out of the journal
+unless `-v` is given, an unplug is logged and recovered from, and SIGTERM stops it with status 0. The generated
+unit was inspected with and without `--oled-port` and with a space in the ZIM path. The serial check reports
+SKIP on a host with no FireBeetle; on the Pi the board enumerates as
+`/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0`, which is the name the check and the sender prefer. The firmware change (silenced core
+logger) builds for the DFR1140 (`pio run`), but has not been flashed and rechecked on the board yet.**
 
 **On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
 holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no

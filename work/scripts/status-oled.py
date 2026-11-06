@@ -16,8 +16,9 @@ Nothing outside the standard library: the port is driven with termios/select, so
 this runs on a stock Raspberry Pi OS without pyserial. It waits for the board when
 the port is absent and reopens it after an unplug, so systemd can keep it running.
 
-Opening the CH340 port pulses the ESP32 reset line on some boards, so expect the
-OLED to restart once per service start; the sender then re-syncs the clock.
+Opening the CH340 port pulses the ESP32 reset line on some boards, so the sender
+waits two seconds before its first command, re-sends until the board confirms with
+`time synced`, and ignores non-JSON lines (the boot ROM writes free text).
 """
 import argparse
 import glob
@@ -34,11 +35,23 @@ CH340_IDS = ("1a86", "ch340", "ch341", "wch")
 TIME_PERIOD = 3600        # UTC is re-sent hourly; the ESP32 millis() clock drifts
 STORAGE_PERIOD = 60
 BOOT_BANNER = "Ktemata r2 status OLED"
+TIME_ACK = "time synced"
 MIN_EPOCH = 1_700_000_000  # the firmware ignores anything earlier (Nov 2023)
+# Opening the CH340 can pulse the ESP32 reset; writing during the boot loses or truncates the
+# first line, so wait before the first command. A command that is not confirmed within
+# RETRY_PERIOD is sent again (MAX_TIME_RETRIES times, then hourly).
+INITIAL_DELAY = 2.0
+RETRY_PERIOD = 5.0
+MAX_TIME_RETRIES = 6
 
 
 def log(msg):
     print(msg, flush=True)
+
+
+def printable(text):
+    """Replace control bytes (boot ROM output) so journald keeps the line as text."""
+    return "".join(ch if ch.isprintable() else " " for ch in text).rstrip()
 
 
 class Link:
@@ -153,6 +166,7 @@ def run_once(port, path):
     link = Link(port)
     log(f"opened {port}")
     try:
+        time.sleep(INITIAL_DELAY)     # the open itself may have reset the board
         sync_time(link, log)
         sync_storage(link, path, log)
         deadline = time.monotonic() + 2.0
@@ -192,29 +206,36 @@ def run_forever(port, path, args):
             continue
         backoff = 0
         log(f"opened {path_now}")
-        next_time = 0.0          # send immediately after opening
-        next_storage = 0.0
+        next_time = time.monotonic() + INITIAL_DELAY   # let a reset finish before writing
+        next_storage = next_time
+        time_confirmed = False
+        time_tries = 0
         last_alerts = None
         try:
             while True:
                 try:
-                    restart = False
+                    restart = retry = False
                     for line in link.lines():
                         if not line:
                             continue
                         if args.verbose:
-                            log(line)
+                            log(printable(line))
                         try:
                             msg = json.loads(line)
                         except json.JSONDecodeError:
-                            log(f"unparsed line: {line}")
-                            continue
+                            continue        # boot ROM noise, or another writer on the port
                         kind = msg.get("type")
-                        if kind == "log" and msg.get("msg") == BOOT_BANNER:
+                        name = msg.get("msg")
+                        if kind == "log" and name == BOOT_BANNER:
                             restart = True     # the board rebooted: clock and storage are cold
+                        elif kind == "log" and name == TIME_ACK:
+                            time_confirmed = True
+                            time_tries = 0
+                            next_time = time.monotonic() + args.time_period
                         elif kind == "error":
-                            detail = f"{msg.get('msg')} {msg.get('detail', '')}".rstrip()
+                            detail = f"{name} {msg.get('detail', '')}".rstrip()
                             log(f"board rejected a command: {detail}")
+                            retry = True       # truncated by the reset, or the ESP missed it
                         alerts = msg.get("alerts")
                         if kind == "telemetry" and alerts != last_alerts:
                             last_alerts = alerts
@@ -225,10 +246,25 @@ def run_forever(port, path, args):
 
                     now = time.monotonic()
                     if restart:
-                        log("board restarted; re-sending time and storage")
+                        log("board boot; sending time and storage")
+                        time_confirmed = False
+                        time_tries = 0
                         next_time = next_storage = 0.0
+                    if retry and time_tries < MAX_TIME_RETRIES:
+                        next_time = min(next_time, now + INITIAL_DELAY)
+                        next_storage = min(next_storage, now + INITIAL_DELAY)
                     if now >= next_time:
-                        next_time = now + (args.time_period if sync_time(link, warn) else 10.0)
+                        if sync_time(link, warn):
+                            time_tries += 1
+                            if time_confirmed:
+                                next_time = now + args.time_period
+                            elif time_tries >= MAX_TIME_RETRIES:
+                                warn("the board never confirmed the clock; retrying hourly")
+                                next_time = now + args.time_period
+                            else:
+                                next_time = now + RETRY_PERIOD
+                        else:
+                            next_time = now + 10.0
                     if now >= next_storage:
                         sync_storage(link, path, warn)
                         next_storage = now + args.storage_period
