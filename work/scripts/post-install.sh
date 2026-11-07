@@ -78,6 +78,9 @@ KIOSK_USER=${KIOSK_USER:-${SUDO_USER:-}}   # whose session autostarts the kiosk
 AUTOLOGIN_USER=${AUTOLOGIN_USER:-ktemata}
 WITH_AUTOLOGIN=true
 WITH_NOCAMERA=false     # opt-in: only edit config.txt when asked
+# The Pi 5 RTC cell is a rechargeable ML-2020 on J5. Enable the PMIC trickle charge so it
+# stays topped up; --no-rtc-charge skips this (and must be used with a non-rechargeable cell).
+WITH_RTC_CHARGE=true
 # Project NOMAD management images. On ARM these must come from a multi-arch fork,
 # because upstream publishes amd64 only. Empty NOMAD_STACK disables the step.
 NOMAD_STACK=${NOMAD_STACK:-auto}      # auto | off
@@ -151,6 +154,8 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-camera-autodetect
                          Set camera_auto_detect=0 in config.txt (no CSI camera in this
                          build). Touches config.txt, so it is opt-in.
+      --no-rtc-charge    Do not enable the Pi RTC trickle charge (default: enable it for
+                         the rechargeable ML-2020; never use it with a CR2032).
       --hotspot          Serve the library over its own Wi-Fi access point (wlan0).
                          Uses NetworkManager when present, else hostapd + dnsmasq.
       --no-hotspot       Do not create an access point (default).
@@ -190,6 +195,7 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
  10. optionally installs the kiosk autostart (--kiosk)
  11. enables GDM automatic login (unless --no-autologin)
  12. optionally serves the library over its own Wi-Fi access point (--hotspot)
+ 12b. enables the Pi RTC trickle charge for the ML-2020 unless --no-rtc-charge
  13. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
  14. verifies the server answers (or the NOMAD containers with --library nomad)
 
@@ -1030,6 +1036,47 @@ autologin_gdm() {
     esac
 }
 
+
+# Enable the PMIC's trickle charge for the Pi 5's RTC cell. The build uses a rechargeable
+# ML-2020 on J5; a non-rechargeable CR2032 must NOT be trickle-charged, hence the opt-out.
+setup_rtc_charge() {
+    $WITH_RTC_CHARGE || { log_stage "RTC trickle"; log_info "skipped (--no-rtc-charge)"; return 0; }
+    log_stage "RTC trickle"
+
+    local cfg="${CONFIG_TXT:-/boot/firmware/config.txt}"
+    if [ ! -f "$cfg" ]; then
+        log_info "no $cfg: not a Raspberry Pi boot partition, skipping"
+        return 0
+    fi
+
+    if grep -qx 'dtparam=rtc_bbat_vchg=3000000' "$cfg"; then
+        log_ok "already enabled for the ML-2020"
+        return 0
+    fi
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s set dtparam=rtc_bbat_vchg=3000000 in %s\n' "$C_YELLOW" "$C_OFF" "$cfg"
+        return 0
+    fi
+
+    [ -f "$cfg.ktemata.bak" ] || cp -a "$cfg" "$cfg.ktemata.bak"
+
+    # A commented or different-value line is replaced in place; otherwise append.
+    if grep -qE '^[#[:space:]]*dtparam=rtc_bbat_vchg[[:space:]]*=' "$cfg"; then
+        sed -i -E 's|^[#[:space:]]*dtparam=rtc_bbat_vchg[[:space:]]*=.*|dtparam=rtc_bbat_vchg=3000000|' "$cfg"
+    else
+        printf '\ndtparam=rtc_bbat_vchg=3000000\n' >>"$cfg"
+    fi
+
+    local n
+    n=$(grep -c '^dtparam=rtc_bbat_vchg=3000000$' "$cfg")
+    if [ "$n" = 1 ]; then
+        log_ok "enabled (reboot to apply; ML-2020 only)"
+    else
+        log_error "RTC trickle edit looks wrong: $n live line(s)"
+        log_warn "restore with: sudo cp $cfg.ktemata.bak $cfg"
+    fi
+}
 
 # Turn off the firmware's CSI-camera probe. The build has no camera, so this only removes
 # a boot-time scan. Opt-in: config.txt can make the board unbootable, so nothing here runs
@@ -1979,6 +2026,7 @@ main() {
             --power)         POWER_SOURCE=${2:?--power takes usbc or hat}; shift ;;
             --no-autologin)  WITH_AUTOLOGIN=false ;;
             --no-camera-autodetect) WITH_NOCAMERA=true ;;
+            --no-rtc-charge) WITH_RTC_CHARGE=false ;;
             --hotspot)       WITH_HOTSPOT=true ;;
             --no-hotspot)    WITH_HOTSPOT=false ;;
             --no-radio)      WITH_NO_RADIO=true ;;
@@ -2059,6 +2107,7 @@ main() {
     setup_rotation
     install_autologin
     set_camera_autodetect_off
+    setup_rtc_charge
     set_radio_off
     setup_hotspot
     prepare_nomad_images

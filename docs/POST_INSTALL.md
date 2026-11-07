@@ -130,6 +130,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
 | 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
 | 12 | Optionally sets `camera_auto_detect=0` in `config.txt` | `--no-camera-autodetect` |
+| 12c | **Enables the Pi RTC trickle charge** (`dtparam=rtc_bbat_vchg=3000000`) for the rechargeable ML-2020 | `--no-rtc-charge` (required with a non-rechargeable CR2032) |
 | 12b | **Optionally disables the Wi-Fi and Bluetooth radios in the firmware** — see below | `--no-radio` |
 | 13 | **Optionally serves the library over its own Wi-Fi AP** — see below | `--hotspot` |
 | 14 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
@@ -203,7 +204,7 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the connector (`DSI-1`) and active mode (720×1280 for the TD2) |
 | **I2C devices** | one line naming the build's chips: `0x3c (OLED), 0x42 (UPS INA219), 0x68 (DS3231)` | unknown addresses are only **counted**, not listed; SKIP when nothing replies (the **FireBeetle** is the I2C master). Buses that answer for nearly every address are **ignored** and named |
 | **UPS gauge** | INA219 at 0x42 visible | SKIP on the Pi itself; the gauge is read by the ESP32 |
-| **Pi RTC** | `/dev/rtc0` with a sane epoch | FAIL if the cell is flat/unset; hints at `dtparam=rtc_bbat_vchg=3000000` |
+| **Pi RTC** | `/dev/rtc0` with a sane epoch | FAIL if the cell is flat/unset; the install step enables `dtparam=rtc_bbat_vchg=3000000` for the ML-2020 |
 | **Storage** | ≥ 2 GB free on `/`, and the active ZIM library not empty | `$ZIM_DIR` with `--library host`, `${NOMAD_STORAGE_PATH}/zim` with `nomad` |
 | **Status OLED** | the FireBeetle's CH340 found on `/dev/serial/by-id` or `/dev/ttyUSB*` | SKIP when the board is not connected; `ttyACM*` is accepted too (a native-USB ESP32) |
 | **Network** | any interface `up` | SKIP when none — normal, Wi-Fi/LAN are off |
@@ -551,6 +552,7 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --nomad-registry R registry/namespace (default ghcr.io/jsoeterbroek)
     --no-camera-autodetect
                        set camera_auto_detect=0 in config.txt (opt-in)
+    --no-rtc-charge    do not enable the ML-2020 RTC trickle charge
     --no-autologin     leave the GDM login screen
     --autologin-user N account to log in automatically (default ktemata)
 -h, --help / -V, --version
@@ -594,6 +596,11 @@ The `config.txt` edit was tested against the actual Pi 5 file: the diff is exact
 (`camera_auto_detect=1` → `0`), `dtparam=audio=on` and `display_auto_detect=1` are untouched, a
 second run reports "already disabled", the commented and absent forms both end with one live line, a
 dry run changes nothing, and a default (no-flag) run leaves the file byte-identical.
+
+The RTC trickle edit was exercised against synthetic `config.txt` copies: a commented line is
+replaced, a different value is rewritten, an absent line is appended once, a second run reports
+"already enabled", and a dry run leaves the file untouched. It is opt-out only; a CR2032 must not be
+used with it.
 
 The artwork steps now live in `desktop-artwork.sh`; their verification is recorded in
 [ARTWORK.md](ARTWORK.md), including the container runs that produced the PNG and TGA.
