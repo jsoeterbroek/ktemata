@@ -89,9 +89,6 @@ WITH_NOCAMERA=false     # opt-in: only edit config.txt when asked
 # The Pi 5 RTC cell is a rechargeable ML-2020 on J5. Enable the PMIC trickle charge so it
 # stays topped up; --no-rtc-charge skips this (and must be used with a non-rechargeable cell).
 WITH_RTC_CHARGE=true
-# Project NOMAD management images. On ARM these must come from a multi-arch fork,
-# because upstream publishes amd64 only. Empty NOMAD_STACK disables the step.
-NOMAD_STACK=${NOMAD_STACK:-auto}      # auto | off
 # The handheld is also a library hotspot. The Pi 5's radio is on board; serving the ZIM files
 # over a private AP is a configuration choice, not extra hardware. Off by default so a fresh
 # image keeps the old no-networking behaviour until someone asks for it.
@@ -107,9 +104,6 @@ HOTSPOT_BAND=${HOTSPOT_BAND:-auto}      # auto (2.4+5 GHz) | 2.4 | 5
 # --hotspot, because a disabled radio cannot host an access point.
 WITH_NO_RADIO=false
 RADIO_STATE="unchanged"                 # what the config.txt step actually did
-NOMAD_REGISTRY=${NOMAD_REGISTRY:-ghcr.io/jsoeterbroek}
-NOMAD_VERSION=${NOMAD_VERSION:-1.35.1}
-NOMAD_COMPOSE_DIR=${NOMAD_COMPOSE_DIR:-/opt/project-nomad}
 
 # ---------------- output ----------------
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -183,9 +177,6 @@ ${C_BOLD}OPTIONS${C_OFF}
       --hotspot-open     Explicitly leave the network open, even if a password was set.
       --hotspot-band B   auto (default) | 2.4 | 5. Only 2.4 GHz reaches older e-readers.
       --hotspot-addr A   AP address (default: 10.10.10.1, matching the Prepper Disk's habit).
-      --no-nomad         Do not pull the Project NOMAD images.
-      --nomad-version V  NOMAD image tag to pull (default 1.35.1).
-      --nomad-registry R Image registry/namespace (default ghcr.io/jsoeterbroek).
       --autologin-user N Account to log in automatically (default: ktemata).
   -h, --help             This message.
   -V, --version          Print the version.
@@ -210,8 +201,7 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
  11. enables GDM automatic login (unless --no-autologin)
  12. optionally serves the library over its own Wi-Fi access point (--hotspot)
  12b. enables the Pi RTC trickle charge for the ML-2020 unless --no-rtc-charge
- 13. pulls the Project NOMAD images for the correct architecture (unless --no-nomad)
- 14. verifies the server answers (or the NOMAD containers with --library nomad)
+ 13. verifies the server answers (or the NOMAD containers with --library nomad)
 
 The artwork itself runs in $ARTWORK_SERVICE.service at the next boot, once the desktop user's
 session bus exists; to apply it immediately, run ./desktop-artwork.sh from the desktop.
@@ -1432,144 +1422,6 @@ verify_hotspot() {
     fi
 }
 
-# ---------------------------------------------------------------------------------------
-# Project NOMAD images
-#
-# Upstream publishes the admin and sidecar images for amd64 only, so `docker compose up`
-# on a Pi fails with "no matching manifest for linux/arm64". Pulling them from a multi-arch
-# fork before the NOMAD installer runs avoids that: the installer's own `docker compose up`
-# then finds the images already local and does not need to resolve a manifest at all.
-#
-# Verified per image, not assumed: `docker manifest inspect` is used because
-# `.Architecture` from `docker image inspect` is empty on the containerd image store.
-# ---------------------------------------------------------------------------------------
-
-nomad_arch() {
-    case $(uname -m) in
-        aarch64|arm64) echo arm64 ;;
-        x86_64|amd64)  echo amd64 ;;
-        armv7l|armv7)  echo arm/v7 ;;
-        *)             uname -m ;;
-    esac
-}
-
-# Print the architectures an image publishes, one per line. Non-zero if unreadable.
-#   multi-arch index  -> one line per platform
-#   single manifest   -> its own architecture, resolved via `manifest inspect --verbose`
-#                        (the architecture lives in the config blob, not the manifest)
-nomad_image_platforms() {
-    local img=$1 out
-    out=$(docker manifest inspect "$img" 2>/dev/null) || return 1
-
-    # A plain manifest has no "manifests" array; ask for the descriptor instead.
-    if ! printf '%s' "$out" | grep -q '"manifests"'; then
-        docker manifest inspect --verbose "$img" 2>/dev/null | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-except Exception:
-    sys.exit(1)
-p = (d.get('Descriptor') or {}).get('platform') or d.get('platform') or {}
-print(p.get('architecture') or 'unknown')
-" 2>/dev/null
-        return
-    fi
-
-    printf '%s' "$out" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-except Exception:
-    sys.exit(1)
-for m in d.get('manifests') or []:
-    p = m.get('platform') or {}
-    if p.get('os') != 'unknown':
-        print(p.get('architecture') + ('/' + p['variant'] if p.get('variant') else ''))
-" 2>/dev/null
-}
-
-prepare_nomad_images() {
-    [ "$NOMAD_STACK" = off ] && { log_stage "NOMAD images"; log_info "skipped (--no-nomad)"; return 0; }
-    log_stage "NOMAD images"
-
-    if ! has_command docker; then
-        log_info "docker not installed; skipping (install NOMAD with its own installer first)"
-        return 0
-    fi
-    if ! docker info >/dev/null 2>&1 && [ "$(id -u)" -ne 0 ]; then
-        log_warn "cannot talk to the docker daemon; skipping NOMAD image pull"
-        return 0
-    fi
-
-    local arch img platforms
-    arch=$(nomad_arch)
-    log_info "host architecture: $arch"
-
-    local images=(
-        "$NOMAD_REGISTRY/project-nomad:$NOMAD_VERSION"
-        "$NOMAD_REGISTRY/project-nomad-sidecar-updater:$NOMAD_VERSION"
-        "$NOMAD_REGISTRY/project-nomad-disk-collector:$NOMAD_VERSION"
-    )
-
-    local failed=0
-    for img in "${images[@]}"; do
-        platforms=$(nomad_image_platforms "$img") || {
-            log_warn "$img: cannot read its manifest (not public, wrong tag, or no network)"
-            failed=$((failed + 1)); continue
-        }
-        if ! printf '%s\n' "$platforms" | grep -qx "$arch"; then
-            log_error "$img has no $arch manifest (has: $(echo $platforms))"
-            case $arch in
-                arm64) log_warn "upstream publishes amd64 only - build the fork's arm64 images" ;;
-            esac
-            failed=$((failed + 1)); continue
-        fi
-
-        if $DRY_RUN; then
-            printf '%s  [dry-run]%s docker pull --platform linux/%s %s\n' \
-                "$C_YELLOW" "$C_OFF" "$arch" "$img"
-            continue
-        fi
-        log_info "pulling $img for linux/$arch"
-        if docker pull --platform "linux/$arch" "$img" >/dev/null 2>&1; then
-            log_ok "$(basename "${img%%:*}"):$NOMAD_VERSION"
-        else
-            log_error "failed to pull $img"
-            failed=$((failed + 1))
-        fi
-    done
-
-    if [ "$failed" -gt 0 ]; then
-        log_warn "$failed image(s) not ready; the NOMAD installer would fail on $arch"
-    fi
-
-    # The NOMAD installer downloads upstream's compose file, which names upstream's images.
-    # Point an existing install at these instead, so a later `compose up` does not pull
-    # amd64 tags back in.
-    local compose="$NOMAD_COMPOSE_DIR/compose.yml"
-    if $DRY_RUN; then
-        [ -f "$compose" ] && printf '%s  [dry-run]%s rewrite image refs in %s\n' \
-            "$C_YELLOW" "$C_OFF" "$compose"
-        return 0
-    fi
-    if [ -f "$compose" ] && grep -q 'ghcr.io/crosstalk-solutions/project-nomad' "$compose"; then
-        cp -a "$compose" "$compose.ktemata.bak"
-        sed -i \
-            -e "s|ghcr.io/crosstalk-solutions/project-nomad-sidecar-updater|$NOMAD_REGISTRY/project-nomad-sidecar-updater|g" \
-            -e "s|ghcr.io/crosstalk-solutions/project-nomad-disk-collector|$NOMAD_REGISTRY/project-nomad-disk-collector|g" \
-            -e "s|ghcr.io/crosstalk-solutions/project-nomad|$NOMAD_REGISTRY/project-nomad|g" \
-            "$compose"
-        # '#' as the delimiter: the pattern needs '|' for the alternation below.
-        sed -i -E "s#($NOMAD_REGISTRY/project-nomad)(-sidecar-updater|-disk-collector)?:[^ \"]*#\1\2:$NOMAD_VERSION#g" "$compose"
-        log_ok "rewrote image refs in $compose (backup: .ktemata.bak)"
-    fi
-
-    if $HOST_LIBRARY && [ -f "$compose" ]; then
-        log_warn "host kiwix-serve uses :8080, the same port as NOMAD's admin;"
-        log_warn "re-run with --library nomad to leave the library to the NOMAD stack"
-    fi
-}
-
 install_kiosk() {
     $WITH_KIOSK || { log_stage "Kiosk"; log_info "skipped (pass --kiosk to enable)"; return 0; }
     log_stage "Kiosk"
@@ -2185,9 +2037,6 @@ main() {
             --hotspot-open)  HOTSPOT_PASS="" ;;
             --hotspot-band)  HOTSPOT_BAND=${2:?--hotspot-band takes auto, 2.4 or 5}; shift ;;
             --hotspot-addr)  HOTSPOT_ADDR=${2:?--hotspot-addr needs an address}; shift ;;
-            --no-nomad)      NOMAD_STACK=off ;;
-            --nomad-version) NOMAD_VERSION=${2:?--nomad-version needs a tag}; shift ;;
-            --nomad-registry) NOMAD_REGISTRY=${2:?--nomad-registry needs a registry}; shift ;;
             --autologin-user) AUTOLOGIN_USER=${2:?--autologin-user needs a name}; shift ;;
             --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
             --rotate)        ROTATE=${2:?--rotate needs normal|left|right|inverted}; shift ;;
@@ -2262,7 +2111,6 @@ main() {
     setup_rtc_charge
     set_radio_off
     setup_hotspot
-    prepare_nomad_images
     install_kiosk
     $WITH_SAMPLE && download_sample
     verify

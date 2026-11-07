@@ -297,36 +297,29 @@ sudo ./work/scripts/desktop-artwork.sh      # or straight from the checkout
 
 Details, options and what was verified: [ARTWORK.md](ARTWORK.md).
 
-## Project NOMAD images
+## Project NOMAD (optional)
 
-Upstream publishes the NOMAD management images for **amd64 only**, so `docker compose up` on a Pi fails with
-`no matching manifest for linux/arm64`. The step pulls the multi-arch fork **before** NOMAD's own installer
-runs, so that installer's `docker compose up` finds the images already present.
+NOMAD is a separate stack and is **not** installed here. Run the Raspberry Pi 5 fork's installer
+(`install/install_nomad.sh` from `broy55/project-nomad-rpi5`) on a fresh box first, then:
 
 ```bash
-sudo ./work/scripts/post-install.sh --nomad-version 1.35.1
-sudo ./work/scripts/post-install.sh --nomad-registry ghcr.io/you
-sudo ./work/scripts/post-install.sh --no-nomad
+sudo ./work/scripts/post-install.sh --library nomad
 ```
 
-Three images: `project-nomad`, `-sidecar-updater`, `-disk-collector`.
+It cannot be folded into this script:
 
-**It verifies rather than assumes.** `docker image inspect .Architecture` is empty on the containerd image
-store, so the check reads the manifest:
+- it is an interactive wizard (whiptail, `read` fallbacks) and refuses to run when
+  `/opt/project-nomad/compose.yml` already exists, so it cannot be re-run from here;
+- on arm64 it **builds** the three images locally from its own source tarball, so pulling or
+  repointing images beforehand has no effect — it never consumes a pre-built tag;
+- its preflight hard-fails on the stock Pi 5 16K-page kernel; set `[pi5] kernel=kernel8.img` in
+  `config.txt` and reboot before running it (it only stages that itself when an NVIDIA eGPU is
+  present);
+- its own update and hotspot/firewall scripts are stubs (`update_nomad.sh` exits 1, the hotspot
+  scripts are preview-only and refuse to write to `/`).
 
-- multi-arch index → lists every platform
-- single-platform manifest → `docker manifest inspect --verbose`, whose `Descriptor.platform.architecture`
-  names it (the architecture is in the config blob, not the manifest)
-
-An image without a manifest for the host architecture is an **error**, with `upstream publishes amd64 only` as
-the hint on ARM. Pulls use `docker pull --platform linux/<arch>`.
-
-It also rewrites an existing `/opt/project-nomad/compose.yml`: upstream's compose pins
-`ghcr.io/crosstalk-solutions/...` with `pull_policy: always`, which would drag the amd64 image back in on the
-next `compose up`. Image references are repointed at the configured registry and version, other services
-(`mysql`, `redis`, …) are untouched, and `compose.yml.ktemata.bak` is kept.
-
-Skips cleanly when Docker is absent or the daemon is unreachable.
+`--library nomad` only changes what this script does: no host `kiwix-serve`, and the status OLED
+and the hardware storage check read `${NOMAD_STORAGE_PATH}/zim`.
 
 ## config.txt (opt-in)
 
@@ -454,6 +447,9 @@ Facts about the NOMAD side (checked against the fork's service seeder): `nomad_a
 **:8090**, binds `${NOMAD_STORAGE_PATH}/zim` as `/data`, and serves `/data/kiwix-library.xml` with
 `--monitorLibrary`. The NOMAD **installer** installs only the Command Center; Kiwix is added from
 the Command Center after setup.
+
+Install NOMAD with its own installer first — see [Project NOMAD](#project-nomad-optional). This
+script never writes to `/opt/project-nomad`.
 
 Consequences:
 
@@ -585,9 +581,6 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --hwtest-only      run the hardware checks and exit
     --strict           non-zero exit when a hardware check fails (not on warnings)
     --power usbc|hat   supply in use, for the diagnostic hints (default usbc)
-    --no-nomad         do not pull the NOMAD images
-    --nomad-version V  NOMAD tag to pull (default 1.35.1)
-    --nomad-registry R registry/namespace (default ghcr.io/jsoeterbroek)
     --no-camera-autodetect
                        set camera_auto_detect=0 in config.txt (opt-in)
     --no-rtc-charge    do not enable the ML-2020 RTC trickle charge
@@ -623,12 +616,6 @@ left untouched. **GDM** (Ubuntu): insert into a stock `custom.conf`, replace an 
 `AutomaticLoginEnable=false` / `AutomaticLogin=pi`, append a missing `[daemon]` section to a config that only
 had `[security]`, and the Debian layout where only `daemon.conf` exists. Each case leaves the other sections
 intact and keeps a backup identical to the original.
-
-The NOMAD step was tested against the real registry with the host architecture forced:
-the fork (`ghcr.io/jsoeterbroek`) reports `arm64 amd64` and pulls; **upstream reports `amd64` only and is
-refused on arm64** with the "build the fork's arm64 images" hint; upstream passes on amd64. A realistic
-upstream `compose.yml` was rewritten to the fork's registry and version with `mysql:8.0` untouched and a
-backup kept. The step skips cleanly when Docker is absent or the daemon is unreachable.
 
 The `config.txt` edit was tested against the actual Pi 5 file: the diff is exactly one line
 (`camera_auto_detect=1` → `0`), `dtparam=audio=on` and `display_auto_detect=1` are untouched, a
