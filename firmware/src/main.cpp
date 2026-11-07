@@ -5,8 +5,8 @@
  *        ESP32-WROOM-32UE-N16R2 (ESP32-D0WDR2-V3, 2 MB PSRAM)
  *
  * Responsibilities (see README.md, "Status OLED"):
- *   - 1.3" 128x64 I2C OLED (SH1106 default, SSD1306 optional), three screens:
- *     time, battery, storage
+ *   - 1.3" 128x64 I2C OLED (SH1106 default, SSD1306 optional), four screens:
+ *     time, power, storage, wifi
  *   - one sealed push button: short press = next screen, long press = ack alert
  *   - DS3231 on the internal I2C bus
  *   - Waveshare UPS HAT (B) INA219 gauge at 0x42 (2S 18650)
@@ -74,8 +74,18 @@ bool upsOk = false;
 // ---------------------------------------------------------------------------
 enum ScreenId : uint8_t {
   SCREEN_TIME = 0,
-  SCREEN_BATTERY = 1,
+  SCREEN_POWER = 1,
   SCREEN_STORAGE = 2,
+  SCREEN_WIFI = 3,
+  SCREEN_COUNT = 4,
+};
+
+// The radio lives on the Pi; the board only mirrors what the Pi reports over serial.
+// The firmware does not initialise Wi-Fi (see the header comment).
+enum WifiMode : uint8_t {
+  WIFI_OFF = 0,
+  WIFI_CLIENT = 1,
+  WIFI_AP = 2,
 };
 
 enum AlertLevel : uint8_t {
@@ -102,8 +112,15 @@ struct StorageReading {
   uint32_t updatedMs = 0;
 };
 
+struct WifiReading {
+  bool valid = false;
+  WifiMode mode = WIFI_OFF;
+  uint32_t updatedMs = 0;
+};
+
 UpsStatus upsData;
 StorageReading storage;
+WifiReading wifi;
 AlertState alerts[ALERT_COUNT];
 
 ScreenId screen = SCREEN_TIME;
@@ -261,7 +278,7 @@ AlertLevel levelLow(float value, float warn, float crit, float hysteresis,
 ScreenId screenForAlert(AlertId id) {
   switch (id) {
     case ALERT_BATTERY:
-      return SCREEN_BATTERY;
+      return SCREEN_POWER;
     case ALERT_STORAGE:
       return SCREEN_STORAGE;
     default:
@@ -531,8 +548,8 @@ bool lowBattery() {
   return upsOk && upsData.percent <= static_cast<uint16_t>(ALERT_BATT_CRIT);
 }
 
-void renderBatteryScreen() {
-  drawHeader("BATTERY");
+void renderPowerScreen() {
+  drawHeader("POWER");
   char buf[40];
 
   if (!upsOk) {
@@ -543,40 +560,48 @@ void renderBatteryScreen() {
     return;
   }
 
-  bodyCursor(0, 12);
+  // Rows are packed from the top so a state that has nothing to report does not leave a
+  // gap: on mains there is no load (the charger feeds the regulator) and no OL flag (the
+  // charging / battery full row already says the pack is on external power).
+  int y = 12;
+
+  bodyCursor(0, y);
   snprintf(buf, sizeof(buf), "%3u %%       %4.1f V", upsData.percent,
            upsData.batteryMv / 1000.0f);
   display.print(buf);
+  y += 10;
 
-  bodyCursor(0, 22);
+  bodyCursor(0, y);
   snprintf(buf, sizeof(buf), "%+5.2f A    %+5.2f W",
            upsData.batteryMa / 1000.0f,
            (upsData.batteryMv / 1000.0f) * (upsData.batteryMa / 1000.0f));
   display.print(buf);
+  y += 10;
 
-  // Flags; load is only shown when the pack is supplying it (on mains the charger feeds
-  // the regulator and the INA219 sees charge current, so there is no load to report).
-  bodyCursor(0, 32);
-  if (upsData.loadValid) {
-    snprintf(buf, sizeof(buf), "%s%s  load %u%%", upsData.mains ? "OL" : "OB",
-             lowBattery() ? " LB" : "", upsData.loadPct);
-  } else {
-    snprintf(buf, sizeof(buf), "%s%s", upsData.mains ? "OL" : "OB",
-             lowBattery() ? " LB" : "");
+  if (!upsData.mains) {
+    bodyCursor(0, y);
+    if (upsData.loadValid) {
+      snprintf(buf, sizeof(buf), "OB%s  load %u%%", lowBattery() ? " LB" : "",
+               upsData.loadPct);
+    } else {
+      snprintf(buf, sizeof(buf), "OB%s", lowBattery() ? " LB" : "");
+    }
+    display.print(buf);
+    y += 10;
   }
-  display.print(buf);
 
-  bodyCursor(0, 42);
+  bodyCursor(0, y);
   if (!upsData.mains) {
     display.print("discharging");
   } else if (upsData.charging) {
     display.print("charging");
   } else {
-    display.print("full");
+    display.print("battery full");
   }
+  y += 10;
 
-  bodyCursor(0, 52);
   if (upsData.runtimeValid) {
+    bodyCursor(0, y);
     if (upsData.runtimeSec < 60UL) {
       snprintf(buf, sizeof(buf), "~%lus left", static_cast<unsigned long>(upsData.runtimeSec));
     } else if (upsData.runtimeSec < 3600UL) {
@@ -589,11 +614,60 @@ void renderBatteryScreen() {
     }
     display.print(buf);
   } else if (upsData.chargeMin > 0 && upsData.chargeMin < 6000) {
+    bodyCursor(0, y);
     snprintf(buf, sizeof(buf), "~%uh%02um to full", upsData.chargeMin / 60,
              upsData.chargeMin % 60);
     display.print(buf);
   }
-  // On mains with no charge estimate there is no runtime, so leave the row blank.
+  // On mains with no charge estimate there is no runtime row, so stop after "battery full".
+}
+
+// The board has no radio: the Pi reports the state of its own Wi-Fi over serial.
+const char* wifiStateText() {
+  switch (wifi.mode) {
+    case WIFI_CLIENT:
+      return "on (client)";
+    case WIFI_AP:
+      return "on (AP mode)";
+    default:
+      return "off";
+  }
+}
+
+const char* wifiStateName() {
+  switch (wifi.mode) {
+    case WIFI_CLIENT:
+      return "client";
+    case WIFI_AP:
+      return "ap";
+    default:
+      return "off";
+  }
+}
+
+void renderWifiScreen() {
+  drawHeader("WIFI");
+
+  if (!wifi.valid) {
+    bodyCursor(0, 20);
+    display.print("no wifi data yet");
+    bodyCursor(0, 34);
+    display.print("waiting for Pi JSON");
+    return;
+  }
+
+  bodyCursor(0, 12);
+  display.print(wifiStateText());
+
+  const uint32_t ageSeconds = (millis() - wifi.updatedMs) / 1000UL;
+  char buf[32];
+  bodyCursor(0, 24);
+  if (ageSeconds < 120) {
+    snprintf(buf, sizeof(buf), "updated %lus ago", static_cast<unsigned long>(ageSeconds));
+  } else {
+    snprintf(buf, sizeof(buf), "updated %lum ago", static_cast<unsigned long>(ageSeconds / 60));
+  }
+  display.print(buf);
 }
 
 void renderStorageScreen() {
@@ -645,11 +719,16 @@ void render() {
     case SCREEN_TIME:
       renderTimeScreen();
       break;
-    case SCREEN_BATTERY:
-      renderBatteryScreen();
+    case SCREEN_POWER:
+      renderPowerScreen();
       break;
     case SCREEN_STORAGE:
       renderStorageScreen();
+      break;
+    case SCREEN_WIFI:
+      renderWifiScreen();
+      break;
+    default:
       break;
   }
 
@@ -673,7 +752,7 @@ void wakeScreen() {
 
 void nextScreen() {
   wakeScreen();
-  screen = static_cast<ScreenId>((static_cast<uint8_t>(screen) + 1) % 3);
+  screen = static_cast<ScreenId>((static_cast<uint8_t>(screen) + 1) % SCREEN_COUNT);
   alertScreenActive = false;
   lastRenderMs = 0;
 }
@@ -756,6 +835,17 @@ void sendTelemetry() {
   disk["free_gb"] = storage.freeGb;
   disk["age_s"] = storage.valid ? (millis() - storage.updatedMs) / 1000UL : 0;
 
+  // Mirror of the Pi's own radio; the board has none.
+  JsonObject wifiJson = doc["wifi"].to<JsonObject>();
+  wifiJson["present"] = wifi.valid;
+  if (wifi.valid) {
+    wifiJson["state"] = wifiStateName();
+    wifiJson["age_s"] = (millis() - wifi.updatedMs) / 1000UL;
+  } else {
+    wifiJson["state"] = nullptr;
+    wifiJson["age_s"] = nullptr;
+  }
+
   JsonArray alertArray = doc["alerts"].to<JsonArray>();
   alertArray.add(static_cast<uint8_t>(alerts[ALERT_BATTERY].level));
   alertArray.add(static_cast<uint8_t>(alerts[ALERT_STORAGE].level));
@@ -788,11 +878,25 @@ void handleSerialLine(char* line) {
       storage.freeGb = freeGb;
       storage.updatedMs = millis();
     }
+  } else if (strcmp(cmd, "wifi") == 0) {
+    const char* state = doc["state"] | "";
+    if (strcmp(state, "off") == 0) {
+      wifi.mode = WIFI_OFF;
+    } else if (strcmp(state, "client") == 0) {
+      wifi.mode = WIFI_CLIENT;
+    } else if (strcmp(state, "ap") == 0) {
+      wifi.mode = WIFI_AP;
+    } else {
+      Serial.println("{\"type\":\"error\",\"msg\":\"wifi state must be off, client or ap\"}");
+      return;
+    }
+    wifi.valid = true;
+    wifi.updatedMs = millis();
   } else if (strcmp(cmd, "ack") == 0) {
     acknowledgeActiveAlert();
   } else if (strcmp(cmd, "screen") == 0) {
     const int index = doc["index"] | -1;
-    if (index >= 0 && index < 3) {
+    if (index >= 0 && index < SCREEN_COUNT) {
       screen = static_cast<ScreenId>(index);
       alertScreenActive = false;
       wakeScreen();
@@ -946,7 +1050,7 @@ void loop() {
     lastRenderMs = 0;
   }
 #else
-  // No panel button yet: walk the three screens (and show the UPS statistics on the way).
+  // No panel button yet: walk the four screens (and show the UPS statistics on the way).
   // Alerts still take over while active. Any wake (button, serial screen command, alert)
   // resets lastInteractionMs, so the next advance is 25 s after that.
   if (!alertScreenActive && now - lastInteractionMs >= AUTO_CYCLE_MS) {

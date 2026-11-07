@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Push time and storage to the Ktemata status OLED (FireBeetle 2 ESP32-UE).
+"""Push time, storage and Wi-Fi state to the Ktemata status OLED (FireBeetle 2 ESP32-UE).
 
 The FireBeetle drives the 1.3" I2C OLED and is the I2C master for the UPS gauge,
 DS3231 and BME688. It has no clock of its own unless the DS3231 is fitted, so the
 Pi sends UTC plus the free space of the library filesystem over the USB serial
-link, and reads the board's telemetry back. Protocol: newline-delimited JSON at
-115200 8N1, see firmware/README.md.
+link, and reads the board's telemetry back. The board has no radio either, so the
+Pi also reports its own Wi-Fi state (off / client / AP) for the WIFI screen.
+Protocol: newline-delimited JSON at 115200 8N1, see firmware/README.md.
 
   python3 work/scripts/status-oled.py                  # autodetect, sync every hour
   python3 work/scripts/status-oled.py --port /dev/ttyUSB0
@@ -29,6 +30,7 @@ import json
 import os
 import select
 import signal
+import subprocess
 import sys
 import termios
 import time
@@ -37,6 +39,8 @@ BAUD = termios.B115200
 CH340_IDS = ("1a86", "ch340", "ch341", "wch")
 TIME_PERIOD = 3600        # UTC is re-sent hourly; the ESP32 millis() clock drifts
 STORAGE_PERIOD = 60
+WIFI_PERIOD = 15          # cheap read-only queries; the state only changes on user action
+WIFI_IFACE = "wlan0"
 BOOT_BANNER = "Ktemata r2 status OLED"
 TIME_ACK = "time synced"
 MIN_EPOCH = 1_700_000_000  # the firmware ignores anything earlier (Nov 2023)
@@ -172,6 +176,46 @@ def sync_storage(link, path, warn):
     return True
 
 
+def run_quiet(cmd, timeout=3.0):
+    """Ask a status tool; empty output means the tool or the device is not there."""
+    try:
+        return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                              text=True, timeout=timeout).stdout
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def wifi_state():
+    """'off', 'client' or 'ap' for the Pi's own radio. Read-only, no root needed.
+
+    NetworkManager is the normal case: `post-install.sh --hotspot` writes an AP profile
+    and Raspberry Pi OS Bookworm ships NM. The hostapd + dnsmasq fallback and a bare
+    `iw` setup are recognised too. Wi-Fi is off unless someone enabled it, so anything
+    that is not connected and not serving an AP reports 'off'.
+    """
+    # GENERAL.STATE 100 = connected on that interface.
+    state = run_quiet(["nmcli", "-t", "-f", "GENERAL.STATE", "device", "show", WIFI_IFACE])
+    if "GENERAL.STATE:100" in state:
+        connection = run_quiet(
+            ["nmcli", "-g", "GENERAL.CONNECTION", "device", "show", WIFI_IFACE]).strip()
+        mode = run_quiet(
+            ["nmcli", "-g", "802-11-wireless.mode", "connection", "show", connection]).strip()
+        return "ap" if mode == "ap" else "client"
+    # No NetworkManager profile: the hotspot may be a standalone hostapd service.
+    if run_quiet(["systemctl", "is-active", "hostapd"]).strip() == "active":
+        return "ap"
+    # Bare setup: ask the driver.
+    if "Connected to" in run_quiet(["iw", "dev", WIFI_IFACE, "link"]):
+        return "client"
+    return "off"
+
+
+def sync_wifi(link):
+    state = wifi_state()
+    link.send({"cmd": "wifi", "state": state})
+    return state
+
+
 def run_once(port, path):
     link = Link(port)
     log(f"opened {port}")
@@ -179,6 +223,7 @@ def run_once(port, path):
         time.sleep(INITIAL_DELAY)     # the open itself may have reset the board
         sync_time(link, log)
         sync_storage(link, path, log)
+        log(f"wifi {sync_wifi(link)}")
         deadline = time.monotonic() + 2.0
         while time.monotonic() < deadline:
             for line in link.lines():
@@ -218,9 +263,11 @@ def run_forever(port, path, args):
         log(f"opened {path_now}")
         next_time = time.monotonic() + INITIAL_DELAY   # let a reset finish before writing
         next_storage = next_time
+        next_wifi = next_time
         time_confirmed = False
         time_tries = 0
         last_alerts = None
+        wifi_seen = None
         try:
             while True:
                 try:
@@ -263,13 +310,14 @@ def run_forever(port, path, args):
 
                     now = time.monotonic()
                     if restart:
-                        log("board boot; sending time and storage")
+                        log("board boot; sending time, storage and wifi")
                         time_confirmed = False
                         time_tries = 0
-                        next_time = next_storage = 0.0
+                        next_time = next_storage = next_wifi = 0.0
                     if retry and time_tries < MAX_TIME_RETRIES:
                         next_time = min(next_time, now + INITIAL_DELAY)
                         next_storage = min(next_storage, now + INITIAL_DELAY)
+                        next_wifi = min(next_wifi, now + INITIAL_DELAY)
                     if now >= next_time:
                         if sync_time(link, warn):
                             time_tries += 1
@@ -285,6 +333,12 @@ def run_forever(port, path, args):
                     if now >= next_storage:
                         sync_storage(link, path, warn)
                         next_storage = now + args.storage_period
+                    if now >= next_wifi:
+                        state = sync_wifi(link)
+                        if state != wifi_seen:
+                            log(f"wifi {state}")
+                            wifi_seen = state
+                        next_wifi = now + WIFI_PERIOD
                 except OSError as exc:
                     warn(f"{path_now}: {exc}; reopening")
                     break
@@ -296,7 +350,8 @@ def run_forever(port, path, args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Send UTC and free space to the Ktemata status OLED over USB serial.")
+        description="Send UTC, free space and Wi-Fi state to the Ktemata status OLED "
+                    "over USB serial.")
     parser.add_argument("--port", help="serial device; default: autodetect the CH340")
     parser.add_argument("--storage", default=os.environ.get("ZIM_DIR", "/srv/kiwix/zim"),
                         help="filesystem to report (default: /srv/kiwix/zim)")

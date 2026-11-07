@@ -148,15 +148,24 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
 
 ## What the firmware does
 
-- Three screens, in this order: **time** (default), **battery**, **storage**.
-  The time screen draws a 9×9 clock icon beside the date and an 11×7 battery
-  icon whose fill follows the pack percentage; a 6×7 plug appears beside it
-  when external power is attached, and `CHG` is appended while current flows
-  into the pack.
+- Four screens, in this order: **time** (default), **power**, **storage**,
+  **wifi**. The time screen draws a 9×9 clock icon beside the date and an 11×7
+  battery icon whose fill follows the pack percentage; a 6×7 plug appears
+  beside it when external power is attached, and `CHG` is appended while
+  current flows into the pack.
+- The **power** screen (header `POWER`) packs its rows from the top: percent and
+  pack voltage, current and power, then — on battery only — `OB` (with `LB`
+  below 10 %) and the load, and always the state line `discharging`, `charging`
+  or `battery full`, then the runtime or the time to full. `OL` is not printed:
+  the state line already says the pack is on external power, and the load is
+  unmeasurable on mains.
+- The **wifi** screen mirrors the Pi's radio, which the board does not have:
+  `off`, `on (client)` or `on (AP mode)`, plus the age of the last report. Until
+  the Pi has sent one it shows `no wifi data yet`.
 - Short button press cycles screens and wakes the OLED. A long press
   acknowledges the active alert.
 - **No button fitted yet:** the current build sets `AUTO_CYCLE_MS=25000UL`, so
-  the three screens advance every 25 s. An active alert still takes over;
+  the four screens advance every 25 s. An active alert still takes over;
   waking (button, serial `screen` command, alert) restarts the 25 s. Set
   `AUTO_CYCLE_MS=0UL` once the PBS-33B is wired.
 - With the button in use (`AUTO_CYCLE_MS=0`), back to the time screen after 30 s
@@ -210,6 +219,7 @@ Pi → ESP32 (one JSON object per line):
 ```json
 {"cmd":"time","epoch":1780000000}
 {"cmd":"storage","used_pct":42.5,"free_gb":580.2}
+{"cmd":"wifi","state":"ap"}
 {"cmd":"ack"}
 {"cmd":"screen","index":1}
 {"cmd":"status"}
@@ -219,7 +229,10 @@ Pi → ESP32 (one JSON object per line):
 `TIMEZONE` only when rendering, so the Pi's local timezone does not matter and DST is handled by the
 POSIX TZ rule. Default `TIMEZONE` is `CET-1CEST,M3.5.0,M10.5.0/3` (Europe/Amsterdam); change it in
 `include/config.h` for another zone.
-`screen` index: 0 time, 1 battery, 2 storage.
+`screen` index: 0 time, 1 power, 2 storage, 3 wifi.
+The board has no radio, so `wifi` carries the Pi's own state: `off`, `client`
+(Wi-Fi up and associated) or `ap` (serving the library hotspot). Any other value
+is rejected with an `error` line and the last state is kept.
 
 ESP32 → Pi every 10 s (and after `status`):
 
@@ -231,14 +244,19 @@ ESP32 → Pi every 10 s (and after `status`):
             "vbus_mv":7660,"remaining_mah":2500,
             "runtime_s":21000,"charge_min":0},
  "storage":{"present":true,"used_pct":42.5,"free_gb":580.2,"age_s":12},
+ "wifi":{"present":true,"state":"ap","age_s":4},
  "alerts":[0,0]}
 ```
 
 `alerts` is `[battery, storage]` with 0 = ok, 1 = warning,
 2 = critical. Values that are not available are serialized as `null`.
+`wifi.state` is the last value the Pi sent (`off`, `client` or `ap`), with
+`age_s` since that report; before the first one it is `null`.
 
 `status` uses NUT's flags: `OL` = on utility power, `OB` = on battery, with
-`LB` appended below 10 %. `load_pct` is the load relative to the HAT's 5 V /
+`LB` appended below 10 %. The OLED's `POWER` screen prints `OB`/`LB` only: on
+mains its `charging` / `battery full` line carries the same information, so the
+`OL` flag is left out. `load_pct` is the load relative to the HAT's 5 V /
 5 A (25 W) output, assuming 88 % buck efficiency. The INA219 sits on the **pack**
 branch, so the load is only measurable while the pack supplies it; on mains the
 charger feeds the regulator and `load_pct` is `null` (the OLED omits the load).
@@ -246,17 +264,17 @@ charger feeds the regulator and `load_pct` is `null` (the OLED omits the load).
 `runtime_s` is NUT's `battery.runtime`: seconds left at the measured discharge
 current, from the voltage-derived remaining capacity (3200 mAh constant) divided
 by that current. It is `null` on mains, or when the current is below 20 mA; the
-battery screen then leaves the runtime row blank (or shows `to full` while
-charging). The estimate follows the load and the (voltage-based) percentage, so
-it moves; it is not a fuel-gauge measurement.
+power screen then omits the runtime row (or shows `to full` while charging). The
+estimate follows the load and the (voltage-based) percentage, so it moves; it is
+not a fuel-gauge measurement.
 
 Without a DS3231 the clock is lost on reset. The Pi-side sender
 (`work/scripts/status-oled.py`) covers that: it pushes UTC at start and hourly (and again when
 the board announces a boot), so a reset is followed by a re-sync within seconds. Opening the
 port can reset the board, so it waits two seconds before the first line; a send that the board
 does not confirm with `{"type":"log","msg":"time synced"}` is repeated every 5 s (six times, then
-hourly). It also sends the storage figures at start and every 60 s, reads the telemetry back,
-and logs alert changes.
+hourly). It also sends the storage figures at start and every 60 s, the Wi-Fi state at start and
+every 15 s, reads the telemetry back, and logs alert and Wi-Fi changes.
 `work/scripts/post-install.sh` installs it to `/usr/local/lib/ktemata/status-oled.py` and
 enables `ktemata-status-oled.service`; `--no-oled` skips it and `--oled-port` pins the device.
 
@@ -273,6 +291,13 @@ The port is driven with `termios`, so no `pyserial` is needed. It prefers the CH
 retrying instead of exiting. The unit therefore needs no device dependency. `used_pct` and
 `free_gb` use `df` semantics (`f_bavail`), so the number matches what the Pi reports. Lines that
 are not JSON (the boot ROM's log) are ignored unless `-v` is given.
+
+The Wi-Fi state for the OLED comes from the Pi, never from the board: `nmcli` reports `wlan0`
+as connected and the active profile's `802-11-wireless.mode` decides `ap` (the `--hotspot`
+profile) versus `client`; without NetworkManager an active `hostapd` means `ap` and
+`iw dev wlan0 link` means `client`; anything else — radio off, `--no-radio`, no association —
+is `off`. All of it is read-only, so the service needs no extra privileges. The state is
+re-sent every 15 s because a board reset loses it, and a change is logged.
 
 It takes an **exclusive lock** on the port. Stop `ktemata-status-oled.service` before running it
 by hand: two readers on one tty split the incoming bytes, so one process can miss the board's

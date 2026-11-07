@@ -124,7 +124,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app, `i2c-tools` for the hardware report and `util-linux-extra` (provides `hwclock` on Debian 12+) | `--no-gui`; `--library nomad` skips the Kiwix packages |
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | `--library nomad` skips this |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service`; `--library nomad` skips it |
-| 6b | **Write and enable `ktemata-status-oled.service`**: UTC + library free space to the FireBeetle over USB serial — see below | `--no-oled`, `--oled-port DEV` |
+| 6b | **Write and enable `ktemata-status-oled.service`**: UTC + library free space + the Wi-Fi state to the FireBeetle over USB serial — see below | `--no-oled`, `--oled-port DEV` |
 | 6c | **Write and enable `ktemata-artwork.service`**: wallpaper + boot splash at `graphical.target` — see [ARTWORK.md](ARTWORK.md) | `--no-artwork` |
 | 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
 | 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
@@ -498,8 +498,13 @@ writes nothing but the board's JSON.
   repeated every 5 s until the board logs `time synced` (six tries, then hourly).
 - Sends `{"cmd":"storage","used_pct":…,"free_gb":…}` at start and every 60 s, computed with
   `df` semantics (`f_bavail`) for `--zim-dir`.
-- Reads the board's telemetry back and logs alert transitions and rejected commands to the
-  journal. Lines that are not JSON (the ESP32 boot ROM) are ignored unless `-v` is given; the
+- Sends `{"cmd":"wifi","state":…}` at start, after a board boot and every 15 s, for the OLED's
+  `WIFI` screen. The board has no radio, so this is the Pi's own state: `nmcli` on `wlan0` plus
+  the active profile's `802-11-wireless.mode` gives `ap` (the `--hotspot` profile) or `client`;
+  without NetworkManager an active `hostapd` means `ap` and `iw dev wlan0 link` means `client`;
+  otherwise `off`. Read-only, so the service needs no extra rights.
+- Reads the board's telemetry back and logs alert and Wi-Fi transitions and rejected commands to
+  the journal. Lines that are not JSON (the ESP32 boot ROM) are ignored unless `-v` is given; the
   firmware silences its own core logger so the stream stays JSON.
 - Retries when the board is absent or unplugged, so the unit is harmless on a box without one.
   `--no-oled` skips the step entirely.
