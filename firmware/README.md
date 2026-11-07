@@ -241,13 +241,14 @@ ESP32 → Pi every 10 s (and after `status`):
 `LB` appended below 10 %. `load_pct` is the load relative to the HAT's 5 V /
 5 A (25 W) output, assuming 88 % buck efficiency. The INA219 sits on the **pack**
 branch, so the load is only measurable while the pack supplies it; on mains the
-charger feeds the regulator and `load_pct` is `null` (the OLED shows `load --`).
+charger feeds the regulator and `load_pct` is `null` (the OLED omits the load).
 
 `runtime_s` is NUT's `battery.runtime`: seconds left at the measured discharge
 current, from the voltage-derived remaining capacity (3200 mAh constant) divided
-by that current. It is `null` on mains, or when the current is below 20 mA, and
-the battery screen then shows `runtime --`. The estimate follows the load and the
-(voltage-based) percentage, so it moves; it is not a fuel-gauge measurement.
+by that current. It is `null` on mains, or when the current is below 20 mA; the
+battery screen then leaves the runtime row blank (or shows `to full` while
+charging). The estimate follows the load and the (voltage-based) percentage, so
+it moves; it is not a fuel-gauge measurement.
 
 Without a DS3231 the clock is lost on reset. The Pi-side sender
 (`work/scripts/status-oled.py`) covers that: it pushes UTC at start and hourly (and again when

@@ -534,7 +534,6 @@ bool lowBattery() {
 void renderBatteryScreen() {
   drawHeader("BATTERY");
   char buf[40];
-  char load[8];
 
   if (!upsOk) {
     bodyCursor(0, 20);
@@ -555,14 +554,16 @@ void renderBatteryScreen() {
            (upsData.batteryMv / 1000.0f) * (upsData.batteryMa / 1000.0f));
   display.print(buf);
 
+  // Flags; load is only shown when the pack is supplying it (on mains the charger feeds
+  // the regulator and the INA219 sees charge current, so there is no load to report).
   bodyCursor(0, 32);
   if (upsData.loadValid) {
-    snprintf(load, sizeof(load), "%u%%", upsData.loadPct);
+    snprintf(buf, sizeof(buf), "%s%s  load %u%%", upsData.mains ? "OL" : "OB",
+             lowBattery() ? " LB" : "", upsData.loadPct);
   } else {
-    snprintf(load, sizeof(load), "--");
+    snprintf(buf, sizeof(buf), "%s%s", upsData.mains ? "OL" : "OB",
+             lowBattery() ? " LB" : "");
   }
-  snprintf(buf, sizeof(buf), "%s%s  load %s", upsData.mains ? "OL" : "OB",
-           lowBattery() ? " LB" : "", load);
   display.print(buf);
 
   bodyCursor(0, 42);
@@ -591,9 +592,8 @@ void renderBatteryScreen() {
     snprintf(buf, sizeof(buf), "~%uh%02um to full", upsData.chargeMin / 60,
              upsData.chargeMin % 60);
     display.print(buf);
-  } else {
-    display.print("runtime --");
   }
+  // On mains with no charge estimate there is no runtime, so leave the row blank.
 }
 
 void renderStorageScreen() {
