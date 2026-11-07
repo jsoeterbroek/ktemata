@@ -28,6 +28,7 @@ import fcntl
 import glob
 import json
 import os
+import re
 import select
 import signal
 import subprocess
@@ -218,10 +219,26 @@ def wifi_state():
     return "off"
 
 
+def wifi_ip():
+    """Dotted IPv4 of wlan0, from `ip` and then NetworkManager; empty if unknown."""
+    out = run_quiet(["ip", "-4", "-o", "addr", "show", "dev", WIFI_IFACE])
+    found = re.search(r"\binet\s+([0-9.]+)/", out)
+    if found:
+        return found.group(1)
+    out = run_quiet(["nmcli", "-g", "IP4.ADDRESS", "device", "show", WIFI_IFACE]).strip()
+    if out:
+        return out.splitlines()[0].split("/")[0]
+    return ""
+
+
 def sync_wifi(link):
     state = wifi_state()
-    link.send({"cmd": "wifi", "state": state})
-    return state
+    ip = wifi_ip() if state != "off" else ""
+    command = {"cmd": "wifi", "state": state}
+    if ip:
+        command["ip"] = ip
+    link.send(command)
+    return state, ip
 
 
 def run_once(port, path):
@@ -231,7 +248,8 @@ def run_once(port, path):
         time.sleep(INITIAL_DELAY)     # the open itself may have reset the board
         sync_time(link, log)
         sync_storage(link, path, log)
-        log(f"wifi {sync_wifi(link)}")
+        wifi, ip = sync_wifi(link)
+        log(f"wifi {wifi}{' ' + ip if ip else ''}")
         deadline = time.monotonic() + 2.0
         while time.monotonic() < deadline:
             for line in link.lines():
@@ -342,10 +360,11 @@ def run_forever(port, path, args):
                         sync_storage(link, path, warn)
                         next_storage = now + args.storage_period
                     if now >= next_wifi:
-                        state = sync_wifi(link)
-                        if state != wifi_seen:
-                            log(f"wifi {state}")
-                            wifi_seen = state
+                        state, ip = sync_wifi(link)
+                        seen = (state, ip)
+                        if seen != wifi_seen:
+                            log(f"wifi {state}{' ' + ip if ip else ''}")
+                            wifi_seen = seen
                         next_wifi = now + WIFI_PERIOD
                 except OSError as exc:
                     warn(f"{path_now}: {exc}; reopening")

@@ -160,8 +160,8 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
   the state line already says the pack is on external power, and the load is
   unmeasurable on mains.
 - The **wifi** screen mirrors the Pi's radio, which the board does not have:
-  `off`, `station mode` or `access point`, plus the age of the last report. Until
-  the Pi has sent one it shows `no wifi data yet`.
+  `off`, `station mode` or `access point`, the interface's IPv4 address, and the
+  age of the last report. Until the Pi has sent one it shows `no wifi data yet`.
 - Short button press cycles screens and wakes the OLED. A long press
   acknowledges the active alert.
 - **No button fitted yet:** the current build sets `AUTO_CYCLE_MS=25000UL`, so
@@ -219,7 +219,8 @@ Pi → ESP32 (one JSON object per line):
 ```json
 {"cmd":"time","epoch":1780000000}
 {"cmd":"storage","used_pct":42.5,"free_gb":580.2}
-{"cmd":"wifi","state":"ap"}
+{"cmd":"wifi","state":"client","ip":"192.168.1.10"}
+{"cmd":"wifi","state":"ap","ip":"10.10.10.1"}
 {"cmd":"ack"}
 {"cmd":"screen","index":1}
 {"cmd":"status"}
@@ -231,8 +232,9 @@ POSIX TZ rule. Default `TIMEZONE` is `CET-1CEST,M3.5.0,M10.5.0/3` (Europe/Amster
 `include/config.h` for another zone.
 `screen` index: 0 time, 1 power, 2 storage, 3 wifi.
 The board has no radio, so `wifi` carries the Pi's own state: `off`, `client`
-(Wi-Fi up and associated) or `ap` (serving the library hotspot). Any other value
-is rejected with an `error` line and the last state is kept.
+(Wi-Fi up and associated) or `ap` (serving the library hotspot), plus the
+`wlan0` IPv4 address. Any other state is rejected with an `error` line and the
+last state is kept; the IP is truncated to 15 characters and cleared on `off`.
 
 ESP32 → Pi every 10 s (and after `status`):
 

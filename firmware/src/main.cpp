@@ -115,6 +115,7 @@ struct StorageReading {
 struct WifiReading {
   bool valid = false;
   WifiMode mode = WIFI_OFF;
+  char ip[16] = {0};           // dotted quad reported by the Pi (station or AP)
   uint32_t updatedMs = 0;
 };
 
@@ -659,9 +660,12 @@ void renderWifiScreen() {
   bodyCursor(0, 12);
   display.print(wifiStateText());
 
+  bodyCursor(0, 24);
+  display.print(wifi.ip[0] ? wifi.ip : "no IP");
+
   const uint32_t ageSeconds = (millis() - wifi.updatedMs) / 1000UL;
   char buf[32];
-  bodyCursor(0, 24);
+  bodyCursor(0, 36);
   if (ageSeconds < 120) {
     snprintf(buf, sizeof(buf), "updated %lus ago", static_cast<unsigned long>(ageSeconds));
   } else {
@@ -840,6 +844,7 @@ void sendTelemetry() {
   wifiJson["present"] = wifi.valid;
   if (wifi.valid) {
     wifiJson["state"] = wifiStateName();
+    wifiJson["ip"] = wifi.ip[0] ? wifi.ip : nullptr;
     wifiJson["age_s"] = (millis() - wifi.updatedMs) / 1000UL;
   } else {
     wifiJson["state"] = nullptr;
@@ -889,6 +894,12 @@ void handleSerialLine(char* line) {
     } else {
       Serial.println("{\"type\":\"error\",\"msg\":\"wifi state must be off, client or ap\"}");
       return;
+    }
+    const char* ip = doc["ip"] | "";
+    strncpy(wifi.ip, ip, sizeof(wifi.ip) - 1);
+    wifi.ip[sizeof(wifi.ip) - 1] = '\0';
+    if (wifi.mode == WIFI_OFF) {
+      wifi.ip[0] = '\0';
     }
     wifi.valid = true;
     wifi.updatedMs = millis();

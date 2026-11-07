@@ -526,8 +526,9 @@ writes nothing but the board's JSON.
   repeated every 5 s until the board logs `time synced` (six tries, then hourly).
 - Sends `{"cmd":"storage","used_pct":…,"free_gb":…}` at start and every 60 s, computed with
   `df` semantics (`f_bavail`) for `--zim-dir`.
-- Sends `{"cmd":"wifi","state":…}` at start, after a board boot and every 15 s, for the OLED's
-  `WIFI` screen. The board has no radio, so this is the Pi's own state: `nmcli` on `wlan0` plus
+- Sends `{"cmd":"wifi","state":…,"ip":…}` at start, after a board boot and every 15 s, for the
+  OLED's `WIFI` screen. The IP is read from `ip -4 addr show wlan0`, with
+  `nmcli -g IP4.ADDRESS` as the fallback; it is sent only while the state is not `off`. The board has no radio, so this is the Pi's own state: `nmcli` on `wlan0` plus
   the active profile's `802-11-wireless.mode` gives `ap` (the `--hotspot` profile) or `client`;
   without NetworkManager an active `hostapd` means `ap` and `iw dev wlan0 link` means `client`;
   a wireless interface that is up with neither tool is treated as `client`, otherwise `off`.
