@@ -287,8 +287,8 @@ Four screens, cycled with a button (or the auto-cycle until it is fitted: time 6
 |---|---|---|---|
 | 1 | **Time** (default) | HH:MM, date, weekday; small battery % and alert icons | ESP32 clock, set from the Pi over USB when it runs; the Pi sends UTC and the firmware applies `TIMEZONE` (default **Europe/Amsterdam**, including DST); a **DS3231 RTC** (I2C 0x68) on the FireBeetle keeps UTC after a full power loss with the Pi off |
 | 2 | **Power** | charge %, voltage, current (charging/discharging), `OB`/`LB` flags and load % of the 5 V/5 A output (battery only), a `charging` / `battery full` / `discharging` line, estimated time left or to full | UPS gauge: INA219 0x42 (r4), BQ4050 0x2D (r2/r3); no `OL` line — on mains the state line says it and the load is unmeasurable |
-| 3 | **Storage** | % used and free GB of the 512 GB SSD | Pi over USB; with the Pi off, shows the last value and its age |
-| 4 | **Wi-Fi** | `off`, `on (client)` or `on (AP mode)`, plus the age of the last report | Pi over USB (`nmcli`, else `hostapd`/`iw`); the FireBeetle has no radio and never initialises one |
+| 3 | **Storage** | % used and free GB of the 512 GB SSD | Pi over USB; with the Pi off, shows the last value, and `stale: Pi not sending` once it is over 10 min old |
+| 4 | **Wi-Fi** | `off`, `on (client)` or `on (AP mode)` and the interface's IP | Pi over USB (`nmcli`, else `hostapd`/`iw`); the FireBeetle has no radio and never initialises one |
 
 **Navigation:** one 12 mm panel button on the case (TinyTronics PBS-33B; add a rubber boot for sealing), wired to ESP32 GPIO4. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert. Until the button is fitted the build sets `AUTO_CYCLE_MS=30000UL`, so time stays 60 s and power/storage/wifi 30 s (alerts still take over); set it to `0UL` when the button is wired.
 

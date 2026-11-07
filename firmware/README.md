@@ -160,8 +160,8 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
   the state line already says the pack is on external power, and the load is
   unmeasurable on mains.
 - The **wifi** screen mirrors the Pi's radio, which the board does not have:
-  `off`, `station mode` or `access point`, the interface's IPv4 address, and the
-  age of the last report. Until the Pi has sent one it shows `no wifi data yet`.
+  `off`, `station mode` or `access point` and the interface's IPv4 address.
+  Until the Pi has sent a report it shows `no wifi data yet`.
 - Short button press cycles screens and wakes the OLED. A long press
   acknowledges the active alert.
 - **No button fitted yet:** the current build sets `AUTO_CYCLE_MS=30000UL`, so
@@ -320,9 +320,9 @@ printf '{"cmd":"time","epoch":%s}\n' "$(date +%s)" > /dev/ttyUSB0
   deliberate next step, not an oversight.
 - No pixel-shift/burn-in mitigation yet. The time screen is mostly static;
   add a small x/y offset on the time text if burn-in shows up.
-- Storage data is whatever the Pi sends. With the Pi off, the last value and
-  its age are shown; data older than 10 minutes is treated as stale for
-  alerts.
+- Storage data is whatever the Pi sends. With the Pi off, the last value is
+  shown; data older than 10 minutes is treated as stale and the screen says
+  `stale: Pi not sending`.
 - The UPS battery-current sign follows the Waveshare register manual:
   positive = charging, negative = discharging.
 

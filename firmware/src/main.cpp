@@ -662,16 +662,6 @@ void renderWifiScreen() {
 
   bodyCursor(0, 24);
   display.print(wifi.ip[0] ? wifi.ip : "no IP");
-
-  const uint32_t ageSeconds = (millis() - wifi.updatedMs) / 1000UL;
-  char buf[32];
-  bodyCursor(0, 36);
-  if (ageSeconds < 120) {
-    snprintf(buf, sizeof(buf), "updated %lus ago", static_cast<unsigned long>(ageSeconds));
-  } else {
-    snprintf(buf, sizeof(buf), "updated %lum ago", static_cast<unsigned long>(ageSeconds / 60));
-  }
-  display.print(buf);
 }
 
 void renderStorageScreen() {
@@ -692,17 +682,6 @@ void renderStorageScreen() {
 
   bodyCursor(0, 24);
   snprintf(buf, sizeof(buf), "%6.1f GB free", storage.freeGb);
-  display.print(buf);
-
-  const uint32_t ageSeconds = (millis() - storage.updatedMs) / 1000UL;
-  bodyCursor(0, 38);
-  if (ageSeconds < 120) {
-    snprintf(buf, sizeof(buf), "updated %lus ago",
-             static_cast<unsigned long>(ageSeconds));
-  } else {
-    snprintf(buf, sizeof(buf), "updated %lum ago",
-             static_cast<unsigned long>(ageSeconds / 60));
-  }
   display.print(buf);
 
   bodyCursor(0, 52);
