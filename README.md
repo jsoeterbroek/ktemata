@@ -281,7 +281,7 @@ Check I2C address collisions before wiring: the UPS fuel gauge and the DS3231. T
 
 ### Status OLED: screens and alerts
 
-Four screens, cycled with a button (or the 25 s auto-cycle until it is fitted). The **time** screen is the default.
+Four screens, cycled with a button (or the auto-cycle until it is fitted: time 60 s, the others 30 s). The **time** screen is the default.
 
 | # | Screen | Content | Source |
 |---|---|---|---|
@@ -290,7 +290,7 @@ Four screens, cycled with a button (or the 25 s auto-cycle until it is fitted). 
 | 3 | **Storage** | % used and free GB of the 512 GB SSD | Pi over USB; with the Pi off, shows the last value and its age |
 | 4 | **Wi-Fi** | `off`, `on (client)` or `on (AP mode)`, plus the age of the last report | Pi over USB (`nmcli`, else `hostapd`/`iw`); the FireBeetle has no radio and never initialises one |
 
-**Navigation:** one 12 mm panel button on the case (TinyTronics PBS-33B; add a rubber boot for sealing), wired to ESP32 GPIO4. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert. Until the button is fitted the build sets `AUTO_CYCLE_MS=25000UL`, so the four screens cycle every 25 s (alerts still take over); set it to `0UL` when the button is wired.
+**Navigation:** one 12 mm panel button on the case (TinyTronics PBS-33B; add a rubber boot for sealing), wired to ESP32 GPIO4. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert. Until the button is fitted the build sets `AUTO_CYCLE_MS=30000UL`, so time stays 60 s and power/storage/wifi 30 s (alerts still take over); set it to `0UL` when the button is wired.
 
 **Auto-switch on thresholds:** when a value passes a threshold, the OLED jumps to that screen and marks the value (inverted/blinking). It stays there until the condition clears or the alert is acknowledged, then returns to the time screen. An acknowledged alert comes back only if it gets worse (warning → critical). With several alerts at once, priority is battery > storage. Thresholds use hysteresis so a value hovering at the limit doesn't flap. Thresholds are stored in the ESP32 (NVS) and can be changed from the Pi over USB.
 

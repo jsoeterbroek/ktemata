@@ -41,7 +41,7 @@ time/date screen renders correctly. The clock uses the `TIMEZONE` setting
 | 1.3" 4-pin OLED | **working** at 0x3C, default SH1106 build; time/date renders in `TIMEZONE` |
 | DS3231 RTC | not fitted; the clock starts from the build timestamp |
 | UPS HAT (B) | **working** at 0x42 on the FireBeetle bus; a full 2S pack reads ~8.4 V, ~40 mA and 100 % (≥99 % snaps to 100) |
-| Panel button (PBS-33B) | selected/ordered, not fitted; the screens auto-cycle every 25 s (`-DAUTO_CYCLE_MS=25000UL`) and can still be changed with `{"cmd":"screen","index":N}` |
+| Panel button (PBS-33B) | selected/ordered, not fitted; the screens auto-cycle — time 60 s, others 30 s (`-DAUTO_CYCLE_MS=30000UL`) — and can still be changed with `{"cmd":"screen","index":N}` |
 | OLED idle blanking | disabled in the current build (`-DSCREEN_OFF_MS=0UL`); enable `60000UL` once the button is wired |
 | Pi → ESP time and storage | **sender written**: `work/scripts/status-oled.py`, installed and enabled as `ktemata-status-oled.service` by `work/scripts/post-install.sh`; see "Pi-side sender" below |
 
@@ -164,10 +164,10 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
   age of the last report. Until the Pi has sent one it shows `no wifi data yet`.
 - Short button press cycles screens and wakes the OLED. A long press
   acknowledges the active alert.
-- **No button fitted yet:** the current build sets `AUTO_CYCLE_MS=25000UL`, so
-  the four screens advance every 25 s. An active alert still takes over;
-  waking (button, serial `screen` command, alert) restarts the 25 s. Set
-  `AUTO_CYCLE_MS=0UL` once the PBS-33B is wired.
+- **No button fitted yet:** the current build sets `AUTO_CYCLE_MS=30000UL`, so
+  the time screen stays 60 s and power/storage/wifi 30 s. An active alert still
+  takes over; waking (button, serial `screen` command, alert) restarts the
+  current screen's dwell. Set `AUTO_CYCLE_MS=0UL` once the PBS-33B is wired.
 - With the button in use (`AUTO_CYCLE_MS=0`), back to the time screen after 30 s
   without a press. Alert screens stay until the condition clears or the alert
   is acknowledged (battery > storage priority, with hysteresis).

@@ -53,11 +53,15 @@
 #define SCREEN_OFF_MS 60000UL
 #endif
 #define RETURN_TO_TIME_MS 30000UL
-// Cycle the four screens every 25 s while no panel button is fitted. 0 disables the cycle
-// and restores the 30 s return-to-time behavior. The current build sets 25000UL; set it to
-// 0 once the PBS-33B is wired and use the button.
+// Cycle the screens while no panel button is fitted. AUTO_CYCLE_MS is the dwell on the
+// power/storage/wifi screens; the time screen gets AUTO_CYCLE_MAIN_MS. 0 disables the cycle
+// and restores the 30 s return-to-time behavior. The current build sets 30000UL (time 60 s);
+// set it to 0 once the PBS-33B is wired and use the button.
 #ifndef AUTO_CYCLE_MS
 #define AUTO_CYCLE_MS 0UL
+#endif
+#ifndef AUTO_CYCLE_MAIN_MS
+#define AUTO_CYCLE_MAIN_MS (AUTO_CYCLE_MS * 2UL)
 #endif
 #define BUTTON_DEBOUNCE_MS 30
 #define BUTTON_LONG_PRESS_MS 800
