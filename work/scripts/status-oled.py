@@ -251,10 +251,15 @@ def run_forever(port, path, args):
                         alerts = msg.get("alerts")
                         if kind == "telemetry" and alerts != last_alerts:
                             last_alerts = alerts
-                            if alerts:
-                                log("alerts "
-                                    f"battery={alerts[0]} environment={alerts[1]} "
-                                    f"storage={alerts[2]}")
+                            if isinstance(alerts, list) and alerts:
+                                # The firmware dropped the environment alert: 2 entries now,
+                                # 3 on older builds. Name them without indexing past the end.
+                                names = ("battery", "storage") if len(alerts) == 2 else (
+                                    "battery", "environment", "storage")
+                                if len(names) != len(alerts):
+                                    names = tuple(f"alert{i}" for i in range(len(alerts)))
+                                log("alerts " + " ".join(
+                                    f"{name}={value}" for name, value in zip(names, alerts)))
 
                     now = time.monotonic()
                     if restart:
