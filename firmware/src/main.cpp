@@ -626,9 +626,9 @@ void renderPowerScreen() {
 const char* wifiStateText() {
   switch (wifi.mode) {
     case WIFI_CLIENT:
-      return "on (client)";
+      return "station mode";
     case WIFI_AP:
-      return "on (AP mode)";
+      return "access point";
     default:
       return "off";
   }

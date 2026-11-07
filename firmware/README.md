@@ -160,7 +160,7 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
   the state line already says the pack is on external power, and the load is
   unmeasurable on mains.
 - The **wifi** screen mirrors the Pi's radio, which the board does not have:
-  `off`, `on (client)` or `on (AP mode)`, plus the age of the last report. Until
+  `off`, `station mode` or `access point`, plus the age of the last report. Until
   the Pi has sent one it shows `no wifi data yet`.
 - Short button press cycles screens and wakes the OLED. A long press
   acknowledges the active alert.

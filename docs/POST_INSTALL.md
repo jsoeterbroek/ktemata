@@ -530,7 +530,8 @@ writes nothing but the board's JSON.
   `WIFI` screen. The board has no radio, so this is the Pi's own state: `nmcli` on `wlan0` plus
   the active profile's `802-11-wireless.mode` gives `ap` (the `--hotspot` profile) or `client`;
   without NetworkManager an active `hostapd` means `ap` and `iw dev wlan0 link` means `client`;
-  otherwise `off`. Read-only, so the service needs no extra rights.
+  a wireless interface that is up with neither tool is treated as `client`, otherwise `off`.
+  Read-only, so the service needs no extra rights. `iw` is installed with the OLED step.
 - Reads the board's telemetry back and logs alert and Wi-Fi transitions and rejected commands to
   the journal. Lines that are not JSON (the ESP32 boot ROM) are ignored unless `-v` is given; the
   firmware silences its own core logger so the stream stays JSON.

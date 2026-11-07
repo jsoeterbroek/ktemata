@@ -207,6 +207,14 @@ def wifi_state():
     # Bare setup: ask the driver.
     if "Connected to" in run_quiet(["iw", "dev", WIFI_IFACE, "link"]):
         return "client"
+    # Last resort: a wireless interface that is administratively up is in station mode.
+    # (Without nmcli/iw an AP cannot be distinguished, but Wi-Fi is off by default here.)
+    try:
+        with open(f"/sys/class/net/{WIFI_IFACE}/operstate") as operstate:
+            if operstate.read().strip() == "up":
+                return "client"
+    except OSError:
+        pass
     return "off"
 
 

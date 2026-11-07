@@ -902,6 +902,8 @@ install_packages() {
     fi
     # the hardware report uses i2cdetect/vcgencmd; harmless if a package is unavailable
     $WITH_HWTEST && pkgs+=(i2c-tools)
+    # the OLED wifi screen reads the Pi's radio through iw; NetworkManager supplies nmcli
+    $WITH_OLED && pkgs+=(iw)
     # hwclock moved to util-linux-extra on Debian 12+ (still in util-linux on older releases)
     if apt-cache show util-linux-extra >/dev/null 2>&1; then
         pkgs+=(util-linux-extra)
