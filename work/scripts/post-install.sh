@@ -63,6 +63,14 @@ OLED_SERVICE=ktemata-status-oled
 # when run by hand from the desktop.
 WITH_ARTWORK=true
 ARTWORK_SERVICE=ktemata-artwork
+# r5 uses the Waveshare 7inch DSI LCD (C); its overlay must be in config.txt or the panel stays
+# dark. --no-display-overlay is for the r4 Touch Display 2 build (auto-detected).
+WITH_DISPLAY_OVERLAY=true
+DISPLAY_OVERLAY="dtoverlay=vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1"
+DISPLAY_MODE=${DISPLAY_MODE:-1024x600M}
+# The vendor Brightness app is a Qt5 GUI; --no-brightness or --no-gui skips it.
+WITH_BRIGHTNESS=true
+BRIGHTNESS_URL="https://files.waveshare.com/wiki/common/Brightness.zip"
 WITH_UPDATE=true
 WITH_KIOSK=false
 WITH_HWTEST=true
@@ -139,6 +147,10 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-oled          Do not install the status OLED sender (FireBeetle over USB serial).
       --oled-port DEV    Serial device for the FireBeetle (default: autodetect the CH340).
       --no-artwork       Do not install the wallpaper/boot-splash unit at graphical.target.
+      --no-display-overlay
+                         Do not add the Waveshare 7inch DSI LCD (C) overlay to config.txt
+                         (for the r4 Touch Display 2 build, which is auto-detected).
+      --no-brightness    Do not install the Waveshare Brightness app (Qt5 GUI).
       --no-gui           Skip the desktop Kiwix app (headless / server installs).
       --no-update        Skip the system upgrade (apt full-upgrade).
       --rotate WHAT      Rotate the display: normal | left | right | inverted,
@@ -179,7 +191,7 @@ ${C_BOLD}OPTIONS${C_OFF}
   -V, --version          Print the version.
 
 ${C_BOLD}ENVIRONMENT${C_OFF}
-  ZIM_DIR, SERVICE_PORT, SERVICE_USER, LIBRARY, NOMAD_STORAGE_PATH, NO_COLOR, OLED_PORT,
+  ZIM_DIR, SERVICE_PORT, SERVICE_USER, LIBRARY, NOMAD_STORAGE_PATH, DISPLAY_MODE, NO_COLOR, OLED_PORT,
   HOTSPOT_SSID, HOTSPOT_PASS, HOTSPOT_ADDR, HOTSPOT_CIDR, HOTSPOT_BAND
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
@@ -191,6 +203,8 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)  [--library host]
   7. writes and enables $OLED_SERVICE.service: UTC + free space to the status OLED
   8. writes and enables $ARTWORK_SERVICE.service: wallpaper + boot splash at graphical.target
+  8b. adds the Waveshare 7inch DSI LCD (C) overlay unless --no-display-overlay
+  8c. installs the Waveshare Brightness app unless --no-brightness / --no-gui
   9. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
  10. optionally installs the kiosk autostart (--kiosk)
  11. enables GDM automatic login (unless --no-autologin)
@@ -787,10 +801,10 @@ setup_rotation() {
         return 0
     fi
 
-    # Touch Display 2 is 720x1280 native (portrait). rotate= is clockwise degrees, console only.
-    local want="video=DSI-1:720x1280@60,rotate=$deg"
+    # The Waveshare panel is 1024x600 natively; rotate= is clockwise degrees, console only.
+    local want="video=DSI-1:$DISPLAY_MODE@60,rotate=$deg"
     if grep -q 'video=DSI-1:' "$cmdline"; then
-        if grep -q "video=DSI-1:720x1280@60,rotate=$deg\b" "$cmdline"; then
+        if grep -q "video=DSI-1:$DISPLAY_MODE@60,rotate=$deg\b" "$cmdline"; then
             log_ok "already set to $deg deg clockwise"
             return 0
         fi
@@ -854,6 +868,21 @@ install_packages() {
     $WITH_OLED && pkgs+=(python3)
     if $WITH_GUI && $HOST_LIBRARY; then
         pkgs+=(kiwix)
+    fi
+    # The Waveshare Brightness app is a Qt5 GUI; add the libs it links when the archive has
+    # them (t64 names on Debian 13, plain names on Ubuntu 24.04).
+    if $WITH_GUI && $WITH_BRIGHTNESS; then
+        local pkg
+        for pkg in libqt5core5t64 libqt5core5a; do
+            if apt-cache show "$pkg" >/dev/null 2>&1; then pkgs+=("$pkg"); break; fi
+        done
+        for pkg in libqt5gui5t64 libqt5gui5; do
+            if apt-cache show "$pkg" >/dev/null 2>&1; then pkgs+=("$pkg"); break; fi
+        done
+        for pkg in libqt5widgets5t64 libqt5widgets5; do
+            if apt-cache show "$pkg" >/dev/null 2>&1; then pkgs+=("$pkg"); break; fi
+        done
+        if apt-cache show libgl1 >/dev/null 2>&1; then pkgs+=(libgl1); fi
     fi
     # desktop rotation is done with wlr-randr; only needed when a rotation was requested
     if [ -n "$ROTATE" ] && $WITH_GUI; then
@@ -1874,6 +1903,119 @@ EOF
     fi
 }
 
+# Add the Waveshare DSI overlay to config.txt. The panel is not auto-detected on the Pi 5, so
+# without this it stays dark. Idempotent, one live line, backup kept once.
+setup_display_overlay() {
+    $WITH_DISPLAY_OVERLAY || { log_stage "Display overlay"; log_info "skipped (--no-display-overlay)"; return 0; }
+    log_stage "Display overlay"
+
+    local cfg="${CONFIG_TXT:-/boot/firmware/config.txt}"
+    if [ ! -f "$cfg" ]; then
+        log_info "no $cfg: not a Raspberry Pi boot partition, skipping"
+        return 0
+    fi
+
+    local line="$DISPLAY_OVERLAY" need_vc4=false need_line=false
+    grep -qE '^dtoverlay=vc4-kms-v3d' "$cfg" || need_vc4=true
+    grep -qxF "$line" "$cfg" || need_line=true
+
+    if ! $need_vc4 && ! $need_line; then
+        log_ok "already enabled"
+        return 0
+    fi
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s add %s and %s to %s\n' "$C_YELLOW" "$C_OFF" "dtoverlay=vc4-kms-v3d" "$line" "$cfg"
+        return 0
+    fi
+
+    [ -f "$cfg.ktemata.bak" ] || cp -a "$cfg" "$cfg.ktemata.bak"
+
+    # vc4-kms-v3d is stock on Pi OS but may be commented out. Keep any options on an existing
+    # line, and put it before the panel overlay if it has to be inserted.
+    if $need_vc4; then
+        if grep -qE '^[[:space:]]*#[[:space:]]*dtoverlay=vc4-kms-v3d' "$cfg"; then
+            sed -i -E 's|^[[:space:]]*#[[:space:]]*dtoverlay=vc4-kms-v3d|dtoverlay=vc4-kms-v3d|' "$cfg"
+        elif grep -qE '^[#[:space:]]*dtoverlay=vc4-kms-dsi-waveshare-panel' "$cfg"; then
+            awk '/^[#[:space:]]*dtoverlay=vc4-kms-dsi-waveshare-panel/ && !done {
+                     print "dtoverlay=vc4-kms-v3d"; done=1
+                 }
+                 { print }' "$cfg" >"$cfg.tmp" && mv "$cfg.tmp" "$cfg"
+        else
+            printf 'dtoverlay=vc4-kms-v3d\n' >>"$cfg"
+        fi
+    fi
+
+    if $need_line; then
+        if grep -qE '^[#[:space:]]*dtoverlay=vc4-kms-dsi-waveshare-panel' "$cfg"; then
+            sed -i -E "s|^[#[:space:]]*dtoverlay=vc4-kms-dsi-waveshare-panel.*|$line|" "$cfg"
+        else
+            printf '%s\n' "$line" >>"$cfg"
+        fi
+    fi
+
+    local n
+    n=$(grep -cF "$line" "$cfg")
+    if [ "$n" = 1 ]; then
+        log_ok "added (reboot to apply)"
+    else
+        log_error "display overlay edit looks wrong: $n live line(s)"
+        log_warn "restore with: sudo cp $cfg.ktemata.bak $cfg"
+    fi
+}
+
+# Install Waveshare's Brightness app exactly as their install.sh does: copy the Qt binary,
+# desktop file and icon into /usr/share/applications. The display's backlight appears as
+# /sys/class/backlight/*/brightness once the DSI overlay is loaded.
+install_brightness() {
+    $WITH_BRIGHTNESS || { log_stage "Brightness app"; log_info "skipped (--no-brightness)"; return 0; }
+    if ! $WITH_GUI; then
+        log_stage "Brightness app"
+        log_info "skipped (--no-gui; it is a desktop app)"
+        return 0
+    fi
+    log_stage "Brightness app"
+
+    local arch
+    arch=$(dpkg --print-architecture 2>/dev/null || uname -m)
+    case $arch in
+        arm64)  local bits=64 ;;
+        armhf)  local bits=32 ;;
+        *)      log_warn "no ARM Brightness binary for $arch; skipping"; return 0 ;;
+    esac
+
+    local bin="/usr/share/applications/brightness${bits}bit"
+    if [ -x "$bin" ]; then
+        log_ok "already installed"
+        return 0
+    fi
+
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s download %s and install brightness%sbit\n' "$C_YELLOW" "$C_OFF" "$BRIGHTNESS_URL" "$bits"
+        return 0
+    fi
+
+    local tmp
+    tmp=$(mktemp -d)
+    if ! curl -fL --retry 3 -sS -o "$tmp/Brightness.zip" "$BRIGHTNESS_URL"; then
+        log_warn "could not download $BRIGHTNESS_URL; skipping the Brightness app"
+        rm -rf "$tmp"
+        return 0
+    fi
+    if ! python3 -m zipfile -e "$tmp/Brightness.zip" "$tmp"; then
+        log_warn "could not extract Brightness.zip; skipping"
+        rm -rf "$tmp"
+        return 0
+    fi
+
+    install -d -m 0755 /usr/share/applications
+    install -m 0755 "$tmp/Brightness/brightness${bits}bit" "$bin"
+    install -m 0644 "$tmp/Brightness/brightness${bits}bit.desktop" /usr/share/applications/
+    install -m 0644 "$tmp/Brightness/brightness.png" /usr/share/applications/
+    rm -rf "$tmp"
+    log_ok "installed (Start Menu -> Accessories -> Brightness)"
+}
+
 download_sample() {
     if ! $HOST_LIBRARY; then
         log_stage "Sample ZIM"
@@ -2020,6 +2162,8 @@ main() {
             --library)       LIBRARY=${2:?--library takes host or nomad}; shift ;;
             --no-oled)       WITH_OLED=false ;;
             --no-artwork)    WITH_ARTWORK=false ;;
+            --no-display-overlay) WITH_DISPLAY_OVERLAY=false ;;
+            --no-brightness) WITH_BRIGHTNESS=false ;;
             --oled-port)     OLED_PORT=${2:?--oled-port needs a device}; shift ;;
             --no-gui)        WITH_GUI=false ;;
             --no-update)     WITH_UPDATE=false ;;
@@ -2108,6 +2252,8 @@ main() {
     install_service
     install_status_oled
     install_artwork_unit
+    setup_display_overlay
+    install_brightness
     setup_rotation
     install_autologin
     set_camera_autodetect_off

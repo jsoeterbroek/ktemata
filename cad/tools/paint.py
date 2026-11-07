@@ -15,7 +15,7 @@ hinge, latch end at y = R5_L).  Paint that crosses the centre line therefore con
 printed part into the other - the three schemes are built on that.
 
 Two facts drive the artwork and are enforced in code, not by eye:
-  * the cover's display well is 190.32 x 121.24 mm (only 0.5 mm of clearance round the glass), so it
+  * the cover's display well is 193.96 x 111.76 mm (only 0.5 mm of clearance round the glass), so it
     eats the cover's whole frame.  Anything continuous across the hinge has to leave the cover at
     |x - w/2| > 95 mm - the 28 mm latch band and the 14.6 mm side margins outside the bezel;
   * the deck's own free fields are the 40.95 mm side rails, the strip between the OLED and the
@@ -1049,7 +1049,7 @@ def cover_features(p: Surface) -> None:
     aw, ah = m.active
     p.rect(px + (pw - aw) / 2, py + (ph - ah) / 2, aw, ah, "none", 0.8,
            layer="features", stroke="#2b353e", sw=0.6, dash="3 2")
-    p.text("TOUCH  DISPLAY  2  ·  7\"", 2.8, m.w / 2, py + ph / 2 - 3.4, LABEL,
+    p.text("WAVESHARE  DSI  LCD  (C)  ·  7\"", 2.8, m.w / 2, py + ph / 2 - 3.4, LABEL,
            layer="features", track=1.5, anchor="middle")
     p.text(f"{f(pw)} × {f(ph)}  ·  image {f(aw)} × {f(ah)}", 2.1, m.w / 2,
            py + ph / 2 + 3.0, LABEL, layer="features", anchor="middle")

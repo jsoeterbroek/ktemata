@@ -1,6 +1,6 @@
 # Power budget — Ktemata r5 vs Project NOMAD, all running 24/7, no AI
 
-Ktemata r5 is the internal-cassette build: r4's electronics (Pi 5, Touch Display 2, UPS HAT (B)
+Ktemata r5 is the internal-cassette build: r4's electronics (Pi 5, 7" Waveshare DSI display, UPS HAT (B)
 with 2× 18650, Rii K06) in a bought hard case, and **no air-quality sensor**. This page prices
 its energy against Project NOMAD's three hardware tiers with the AI left off, which NOMAD's own
 FAQ supports ("the AI is 100% optional").

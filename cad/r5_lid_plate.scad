@@ -1,9 +1,9 @@
 // Ktemata r5 - display plate for the inside of the host lid
 //
 // The display hangs on the lid, glass towards the base, so opening the case shows it like the
-// r4 face. This plate carries it: four M2.5 go through the plate into the display's own 8.5 mm
-// standoffs (7" TD2 pattern 168.55 x 99.71), and the plate itself is fixed to the host lid with
-// 3M VHB tape. No hole through the host case, so the host keeps its IP rating.
+// r4 face. This plate carries it: four M3 go through the plate into the Waveshare's rear M3
+// inserts (pattern in common.scad), and the plate itself is fixed to the host lid with 3M VHB
+// tape. No hole through the host case, so the host keeps its IP rating.
 //
 // Print flat, as modelled: the glass side is the bed face and there is nothing to support.
 include <common.scad>
@@ -16,9 +16,13 @@ module plate() linear_extrude(R5_LID_T) plate2d();
 
 // ---- screw pockets: the heads sit on the glass side, so they never touch the lid ----
 module screw_cut(p) {
-    translate([p[0], p[1], -1]) cylinder(d=M25_CLR, h=R5_LID_T + 2);
-    translate([p[0], p[1], -0.01]) cylinder(d=M25_HEAD, h=1.2);      // counterbore, glass side
+    translate([p[0], p[1], -1]) cylinder(d=M3_CLR, h=R5_LID_T + 2);
+    translate([p[0], p[1], -0.01]) cylinder(d=M3_HEAD, h=1.6);       // counterbore, glass side
 }
+
+// The display's unused 58 x 49 Pi standoffs protrude 3.5 mm behind the PCB; let them through.
+module post_relief(p) translate([p[0], p[1], R5_LID_T - R5_PANEL_STUD])
+    cylinder(d=5.8, h=R5_PANEL_STUD + 0.1);
 
 // ---- relief for the display's ribbon and GPIO leads ----
 // Both leave the panel at its hinge-side long edge; the plate is cut back over them so they can
@@ -35,6 +39,7 @@ module finger_slots() for (x=[14, R5_LID_PLATE[0] - 24])
 module r5_lid_plate() difference() {
     plate();
     for (p=R5_DISP_HOLES) screw_cut([p[0] + 6, p[1] + 6]);
+    for (p=R5_DISP_POSTS) post_relief([p[0] + 6, p[1] + 6]);
     cable_relief();
     finger_slots();
 }

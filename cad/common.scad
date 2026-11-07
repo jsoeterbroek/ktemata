@@ -563,29 +563,39 @@ R5_MPPT_X = 40; R5_MPPT_Y = 150;                        // 26 x 20 tray, below t
 // The 189.32 mm axis MUST run along x: 189.32 alone is more than the 178.1 mm cassette length,
 // so a portrait mount cannot fit any accepted host. The panel therefore sits landscape, as r4's
 // does, with the 120.24 mm axis across the cassette.
-R5_PANEL        = [189.32, 120.24, 8];                  // w (along x), h (along y), corner R
-R5_PANEL_ACTIVE = [154.6, 86.9];                        // lit area, same axes
-R5_PANEL_HOLES  = [168.55, 99.71];                      // standoff pattern, same axes
-// The display's back (6.42 body + its own 8.5 standoffs) faces the lid, the glass faces the base.
-R5_LID_T = 2;
-R5_DISP_DEEP = R5_LID_T + DISP_POST + DISP_T_R2;        // 16.92 mm from the lid wall to the glass
+// Waveshare 7inch DSI LCD (C), 1024 x 600, DSI + I2C touch. Overall 192.96 x 110.76 with R8
+// corners; active area 154.88 x 86.72 (top margin 11.00, bottom 13.04, sides 19.04). The
+// front glass is 10.50 mm above the PCB back; the four M3 threaded inserts sit 9.54 mm behind
+// the glass (their openings are 0.96 mm inside the PCB back), and the unused 58 x 49 Pi
+// standoffs (M2.5) protrude 3.5 mm behind the PCB.
+R5_PANEL        = [192.96, 110.76, 8];                  // w (along x), h (along y), corner R
+R5_PANEL_ACTIVE = [154.88, 86.72];                      // lit area, same axes
+R5_PANEL_DEPTH  = 10.50;                                // front glass to PCB back
+R5_PANEL_STUD   = 3.5;                                  // M2.5 Pi standoffs behind the PCB
+// The four M3 inserts and the four M2.5 standoffs, relative to the panel's top-left in the
+// drawing, measured from Waveshare's STEP (the pattern is not symmetric about the glass centre).
+R5_DISP_HOLES = [[34.42, 21.58], [160.67, 21.58],
+                 [34.42, 87.07], [160.67, 87.07]];
+R5_DISP_POSTS = [[73.97, 27.43], [131.97, 27.43],
+                 [73.97, 76.43], [131.97, 76.43]];
+// The display's PCB back sits on the plate/lid; the glass faces the base.
+R5_LID_T = 4;
+R5_DISP_DEEP = R5_LID_T + R5_PANEL_DEPTH;               // 14.50 mm from the lid wall to the glass
 // Centred in both axes. The lid has no hardware left to dodge: the 7" panel eats the latch band
 // the 16 mm power button needed, so the button moved to the deck (see R5_BTN_* below).
-R5_DISP_X0 = (R5_W - R5_PANEL[0])/2;                    // 22.09
-R5_DISP_Y0 = (R5_L - R5_PANEL[1])/2;                    // 28.93
-R5_LID_PLATE = [R5_PANEL[0] + 12, R5_PANEL[1] + 12];    // 201.32 x 132.24, 6 mm border
-R5_DISP_HOLE_IX = (R5_PANEL[0] - R5_PANEL_HOLES[0])/2;  // 10.385
-R5_DISP_HOLE_IY = (R5_PANEL[1] - R5_PANEL_HOLES[1])/2;  // 10.265
-R5_DISP_HOLES = [for (dx=[R5_DISP_HOLE_IX, R5_DISP_HOLE_IX + R5_PANEL_HOLES[0]])
-                 for (dy=[R5_DISP_HOLE_IY, R5_DISP_HOLE_IY + R5_PANEL_HOLES[1]]) [dx, dy]];
+R5_DISP_X0 = (R5_W - R5_PANEL[0])/2;                    // 18.77
+R5_DISP_Y0 = (R5_L - R5_PANEL[1])/2;                    // 32.17
+R5_LID_PLATE = [R5_PANEL[0] + 12, R5_PANEL[1] + 12];    // 204.96 x 122.76, 6 mm border
 // The DSI/GPIO leads leave the panel's hinge-side long edge and have to turn down into the base,
 // so the cover and the plate are notched there, through plate and bezel wall together. The notch
 // is R5_CABLE_W wide, R5_CABLE_W/2 of it each side of R5_CABLE_X (measured from the panel's own
 // left edge), so moving the connector is one number. Verify against your panel before printing:
 // the 7" drawing puts the FFC at one end of that edge, and a notch at the wrong end leaves the
 // ribbon with no way out.
-R5_CABLE_W  = 46;                                        // covers the DSI + GPIO sockets
-R5_CABLE_X  = R5_CABLE_W/2;                              // notch centre, from the panel's left edge
+// The Waveshare's DSI FPC leaves at the centre of the panel's hinge-side edge; the 4-pin
+// 5 V/I2C lead leaves at the opposite right corner and is routed inside (use a longer lead).
+R5_CABLE_W  = 46;                                        // covers the 15-pin DSI FPC
+R5_CABLE_X  = R5_PANEL[0]/2;                             // notch centre, from the panel's left edge
 R5_CABLE_X0 = R5_CABLE_X - R5_CABLE_W/2;                 // its left edge, in panel coords
 
 // deck screws: on the straight wall runs only (a boss in a 14 mm corner would break the
@@ -690,14 +700,15 @@ COVER_T     = 4;          // plate thickness: tape face, and the print bed
 COVER_FRAME = 7;          // bezel wall thickness outside the glass
 COVER_GAP   = 0.5;        // clearance around the panel module, inside the bezel
 COVER_R     = 8;          // cover corner radius
-COVER_PROUD = 1.5;        // bezel height above the glass plane, to protect the panel edge
+COVER_PROUD = 0;          // flush: the bezel top and the glass front are the same plane
 
 COVER_W = HOST_L - 2*HOST_CLR;      // the same 1.5 mm clearance the cassette uses
 COVER_L = HOST_W - 2*HOST_CLR;
 
-// The TD2's own vertical stack: plate, its 8.5 mm standoffs, 6.42 mm of panel body, then glass.
-COVER_GLASS_Z = COVER_T + DISP_POST + DISP_T_R2;
-COVER_RIM_H   = DISP_POST + DISP_T_R2 + COVER_PROUD;    // bezel height above the plate
+// The Waveshare's own stack: plate, PCB back on it, 10.50 mm to the glass. The bezel rises to
+// that plane, so the glass is flush with the cover's front.
+COVER_GLASS_Z = COVER_T + R5_PANEL_DEPTH;
+COVER_RIM_H   = R5_PANEL_DEPTH + COVER_PROUD;           // bezel height above the plate
 
 // The 7" panel, centred in both axes - the operator's call, and the lid has nothing left to
 // dodge now that the power button is on the deck. Margins: 15.09 mm of plate outside the bezel

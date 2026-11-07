@@ -13,10 +13,13 @@ SVGs. The schematic, PDF, PNG and CSV are named `ktemata_r3_*`; r3 uses the same
 and differs only in the keyboard. The r4 power/data deltas are listed in section 5 so the r2/r3 diagrams
 stay valid for that build.
 
-> The single I²C master is the **FireBeetle 2 ESP32-UE**. The Pi 5 has **no I²C connection** in this build
-> (no 40-pin header); the BME688, DS3231, OLED and UPS fuel gauge sit on the FireBeetle bus. The Pimoroni
-> trackball is **r2 only** (0x0A, firmware forwarding pending) and is marked DNP in the r3 schematic;
-> **r3 does not use it** — the Phistone keyboard's air mouse and the touchscreen provide pointer input.
+> The single **sensor** I²C master is the **FireBeetle 2 ESP32-UE**. The Pi 5 has **no 40-pin header** in
+> this build; the DS3231, OLED and UPS fuel gauge sit on the FireBeetle bus. The **r5 Waveshare display**
+> adds one separate Pi bus: its 4-pin 5 V/I²C lead uses **I²C1** (SDA GPIO2, SCL GPIO3) for the Goodix
+> touch at 0x14, soldered to the 40-pin pads (5 V, GND, GPIO2/3) because there is no header. That bus is
+> not shared with the FireBeetle. The Pimoroni trackball is **r2 only** (0x0A, firmware forwarding pending)
+> and is marked DNP in the r3 schematic; **r3 does not use it** — the Phistone keyboard's air mouse and
+> the touchscreen provide pointer input.
 
 ---
 
@@ -50,7 +53,7 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 
 | Link | Cable / interface | Notes |
 |---|---|---|
-| Pi ↔ display | 15-pin DSI FFC (Pi 5 22-pin → 15-pin adapter) | r2/r3: DFR0550-V2 (touch on the FFC — verify your batch). r4: Touch Display 2, auto-detected, **plus** the 3-pin GPIO power cable. |
+| Pi ↔ display | 15-pin DSI FFC (Pi 5 22-pin → 15-pin adapter) | r2/r3: DFR0550-V2 (touch on the FFC — verify your batch). r4: Touch Display 2, auto-detected, **plus** the 3-pin GPIO power cable. **r5:** Waveshare 7inch DSI LCD (C) with the included 22→15-pin DSI-Cable-12cm, **plus** its 4-pin 5 V/I²C lead (GND SDA SCL 5V) to the Pi's 40-pin pads; `dtoverlay=vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1`. |
 | Pi ↔ NVMe | PCIe FPC → Seeed M.2 BASE → WD SN740 512 GB (M.2 **2242**) | BASE is back-mounted under the Pi; it needs ≈10 mm with the card, which the current r4 stack does not have (the UPS HAT (B) is in that space). Mount the SSD at the 42 mm hole. |
 | Keyboard → Pi | 2.4 GHz USB-A dongle **or** Pi Bluetooth | r3: Phistone; r4: Rii K06. The dongle goes in the second Pi USB-A port; Bluetooth needs no wire and the Pi's BT enabled (Wi-Fi stays off). No internal keyboard cable. |
 | FireBeetle ↔ Pi | USB-C → Pi USB-A, **serial** | Telemetry/commands. Prefer a **data-only** cable (VBUS disconnected) because the FireBeetle is separately powered from the UPS. |
@@ -144,17 +147,18 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
    adapter cable. The DFR0550 listing currently warns about Pi 5 compatibility — verify the driver before
    closing the case. **r4:** the Touch Display 2 is auto-detected from the DSI and additionally needs its
    **3-pin GPIO power cable** on J1 → pins 2 (5 V) and 6 (GND); the 22→15 pin FFC is the same kind.
-7. **Battery pack:** 4S = 14.4 V nominal / 16.8 V full. Use matched cells, insulation rings, a fuse in the
+7. **r5 display power/touch:** the Waveshare's 4-pin lead is `GND SDA SCL 5V`; use Pi 5 pads 6 (GND), 3 (GPIO2/SDA), 5 (GPIO3/SCL) and 2 or 4 (5 V). There is no 40-pin header: solder the four wires before fitting the UPS HAT. The DSI FFC is the 12 cm cable in the display kit.
+8. **Battery pack:** 4S = 14.4 V nominal / 16.8 V full. Use matched cells, insulation rings, a fuse in the
    positive lead, and verify the V1–V4 order before connecting. Never assemble the pack with the UPS
    switched on.
-8. **Buttons/switches:** the PBS-33B is not IP-rated; fit a 12 mm rubber boot. The UPS power switch stays on;
+9. **Buttons/switches:** the PBS-33B is not IP-rated; fit a 12 mm rubber boot. The UPS power switch stays on;
    the Pi is shut down via software. The status button is GPIO4 to GND.
-9. **NVMe:** the Seeed M.2 BASE is back-mounted; its ≈10 mm with the SN740 does not fit the 6.5 mm
+10. **NVMe:** the Seeed M.2 BASE is back-mounted; its ≈10 mm with the SN740 does not fit the 6.5 mm
    gap between the Pi and the UPS HAT (B). Resolve the mounting before final assembly — see `docs/BOM.md`
    note 7.
-10. **First power-up:** leave the Pi disconnected, connect the UPS with a current-limited/bench supply,
+11. **First power-up:** leave the Pi disconnected, connect the UPS with a current-limited/bench supply,
     check 5 V rails and I²C addresses, then connect the Pi and display.
-11. **r3 keyboard link:** put the Phistone's 2.4 GHz dongle in the second Pi USB-A port, or enable the Pi's
+12. **r3 keyboard link:** put the Phistone's 2.4 GHz dongle in the second Pi USB-A port, or enable the Pi's
     Bluetooth only (`dtoverlay=disable-bt` removed) and pair. Wi-Fi stays off and the FireBeetle radios stay
     off; the keyboard radio is the single allowed radio exception. Keep a wired USB keyboard for first boot
     and recovery, because Bluetooth is not available before the OS starts.

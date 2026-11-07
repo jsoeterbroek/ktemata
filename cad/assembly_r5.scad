@@ -98,8 +98,8 @@ module c_display() {
     // on the lid: the plate is taped to the lid ceiling, so its back sits R5_DISP_DEEP below
     // z = HOST_BOT + HOST_LID; the display hangs down from there, glass towards the base
     z = HOST_BOT + HOST_LID - R5_DISP_DEEP;
-    r5_at(R5_DISP_X0, R5_DISP_Y0 + R5_PANEL[1], z + R5_LID_T + DISP_POST)
-        linear_extrude(DISP_T_R2) rrect(R5_PANEL[0], R5_PANEL[1], R5_PANEL[2]);
+    r5_at(R5_DISP_X0, R5_DISP_Y0 + R5_PANEL[1], z + R5_LID_T)
+        linear_extrude(R5_PANEL_DEPTH) rrect(R5_PANEL[0], R5_PANEL[1], R5_PANEL[2]);
     r5_at(R5_DISP_X0 - 6, R5_DISP_Y0 + R5_PANEL[1] + 6, z) linear_extrude(R5_LID_T)
         rrect(R5_LID_PLATE[0], R5_LID_PLATE[1], 8);
     // the display's own standoffs

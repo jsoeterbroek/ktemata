@@ -4,7 +4,7 @@
 of the alternatives and because the generator still produces them.
 
 Three airbrush designs for the two printed surfaces you actually look at: the **deck** (keyboard
-side, seen when the case is open) and the **lid cover** (bezel round the Touch Display 2, seen when
+side, seen when the case is open) and the **lid cover** (bezel round the Waveshare 7inch DSI LCD (C), seen when
 it is closed). Each scheme is one continuous design across both parts, not two decorations that
 happen to share a palette.
 
@@ -57,7 +57,7 @@ These are the constraints the artwork obeys, and `cad/tools/paint_probe.scad` fe
 generator straight from `common.scad`. Change a part and the sheets follow; the assertions fail
 rather than drawing a line through a fan.
 
-- **The cover's display well is 190.32 × 121.24 mm** (`R5_PANEL` + 0.5 clearance), with 7 mm of
+- **The cover's display well is 193.96 × 111.76 mm** (`R5_PANEL` + 0.5 clearance), with 7 mm of
   bezel round it, and the 7" panel is **centred**: the well runs `x 21.59..211.91`, `y 28.43..149.67`.
   That leaves only **14.6 mm of plate outside the bezel in x** and a **28.4 mm latch band**, so the
   cover's usable paint is the flat ring round the bezel, not the rails the 5" layout had. Anything

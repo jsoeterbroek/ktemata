@@ -126,6 +126,8 @@ hciconfig -a 2>/dev/null           # nothing
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service`; `--library nomad` skips it |
 | 6b | **Write and enable `ktemata-status-oled.service`**: UTC + library free space + the Wi-Fi state to the FireBeetle over USB serial — see below | `--no-oled`, `--oled-port DEV` |
 | 6c | **Write and enable `ktemata-artwork.service`**: wallpaper + boot splash at `graphical.target` — see [ARTWORK.md](ARTWORK.md) | `--no-artwork` |
+| 6d | **Add the Waveshare 7inch DSI LCD (C) overlay** (`vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1`) and ensure `vc4-kms-v3d` | `--no-display-overlay` (r4 / Touch Display 2) |
+| 6e | **Install Waveshare's Brightness app** and the Qt5 libs it needs | `--no-brightness`, `--no-gui` |
 | 7 | Set the display rotation | `--rotate left\|right\|inverted\|normal` |
 | 8 | Optionally install the kiosk launcher + autostart | `--kiosk` |
 | 9 | Enable GDM automatic login for the `ktemata` account | `--no-autologin`, `--autologin-user` |
@@ -151,8 +153,9 @@ not get a Kiwix build that is already superseded.
 
 ## Display rotation
 
-The Touch Display 2 is **720 × 1280 natively (portrait)**; the r4 case mounts it in landscape, so a new
-install usually needs a rotation.
+The r5 Waveshare 7inch DSI LCD (C) is **1024 × 600 natively (landscape)** and needs no rotation when
+mounted landscape. The r4 Touch Display 2 is 720 × 1280 (portrait); a new r4 install usually needs a
+rotation. `--no-display-overlay` is for that r4 build.
 
 `--rotate left` means **90° counter-clockwise** (what "turn the screen left" means to a person). The kernel
 takes clockwise degrees, so the script maps it:
@@ -169,7 +172,7 @@ Two separate things are rotated, because on Raspberry Pi OS they are separate:
 1. **Console / kiosk** — one line in `/boot/firmware/cmdline.txt`:
 
    ```
-   video=DSI-1:720x1280@60,rotate=270
+   video=DSI-1:1024x600M@60,rotate=270
    ```
 
    The script appends it, or rewrites an existing `video=DSI-1:…` entry in place, and keeps a
@@ -201,7 +204,7 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | **Pi model** | model string from `/proc/device-tree/model` | SKIP on non-Pi hardware |
 | **SoC temperature** | 5 samples + actual CPU busy %; PASS < 80 °C | **WARN** ≥ 80/85 °C under load. **FAIL** if ≥ 85 °C while the CPU is idle — that is not the missing cooler |
 | **Throttle flags** | `vcgencmd get_throttled` = `0x0` | **FAIL only on undervoltage** (bits 0/16) — a supply fault. Thermal/clock bits are WARN |
-| **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the connector (`DSI-1`) and active mode (720×1280 for the TD2) |
+| **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the connector (`DSI-1`) and active mode (`1024x600` for the r5 Waveshare, `720x1280` for the TD2) |
 | **I2C devices** | one line naming the build's chips: `0x3c (OLED), 0x42 (UPS INA219), 0x68 (DS3231)` | unknown addresses are only **counted**, not listed; SKIP when nothing replies (the **FireBeetle** is the I2C master). Buses that answer for nearly every address are **ignored** and named |
 | **UPS gauge** | INA219 at 0x42 visible | SKIP on the Pi itself; the gauge is read by the ESP32 |
 | **Pi RTC** | `/dev/rtc0` with a sane epoch | FAIL if the cell is flat/unset; the install step enables `dtparam=rtc_bbat_vchg=3000000` for the ML-2020 |
@@ -248,6 +251,31 @@ sudo ./work/scripts/post-install.sh --hwtest-only --power hat    # in the case, 
 It only changes the wording of an undervoltage hint — USB-C points at the 27 W supply and cable, `hat` points
 at the pogo pins and the 8.4 V input. On the 27 W supply an undervoltage flag should never appear; if it does,
 suspect the cable or the connector rather than the PSU.
+
+## Display overlay and backlight
+
+The r5 panel is not auto-detected on the Pi 5: the step adds
+
+```
+dtoverlay=vc4-kms-v3d
+dtoverlay=vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1
+```
+
+to `config.txt` (idempotent, one live line each, `.ktemata.bak` once), then reboots. `i2c1` is the
+Pi's touch bus; it is separate from the FireBeetle's I²C bus. The panel is 1024 × 600 and gets the
+mode from the overlay; `--rotate` only writes `video=DSI-1:1024x600M@60,rotate=…` for the console.
+
+The Brightness step mirrors Waveshare's `install.sh`: it downloads
+<https://files.waveshare.com/wiki/common/Brightness.zip>, copies the matching ARM64/ARMHF Qt
+binary, desktop file and icon into `/usr/share/applications`, and adds the Qt5 Core/Gui/Widgets
+and libGL packages when the archive has them. The app then appears under *Start Menu → Accessories
+→ Brightness*. It is skipped with `--no-gui`; the terminal equivalent always works:
+
+```bash
+echo 100 | sudo tee /sys/class/backlight/*/brightness   # 0..255
+```
+
+The app is a precompiled vendor binary, not built from source; it is optional.
 
 ## Desktop artwork
 
@@ -543,6 +571,9 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --no-oled          skip the status OLED sender
     --oled-port DEV    FireBeetle serial device (default: autodetect)
     --no-artwork       skip the graphical.target wallpaper/splash unit
+    --no-display-overlay
+                       skip the Waveshare DSI overlay (for the r4 Touch Display 2)
+    --no-brightness    skip the Waveshare Brightness app
     --no-gui           skip the desktop app
     --no-update        skip the system upgrade
     --rotate WHAT      normal | left | right | inverted (or 0|90|180|270 clockwise)
@@ -564,7 +595,7 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
 ```
 
 `ZIM_DIR`, `SERVICE_PORT`, `SERVICE_USER`, `LIBRARY`, `NOMAD_STORAGE_PATH`, `SAMPLE_ZIM`, `ROTATE`,
-`NO_COLOR`, `OLED_PORT` and `CMDLINE_FILE` (test hook) can be set in the environment.
+`DISPLAY_MODE`, `NO_COLOR`, `OLED_PORT` and `CMDLINE_FILE` (test hook) can be set in the environment.
 
 ## Verified
 
@@ -606,6 +637,12 @@ The RTC trickle edit was exercised against synthetic `config.txt` copies: a comm
 replaced, a different value is rewritten, an absent line is appended once, a second run reports
 "already enabled", and a dry run leaves the file untouched. It is opt-out only; a CR2032 must not be
 used with it.
+
+The display overlay edit was tested on synthetic `config.txt` files: a commented `vc4-kms-v3d`
+with `,cma-256` is uncommented in place, a missing one is inserted before the panel overlay, an
+existing `dsi0` panel line is rewritten, and a second run is a no-op. The Brightness installer was
+exercised against the real Waveshare zip with a stubbed `dpkg`; it copies the ARM64 binary, desktop
+file and icon. Neither has been run on the Pi with the panel attached yet.
 
 The artwork steps now live in `desktop-artwork.sh`; their verification is recorded in
 [ARTWORK.md](ARTWORK.md), including the container runs that produced the PNG and TGA.
