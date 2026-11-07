@@ -121,7 +121,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 1 | Platform check: Debian/Ubuntu derivative, warns on untested arch | — |
 | 2 | **Hardware checks** — see below; runs *before* anything is changed | `--no-hwtest`, `--hwtest-only`, `--strict` |
 | 3 | **System update**: `apt-get update` then a non-interactive `full-upgrade` (keeps existing conffiles) | `--no-update` |
-| 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app and `i2c-tools` for the hardware report | `--no-gui`; `--library nomad` skips the Kiwix packages |
+| 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app, `i2c-tools` for the hardware report and `util-linux-extra` (provides `hwclock` on Debian 12+) | `--no-gui`; `--library nomad` skips the Kiwix packages |
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | `--library nomad` skips this |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service`; `--library nomad` skips it |
 | 6b | **Write and enable `ktemata-status-oled.service`**: UTC + library free space to the FireBeetle over USB serial — see below | `--no-oled`, `--oled-port DEV` |
