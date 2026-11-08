@@ -25,7 +25,7 @@ if (PART=="charge_plug")      charge_plug();                       // flange on 
 // the 151 x 59 recess and bridge the pcb pocket. stl/ktemata_r5_cass.3mf already stores it flipped.
 if (PART=="r5_tray")          r5_tray();
 if (PART=="r5_deck")          rotate([180,0,0]) r5_deck();
-if (PART=="r5_lid_plate")     r5_lid_plate();                      // plate flat, glass side down
+if (PART=="r5_lid_plate")     r5_lid_plate();                      // plate flat, lid/tape side down
 if (PART=="r5_lid_cover")     r5_lid_cover();                      // cover flat, lid/tape side down
 // corner overmould tool (one corner at a time); print the cap in TPU for a test fit.
 // The cup and lid print as modelled (open face up); the plate flips flat.

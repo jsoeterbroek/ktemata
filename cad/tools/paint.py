@@ -15,9 +15,10 @@ hinge, latch end at y = R5_L).  Paint that crosses the centre line therefore con
 printed part into the other - the three schemes are built on that.
 
 Two facts drive the artwork and are enforced in code, not by eye:
-  * the cover's display well is 193.96 x 111.76 mm (only 0.5 mm of clearance round the glass), so it
-    eats the cover's whole frame.  Anything continuous across the hinge has to leave the cover at
-    |x - w/2| > 95 mm - the 28 mm latch band and the 14.6 mm side margins outside the bezel;
+  * the cover has one flat front at z = 14.50 mm. Its 193.96 x 111.76 mm display opening (the
+    module plus 0.5 mm clearance per side) recedes 10.50 mm to the 4.00 mm rear skin. The 7 mm
+    slate border is paint on that same front, not a keep-out; only the opening, cable notch,
+    finger slots and reserved type interrupt marks;
   * the deck's own free fields are the 40.95 mm side rails, the strip between the OLED and the
     keyboard (y 72.2..102.5) and the 30 mm along the latch edge.
 """
@@ -116,11 +117,12 @@ class Model:
 
         self.gap = g("P_C_GAP")
         self.frame = g("P_C_FRAME")
-        # the raised bezel's footprint on the plate: panel outline + COVER_GAP + COVER_FRAME
+        # the flat painted border's footprint: panel outline + COVER_GAP + COVER_FRAME
         self.bezel_d = g("P_C_GAP") + g("P_C_FRAME")
         self.panel = (g("P_PANEL_X"), g("P_PANEL_Y"), g("P_DISP_W"), g("P_DISP_H"), g("P_DISP_R"))
         px, py, pw, ph, pr = self.panel
-        self.well = (px - self.gap, py - self.gap, pw + 2 * self.gap, ph + 2 * self.gap, pr)
+        self.well = (px - self.gap, py - self.gap, pw + 2 * self.gap, ph + 2 * self.gap,
+                     pr + self.gap)
         d = self.bezel_d
         self.bezel_ring = (px - d, py - d, pw + 2 * d, ph + 2 * d, pr + d)
         self.active = (g("P_ACTIVE_W"), g("P_ACTIVE_H"))
@@ -140,11 +142,10 @@ class Model:
         # baseline in the 35.6 mm strip between the OLED window (ends y 66.9) and the keyboard
         # (starts y 102.5): 4 mm clear above the cap, 4 mm below the small line
         self.deck_text_y = g("P_OLED_Y0") + g("P_OLED_H") + 4.0 + 10.5
-        # The cover block sits in the band between the bottom of the display well and the part's
-        # latch edge. With the 7" panel that band is 28.9 mm (the 5" left 82.6), and the well is
-        # centred, so the band's top is fixed by the panel and its bottom by the part edge.
-        # the flat plate below the raised bezel, not merely below the well: the type block is a
-        # vinyl sticker and a sticker cannot bridge the 16.4 mm step either
+        # Keep the cover block in the latch band below the painted border. The border is still a
+        # useful layout datum, but it is not a height change: the sticker and every painted pass
+        # share the same flat front. The band's top comes from the panel, clearance and frame;
+        # its bottom is the part edge.
         self.cover_band_y0 = py + ph + self.bezel_d
         self.cover_band = self.l - self.cover_band_y0
         # Pick the largest cap whose block, trim and both margins fit the band. Done here, before
@@ -181,13 +182,13 @@ class Model:
         # ---- free fields, derived and checked ----
         self.rail_l = x                       # deck free rail, 40.95
         self.rail_r = self.w - (x + bw)       # 40.95
-        # the cover's free plate outside the bezel ring: the 7" panel and its 7 mm bezel take
-        # 203.3 of 233.5, so 15.1 mm each side - not the 44.55 of the 5" layout
+        # Cover margin outside the painted border. The border remains a layout datum, not an
+        # aperture or a separate surface.
         self.cover_margin = px - self.gap - self.frame
-        self.band_x0 = px - self.gap          # 21.59: cover margin left of the display well
-        self.band_x1 = px + pw + self.gap      # 211.51
+        self.band_x0 = px - self.gap          # 19.77: display opening, left edge
+        self.band_x1 = px + pw + self.gap      # 213.73: display opening, right edge
         assert self.cover_margin >= 10.0, \
-            f"only {self.cover_margin:.1f} mm of cover plate outside the bezel"
+            f"only {self.cover_margin:.1f} mm of cover plate outside the painted border"
 
         # The lettering must sit on clean plate, and its block must not swallow a feature - a
         # wordmark that has to dodge a fan is a wordmark in the wrong place.  Only the features
@@ -310,10 +311,9 @@ STICKER_BLEED = 1.0      # print past the cut line, per the printer's spec
 STICKER_CAP = 10.5       # matches brand_deck's cap
 
 
-# The motto block has to live in whatever band the panel leaves at the latch end, and the 7"
-# panel leaves 28.9 mm where the 5" left 82.6.  Shrinking the block is the only option: the
-# band is set by the display, and moving the display off centre is what the operator asked
-# not to do.  Model.cover_cap() picks the largest cap that fits; sticker_specs() takes it.
+# The motto block lives in the latch band below the painted border. Its cap is fitted to the
+# probed band rather than moving the centred display. Model.cover_cap picks the largest cap that
+# fits; sticker_specs() takes it.
 COVER_CAPS = [10.5, 10.0, 9.5, 9.0, 8.5, 8.0, 7.5, 7.0, 6.5, 6.0, 5.5, 5.0, 4.5]
 
 
@@ -325,11 +325,11 @@ def sticker_specs(cover_cap: float = STICKER_CAP) -> list[dict]:
                     ("OFFLINE  LIBRARY", 2.6, 1.5, False, GREY_L, 6.8)],
              rule=(3.0, text_w("KTEMATA", cap, cap * 0.28) / 2, AMBER, 0.8),
              note="KTEMATA wordmark, deck top face"),
-        # The cover block is SCALED, not merely re-capped: its band is the 21.4 mm of flat plate
-        # below the raised bezel, and a block whose tagline sits at a fixed 9.8 mm under the
-        # baseline cannot shrink into it however small the Greek is set. Every vertical offset
-        # is therefore a fraction of the cap (0.495 for the rule, 0.933 for the tagline - the
-        # ratios the original 10.5 mm block had), so the whole block scales as one.
+        # The cover block is SCALED, not merely re-capped: a block whose tagline sits at a fixed
+        # 9.8 mm under the baseline cannot shrink into the latch band however small the Greek is
+        # set. Every vertical offset is therefore a fraction of the cap (0.495 for the rule,
+        # 0.933 for the tagline - the ratios the original 10.5 mm block had), so the whole block
+        # scales as one. The band is a layout choice on the flat front, not a step constraint.
         dict(side="cover", name="motto",
              lines=[("κτῆμα ἐς ἀεί", cover_cap, 0.0, True, IVORY, 0.0),
                     ("KTEMATA  ·  A POSSESSION FOR ALL TIME", max(1.9, cover_cap * 0.229),
@@ -337,7 +337,7 @@ def sticker_specs(cover_cap: float = STICKER_CAP) -> list[dict]:
              rule=(cover_cap * 0.495,
                    text_w("κτῆμα ἐς ἀεί", cover_cap, 0.0, True) / 2 + cover_cap * 0.76,
                    AMBER, 0.8),
-             note="motto, lid cover bezel face"),
+             note="motto, lid cover front face"),
     ]
 
 
@@ -647,21 +647,15 @@ def deck_hit(m: Model, px, py, pad=0.0) -> bool:
 
 
 def cover_hit(m: Model, px, py, pad=0.0) -> bool:
-    """True where the cover cannot be painted: off the plate, in an aperture, under the type, or
-    on the RAISED BEZEL.
+    """True where the flat cover front is interrupted or reserved for the lettering.
 
-    The bezel is 16.4 mm above the plate's painted face - `COVER_T - 0.8` to
-    `COVER_T - 0.8 + COVER_RIM_H` - so it is a step, not a surface.  A sprayed pass laid flat on
-    the plate cannot climb it, and a rigid mask certainly cannot, so nothing crosses the ring:
-    the graticule stops at its outer edge and the latch band below it is a separate field.  The
-    previous 5" layout got away with treating the whole cover as one plane because its bezel
-    stood at the very edge, outside every mark; the centred 7" ring lands among them and 25 of
-    the 39 graticule marks crossed it.
+    The entire broad front and the display glass are coplanar at z = 14.50 mm. The 7 mm slate
+    border is paint, so it is deliberately NOT a keep-out: graticule marks and rigid-mask slots
+    may cross it. Only real apertures (the display opening, cable notch and finger slots), the
+    part outline and the reserved type block interrupt the non-border passes.
     """
-    px0, py0, pw, ph = m.bezel_ring[:4]
     return (_off_plate(px, py, m.w, m.l, m.cover_r)
             or _in_rect(px, py, m.type_boxes["cover"], pad)
-            or _in_rect(px, py, (px0, py0, pw, ph), pad)
             or _in_rect(px, py, m.well, pad) or _in_rect(px, py, m.cable, pad)
             or any(_in_circle(px, py, sx, sy, 5.5, pad) for sx, sy in m.slots))
 
@@ -706,7 +700,7 @@ def brand_deck(p: Surface, tagline: str, cap: float = 10.5) -> None:
 
 
 def brand_cover(p: Surface, cap: float = 10.0) -> None:
-    """Motto in the cover's 60 mm latch band, clear of the display well and the finger slots."""
+    """Motto in the cover's latch band, clear of the display opening and finger slots."""
     m = p.m
     x, y = m.w / 2, m.cover_text_y
     p.text("κτῆμα ἐς ἀεί", cap, x, y, IVORY, italic=True, anchor="middle", group="word")
@@ -721,9 +715,9 @@ def brand_cover(p: Surface, cap: float = 10.0) -> None:
 class Mark:
     """One painted mark: a rounded rectangle, optionally with a rounded hole in it (a ring).
 
-    Rects alone cannot express the bezel: four rects leave sharp slivers at the display well's
-    rounded corners. `inner` makes the ring exact, and both consumers - the colour sheet and the
-    cut file - build their geometry from this one object, so they cannot disagree.
+    Rects alone cannot express the painted border: four rects leave sharp slivers at the display
+    opening's rounded corners. `inner` makes the ring exact, and both consumers - the colour sheet
+    and the cut file - build their geometry from this one object, so they cannot disagree.
     """
     __slots__ = ("x0", "y0", "x1", "y1", "fill", "group", "r", "inner", "opacity")
 
@@ -799,8 +793,8 @@ def meridian_marks(m: Model, cover: bool) -> list[Mark]:
             out.append(Mark(x0, y0, x1, y1, AMBER_D, "seam"))
 
     if cover:
-        # the bezel takes a half step of tone, not a hue: it is the largest free surface on the
-        # part but it is not part of the grid.  Four rects, because it is a frame.
+        # The 7 mm border is a flat slate paint pass, not a raised wall. Other passes may cross
+        # its footprint; this later pass covers them. The display opening remains a real hole.
         wx, wy, ww, wh, wr = m.well
         fr = m.frame
         # one ring mark, not four rects: the inner edge has to follow the well's corner radii or
@@ -831,9 +825,9 @@ def scheme_strata(p: Surface, cover: bool) -> None:
     x0, y0, bw, bl, br = part_box(m, cover)
     p.rect(x0, y0, bw, bl, BASE, br)
 
-    # 32 mm of bands per rail: inside the deck's 40.95 mm rail, but NOT the cover's 14.6 mm
-    # margin outside the 7" bezel - Strata is kept as a record of the alternatives, and on the
-    # cover it now runs under the bezel ring instead of beside it
+    # 32 mm of bands per rail: inside the deck's 40.95 mm rail, but wider than the cover margin
+    # outside Meridian's 7 mm border datum. The cover front is flat, so the bands continue across
+    # that datum; only the actual display opening and other apertures clip them.
     bands = [(8.0, AMBER_D), (5.0, SLATE), (12.0, AMBER), (3.0, GREY), (4.0, BASE)]
     for mirror in (False, True):
         x = 0.0
@@ -884,15 +878,15 @@ def scheme_bearing(p: Surface, cover: bool) -> None:
     # One lane, both parts, free along its whole length. x = 215.5, checked against the model:
     #   deck  - 10.6 mm clear of the Pi opening (ends 203.4), 13.0 of the hinge screw head
     #           (207.5 + 3.1), 9.9 of the screw at 228.4;
-    #   cover - 19.5 of the bezel (ends 195.95); the finger slots are at y 164..174 and the trace
-    #           stops at 152, so they never meet it.
+    #   cover - just right of the display opening; the painted border is no obstacle, and the
+    #           finger slots are at y 164..174 while the trace stops at 152, so they never meet.
     # The hinge gateway must also clear the plate's 14 mm corner radius, whose tangent is at
     # x = 219.5: an 8 mm square centred here ends on that tangent, so no corner is shaved off.
     tx = 215.5
     fx, fy, fd = m.fan
     if cover:
-        # the bezel carries the same slate as the border, so the cover reads as a frame round a
-        # screen rather than as one flat field
+        # The flat painted display border carries the same slate as the outer border, so the
+        # cover reads as a frame round a screen without adding a second height.
         wx, wy, ww, wh, wr = m.well
         fr = m.frame
         p.path(p.rrect(wx - fr, wy - fr, ww + 2 * fr, wh + 2 * fr, wr + fr)
@@ -917,12 +911,12 @@ SCHEMES = [
         slug="1_meridian", name="MERIDIAN", sub="a chart graticule ruled from the hinge",
         draw=scheme_meridian,
         palette=[(BASE, "graphite"), (AMBER, "amber rules"), (AMBER_L, "long ticks"),
-                 (GREY_L, "short ticks"), (SLATE, "bezel")],
+                 (GREY_L, "short ticks"), (SLATE, "slate border")],
         steps=[
             "1  400-grit scuff, adhesion promoter, graphite base over the whole face",
             "2  tape the 0.5 mm graticule at 17.81 mm pitch, every fifth line  ->  ash",
             "3  re-mask the fifth lines and the two end rules  ->  amber",
-            "4  mask the bezel ring  ->  slate",
+            "4  mask the flat 7 mm cover border  ->  slate",
             "5  unmask, matte 2K clear over everything",
             "6  lay the two printed stickers last, on the plate the mask reserved",
         ],
@@ -930,9 +924,11 @@ SCHEMES = [
              "parts, so line n is the same distance from the seam on either half and the chart "
              "runs on across it. Every fifth line and the two end rules are amber, the rest ash. "
              "Each line is drawn only where there is plate: measured against the model, the grid "
-             "meets the Pi opening, the fan, the keyboard well, the display well and the screw "
-             "heads, and stops dead at each. Nothing is touched up by hand, so the grid reads as "
-             "one chart with holes punched through it rather than as a pattern that gives up.",
+             "meets the Pi opening, the fan, the keyboard well, the display opening and the screw "
+             "heads, and stops dead at each. On the flat cover the graticule may cross the painted "
+             "border; the later slate pass covers it there. Actual apertures and reserved type "
+             "still stop every line. Nothing is touched up by hand, so the grid reads as one chart "
+             "with holes punched through it rather than as a pattern that gives up.",
     ),
     dict(
         slug="2_strata", name="STRATA", sub="five bands in the rails, all the way past the seam",
@@ -948,9 +944,10 @@ SCHEMES = [
         ],
         note="Continuity: the stack is keyed to x, not to y, so each rail runs dead straight from the "
              "cover into the deck and the U closes across the hinge. 32 mm of bands fills the deck's "
-             "40.95 mm rail, but the 7\" bezel leaves only 14.6 mm of cover plate beside it, so on "
-             "the cover the outer bands now run under the bezel ring instead of beside it. Kept as "
-             "the record of an alternative: on the 7\" layout Meridian is the scheme that works.",
+             "40.95 mm rail and extends inboard of the cover's 7 mm painted-border datum. That "
+             "border is not a raised ring, so the flat cover bands are clipped only by real "
+             "apertures. Kept as the record of an alternative: on the 7\" layout Meridian is the "
+             "scheme that works.",
     ),
     dict(
         slug="3_bearing", name="BEARING", sub="a slate border and one amber trace through the seam",
@@ -968,8 +965,9 @@ SCHEMES = [
              "single 3 mm line that runs from a port ring in the cover, through an 8 mm gateway "
              "square on the hinge, to a second port ring in the deck. The lane was chosen by "
              "measurement, not by eye: on the deck it clears the Pi opening (ends 203.4), the hinge "
-             "screw head at 207.5 and the screw at 228.4; on the cover it clears the bezel (ends "
-             "195.95). The obvious left rail does not work - x = 17.1 is clear of the deck's "
+             "screw head at 207.5 and the screw at 228.4; on the cover it runs just right of the "
+             "display opening and straight across the flat painted border. The obvious left rail "
+             "does not work - x = 17.1 is clear of the deck's "
              "hardware, but the FireBeetle access hole (x 14..30, y 148..158) would cut the line "
              "20 mm short of its end. The well also takes the "
              "border's hinge band on the cover, so the border there survives only in the two side "
@@ -1136,7 +1134,7 @@ def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path
     elems.append(tspan("HINGE  ·  the pattern crosses this line", 2.6, M + w / 2, hinge_y - 3.4,
                        PAPER_MUTED, track=1.3, anchor="middle"))
 
-    elems.append(tspan("LID COVER  ·  bezel face", 3.0, M, y_cover - 5.0, PAPER_MUTED,
+    elems.append(tspan("LID COVER  ·  front face", 3.0, M, y_cover - 5.0, PAPER_MUTED,
                        track=1.3))
     elems.append(tspan(f"{f(w)} × {f(l)} mm", 2.6, M + w, y_cover - 5.0, PAPER_MUTED,
                        anchor="end"))
@@ -1243,7 +1241,7 @@ STENCIL_PASSES = [
     ("ash", "ASH", "0.5 mm graticule, the short rules"),
     ("amber", "AMBER", "0.9 mm graticule, every fifth rule"),
     ("seam", "DEEP AMBER", "seam rule at the hinge, end stop at the latch edge"),
-    ("bezel", "SLATE", "bezel ring (lid cover only)"),
+    ("bezel", "SLATE", "flat 7 mm painted border (lid cover only)"),
 ]
 
 

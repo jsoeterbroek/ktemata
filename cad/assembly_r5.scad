@@ -16,8 +16,8 @@ use <r5_lid_cover.scad>
 EXPLODE = 0;
 SECTION = false;
 SHOW_HOST = is_undef(SHOW_HOST) ? true : SHOW_HOST;   // -D SHOW_HOST=false for the cassette alone
-// Which lid part to show: the flat plate (r5_lid_plate) or the bezelled cover with the 7" panel
-// well (r5_lid_cover, the shipped one). -D LID="plate" to check the simpler part in place.
+// Which lid part to show: the flat plate (r5_lid_plate) or the full-face cover with the recessed
+// 7" panel (r5_lid_cover, the shipped one). -D LID="plate" to check the simpler part in place.
 LID = is_undef(LID) ? "cover" : LID;
 SECTION_Y = R5_L/2;
 
@@ -95,23 +95,25 @@ module c_oled() {
            R5_OLED_SEAT, R5_OLED_GLASS[2]);
 }
 module c_display() {
-    // on the lid: the plate is taped to the lid ceiling, so its back sits R5_DISP_DEEP below
-    // z = HOST_BOT + HOST_LID; the display hangs down from there, glass towards the base
-    z = HOST_BOT + HOST_LID - R5_DISP_DEEP;
-    r5_at(R5_DISP_X0, R5_DISP_Y0 + R5_PANEL[1], z + R5_LID_T)
+    // Glass at R5_GLASS, PCB back R5_PANEL_DEPTH above it on the lid part's recess seat. This is
+    // only the Waveshare module; the selected lid part is modelled separately.
+    r5_at(R5_DISP_X0, R5_DISP_Y0 + R5_PANEL[1], R5_GLASS)
         linear_extrude(R5_PANEL_DEPTH) rrect(R5_PANEL[0], R5_PANEL[1], R5_PANEL[2]);
-    r5_at(R5_DISP_X0 - 6, R5_DISP_Y0 + R5_PANEL[1] + 6, z) linear_extrude(R5_LID_T)
-        rrect(R5_LID_PLATE[0], R5_LID_PLATE[1], 8);
-    // the display's own standoffs
-    for (p=R5_DISP_HOLES) r5_at(R5_DISP_X0 + p[0], R5_DISP_Y0 + p[1], z + R5_LID_T)
-        cylinder(d=4.5, h=DISP_POST, $fn=6);
+    // The four unused Pi standoffs project 3.5 mm behind the PCB into the lid part's reliefs.
+    for (p=R5_DISP_POSTS)
+        r5_at(R5_DISP_X0 + p[0], R5_DISP_Y0 + p[1], R5_GLASS + R5_PANEL_DEPTH)
+            cylinder(d=5.5, h=R5_PANEL_STUD);
 }
-// The lid cover, in place: taped to the lid ceiling with its well facing the base. Modelled
-// with z = 0 on the lid face, so it is flipped about x and dropped so that z = 0 lands on the
-// ceiling (z = HOST_BOT + HOST_LID) and the rim hangs down into the case.
+
+// Both lid parts are modelled with z = 0 on the host/tape face and grow towards the display.
+// Flip them about x so that face lands on the lid ceiling; their PCB seats are R5_LID_T below it.
+// No extra y translation: the flip alone maps their drawing-y frames into the cassette frame.
+module c_lid_plate() {
+    translate([R5_DISP_X0 - 6, R5_L - R5_DISP_Y0 + 6, HOST_BOT + HOST_LID])
+        rotate([180, 0, 0]) r5_lid_plate();
+}
 module c_lid_cover() {
-    translate([0, R5_L, HOST_BOT + HOST_LID]) rotate([180, 0, 0])
-        translate([0, -COVER_L, 0]) r5_lid_cover();
+    translate([0, R5_L, HOST_BOT + HOST_LID]) rotate([180, 0, 0]) r5_lid_cover();
 }
 
 // The 16 mm IP67 power button on the deck: the thread through the bore and the nut under the
@@ -150,6 +152,7 @@ module components() {
 module all() {
     if (SHOW_HOST) host_case();
     if (LID == "cover") color("#6b8fb0") c_lid_cover();
+    if (LID == "plate") color("#6b8fb0") c_lid_plate();
     color("#3a3a3a") r5_tray();
     color("#555") translate([0, 0, EXPLODE]) r5_deck();
     components();
@@ -164,12 +167,9 @@ else all();
 
 module part(n) {
     if (n=="tray") r5_tray(); if (n=="deck") r5_deck();
-    if (n=="lid") r5_at(R5_DISP_X0 - 6, R5_DISP_Y0 + R5_PANEL[1] + 6,
-                        HOST_BOT + HOST_LID - R5_DISP_DEEP)
-        translate([0, -R5_LID_PLATE[1], 0]) r5_lid_plate();
-    // the cover is the shipped lid part, so it has to be sweepable against the cassette. It is
-    // NOT checked against "display": the display hangs off whichever lid part is fitted, and
-    // c_display() draws the plate too, so that pair would always intersect by construction.
+    if (n=="lid") c_lid_plate();
+    // The display and selected lid part are separate, so both cover:display and lid:display are
+    // real fit checks: the panel must clear the recess and its Pi standoffs must enter the reliefs.
     if (n=="cover") c_lid_cover();
     if (n=="pi") c_pi(); if (n=="ups") c_ups(); if (n=="cells") c_cells();
     if (n=="keyboard") c_keyboard(); if (n=="oled") c_oled(); if (n=="display") c_display();

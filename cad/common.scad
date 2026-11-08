@@ -586,16 +586,14 @@ R5_DISP_DEEP = R5_LID_T + R5_PANEL_DEPTH;               // 14.50 mm from the lid
 R5_DISP_X0 = (R5_W - R5_PANEL[0])/2;                    // 18.77
 R5_DISP_Y0 = (R5_L - R5_PANEL[1])/2;                    // 32.17
 R5_LID_PLATE = [R5_PANEL[0] + 12, R5_PANEL[1] + 12];    // 204.96 x 122.76, 6 mm border
-// The DSI/GPIO leads leave the panel's hinge-side long edge and have to turn down into the base,
-// so the cover and the plate are notched there, through plate and bezel wall together. The notch
-// is R5_CABLE_W wide, R5_CABLE_W/2 of it each side of R5_CABLE_X (measured from the panel's own
-// left edge), so moving the connector is one number. Verify against your panel before printing:
-// the 7" drawing puts the FFC at one end of that edge, and a notch at the wrong end leaves the
-// ribbon with no way out.
-// The Waveshare's DSI FPC leaves at the centre of the panel's hinge-side edge; the 4-pin
-// 5 V/I2C lead leaves at the opposite right corner and is routed inside (use a longer lead).
+// The DSI/GPIO leads leave the panel's right-hand rear PCB area and turn towards the hinge/base,
+// so the full-height cover and the simple plate are both notched there. The notch is R5_CABLE_W
+// wide, centred at R5_CABLE_X from the panel's left edge. At 140.60 the default cover's cable
+// centre is x 160.87: inside both the deck's x 150..203.4 opening and the tray's x 61.75..171.75
+// rim notch, instead of the old centred x 116.75 route. This moves the hinge crossing 44.12 mm
+// right and shortens the FPC run without moving the tray notch into its deck-screw boss.
 R5_CABLE_W  = 46;                                        // covers the 15-pin DSI FPC
-R5_CABLE_X  = R5_PANEL[0]/2;                             // notch centre, from the panel's left edge
+R5_CABLE_X  = 140.60;                                    // notch centre, from the panel's left edge
 R5_CABLE_X0 = R5_CABLE_X - R5_CABLE_W/2;                 // its left edge, in panel coords
 
 // deck screws: on the straight wall runs only (a boss in a 14 mm corner would break the
@@ -673,8 +671,8 @@ assert(R5_KB_WELL_BOT - R5_KB_SEAT > R5_FLOOR,
 // The 7" panel must fit the cassette plan and the cassette must still fit the host: the glass is
 // 189.32 x 120.24 against a 233.5 x 178.1 cassette, so there is 22.09 / 28.93 a side, not much -
 // check it rather than trust it, since R5_W/R5_L move with HOST. 20 mm of cassette either side is
-// the floor: a 7 mm bezel, the 8 mm tape border round it and the 5 mm of wall the panel's own
-// standoff screws need.
+// the floor: a 7 mm front border, the 8 mm tape border round it and the 5 mm of wall the panel's
+// own standoff screws need.
 assert(!R5 || R5_W - R5_PANEL[0] >= 20 && R5_L - R5_PANEL[1] >= 20,
        str("host ", HOST, ": the 7\" panel (", R5_PANEL[0], " x ", R5_PANEL[1],
            ") leaves only ", (R5_W - R5_PANEL[0])/2, " / ", (R5_L - R5_PANEL[1])/2,
@@ -696,23 +694,21 @@ assert(R5_BTN_Y + R5_BTN_BODY/2 < R5_L - 2.5,
 // Params live here, not in r5_lid_cover.scad, because assembly_r5.scad `use`s that file: `use`
 // imports modules only, never variables, so the assembly could not see them. The assertions that
 // guard these values stay in r5_lid_cover.scad, next to the geometry they protect.
-COVER_T     = 4;          // plate thickness: tape face, and the print bed
-COVER_FRAME = 7;          // bezel wall thickness outside the glass
-COVER_GAP   = 0.5;        // clearance around the panel module, inside the bezel
+COVER_T     = R5_LID_T;   // rear mounting skin: tape face and print bed
+COVER_FRAME = 7;          // minimum front border / painted band outside the display opening
+COVER_GAP   = 0.5;        // clearance per side around the panel module
 COVER_R     = 8;          // cover corner radius
-COVER_PROUD = 0;          // flush: the bezel top and the glass front are the same plane
 
 COVER_W = HOST_L - 2*HOST_CLR;      // the same 1.5 mm clearance the cassette uses
 COVER_L = HOST_W - 2*HOST_CLR;
 
-// The Waveshare's own stack: plate, PCB back on it, 10.50 mm to the glass. The bezel rises to
-// that plane, so the glass is flush with the cover's front.
-COVER_GLASS_Z = COVER_T + R5_PANEL_DEPTH;
-COVER_RIM_H   = R5_PANEL_DEPTH + COVER_PROUD;           // bezel height above the plate
+// A full-height front panel, not a raised rim on a thin plate. The 10.50 mm display recess starts
+// at COVER_T and ends at the broad front, so the glass and the whole cover face are coplanar.
+// This is the same overall stack as r5_lid_plate and leaves the host/tape interface unchanged.
+COVER_FRONT_Z = R5_DISP_DEEP;
 
 // The 7" panel, centred in both axes - the operator's call, and the lid has nothing left to
-// dodge now that the power button is on the deck. Margins: 15.09 mm of plate outside the bezel
-// in x, 21.93 in y; 22.09 / 28.93 from the panel module itself.
+// dodge now that the power button is on the deck. The actual front border follows the host size.
 PANEL_X = (COVER_W - R5_PANEL[0]) / 2;
 PANEL_Y = (COVER_L - R5_PANEL[1]) / 2;
 
@@ -788,12 +784,21 @@ assert(R5_OPEN_D >= R5_PI_Y,
        str("the hinge opening is ", R5_OPEN_D, " mm deep, the Pi's connectors need ", R5_PI_Y));
 assert(R5_SCREWS[5][0] - M3_HEAD/2 >= R5_OPEN_X1,
        "the hinge opening runs into deck screw 5's countersink");
+// The lid notch's centreline must fit both existing openings with 8 mm half-width for the FPC.
+assert(!R5 || (R5_CABLE_X0 >= 0 && R5_CABLE_X0 + R5_CABLE_W <= R5_PANEL[0]),
+       "the lid cable notch runs outside the display outline");
+assert(!R5 || (R5_DISP_X0 + R5_CABLE_X >= R5_OPEN_X0 + 8
+               && R5_DISP_X0 + R5_CABLE_X <= R5_OPEN_X1 - 8),
+       "the lid cable route does not fit the deck's hinge opening");
+assert(!R5 || (R5_DISP_X0 + R5_CABLE_X >= R5_W/2 - 55 + 8
+               && R5_DISP_X0 + R5_CABLE_X <= R5_W/2 + 55 - 8),
+       "the lid cable route does not fit the tray's rim notch");
 
 // ---- charge socket: 5.5 x 2.1 DC jack through the deck's right rail ----
 // The host stays sealed: the 8.4 V charge lead ends in a panel socket in the deck's top face
 // instead of a hole through the Peli wall. The socket is the r4 part (CHG_W's 9.5 mm barrel), so
-// its plug goes in from above and charging is done with the lid open; with the plug out only
-// the bezel stands proud, well inside the 4.6 mm between the deck and the display glass.
+// its plug goes in from above and charging is done with the lid open; with the plug out only the
+// socket's own bezel stands proud, inside the clearance to the flush display/cover front.
 //
 // The barrel drops through the hole into the channel between the Pi's port edge (x 208) and the
 // tray wall (x 230.9), which is empty floor: the nut and the tags land there. The position

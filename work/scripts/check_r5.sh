@@ -9,9 +9,9 @@ trap 'rm -rf "$tmp"' EXIT
 extra="-D R5=true"
 [ -n "$HOST" ] && extra="$extra -D HOST=\"$HOST\""
 pairs="tray:deck tray:pi tray:ups tray:cells tray:floor tray:keyboard tray:display
-deck:pi deck:ups deck:cells deck:floor deck:keyboard deck:oled deck:display deck:lid
+deck:pi deck:ups deck:cells deck:floor deck:keyboard deck:oled deck:display deck:lid lid:display
 keyboard:display pi:display ups:display cells:display lid:pi lid:ups lid:cells lid:floor
-cover:tray cover:deck cover:keyboard cover:pi cover:ups cover:cells cover:floor
+cover:tray cover:deck cover:keyboard cover:pi cover:ups cover:cells cover:floor cover:display
 deck:button button:tray button:pi button:ups button:cells button:keyboard button:cover
 charger:deck charger:pi charger:ups charger:cells charger:tray charger:keyboard
 ups:cells pi:ups"

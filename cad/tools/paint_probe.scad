@@ -45,6 +45,7 @@ echo(P_COVER_W = COVER_W);
 echo(P_COVER_L = COVER_L);
 echo(P_COVER_R = COVER_R);
 echo(P_COVER_T = COVER_T);
+echo(P_C_FRONT_Z = COVER_FRONT_Z);
 echo(P_C_FRAME = COVER_FRAME);
 echo(P_C_GAP = COVER_GAP);
 echo(P_PANEL_X = PANEL_X);

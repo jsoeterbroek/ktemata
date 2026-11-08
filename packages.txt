@@ -1,6 +1,7 @@
 # Runtime Python dependencies for the project tooling.
 #
 #   cad/tools/export.py, cad/tools/render.py   stdlib only (drive the openscad CLI)
+#   cad/tools/paint.py                         matplotlib + numpy + Pillow
 #   work/scripts/crop.py                       Pillow (PDF page crops with a measurement grid)
 #   work/scripts/zim.py                        libzim (inspect/verify the Kiwix ZIM library)
 #
@@ -11,5 +12,7 @@
 # Install into the local venv:
 #   uv venv .venv && uv pip install -r packages.txt
 
+matplotlib>=3.10
+numpy>=2.0
 Pillow>=12.0
 libzim>=3.13

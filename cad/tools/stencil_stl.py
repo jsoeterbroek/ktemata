@@ -23,12 +23,13 @@ WHY THE GEOMETRY COMES FROM paint.py, NOT FROM THE SVG
     (`Mark`) and every aperture as a shape (`Aperture`), and the sheets are rendered from exactly
     that data - so this module reads the same objects and the two cannot drift apart.
 
-THE COVER IS TWO PLANES, NOT ONE
-    Its plate's painted face is at z 4.0 and its bezel stands to z 11.92: a 7.92 mm step.  A flat
-    mask cannot bridge it, so the cover's plate-level masks have the bezel's whole footprint cut
-    away (they lie on the plate and the ring pokes through), and the `bezel` pass is its own
-    ring-shaped mask that sits on the bezel's top face.  `cover_hit()` enforces the same rule for
-    the artwork, so no mark crosses the step in the first place.
+THE COVER FRONT IS ONE PLANE
+    The rear mounting skin is 4.00 mm thick, the display recess is 10.50 mm deep, and the entire
+    broad front and display glass are coplanar at z = 14.50 mm. Every rigid cover mask therefore
+    lies on that same front; there is no raised bezel step to bridge. Non-border masks keep the
+    painted border's footprint and are cut only by their own marks, real apertures and reserved
+    type. The `bezel` pass remains a separate ring-shaped mask for the flat 7 mm slate border,
+    retaining its existing output name.
 """
 from __future__ import annotations
 
@@ -141,19 +142,13 @@ def mask_source(m: "paint.Model", cover: bool, group: str,
         else:
             cuts.append(rrect_solid(a.x, a.y, a.w, a.h, a.r, -1.0, thickness + 2.0))
 
-    # The cover's raised bezel: plate-level masks cannot cross a 7.92 mm step, so they carry a
-    # hole where the ring stands and the ring gets its own mask on its top face.
-    if cover and group != "bezel":
-        bx, by, bw, bh, br = m.bezel_ring
-        cuts.append(rrect_solid(bx, by, bw, bh, br, -1.0, thickness + 2.0))
-
     body = "difference() { union() { " + " ".join(solids) + " } " + " ".join(cuts) + " }"
     if x0 or y0:
         body = f"translate([{-x0:.4f}, {-y0:.4f}]) " + body
 
     if cover and group == "bezel":
-        # the bezel mask is the ring's top face and nothing else: it is placed on the raised
-        # face, not on the plate
+        # Keep the separate ring-shaped mask for the slate border. It lies on the same flat front
+        # as every other cover mask; only its plan shape is different.
         bx, by, bw, bh, br = m.bezel_ring
         wx, wy, ww, wh, wr = m.well
         body = ("difference() { "

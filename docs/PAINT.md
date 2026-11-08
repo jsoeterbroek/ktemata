@@ -4,9 +4,9 @@
 of the alternatives and because the generator still produces them.
 
 Three airbrush designs for the two printed surfaces you actually look at: the **deck** (keyboard
-side, seen when the case is open) and the **lid cover** (bezel round the Waveshare 7inch DSI LCD (C), seen when
-it is closed). Each scheme is one continuous design across both parts, not two decorations that
-happen to share a palette.
+side, seen when the case is open) and the **lid cover** (one flat front panel around the recessed
+Waveshare 7inch DSI LCD (C), seen when it is closed). Each scheme is one continuous design across
+both parts, not two decorations that happen to share a palette.
 
 ```
 python3 cad/tools/paint.py                          # all three sheets + contact sheet
@@ -26,7 +26,7 @@ Output lands in `docs/paint/`:
 | `ktemata_paint_all.png` | the three sheets side by side, for choosing |
 | `ktemata_stencil_{deck,cover}_{ash,amber,seam,bezel}.svg` | **cut files**, one per paint pass, `--stencils` |
 | `ktemata_sticker_deck_wordmark_91x22.4mm_bleed.pdf` | **the deck wordmark sticker**, artwork only, `--stickers` |
-| `ktemata_sticker_cover_motto_82.1x17.3mm_bleed.pdf` | **the lid motto sticker**, artwork only, `--stickers` |
+| `ktemata_sticker_cover_motto_<W>x<H>mm_bleed.pdf` | **the lid motto sticker**, artwork only, `--stickers`; filename records its fitted trim size |
 
 The SVGs are **1:1 in millimetres** and are drawn from the model, so they print as masking
 templates: 400 gsm card or vinyl, cut to the panels, laid on the part. There is a 50 mm scale bar
@@ -57,12 +57,14 @@ These are the constraints the artwork obeys, and `cad/tools/paint_probe.scad` fe
 generator straight from `common.scad`. Change a part and the sheets follow; the assertions fail
 rather than drawing a line through a fan.
 
-- **The cover's display well is 193.96 × 111.76 mm** (`R5_PANEL` + 0.5 clearance), with 7 mm of
-  bezel round it, and the 7" panel is **centred**: the well runs `x 21.59..211.91`, `y 28.43..149.67`.
-  That leaves only **14.6 mm of plate outside the bezel in x** and a **28.4 mm latch band**, so the
-  cover's usable paint is the flat ring round the bezel, not the rails the 5" layout had. Anything
-  that has to be continuous across the seam on the cover must therefore live in that **latch band**
-  (`y > 149.7`; the finger slots are at `y 161..171`) or in the **14.6 mm side margins**.
+- **The cover has one flat front at `z = 14.50 mm`.** Its rear mounting skin is **4.00 mm** thick
+  (`z = 0..4.00`), and the display recess is **10.50 mm** deep (`z = 4.00..14.50`). The display
+  glass and the entire broad cover front are coplanar; there is no raised bezel. The **193.96 ×
+  111.76 mm display opening** (`R5_PANEL` + 0.5 mm clearance per side) is centred at
+  `x 19.77..213.73`, `y 33.17..144.93`. Meridian's **7 mm slate border** around that opening is
+  flat paint and a layout datum, not a keep-out. Marks may cross it; only the display opening,
+  cable notch, finger slots and reserved type interrupt them. The default layout leaves **12.77 mm
+  outside the painted border in x** and a **26.17 mm latch band** below it, all on that same face.
 - **The deck's free fields** are the **40.95 mm side rails**, the **35.6 mm strip** between the OLED
   window (ends `y 66.9`) and the keyboard pocket (starts `y 102.5`), and the **16 mm** between the
   keyboard pocket (ends `y 162.1`) and the latch edge. The right rail carries the power button
@@ -71,7 +73,7 @@ rather than drawing a line through a fan.
   BEARING's trace runs there and not up the more obvious left rail — the deck's left rail is
   crossed by the fan (x 25..63, y 19..57), the FireBeetle access hole (x 14..30, y 148..158), a
   screw and the **power button** (Ø16.2 at 213.0, 160.1), and the cover's left margin is crossed
-  by the display well from `x 21.59`. That lane now also carries the **charge socket** (Ø14
+  by the display opening from `x 19.77`. That lane now also carries the **charge socket** (Ø14
   envelope at 216.0, 90.0): the graticule stops at it, and BEARING's trace is interrupted there.
   If that scheme were revived the trace would have to jog around the socket, x 209..223.
 
@@ -123,7 +125,7 @@ chip: nothing in Model Air is as dark as `#151b21` (71.057 is a half-step lighte
 clear mostly hides), and every Pantone chip near `#f2ebe0` is yellower — 7527 C is the closest
 neutral and Pantone has no true off-white. Slate needs the two-pot mix because no single matte
 Model Air matches it; 71.300 Glossy Sea Blue is closer but gloss, which is wrong under the 2K
-clear on a bezel.
+clear on the painted border.
 
 The Pantone column is for **checking, not spraying** — Pantone sells no paint. Use the chip at the
 hobby shop to judge a tint under daylight, or to order the same tone from a paint mixer. The
@@ -143,7 +145,7 @@ each colour, not as a measurement of the bottle in your hand.
 | `ktemata_stencil_deck_ash.svg` | ash | the 0.5 mm graticule and the short rules |
 | `ktemata_stencil_deck_amber.svg` | amber | the 0.9 mm graticule, every fifth rule |
 | `ktemata_stencil_deck_seam.svg` | deep amber | the seam rule at the hinge, the end stop at the latch edge |
-| `ktemata_stencil_cover_*.svg` | as above, plus `bezel` | the same on the lid cover; `bezel` is the slate ring |
+| `ktemata_stencil_cover_*.svg` | as above, plus `bezel` | the same on the lid cover; `bezel` is the flat 7 mm slate border |
 
 The same masks are also printable as rigid 1.2 mm panels (`stl/stencil_*.stl`, one file per pass)
 for anyone who would rather not cut vinyl — see **Printed masks** below. The sheets and the STLs
@@ -156,9 +158,10 @@ because they decide whether the mask survives being handled:
   mask into strips — that is visible in `ktemata_stencil_cover_ash.svg` and it is not a fault. Cut
   the vinyl but leave the backing on, lay application tape over the face, and lift the whole
   assembly onto the part in one go; the tape holds every island in register. Peel the tape last.
-- **The bezel ring needs bridges or transfer tape.** Cutting a closed ring frees it from the
-  surrounding sheet. Transfer tape carries it; without tape, add two 2 mm bridges at the ring's
-  top and bottom and accept two hairlines in the slate.
+- **The painted border ring needs bridges or transfer tape.** Cutting a closed ring frees it from
+  the surrounding sheet. Transfer tape carries it; without tape, add two 2 mm bridges at the ring's
+  top and bottom and accept two hairlines in the slate. This is a cutting concern, not a height
+  difference: the border lies on the same face as every other cover pass.
 - **0.5 mm is at the limit for a blade.** If your cutter cannot hold a 0.5 mm line cleanly, lay the
   ash graticule with 0.5 mm pinstripe tape instead — it is a stock product, and the grid is on a
   17.81 mm pitch so the tape wants no measuring beyond the first line. The stencils then cover
@@ -188,21 +191,20 @@ each other in the middle of the plate, so the split is inherent to the artwork r
 tie width. Ash therefore stays vinyl: 0.5 mm pinstripe tape on a 17.81 mm pitch, as the note above
 already suggests. `--include-vinyl` will emit it anyway if you want to see the strips.
 
-**The cover is two planes, and the masks respect that.** Its plate's painted face is at z 4.0 and
-its bezel stands 7.92 mm above it. A flat 1.2 mm mask cannot bridge a step that size, so the
-plate-level masks have the bezel's footprint cut away and lie on the plate with the ring poking
-through, while `stencil_cover_bezel` is a ring-shaped mask that sits on the bezel's top face.
-`cover_hit()` enforces the same rule for the artwork, so no mark crosses the step.
+**Every cover mask lies on the same flat front at `z = 14.50 mm`.** The display recess extends
+10.50 mm down to the 4.00 mm rear skin, and the glass is flush with the surrounding front. There
+is no raised bezel step for a rigid mask to bridge. The non-border cover masks retain the painted
+border's footprint instead of cutting it away; their own paint slots, the actual display opening,
+cable notch and finger slots still pass through, and the type block stays reserved. The separate
+`stencil_cover_bezel.stl` remains a ring-shaped mask for the flat 7 mm slate border, on that same
+plane and with the same filename. `cover_hit()` applies the same single-plane rule to the artwork.
 
-Two corrections came out of building these, both in the sheet output rather than the STLs:
+Two earlier corrections in the sheet output remain relevant:
 
 - **The cover's apertures were not mirrored with its marks.** The cover is drawn mirrored in y on
   the open-flat sheet, so that its hinge edge meets the deck's at the seam, and the marks were
   flipped while the cut-outs were not — the DSI notch appeared at the latch end and both finger
   slots at the hinge. Apertures are now one `Aperture` shape rendered for both consumers.
-- **The motto sat on the raised bezel.** Its block was centred in the band below the display well
-  rather than below the bezel, so 5 mm of it lay on a surface 7.92 mm higher. The flat band is
-  21.4 mm, the block is scaled into it (cap 6.0, trim 82.1 × 17.3 mm) and centred.
 - **The deck's apertures were drawn one height too low.** `Aperture.d()` applied the mirror
   unconditionally: right for the cover (drawn flipped) and wrong for the deck, so the keyboard hole
   landed at the latch edge and the Pi opening 20 mm inside the plate instead of on it. The STL
@@ -213,7 +215,7 @@ Two corrections came out of building these, both in the sheet output rather than
 
 ```
 ┌──────────────────────────────────────────────┐
-│ LID COVER · bezel face       233.5 × 178.1   │  the cover, hinge edge at the BOTTOM
+│ LID COVER · front face       233.5 × 178.1   │  the cover, hinge edge at the BOTTOM
 │  ┌────────────────────────────────────────┐  │
 │  │  painted artwork, clipped by the mask  │  │
 │  └────────────────────────────────────────┘  │
@@ -244,7 +246,7 @@ The chosen scheme, in the order the sheet gives:
 4. **Deep amber** pass: the 1.7 mm seam rule at `y 2.2` and the end stop at `y l-8`. On the deck the
    seam rule is **two pieces**, not one — the Pi opening cuts it at `x 150..203.4`. That is correct
    and deliberate: the cut file is the authority, and a line that crosses a hole is not a line.
-5. **Slate** pass (cover only): the 7 mm bezel ring.
+5. **Slate** pass (cover only): the flat 7 mm painted border around the display opening.
 6. Matte 2K clear over everything.
 7. **Stickers last**: the deck wordmark and the lid motto, on the bare plate the mask reserved.
    See [Stickers instead of stencilled type](#stickers-instead-of-stencilled-type).
@@ -258,16 +260,16 @@ paint. `--stickers` writes them as print-ready vinyl instead:
 | File | Block | Trim (cut size) | Where it goes |
 |---|---|---|---|
 | `ktemata_sticker_deck_wordmark_91x22.4mm_bleed.pdf` | `KTEMATA` + `OFFLINE LIBRARY` | **91 × 22.4 mm** | deck, x 71.25..162.25, y 68.40..90.80 |
-| `ktemata_sticker_cover_motto_82.1x17.3mm_bleed.pdf` | `κτῆμα ἐς ἀεί` + translation | **82.1 × 17.3 mm** | cover, x 75.70..157.80, y 158.73..176.03 — the 21.4 mm flat band below the raised bezel |
+| `ktemata_sticker_cover_motto_<W>x<H>mm_bleed.pdf` | `κτῆμα ἐς ἀεί` + translation | **W × H, fitted from the model** | cover, centred in the latch band below the flat 7 mm painted border |
 
 Upload the **PDF**. It is vector (PDF 1.7, not the 1.4 they reject), all lettering already
 converted to outlines, RGB — they convert to their CMYK profile themselves — and it carries **no
 cut line and no crop marks**, which is what their upload form requires. Each file has 1 mm of
-bleed on all four sides beyond the trim, so the artwork measures 93 × 24.4 mm and 84.1 × 19.3 mm;
-order a **contour-cut rectangle at the trim size above**, centred. Matte
-laminate, so it matches the 2K clear it is going under. The trim size is also in the file name
-and the SVG `<title>`, because the order form asks for it as a number and a file name is harder
-to lose than a note.
+bleed on all four sides beyond the trim: the deck artwork measures 93 × 24.4 mm, and the cover
+artwork is its model-derived trim size plus 2 mm on each axis. Order a **contour-cut rectangle at
+the trim size above**, centred. Matte laminate matches the 2K clear finish. The trim size is also
+in the file name and the SVG `<title>`, because the order form asks for it as a number and a file
+name is harder to lose than a note.
 
 Why the design survives as a sticker when it would not survive as a stencil:
 
@@ -288,15 +290,15 @@ sticker under it would have to pass the same wet-coat test the paint does. Press
 clean, de-greased clear coat; a vinyl sticker on scuffed PETG without clear under it is the one
 joint that will lift at the corner in a pocket.
 
-Text metrics are measured from the same font (`DejaVu Sans`, cap height 10.5 mm on both blocks)
-that draws the sheets, so the sticker and the painted artwork are the same design, not a
-lookalike.
+Text metrics are measured from the same `DejaVu Sans` font that draws the sheets. The deck cap is
+10.5 mm; the cover cap and trim are fitted to the latch band derived from the model. The sticker
+and painted artwork therefore remain the same design, not a lookalike.
 
 ## Printing notes
 
-- All three are designed for parts painted **before assembly**: the deck top-face-down on the
-  bench, the cover lid-face-down. Both faces are the print bed face, so the paint sits on a
-  texture the slicer left — scuff it, do not sand it flat.
+- Paint before assembly with the visible face upward: the deck's top face and the cover's recessed
+  front. The deck prints top-face-down and the cover prints lid/tape-face-down, so the cover's
+  painted front is the **top of the print**, not its bed face. Scuff both; do not sand them flat.
 - Mask the apertures from the back where you can; the deck's fan grille bars are flush with the
   top face and will pick up overspray through the slots.
 - The key faces (K06 keys, the display glass) are not painted and must stay masked throughout.

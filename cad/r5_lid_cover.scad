@@ -1,21 +1,21 @@
-// Ktemata r5 - lid cover: Waveshare 7inch DSI LCD (C) bezel
+// Ktemata r5 - lid cover: recessed Waveshare 7inch DSI LCD (C)
 //
-// The cassette holds the electronics in the base; this is the other half. A cover taped into
-// the host lid that carries the Waveshare 7inch DSI LCD (C), 1024 x 600.
+// The cassette holds the electronics in the base; this is the other half. A full-face cover taped
+// into the host lid carries the Waveshare 7inch DSI LCD (C), 1024 x 600.
 //
 //   openscad -D R5=true cad/r5_lid_cover.scad                   # the default build
 //   openscad -D R5=true -D 'HOST="1400"' cad/r5_lid_cover.scad   # the larger host
 //
 // Orientation as modelled: z = 0 is the LID side (the tape face and the print bed) and z grows
-// into the case. So the plate is on the bed, the bezel rises off it, and the panel drops in
-// from the interior side. Print it exactly like this - every wall is vertical, so no supports.
+// into the case. The rear mounting skin is on the bed and the display recess opens upwards.
+// Print it exactly like this - every wall is vertical, so no supports.
 //
 // The vertical stack is the Waveshare's own, and matches r5_lid_plate so the two are
 // interchangeable:
-//   plate 0..COVER_T, the PCB back on the plate, 10.50 mm to the glass; the bezel rises to the
-//   glass plane, so the screen is flush with the cover's front. The panel is held by four M3
-//   through the plate into its rear inserts - not by a lip, because the module outline is the
-//   glass outline (192.96 x 110.76) and a lip would stand proud of the glass.
+//   rear skin 0..COVER_T, PCB back at COVER_T, glass and the ENTIRE broad cover front at
+//   COVER_FRONT_Z. The display drops into a 10.50 mm recess instead of sitting on a thin plate
+//   inside a raised rim. Four M3 screws pass through the rear skin into the display's inserts;
+//   no retaining lip stands over or proud of the glass.
 //
 // Panel numbers all come from common.scad, so the cover cannot disagree with the cassette:
 //   module                192.96 x 110.76, corners R8   (R5_PANEL)
@@ -33,72 +33,64 @@ assert(R5, "r5 parts need -D R5=true");
 
 // ---------------- guards ----------------
 // The values themselves are in common.scad (see the note there); these are the checks that make
-// a bad host or a bad bezel a build error instead of a print.
+// a bad host or an inadequate display border a build error instead of a print.
 assert(R5_PANEL[0] + 2*COVER_FRAME + 4 <= COVER_W,
-       str("host ", HOST, ": ", COVER_W, " mm cover, the panel + bezel needs ",
+       str("host ", HOST, ": ", COVER_W, " mm cover, the panel + minimum front border needs ",
            R5_PANEL[0] + 2*COVER_FRAME + 4));
 assert(R5_PANEL[1] + 2*COVER_FRAME + 4 <= COVER_L,
-       str("host ", HOST, ": ", COVER_L, " mm cover, the panel + bezel needs ",
+       str("host ", HOST, ": ", COVER_L, " mm cover, the panel + minimum front border needs ",
            R5_PANEL[1] + 2*COVER_FRAME + 4));
 assert(COVER_GAP < (R5_PANEL[0] - R5_PANEL_ACTIVE[0])/2
        && COVER_GAP < (R5_PANEL[1] - R5_PANEL_ACTIVE[1])/2,
-       "COVER_GAP must stay inside the glass border, or the bezel crops the image");
-assert(COVER_GLASS_Z + COVER_PROUD <= HOST_LID - 4,
-       str("host ", HOST, ": lid ", HOST_LID, " mm, the cover + panel needs ",
-           COVER_GLASS_Z + COVER_PROUD + 4));
-// The cable notch has to be able to reach the bezel wall from inside the well and still leave
-// the plate whole round the panel: the bezel is the only thing it should cut.
-assert(PANEL_Y > COVER_FRAME, "the panel's hinge-side bezel would reach the cover edge");
+       "COVER_GAP must stay inside the glass border, or the front opening crops the image");
+assert(COVER_FRONT_Z + 4 <= HOST_LID,
+       str("host ", HOST, ": lid ", HOST_LID, " mm, the recessed cover + lead fold needs ",
+           COVER_FRONT_Z + 4));
+// The cable notch must reach the recess from the hinge edge without severing the cover.
+assert(PANEL_Y > COVER_FRAME, "the panel's hinge-side front border would reach the cover edge");
 
 // ---------------- geometry ----------------
 module cover_outline() rrect(COVER_W, COVER_L, COVER_R);
 
-// The module footprint and the bezel opening around it, both at the panel's position.
-module panel_2d(pad=0) translate([PANEL_X, PANEL_Y])
-    rrect(R5_PANEL[0] + 2*pad, R5_PANEL[1] + 2*pad, R5_PANEL[2]);
+// The module footprint and its clearance opening, both at the panel's position.
+module panel_2d(pad=0) translate([PANEL_X - pad, PANEL_Y - pad])
+    rrect(R5_PANEL[0] + 2*pad, R5_PANEL[1] + 2*pad, R5_PANEL[2] + pad);
 
-// Plate plus bezel: the plate is solid (it is the tape face and the lid-side skin), the bezel
-// is a ring standing up around the panel well.
-module cover_body() {
-    linear_extrude(COVER_T) cover_outline();
-    // 0.8 mm sink so the ring and the plate interpenetrate properly: a tangent contact is below
-    // CGAL's tolerance and exports as a separate solid (>= 0.5 mm per AGENTS.md)
-    translate([0, 0, COVER_T - 0.8]) linear_extrude(COVER_RIM_H + 0.8)
-        difference() {
-            translate([PANEL_X, PANEL_Y]) offset(COVER_FRAME)
-                rrect(R5_PANEL[0] + 2*COVER_GAP, R5_PANEL[1] + 2*COVER_GAP, R5_PANEL[2]);
-            panel_2d(COVER_GAP);
-        }
+// Full-height front panel with a blind display recess. The cut starts at COVER_T, leaving the
+// rear mounting skin intact, and over-runs the front by 1 mm for a clean boolean. The opening
+// matches the glass outline plus clearance; there is no raised rim or lip over the display.
+module cover_body() difference() {
+    linear_extrude(COVER_FRONT_Z) cover_outline();
+    translate([0, 0, COVER_T])
+        linear_extrude(COVER_FRONT_Z - COVER_T + 1) panel_2d(COVER_GAP);
 }
 
-// The display's PCB back sits on the plate, so the plate stays whole under the panel; the bezel
-// is the ring around the glass. The panel is held by M3 screws through the plate into its rear
-// inserts, heads counterbored on the lid side so the tape face stays flat.
+// The display's PCB back sits on the rear skin at COVER_T. M3 screws pass through that skin into
+// the display's rear inserts, with heads counterbored on the lid side so the tape face stays flat.
 module panel_screws() for (p=R5_DISP_HOLES) translate([PANEL_X + p[0], PANEL_Y + p[1], 0]) {
     cylinder(d=M3_CLR, h=COVER_T + 1);
     translate([0, 0, -0.01]) cylinder(d=M3_HEAD, h=1.6);
 }
 
 // The display's unused 58 x 49 Pi standoffs (M2.5, 5.5 mm OD) protrude 3.5 mm behind its PCB;
-// blind reliefs keep the PCB flat on the plate without breaking the tape face.
+// blind reliefs keep the PCB flat on the rear skin without breaking the tape face.
 module post_reliefs() for (p=R5_DISP_POSTS)
     translate([PANEL_X + p[0], PANEL_Y + p[1], COVER_T - R5_PANEL_STUD])
         cylinder(d=5.8, h=R5_PANEL_STUD + 0.1);
 
-// Panel leads: the Waveshare's DSI FPC leaves at the centre of its hinge-side long edge; the
-// 4-pin 5 V/I2C lead leaves at the opposite right corner and is routed inside the case. The
-// cover is taped to the lid, so the FPC cannot pass under it: the notch runs from the panel's
-// edge out through the bezel wall AND the plate to the cover's own hinge edge, and the FPC then
-// crosses the narrow strip of bare lid to the hinge. It is a notch in the edge, not a slit, so
-// the plate stays one piece - 46 mm of the 233.5 mm edge.
+// Panel leads: the Waveshare's 15-pin DSI socket is on the right-hand rear PCB; the 4-pin
+// 5 V/I2C lead is routed inside the case. The cover is taped to the lid, so the FPC cannot pass
+// under it. The 46 mm notch runs from the panel edge to the hinge edge at R5_CABLE_X = 140.60,
+// placing its centre over the existing deck/tray opening overlap at x 160.87 on the default host.
+// The cut over-runs the recess by 0.5 mm, so no web remains; the cover stays one piece.
 module cable_relief() {
     translate([PANEL_X + R5_CABLE_X0, -1, -1])
-        cube([R5_CABLE_W, PANEL_Y - COVER_GAP + 1.01, COVER_T + COVER_RIM_H + 2]);
+        cube([R5_CABLE_W, PANEL_Y - COVER_GAP + 1.5, COVER_FRONT_Z + 2]);
 }
 
 // Finger slots to lift the cover off the lid tape - in the latch band, clear of the motto.
 module finger_slots() for (x=[COVER_FRAME + 11, COVER_W - COVER_FRAME - 11])
-    translate([x, COVER_L - COVER_FRAME - 5, -1]) cylinder(d=10, h=COVER_T + 2);
+    translate([x, COVER_L - COVER_FRAME - 5, -1]) cylinder(d=10, h=COVER_FRONT_Z + 2);
 
 module r5_lid_cover() difference() {
     cover_body();
