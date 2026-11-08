@@ -152,12 +152,6 @@ module openings() {
     // the PLATE's edge, not the tray's: the plate overhangs the tray by R5_DECK_Y0, and a cut that
     // stopped at drawing y 0 would leave a 4.4 mm lip over the Pi's hinge-edge connectors.
     dbox(R5_OPEN_X0, R5_DECK_Y0, R5_OPEN_X1, R5_OPEN_D, R5_DECK_Z - 1, R5_DECK_T + 2);
-    // FireBeetle 2: gives its USB-C port access for flashing and lets its OLED / button leads
-    // rise to the deck. The module sits under the deck, so without this hole it is sealed in.
-    // R5_FB_HOLE_Y0 places it 44 mm along the module (was 30): at 30 the hole abutted the left
-    // fan opening, which read as clutter in the print view. Still well inside the 60 mm module.
-    dbox(R5_FB_X + 6, R5_FB_Y + R5_FB_HOLE_Y0, R5_FB_X + 22, R5_FB_Y + R5_FB_HOLE_Y0 + 10,
-         R5_DECK_Z - 1, R5_DECK_T + 2);
     // (the OLED cable slot that used to be here is gone: the module now sits in the deck's
     //  underside, so its 4-pin header looks straight into the tray cavity where the FireBeetle
     //  is. The old slot would be a 16 x 4 mm hole in the visible top face for nothing.)

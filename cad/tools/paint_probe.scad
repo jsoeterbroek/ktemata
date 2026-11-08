@@ -30,11 +30,6 @@ echo(P_OPEN_X0 = R5_OPEN_X0);
 echo(P_OPEN_X1 = R5_OPEN_X1);
 echo(P_OPEN_D = R5_OPEN_D);
 
-echo(P_FB_X = R5_FB_X + 6);
-echo(P_FB_Y = R5_FB_Y + R5_FB_HOLE_Y0);
-echo(P_FB_W = 16);
-echo(P_FB_H = 10);
-
 echo(P_FAN_X = DECK_FAN_CTRL[0][0]);
 echo(P_FAN_Y = DECK_FAN_CTRL[0][1]);
 echo(P_FAN_D = DECK_FAN_D);

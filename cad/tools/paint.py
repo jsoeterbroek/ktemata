@@ -110,7 +110,6 @@ class Model:
         self.oled = (g("P_OLED_X0"), g("P_OLED_Y0"), g("P_OLED_W"), g("P_OLED_H"))
         # the hinge opening runs from the PLATE's edge to R5_OPEN_D (not from y = 0)
         self.port = (g("P_OPEN_X0"), self.deck[1], g("P_OPEN_X1"), g("P_OPEN_D"))
-        self.fb = (g("P_FB_X"), g("P_FB_Y"), g("P_FB_W"), g("P_FB_H"))
         self.fan = (g("P_FAN_X"), g("P_FAN_Y"), g("P_FAN_D"))
         self.fan_bars, self.fan_bar = int(v["P_FAN_BARS"]), g("P_FAN_BAR")
         self.screws = [(g(f"P_S{i}"), g(f"P_S{i}Y")) for i in range(7)]
@@ -193,7 +192,7 @@ class Model:
         # wordmark that has to dodge a fan is a wordmark in the wrong place.  Only the features
         # of its OWN part matter: the two parts are judged separately.
         for name, box, own in (("deck", self.type_boxes["deck"],
-                                (self.kb, self.oled, self.fb)),
+                                (self.kb, self.oled)),
                                ("cover", self.type_boxes["cover"],
                                 (self.well, self.cable))):
             for h in own:
@@ -588,10 +587,8 @@ def deck_apertures(m: Model) -> list[Aperture]:
     ox, oy, ow, oh = m.oled
     px, py, pw, ph = m.port
     fx, fy, fd = m.fan
-    bx, by, bw, bh = m.fb
     out = [Aperture.rrect(kx, ky, kw, kh, kr), Aperture.rrect(ox, oy, ow, oh, 0.8),
-           Aperture.rrect(px, py, pw - px, ph - py, 0.0), Aperture.rrect(bx, by, bw, bh, 0.8),
-           Aperture.circle(fx, fy, fd)]
+           Aperture.rrect(px, py, pw - px, ph - py, 0.0), Aperture.circle(fx, fy, fd)]
     out += [Aperture.circle(sx, sy, 2 * 3.1) for sx, sy in m.screws]
     # the 16 mm power button lives on the deck now, and so does the charge socket
     out.append(Aperture.circle(m.btn[0], m.btn[1], m.btn[2]))
@@ -636,7 +633,7 @@ def deck_hit(m: Model, px, py, pad=0.0) -> bool:
             or _in_rect(px, py, m.type_boxes["deck"], pad)
             or _in_rect(px, py, m.kb, pad) or _in_rect(px, py, m.oled, pad)
             or _in_rect(px, py, (x0, y0, x1 - x0, y1 - y0), pad)
-            or _in_rect(px, py, m.fb, pad) or _in_circle(px, py, fx, fy, fd / 2, pad)
+            or _in_circle(px, py, fx, fy, fd / 2, pad)
             or _in_circle(px, py, bx, by, bd / 2 + 3.0, pad)
             or _in_circle(px, py, cx, cy, cnut / 2 + 2.0, pad)
             or any(_in_circle(px, py, sx, sy, 3.7, pad) for sx, sy in m.screws))
@@ -972,10 +969,7 @@ SCHEMES = [
              "square on the hinge, to a second port ring in the deck. The lane was chosen by "
              "measurement, not by eye: on the deck it clears the Pi opening (ends 203.4), the hinge "
              "screw head at 207.5 and the screw at 228.4; on the cover it runs just right of the "
-             "display opening and straight across the flat painted border. The obvious left rail "
-             "does not work - x = 17.1 is clear of the deck's "
-             "hardware, but the FireBeetle access hole (x 14..30, y 148..158) would cut the line "
-             "20 mm short of its end. The well also takes the "
+             "display opening and straight across the flat painted border. The well also takes the "
              "border's hinge band on the cover, so the border there survives only in the two side "
              "margins: the trace, not the border, is what crosses the seam.",
     ),
@@ -1018,10 +1012,6 @@ def deck_features(p: Surface) -> None:
     p.line([(x1, y0), (x1, y1)], "#48545f", 0.9, layer="features")
     p.text("PI  ·  USB-C  HDMI ×2  DSI", 2.1, (x0 + x1) / 2, 11.0, LABEL,
            layer="features", anchor="middle")
-
-    bx, by, bw, bh = m.fb
-    p.rect(bx, by, bw, bh, INK, 0.8, layer="features", stroke="#43505b", sw=0.7)
-    p.text("FB2", 1.8, bx + bw / 2, by + bh / 2 + 0.7, LABEL, layer="features", anchor="middle")
 
     for sx, sy in m.screws:
         p.circle(sx, sy, 3.1, "#151d25", layer="features", stroke="#48545f", sw=0.6)

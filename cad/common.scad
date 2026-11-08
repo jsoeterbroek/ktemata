@@ -548,8 +548,6 @@ assert(R5_DECK_T - R5_OLED_BOARD[2] - R5_OLED_GLASS[2] >= 0.5,
 // 62 mm strip at the hinge end, left of the boards: x 8..70, y 100..175, which is clear of the
 // cell cradles (y 22..87) and of the UPS jack at x 132..144.
 R5_FB_X = 8;  R5_FB_Y = 104;                            // 25.4 x 60 FireBeetle, upright
-R5_FB_HOLE_Y0 = 44;                                     // access hole start along the module
-R5_FB_HOLE_H  = 10;                                     // ... and its length (16 x 10 mm)
 R5_RTC_X = 40; R5_RTC_Y = 104;                          // DS3231, turned 90 deg (22 along x)
 R5_MPPT_X = 40; R5_MPPT_Y = 150;                        // 26 x 20 tray, below the RTC
 

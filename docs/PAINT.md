@@ -69,13 +69,10 @@ rather than drawing a line through a fan.
   window (ends `y 66.9`) and the keyboard pocket (starts `y 102.5`), and the **16 mm** between the
   keyboard pocket (ends `y 162.1`) and the latch edge. The right rail carries the power button
   (`213.0, 160.1`) and the charge socket (`216.0, 90.0`).
-- **Only one vertical lane is clear on both parts at once**: **x 216.5 .. 223.0**. That is why
-  BEARING's trace runs there and not up the more obvious left rail — the deck's left rail is
-  crossed by the fan (x 25..63, y 19..57), the FireBeetle access hole (x 14..30, y 148..158), a
-  screw and the **power button** (Ø16.2 at 213.0, 160.1), and the cover's left margin is crossed
-  by the display opening from `x 19.77`. That lane now also carries the **charge socket** (Ø14
-  envelope at 216.0, 90.0): the graticule stops at it, and BEARING's trace is interrupted there.
-  If that scheme were revived the trace would have to jog around the socket, x 209..223.
+- **BEARING's retained trace uses the right-side lane at x 216.5 .. 223.0**. The **charge socket**
+  (Ø14 envelope at 216.0, 90.0) interrupts that trace; if the alternative layout were revived it
+  would need to jog around the socket, x 209..223. Removing the FB2 opening also leaves the left
+  rail available for a future alternative layout.
 
   The power button is why the deck now has a hole where the 5" layout had clean rail: it moved
   off the lid when the panel grew to 7", and the rail at x 213 is the only place on the deck that
