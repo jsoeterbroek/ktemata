@@ -56,7 +56,7 @@ For development phase use:
 python3 cad/tools/export.py              # export all r4 parts to stl/ (binary, centred, on z=0), prints size + open-edge count
 python3 cad/tools/export.py --r2         # export the previous r2/r3 set instead (DFR0550 + HAT (E) + Phistone)
 python3 cad/tools/export.py --r1         # export the original r1 set instead (pull_switch, power_button)
-python3 cad/tools/export.py --r5         # export the r5 set (r5_tray, r5_deck, r5_lid_plate, r5_lid_cover)
+python3 cad/tools/export.py --r5         # export the r5 set to stl/r5/ (tray, deck, lid plate, lid cover)
 python3 cad/tools/export.py face bottom  # export only some parts (names: bottom face keyboard_support charge_plug)
 python3 cad/tools/render.py              # regenerate renders/*.png (after export; ktemata_* views use the STLs); args filter by name, e.g. asm_iso
 bash work/scripts/check.sh               # r4 interference check (slow, minutes); R4=0 for r2/r3, R1=1 for r1
@@ -65,7 +65,7 @@ openscad -D 'CHECK="bottom:pi"' -o /tmp/x.stl cad/assembly.scad   # single inter
 openscad -D R4=false -o /tmp/r2.stl cad/assembly.scad              # r2/r3 assembly (R2=false for r1)
 openscad -o out.png --render --imgsize=1400,1100 --camera=75,90,17,60,0,35,430 cad/assembly.scad  # render preview
 python3 cad/tools/paint.py --stencils    # r5 paint: Strata (chosen) + mask cut files -> docs/paint/
-python3 cad/tools/stencil_stl.py          # the same masks as printable 1.2 mm panels -> stl/stencil_*.stl
+python3 cad/tools/stencil_stl.py          # the same masks as printable 1.2 mm panels -> stl/stencil/stencil_*.stl
 ```
 
 `bad edges: 0` from export.py means the mesh is manifold (no open edges, no edges shared by >2 faces, which slicers flag as non-manifold). Touching-but-not-overlapping solids (tangent bosses, flush faces) are the usual cause: overlap them by ≥0.5 mm. Any other value is a regression. In check.sh (r4 by default, `R4=0` for r2/r3, `R1=1` for r1), a "HIT" whose bbox is flat in one axis (or that throws an empty-bbox traceback) is a zero-volume contact and is expected. Only volumetric bboxes are real collisions.

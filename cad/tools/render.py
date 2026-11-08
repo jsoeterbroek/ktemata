@@ -10,6 +10,7 @@ import subprocess, sys, os, tempfile
 from concurrent.futures import ThreadPoolExecutor
 HERE = os.path.dirname(os.path.abspath(__file__)); CAD = os.path.dirname(HERE); ROOT = os.path.dirname(CAD)
 OUT = os.path.join(ROOT, 'renders'); STL = os.path.join(ROOT, 'stl')
+STL_R5 = os.path.join(STL, 'r5')
 ISO, BACK = '0,0,0,55,0,25,0', '0,0,0,125,0,205,0'   # gimbal camera rotations used with --viewall
 
 # name: (source, size, camera, extra args, full CGAL render?)
@@ -71,7 +72,9 @@ def render(name, td):
         extra += ['-D', 'R5=true']
     if src.startswith('stl:'):
         src = os.path.join(td, name + '.scad')
-        open(src, 'w').write(f'color("#4a72b0") import("{os.path.join(STL, "ktemata_" + VIEWS[name][0][4:] + ".stl")}");\n')
+        stl_dir = STL_R5 if name in R5_ONLY else STL
+        stl = os.path.join(stl_dir, "ktemata_" + VIEWS[name][0][4:] + ".stl")
+        open(src, 'w').write(f'color("#4a72b0") import("{stl}");\n')
     else:
         src = os.path.join(CAD, src)
     view = ['--camera=' + cam] + (['--viewall', '--autocenter'] if cam.count(',') == 6 and cam.startswith('0,0,0,') else [])

@@ -39,7 +39,7 @@ A written, photographed and filmed record of the build is in progress:
 down, solder the power run, fit the cells and modules, glue the keyboard, mount the display, route the
 FFC, close and check, first boot) and the photographs and short video clips are being captured during
 the actual build. Until those land, the authoritative numbers are in [`docs/R5.md`](docs/R5.md) and the
-per-part STLs are in [`stl/`](stl/).
+per-part STLs are in [`stl/r5/`](stl/r5/).
 
 When the media exists, each step in `site/build.html` gets its own figure blocks (the same
 `<figure>` style the [Power](https://ktemata.org/power.html) page uses, so captions and credits stay

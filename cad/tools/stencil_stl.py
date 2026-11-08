@@ -14,7 +14,7 @@ outline as the datum - no margin, no measuring, no rescaling.  The deck's plate 
     python3 cad/tools/stencil_stl.py --thickness 2.0    # a stiffer mask (default 1.2 mm)
     python3 cad/tools/stencil_stl.py --scheme 1 --include-vinyl  # Meridian ash as loose strips
 
-Output: stl/stencil_<part>_<pass>.stl.
+Output: stl/stencil/stencil_<part>_<pass>.stl.
 
 WHY THE GEOMETRY COMES FROM paint.py, NOT FROM THE SVG
     An SVG is a drawing: its marks are filled paths and the part is a clip path.  Rasterising it
@@ -40,7 +40,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-OUT = REPO / "stl"
+OUT = REPO / "stl" / "stencil"
 
 sys.path.insert(0, str(HERE))
 import paint  # noqa: E402  (same directory: shares Model, scheme marks, apertures)

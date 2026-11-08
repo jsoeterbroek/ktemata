@@ -149,7 +149,7 @@ data as the colour sheet:
 
 The innermost 4 mm rail band is the existing graphite base and needs no mask. Files are named
 `ktemata_stencil_{deck,cover}_<pass>.svg`. The same masks are also printable as rigid 1.2 mm panels
-(`stl/stencil_*.stl`) — see **Printed masks** below. Sheets and STLs come from `strata_marks()`,
+(`stl/stencil/stencil_*.stl`) — see **Printed masks** below. Sheets and STLs come from `strata_marks()`,
 so they cannot disagree.
 
 Black is the sheet you lay on the part; white is what the blade removes. The full-length rail cuts
@@ -170,7 +170,7 @@ python3 cad/tools/stencil_stl.py --pass amber      # one pass on both parts
 python3 cad/tools/stencil_stl.py --thickness 2.0   # stiffer
 ```
 
-Writes `stl/stencil_{deck,cover}_{deep_amber,slate,amber,ash,hairline,ink}.stl`: the part outline
+Writes `stl/stencil/stencil_{deck,cover}_{deep_amber,slate,amber,ash,hairline,ink}.stl`: the part outline
 with that pass's slots cut straight through and no handling margin — 243.3 × 186.8 mm for the deck,
 233.5 × 178.1 mm for the cover. The deck fits a 256 mm bed. Full-length cuts make some masks
 multi-piece; arrange those pieces against the part outline, or use the registered SVG sheet with

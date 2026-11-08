@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export parts to ../stl as binary STL, dropped onto z=0 and centred on x/y.
+"""Export parts to ../stl (r5: ../stl/r5) as binary STL, dropped onto z=0 and centred on x/y.
 
   python3 cad/tools/export.py                 # r4 parts (default: TD2 + UPS HAT (B) + K06)
   python3 cad/tools/export.py --r2            # previous r2/r3 set (DFR0550 + HAT (E) + Phistone)
@@ -13,6 +13,7 @@ The corner_* parts are an accessory (see docs/CORNER_MOULD.md); they are skipped
 import subprocess, struct, sys, os, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__)); CAD = os.path.dirname(HERE)
 OUT = os.path.join(os.path.dirname(CAD), 'stl')
+OUT_R5 = os.path.join(OUT, 'r5')
 PARTS = {'bottom':'ktemata_bottom', 'face':'ktemata_face', 'keyboard_support':'ktemata_keyboard_support',
          'charge_plug':'ktemata_charge_plug',
          'corner_cap':'ktemata_corner_cap', 'corner_plate':'ktemata_corner_plate',
@@ -65,7 +66,8 @@ extra = ['-D', 'R2=false'] if r1 else (['-D', 'R4=false'] if r2 else [])
 if r5:
     extra += ['-D', 'R5=true']
 
-os.makedirs(OUT, exist_ok=True)
+out_dir = OUT_R5 if r5 else OUT
+os.makedirs(out_dir, exist_ok=True)
 for part, fname in PARTS.items():
     if r1 is False and part in LEGACY: continue
     if not args and part in TOOLING: continue
@@ -83,6 +85,6 @@ for part, fname in PARTS.items():
     xs = [p[0] for t in tris for p in t]; ys = [p[1] for t in tris for p in t]; zs = [p[2] for t in tris for p in t]
     off = (-(min(xs)+max(xs))/2, -(min(ys)+max(ys))/2, -min(zs))
     tris = [[tuple(p[i]+off[i] for i in range(3)) for p in t] for t in tris]
-    write_bin(os.path.join(OUT, fname + '.stl'), tris, fname)
+    write_bin(os.path.join(out_dir, fname + '.stl'), tris, fname)
     print(f'{fname:28s} {max(xs)-min(xs):6.1f} x {max(ys)-min(ys):6.1f} x {max(zs)-min(zs):5.1f} mm  '
           f'{len(tris):6d} tris  bad edges: {check_manifold(tris)}')
