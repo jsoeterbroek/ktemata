@@ -15,10 +15,10 @@ module plate2d() rrect(R5_LID_PLATE[0], R5_LID_PLATE[1], 8);
 
 module plate() linear_extrude(R5_LID_T) plate2d();
 
-// ---- screw pockets: heads counterbored on the lid/tape side, flush with the tape face ----
+// ---- DIN 7991 M3 x 6: 90-degree seats on the lid/tape side, flush with the tape face ----
 module screw_cut(p) {
     translate([p[0], p[1], -1]) cylinder(d=M3_CLR, h=R5_LID_T + 2);
-    translate([p[0], p[1], -0.01]) cylinder(d=M3_HEAD, h=1.6);       // counterbore, lid side
+    translate([p[0], p[1], -0.01]) cylinder(d1=M3_HEAD, d2=M3_CLR, h=M3_CSK_T + 0.02);
 }
 
 // Blind reliefs for the unused 58 x 49 Pi standoffs; a 0.5 mm tape-side skin remains.

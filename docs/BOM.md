@@ -36,8 +36,9 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | 20 | Dupont jumpers, female–female, 20 cm | 1 set | UPS INA219 I²C (0x42) + 5 V to the FireBeetle. | € 5 |
 | 21 | USB-A → USB-C data cable, 20–30 cm | 1 | FireBeetle ↔ Pi serial. **Data-only** (VBUS disconnected) — the FireBeetle is powered from the UPS. | € 5 |
 | 22 | USB-A → 2-pin 5 V lead (JST-XH / dupont) | 1 | UPS USB-A 5 V → FireBeetle 5 V/GND; keeps the OLED alive with the Pi off. | € 5 |
-| 23 | M3 × 10 **countersunk** screws | 7 | DIN 7991 / ISO 10642, for the r5 deck's countersunk seats (a button head no longer fits). The display's M3 screws come in its screws pack; the cover uses four of them through the lid-side plate. | € 12 (set) |
-| 23a | 16 mm IP67 metal panel button (momentary NO) | 1 | r5 power button, on the deck's right rail (`R5_BTN_D`). Two leads to the Pi 5's **J2** pads. A centred 7" panel leaves no latch band for it on the lid. | € 8 |
+| 23 | [M3 × 10 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/bzk-inbus-verzonkenkopschroef-staal-din-7991-m3x10.html) | **7** | DIN 7991 / ISO 10642; **dk 6.0 mm, k 1.7 mm, 2.0 mm hex**. Seven deck screws into the heat-set inserts. Sold in packs of 25. | € 2.60 / 25 |
+| 23a | [M3 × 6 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/inbus-torx-schroeven/inbusbout-met-verzonken-kop-staal/inbusbout-verzonkenkop-m3/) | **4** | Same DIN 7991 head and 2.0 mm hex. For the 4 mm lid cover **or** alternate plate into the display's rear inserts; gives ≈1.04 mm engagement. **Do not substitute M3 × 8**, which can bottom out. Sold in packs of 25. | € 2.45 / 25 |
+| 23b | 16 mm IP67 metal panel button (momentary NO) | 1 | r5 power button, on the deck's right rail (`R5_BTN_D`). Two leads to the Pi 5's **J2** pads. A centred 7" panel leaves no latch band for it on the lid. | € 8 |
 | 24 | Fuse + holder, 3–5 A | 1 | On the 2S pack lead. | € 4 |
 | 25 | Silicone O-ring / gasket assortment | 1 | Case seam, DC socket, button. | € 10 |
 | 26 | Filament, PETG/PLA + TPU | ≈ 500 g | The r4 shells or the r5 cassette; the TPU is only for the charge plug. | € 15 + € 20 |
@@ -64,8 +65,9 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
 1. **Display.** The r5 7" is the **Waveshare 7inch DSI LCD (C)**: 192.96 × 110.76 mm, 1024 × 600,
    active 154.88 × 86.72 (top 11.00, bottom 13.04, sides 19.04), 10.50 mm front glass to PCB back, four
    **M3** rear inserts at a 126.25 × 65.49 span (not symmetric), and unused 58 × 49 M2.5 Pi standoffs
-   that protrude 3.5 mm behind the PCB. The lid cover screws through its 4 mm plate into the M3 inserts
-   and the bezel top is at the glass plane, so the screen is **flush**. It runs landscape in the host lid
+   that protrude 3.5 mm behind the PCB. Four **DIN 7991 M3 × 6** screws pass through the 4 mm rear
+   skin into those inserts; their heads sit in 90° countersinks on the tape side, and the display
+   glass is **flush with the entire front face**. It runs landscape in the host lid
    and is thinner than the old TD2, so the lid clearance improves. Pi 5 DSI1 + I2C1 (`i2c1` overlay
    parameter); the touch is a Goodix at 0x14. 5 V / 0.5 A, 2.5 W.
    The **5" Touch Display 2** (143.4 × 91.46, standoffs 122.74 × 72.96, 1.4 W) is the r4 target; the r4

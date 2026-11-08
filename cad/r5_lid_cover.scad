@@ -65,11 +65,13 @@ module cover_body() difference() {
         linear_extrude(COVER_FRONT_Z - COVER_T + 1) panel_2d(COVER_GAP);
 }
 
-// The display's PCB back sits on the rear skin at COVER_T. M3 screws pass through that skin into
-// the display's rear inserts, with heads counterbored on the lid side so the tape face stays flat.
+// The display's PCB back sits on the rear skin at COVER_T. Four DIN 7991 M3 x 6 screws pass
+// through that skin into the display's inserts. Their 6 mm / 1.7 mm heads use the same 90-degree
+// seats as the deck, opening on the lid side so the tape face stays flat. Do not use M3 x 8: its
+// tip reaches the far end of the display's ~3 mm insert.
 module panel_screws() for (p=R5_DISP_HOLES) translate([PANEL_X + p[0], PANEL_Y + p[1], 0]) {
     cylinder(d=M3_CLR, h=COVER_T + 1);
-    translate([0, 0, -0.01]) cylinder(d=M3_HEAD, h=1.6);
+    translate([0, 0, -0.01]) cylinder(d1=M3_HEAD, d2=M3_CLR, h=M3_CSK_T + 0.02);
 }
 
 // The display's unused 58 x 49 Pi standoffs (M2.5, 5.5 mm OD) protrude 3.5 mm behind its PCB;

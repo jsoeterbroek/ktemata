@@ -17,6 +17,9 @@ reference/content/
 __pycache__/
 *.pyc
 
+# macOS Finder
+.DS_Store
+
 # Scratch / working files (keep the helper scripts)
 work/*
 !work/scripts/

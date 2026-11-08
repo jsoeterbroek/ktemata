@@ -605,9 +605,9 @@ R5_CABLE_X0 = R5_CABLE_X - R5_CABLE_W/2;                 // its left edge, in pa
 // does not. That in turn sets the boss: an M3 insert is ~4.6 mm across, so the boss goes from
 // Ø7 (BOSS_D, still right for the board posts and the case) to Ø9, which leaves 2.4 mm of wall
 // round the insert. The four board posts keep their Ø8 and M2.5 pilots - those screws go in once.
-M3_CLR   = 3.4;                                        // clearance hole through the deck
-M3_HEAD  = 6.2;                                        // countersink at the top face: Ø6.0 flat head + 0.2
-M3_CSK_T = (M3_HEAD - M3_CLR)/2;                       // 1.4, i.e. 90 deg
+M3_CLR   = 3.4;                                        // clearance hole through deck/lid plates
+M3_HEAD  = 6.2;                                        // DIN 7991 dk 6.0 + 0.2; k 1.7, hex 2.0
+M3_CSK_T = (M3_HEAD - M3_CLR)/2;                       // 1.4, 90 deg; head seats 0.1 below face
 M3_INS_D = 4.2;                                        // heat-set insert hole: 4.6 OD - 0.4 melt
 M3_INS_H = 6.0;                                        // insert depth: 5.7 mm insert + margin
 R5_BOSS_D = 9;                                         // deck boss (2.4 mm wall round the insert)
