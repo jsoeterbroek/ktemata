@@ -90,16 +90,11 @@ module cable_relief() {
         cube([R5_CABLE_W, PANEL_Y - COVER_GAP + 1.5, COVER_FRONT_Z + 2]);
 }
 
-// Finger slots to lift the cover off the lid tape - in the latch band, clear of the motto.
-module finger_slots() for (x=[COVER_FRAME + 11, COVER_W - COVER_FRAME - 11])
-    translate([x, COVER_L - COVER_FRAME - 5, -1]) cylinder(d=10, h=COVER_FRONT_Z + 2);
-
 module r5_lid_cover() difference() {
     cover_body();
     panel_screws();
     post_reliefs();
     cable_relief();
-    finger_slots();
 }
 
 if (is_undef(ASSEMBLY)) r5_lid_cover();

@@ -90,7 +90,7 @@ openscad -D R2=false -o out.png cad/assembly.scad      # r1 assembly preview
 
 The r1 parts are still in the repository and export with `export.py --r1`. r3 is a keyboard/radio variant of
 r2 and shares its STLs (see [`docs/R3.md`](docs/R3.md)); r4 has its own geometry because the display, the
-power board, the cells and the keyboard all changed (see [`docs/R4.md`](docs/R4.md)). Finishes for r5's two visible faces are in [`docs/PAINT.md`](docs/PAINT.md): **Meridian** is the
+power board, the cells and the keyboard all changed (see [`docs/R4.md`](docs/R4.md)). Finishes for r5's two visible faces are in [`docs/PAINT.md`](docs/PAINT.md): **Strata** is the
 chosen airbrush scheme, with 1:1 colour sheets and per-pass mask cut files from
 `cad/tools/paint.py`. Making r4 flatter is
 analysed — and deliberately not done — in [`docs/SLIMMING.md`](docs/SLIMMING.md). Cast soft-rubber corner

@@ -17,8 +17,8 @@ printed part into the other - the three schemes are built on that.
 Two facts drive the artwork and are enforced in code, not by eye:
   * the cover has one flat front at z = 14.50 mm. Its 193.96 x 111.76 mm display opening (the
     module plus 0.5 mm clearance per side) recedes 10.50 mm to the 4.00 mm rear skin. The 7 mm
-    slate border is paint on that same front, not a keep-out; only the opening, cable notch,
-    finger slots and reserved type interrupt marks;
+    slate border is paint on that same front, not a keep-out; only the opening, cable notch and
+    reserved type interrupt marks;
   * the deck's own free fields are the 40.95 mm side rails, the strip between the OLED and the
     keyboard (y 72.2..102.5) and the 30 mm along the latch edge.
 """
@@ -131,7 +131,6 @@ class Model:
         self.btn_body = g("P_BTN_BODY")
         # 8.4 V charge socket through the deck's right rail: hole + the bezel/nut envelope
         self.chg = (g("P_CHG_X"), g("P_CHG_Y"), g("P_CHG_D"), g("P_CHG_NUT_D"))
-        self.slots = [(g("P_SLOT_A"), g("P_SLOT_Y")), (g("P_SLOT_B"), g("P_SLOT_Y"))]
         self.cable = (g("P_CABLE_X"), g("P_CABLE_Y"), g("P_CABLE_W"), g("P_CABLE_H"))
 
         # ---- the type blocks are part of the mask, not something painted over ----
@@ -199,10 +198,9 @@ class Model:
                                 (self.well, self.cable))):
             for h in own:
                 assert not _overlaps(box, h), f"the {name} lettering runs into {h}"
-            near = self.slots if name == "cover" else self.screws
-            assert not any(_overlaps(box, (sx - 6.0, sy - 6.0, 12.0, 12.0))
-                           for sx, sy in near), \
-                f"the {name} lettering runs into a {'finger slot' if name == 'cover' else 'deck screw'}"
+            if name == "deck":
+                assert not any(_overlaps(box, (sx - 6.0, sy - 6.0, 12.0, 12.0))
+                               for sx, sy in self.screws), "the deck lettering runs into a deck screw"
             assert 2.0 < box[1] and box[1] + box[3] < self.l - 2.0, \
                 f"the {name} lettering runs off the part: {box}"
 
@@ -544,7 +542,7 @@ def _in_circle(px, py, cx, cy, r, pad=0.0) -> bool:
 # to OpenSCAD solids for the printed masks (cad/tools/stencil_stl.py).  Keeping the two renderings
 # off one shape list is what stops the sheet and the STL from disagreeing about where a hole is -
 # they did, because the cover's marks are mirrored into the sheet's frame and its apertures were
-# not, which put the DSI notch and both finger slots on the wrong half of the drawing.
+# not, which put the DSI notch on the wrong half of the drawing.
 class Aperture:
     """One opening in the part: a rounded rectangle or a circle, in drawing coordinates."""
     __slots__ = ("kind", "x", "y", "w", "h", "r")
@@ -604,9 +602,7 @@ def deck_apertures(m: Model) -> list[Aperture]:
 def cover_apertures(m: Model) -> list[Aperture]:
     wx, wy, ww, wh, wr = m.well
     cx, cy, cw, ch = m.cable
-    out = [Aperture.rrect(wx, wy, ww, wh, wr), Aperture.rrect(cx, cy, cw, ch, 0.0)]
-    out += [Aperture.circle(sx, sy, 2 * 5.0) for sx, sy in m.slots]
-    return out
+    return [Aperture.rrect(wx, wy, ww, wh, wr), Aperture.rrect(cx, cy, cw, ch, 0.0)]
 
 
 def apertures(m: Model, cover: bool) -> list[Aperture]:
@@ -622,8 +618,8 @@ def cover_holes_d(m: Model) -> list[str]:
 
     The cover is drawn mirrored in y so its hinge edge meets the deck's at the seam, and its
     MARKS are mirrored to match.  Its apertures were not, which put the DSI notch at the latch
-    end and both finger slots at the hinge (see docs/PAINT.md).  A rectangle's flipped top edge
-    is l - (y + h); a circle's centre is simply mirrored.
+    end instead of the hinge (see docs/PAINT.md).  A rectangle's flipped top edge is
+    l - (y + h); a circle's centre is simply mirrored.
     """
     l = m.l
     return [a.d(lambda y: l - y) for a in cover_apertures(m)]
@@ -651,13 +647,12 @@ def cover_hit(m: Model, px, py, pad=0.0) -> bool:
 
     The entire broad front and the display glass are coplanar at z = 14.50 mm. The 7 mm slate
     border is paint, so it is deliberately NOT a keep-out: graticule marks and rigid-mask slots
-    may cross it. Only real apertures (the display opening, cable notch and finger slots), the
-    part outline and the reserved type block interrupt the non-border passes.
+    may cross it. Only real apertures (the display opening and cable notch), the part outline and
+    the reserved type block interrupt the non-border passes.
     """
     return (_off_plate(px, py, m.w, m.l, m.cover_r)
             or _in_rect(px, py, m.type_boxes["cover"], pad)
-            or _in_rect(px, py, m.well, pad) or _in_rect(px, py, m.cable, pad)
-            or any(_in_circle(px, py, sx, sy, 5.5, pad) for sx, sy in m.slots))
+            or _in_rect(px, py, m.well, pad) or _in_rect(px, py, m.cable, pad))
 
 
 # ---------------------------------------------------------------- runs over real face
@@ -700,7 +695,7 @@ def brand_deck(p: Surface, tagline: str, cap: float = 10.5) -> None:
 
 
 def brand_cover(p: Surface, cap: float = 10.0) -> None:
-    """Motto in the cover's latch band, clear of the display opening and finger slots."""
+    """Motto in the cover's latch band, clear of the display opening."""
     m = p.m
     x, y = m.w / 2, m.cover_text_y
     p.text("κτῆμα ἐς ἀεί", cap, x, y, IVORY, italic=True, anchor="middle", group="word")
@@ -727,10 +722,12 @@ class Mark:
         self.opacity = opacity
 
     def d(self, fy=lambda y: y) -> str:
-        out = rrect_d(self.x0, fy(self.y1), self.x1 - self.x0, self.y1 - self.y0, self.r)
+        ya, yb = fy(self.y0), fy(self.y1)
+        out = rrect_d(self.x0, min(ya, yb), self.x1 - self.x0, abs(yb - ya), self.r)
         if self.inner:
-            ix02, iy0, ix1, iy1, ir = self.inner
-            out += " " + rrect_d(ix02, fy(iy1), ix1 - ix02, iy1 - iy0, ir)
+            ix0, iy0, ix1, iy1, ir = self.inner
+            iya, iyb = fy(iy0), fy(iy1)
+            out += " " + rrect_d(ix0, min(iya, iyb), ix1 - ix0, abs(iyb - iya), ir)
         return out
 
     @property
@@ -818,29 +815,39 @@ def scheme_meridian(p: Surface, cover: bool) -> None:
 
 
 # ---------------------------------------------------------------- scheme 2
+def strata_marks(m: Model, cover: bool) -> list[Mark]:
+    """STRATA as rectangles shared by the colour sheet and both stencil outputs."""
+    w, l = m.w, m.l
+    out: list[Mark] = []
+    # 32 mm of bands per rail: inside the deck's 40.95 mm rail, but wider than the cover margin
+    # outside Meridian's 7 mm border datum. The cover front is flat, so the bands continue across
+    # that datum; only the actual display opening and other apertures clip them. The innermost
+    # 4 mm is base coat, so it has no stencil pass.
+    bands = [(8.0, AMBER_D, "deep_amber"), (5.0, SLATE, "slate"),
+             (12.0, AMBER, "amber"), (3.0, GREY, "ash"), (4.0, BASE, "base")]
+    for mirror in (False, True):
+        x = 0.0
+        for width, colour, group in bands:
+            left = w - x - width if mirror else x
+            out.append(Mark(left, 0.0, left + width, l, colour, group))
+            x += width
+    for edge in (8.0, w - 8.0):
+        out.append(Mark(edge - 0.3, 0.0, edge + 0.3, l, AMBER_L, "hairline", opacity=0.85))
+
+    # Latch band: the U closed, 2.6 mm deep amber, full width, with a graphite shadow.
+    out.append(Mark(0.0, 2.6, w, 5.2, AMBER_D, "deep_amber"))
+    out.append(Mark(0.0, 5.2, w, 5.8, INK, "ink", opacity=0.7))
+    return out
+
+
 def scheme_strata(p: Surface, cover: bool) -> None:
     """STRATA - five bands in the side rails, keyed to x so they cross the hinge dead straight."""
     m = p.m
     w, l = m.w, m.l
     x0, y0, bw, bl, br = part_box(m, cover)
     p.rect(x0, y0, bw, bl, BASE, br)
-
-    # 32 mm of bands per rail: inside the deck's 40.95 mm rail, but wider than the cover margin
-    # outside Meridian's 7 mm border datum. The cover front is flat, so the bands continue across
-    # that datum; only the actual display opening and other apertures clip them.
-    bands = [(8.0, AMBER_D), (5.0, SLATE), (12.0, AMBER), (3.0, GREY), (4.0, BASE)]
-    for mirror in (False, True):
-        x = 0.0
-        for width, colour in bands:
-            p.rect(w - x - width if mirror else x, 0, width, l, colour)
-            x += width
-    for edge in (8.0, w - 8.0):
-        p.rect(edge - 0.3, 0, 0.6, l, AMBER_L, opacity=0.85)
-
-    # latch band: the U closed, 2.6 mm deep amber, full width
-    p.rect(0, 2.6, w, 2.6, AMBER_D)
-    p.rect(0, 5.2, w, 0.6, INK, opacity=0.7)
-
+    for mk in strata_marks(m, cover):
+        p.path(mk.d(p.y), mk.fill, rule=mk.rule, opacity=mk.opacity, group=mk.group)
     if cover:
         brand_cover(p, m.cover_cap)
     else:
@@ -878,8 +885,7 @@ def scheme_bearing(p: Surface, cover: bool) -> None:
     # One lane, both parts, free along its whole length. x = 215.5, checked against the model:
     #   deck  - 10.6 mm clear of the Pi opening (ends 203.4), 13.0 of the hinge screw head
     #           (207.5 + 3.1), 9.9 of the screw at 228.4;
-    #   cover - just right of the display opening; the painted border is no obstacle, and the
-    #           finger slots are at y 164..174 while the trace stops at 152, so they never meet.
+    #   cover - just right of the display opening; the painted border is no obstacle.
     # The hinge gateway must also clear the plate's 14 mm corner radius, whose tangent is at
     # x = 219.5: an 8 mm square centred here ends on that tangent, so no corner is shaved off.
     tx = 215.5
@@ -946,8 +952,8 @@ SCHEMES = [
              "cover into the deck and the U closes across the hinge. 32 mm of bands fills the deck's "
              "40.95 mm rail and extends inboard of the cover's 7 mm painted-border datum. That "
              "border is not a raised ring, so the flat cover bands are clipped only by real "
-             "apertures. Kept as the record of an alternative: on the 7\" layout Meridian is the "
-             "scheme that works.",
+             "apertures. This is the selected scheme; its SVG and printable STL stencils use the "
+             "same rectangular marks as this sheet.",
     ),
     dict(
         slug="3_bearing", name="BEARING", sub="a slate border and one amber trace through the seam",
@@ -1055,9 +1061,6 @@ def cover_features(p: Surface) -> None:
     p.text(f"WELL {f(ww)} × {f(wh)}   ·   BEZEL {f(m.frame)}   ·   POWER ON THE DECK",
            1.9, m.w / 2, py + ph / 2 + 9.0, LABEL, layer="features", track=0.5,
            anchor="middle")
-
-    for sx, sy in m.slots:
-        p.circle(sx, sy, 5.0, INK, layer="features", stroke="#48545f", sw=0.8)
 
     cx, cy, cw, ch = m.cable
     p.rect(cx, cy, cw, ch, INK, layer="features")
@@ -1235,17 +1238,37 @@ def contact(pngs: list[Path], path: Path) -> None:
 # ---------------------------------------------------------------- stencils
 # A mask is the inverse of the paint: you cut away what gets sprayed. So each stencil is the part
 # outline with the marks of ONE pass removed, plus registration holes on a common datum so the
-# passes stack up. The colour sheet and these cut files come from the same mark data
-# (meridian_marks), so they cannot disagree.
-STENCIL_PASSES = [
+# passes stack up. The colour sheet and these cut files come from the same mark data.
+MERIDIAN_STENCIL_PASSES = [
     ("ash", "ASH", "0.5 mm graticule, the short rules"),
     ("amber", "AMBER", "0.9 mm graticule, every fifth rule"),
     ("seam", "DEEP AMBER", "seam rule at the hinge, end stop at the latch edge"),
     ("bezel", "SLATE", "flat 7 mm painted border (lid cover only)"),
 ]
+STRATA_STENCIL_PASSES = [
+    ("deep_amber", "DEEP AMBER", "8 mm outer rails and 2.6 mm latch band"),
+    ("slate", "SLATE", "5 mm rail bands"),
+    ("amber", "AMBER", "12 mm rail bands"),
+    ("ash", "ASH", "3 mm rail bands"),
+    ("hairline", "LIGHT AMBER", "0.6 mm rail hairlines"),
+    ("ink", "GRAPHITE SHADOW", "0.6 mm latch shadow"),
+]
+SELECTED_SCHEME = 2
+STENCIL_SCHEMES = {
+    1: ("MERIDIAN", meridian_marks, MERIDIAN_STENCIL_PASSES),
+    2: ("STRATA", strata_marks, STRATA_STENCIL_PASSES),
+}
 
 
-def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool) -> Path:
+def stencil_spec(scheme: int = SELECTED_SCHEME):
+    """Display name, mark source and paint passes for one stencil-capable scheme."""
+    if scheme not in STENCIL_SCHEMES:
+        raise ValueError("stencils are available for Meridian (1) and Strata (2), not Bearing (3)")
+    return STENCIL_SCHEMES[scheme]
+
+
+def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool,
+            scheme: int = SELECTED_SCHEME) -> Path:
     """One cut file: the mask for ONE paint pass.
 
     Black is the material you keep and lay on the part; white is what the blade removes - the
@@ -1261,13 +1284,14 @@ def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool) ->
     pad = 14.0
     sw, sh = 2 * pad + w, 2 * pad + l + 28.0
 
-    marks = [mk for mk in meridian_marks(model, cover) if mk.group == group]
+    scheme_name, mark_fn, passes = stencil_spec(scheme)
+    marks = [mk for mk in mark_fn(model, cover) if mk.group == group]
     holes = cover_holes_d(model) if cover else deck_holes_d(model)
     # the cover is drawn mirrored y, exactly as on the colour sheet, so a mask cut from this file
     # lands the same way round
     fy = (lambda y: l - y) if cover else (lambda y: y)
 
-    title, blurb = next((n, b) for g, n, b in STENCIL_PASSES if g == group)
+    title, blurb = next((n, b) for g, n, b in passes if g == group)
     elems = [f'<rect x="0" y="0" width="{f(sw)}" height="{f(sh)}" fill="{PAPER}"/>']
     # Printed as black-on-white, which is how a stencil sheet is read and cut.  It is deliberately
     # NOT one boolean path: an even-odd union of an outline, a ring and its hole re-fills the ring
@@ -1297,7 +1321,7 @@ def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool) ->
     for cx in (pad / 2, sw - pad / 2):
         elems.append(cross(cx, pad + l / 2))
 
-    elems.append(tspan(f"MERIDIAN  ·  STENCIL  {title}  ·  {'LID COVER' if cover else 'DECK'}",
+    elems.append(tspan(f"{scheme_name}  ·  STENCIL  {title}  ·  {'LID COVER' if cover else 'DECK'}",
                        3.2, pad, pad - 9.0, PAPER_INK, track=1.4))
     elems.append(tspan(f"{blurb}   ·   cut 1:1, {f(w)} × {f(l)} mm", 2.4, pad,
                        pad + l + 15.0, PAPER_MUTED))
@@ -1309,7 +1333,7 @@ def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool) ->
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{f(sw)}mm" height="{f(sh)}mm" '
             f'viewBox="0 0 {f(sw)} {f(sh)}">\n'
-            f'<title>Meridian stencil - {"lid cover" if cover else "deck"} - {title}</title>\n')
+            f'<title>{scheme_name.title()} stencil - {"lid cover" if cover else "deck"} - {title}</title>\n')
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(head + "\n".join(elems) + "\n</svg>\n", encoding="utf-8")
     if preview:
@@ -1386,7 +1410,7 @@ def main() -> None:
     ap.add_argument("--scheme", type=int, choices=(1, 2, 3), help="only this scheme")
     ap.add_argument("--no-png", action="store_true", help="skip the raster previews")
     ap.add_argument("--stencils", action="store_true",
-                    help="also cut the chosen scheme (MERIDIAN) into one mask per paint pass")
+                    help="also cut the selected scheme (default STRATA) into one mask per paint pass")
     ap.add_argument("--stickers", action="store_true",
                     help="also write the two MERIDIAN type blocks as print-ready sticker files")
     args = ap.parse_args()
@@ -1405,14 +1429,17 @@ def main() -> None:
         print(f"{'contact':<9} {(OUT / 'ktemata_paint_all.png').relative_to(REPO)}")
 
     if args.stencils:
-        # MERIDIAN is the chosen scheme, and the only one that is entirely rectangles - which is
-        # why it is the one that can be cut as masks without any curve fitting
+        scheme = args.scheme or SELECTED_SCHEME
+        try:
+            scheme_name, mark_fn, passes = stencil_spec(scheme)
+        except ValueError as exc:
+            ap.error(str(exc))
         for cover, side in ((False, "deck"), (True, "cover")):
-            for group, name, _b in STENCIL_PASSES:
-                if not any(mk.group == group for mk in meridian_marks(model, cover)):
+            for group, name, _b in passes:
+                if not any(mk.group == group for mk in mark_fn(model, cover)):
                     continue
                 out = OUT / f"ktemata_stencil_{side}_{group}.svg"
-                stencil(model, cover, group, out, not args.no_png)
+                stencil(model, cover, group, out, not args.no_png, scheme)
                 print(f"{'stencil':<9} {out.relative_to(REPO)}")
 
     if args.stickers:

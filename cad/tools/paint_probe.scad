@@ -64,10 +64,6 @@ echo(P_CHG_X = R5_CHG_X);
 echo(P_CHG_Y = R5_CHG_Y);
 echo(P_CHG_D = R5_CHG_D);
 echo(P_CHG_NUT_D = R5_CHG_NUT_D);
-echo(P_SLOT_A = COVER_FRAME + 11);
-echo(P_SLOT_B = COVER_W - COVER_FRAME - 11);
-echo(P_SLOT_Y = COVER_L - COVER_FRAME - 5);
-
 // the DSI notch: from the cover's hinge edge to the panel, through bezel wall and plate
 echo(P_CABLE_X = PANEL_X + R5_CABLE_X0);
 echo(P_CABLE_Y = 0);

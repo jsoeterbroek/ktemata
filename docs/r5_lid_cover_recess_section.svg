@@ -77,6 +77,6 @@
     <!-- Datums and plan dimensions -->
     <text x="36" y="443" font-size="13">Model datums: rear / tape z = 0.00 · PCB seat z = 4.00 · glass + broad front z = 14.50</text>
     <text x="36" y="466" font-size="13">Opening: 193.96 × 111.76 (192.96 × 110.76 module + 0.50 clearance per side)</text>
-    <text x="36" y="488" font-size="13">Cover: 233.50 × 178.10 · existing M3 positions, stand-off reliefs, cable notch and finger slots retained</text>
+    <text x="36" y="488" font-size="13">Cover: 233.50 × 178.10 · existing M3 positions, stand-off reliefs and cable notch retained</text>
   </g>
 </svg>

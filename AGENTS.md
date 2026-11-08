@@ -11,7 +11,7 @@ Parametric OpenSCAD re-creation of the 3D-printed case for the **Ktemata** handh
 
 **r5 (new) removes the printed exterior entirely.** `-D R5=true` (or `export.py --r5`) builds an internal cassette — `r5_tray`, `r5_deck`, `r5_lid_cover` (plus the simpler `r5_lid_plate`) — that drops into a bought waterproof hard case, with the **7"** Waveshare 7inch DSI LCD (C) (192.96 × 110.76, four M3 rear inserts) centred in the lid. The 16 mm IP67 power button is on the **deck**, not the lid: a centred 7" panel leaves 33.7 mm of latch band and the button needs 34.2 mm. r5 keeps r4's electronics but **drops the air-quality sensor**. Only `HOST = "1200"` (Peli 1200, default) and `"1400"` are accepted; the **Peli R40/R60 are rejected by `assert()`** because their base cannot take the 52.9 mm cassette and neither publishes a lid split; the 14.5 mm display assembly is no longer the blocker.
 
-**Meridian is the chosen paint scheme for r5's two visible faces** (`docs/PAINT.md`): the deck's top
+**Strata is the chosen paint scheme for r5's two visible faces** (`docs/PAINT.md`): the deck's top
 face and the lid cover's bezel face are painted as one surface across the hinge. The artwork is
 generated, not drawn by hand — `cad/tools/paint.py` reads the geometry through
 `cad/tools/paint_probe.scad` and emits 1:1 colour sheets plus one mask cut file per paint pass, so a
@@ -64,7 +64,7 @@ bash work/scripts/check_r5.sh            # r5 cassette interference check (HOST=
 openscad -D 'CHECK="bottom:pi"' -o /tmp/x.stl cad/assembly.scad   # single interference pair
 openscad -D R4=false -o /tmp/r2.stl cad/assembly.scad              # r2/r3 assembly (R2=false for r1)
 openscad -o out.png --render --imgsize=1400,1100 --camera=75,90,17,60,0,35,430 cad/assembly.scad  # render preview
-python3 cad/tools/paint.py --stencils    # r5 paint: Meridian (chosen) + mask cut files -> docs/paint/
+python3 cad/tools/paint.py --stencils    # r5 paint: Strata (chosen) + mask cut files -> docs/paint/
 python3 cad/tools/stencil_stl.py          # the same masks as printable 1.2 mm panels -> stl/stencil_*.stl
 ```
 

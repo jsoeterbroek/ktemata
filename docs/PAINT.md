@@ -1,6 +1,6 @@
 # r5 paint schemes — deck and lid cover
 
-**Meridian is the chosen scheme.** It is the design to build; Strata and Bearing are kept as record
+**Strata is the chosen scheme.** It is the design to build; Meridian and Bearing are kept as record
 of the alternatives and because the generator still produces them.
 
 Three airbrush designs for the two printed surfaces you actually look at: the **deck** (keyboard
@@ -10,8 +10,8 @@ both parts, not two decorations that happen to share a palette.
 
 ```
 python3 cad/tools/paint.py                          # all three sheets + contact sheet
-python3 cad/tools/paint.py --scheme 1 --stencils    # Meridian + its cut files
-python3 cad/tools/paint.py --scheme 2               # one scheme
+python3 cad/tools/paint.py --scheme 2 --stencils    # Strata + its cut files (also the default)
+python3 cad/tools/paint.py --scheme 1               # Meridian colour sheet
 python3 cad/tools/paint.py --stickers                # the two type blocks as sticker PDFs
 python3 cad/tools/paint.py --no-png                 # SVGs only
 ```
@@ -24,7 +24,7 @@ Output lands in `docs/paint/`:
 | `ktemata_paint_2_strata.svg` / `.png` | **STRATA** — five bands up both rails, straight past the seam |
 | `ktemata_paint_3_bearing.svg` / `.png` | **BEARING** — a slate border and one amber trace through the seam |
 | `ktemata_paint_all.png` | the three sheets side by side, for choosing |
-| `ktemata_stencil_{deck,cover}_{ash,amber,seam,bezel}.svg` | **cut files**, one per paint pass, `--stencils` |
+| `ktemata_stencil_{deck,cover}_{deep_amber,slate,amber,ash,hairline,ink}.svg` | **Strata cut files**, one per colour pass, `--stencils` |
 | `ktemata_sticker_deck_wordmark_91x22.4mm_bleed.pdf` | **the deck wordmark sticker**, artwork only, `--stickers` |
 | `ktemata_sticker_cover_motto_<W>x<H>mm_bleed.pdf` | **the lid motto sticker**, artwork only, `--stickers`; filename records its fitted trim size |
 
@@ -63,7 +63,7 @@ rather than drawing a line through a fan.
   111.76 mm display opening** (`R5_PANEL` + 0.5 mm clearance per side) is centred at
   `x 19.77..213.73`, `y 33.17..144.93`. Meridian's **7 mm slate border** around that opening is
   flat paint and a layout datum, not a keep-out. Marks may cross it; only the display opening,
-  cable notch, finger slots and reserved type interrupt them. The default layout leaves **12.77 mm
+  cable notch and reserved type interrupt them. The default layout leaves **12.77 mm
   outside the painted border in x** and a **26.17 mm latch band** below it, all on that same face.
 - **The deck's free fields** are the **40.95 mm side rails**, the **35.6 mm strip** between the OLED
   window (ends `y 66.9`) and the keyboard pocket (starts `y 102.5`), and the **16 mm** between the
@@ -138,73 +138,58 @@ each colour, not as a measurement of the bottle in your hand.
 
 ## Cutting the masks
 
-`--stencils` writes one cut file per paint pass, derived from the same mark data as the sheet:
+`--stencils` writes the six selected Strata cut files for each part, derived from the same mark
+data as the colour sheet:
 
-| File | Pass | Cut |
+| Filename suffix | Pass | Cut |
 |---|---|---|
-| `ktemata_stencil_deck_ash.svg` | ash | the 0.5 mm graticule and the short rules |
-| `ktemata_stencil_deck_amber.svg` | amber | the 0.9 mm graticule, every fifth rule |
-| `ktemata_stencil_deck_seam.svg` | deep amber | the seam rule at the hinge, the end stop at the latch edge |
-| `ktemata_stencil_cover_*.svg` | as above, plus `bezel` | the same on the lid cover; `bezel` is the flat 7 mm slate border |
+| `deep_amber` | deep amber | 8 mm outer rails and the 2.6 mm latch band at `y 2.6` |
+| `slate` | slate | 5 mm rail bands |
+| `amber` | amber | 12 mm rail bands |
+| `ash` | ash | 3 mm rail bands |
+| `hairline` | light amber | 0.6 mm rail hairlines at `x 8` and `x W-8` |
+| `ink` | graphite shadow | 0.6 mm latch shadow at `y 5.2` |
 
-The same masks are also printable as rigid 1.2 mm panels (`stl/stencil_*.stl`, one file per pass)
-for anyone who would rather not cut vinyl — see **Printed masks** below. The sheets and the STLs
-come from the same mark data, so they cannot disagree.
+The innermost 4 mm rail band is the existing graphite base and needs no mask. Files are named
+`ktemata_stencil_{deck,cover}_<pass>.svg`. The same masks are also printable as rigid 1.2 mm panels
+(`stl/stencil_*.stl`) — see **Printed masks** below. Sheets and STLs come from `strata_marks()`,
+so they cannot disagree.
 
-Black is the sheet you lay on the part; white is what the blade removes. Three practical points,
-because they decide whether the mask survives being handled:
+Black is the sheet you lay on the part; white is what the blade removes. The full-length rail cuts
+and the full-width latch cut can separate a mask into strips. Kiss-cut the vinyl, leave the backing
+on, and use transfer tape to lift every island onto the part in register. The **0.6 mm hairline and
+latch-shadow passes are at the limit for a hand-cut blade**; a vinyl cutter or 0.6 mm pinstripe tape
+is preferable. Registration crosses in the margins align the passes; the part outline is the datum.
 
-- **Kiss-cut and apply with transfer tape.** A slot that runs the full width of a panel severs the
-  mask into strips — that is visible in `ktemata_stencil_cover_ash.svg` and it is not a fault. Cut
-  the vinyl but leave the backing on, lay application tape over the face, and lift the whole
-  assembly onto the part in one go; the tape holds every island in register. Peel the tape last.
-- **The painted border ring needs bridges or transfer tape.** Cutting a closed ring frees it from
-  the surrounding sheet. Transfer tape carries it; without tape, add two 2 mm bridges at the ring's
-  top and bottom and accept two hairlines in the slate. This is a cutting concern, not a height
-  difference: the border lies on the same face as every other cover pass.
-- **0.5 mm is at the limit for a blade.** If your cutter cannot hold a 0.5 mm line cleanly, lay the
-  ash graticule with 0.5 mm pinstripe tape instead — it is a stock product, and the grid is on a
-  17.81 mm pitch so the tape wants no measuring beyond the first line. The stencils then cover
-  amber, seam and bezel only, which are all wide enough to cut and lift cleanly.
-
-The registration crosses in the margins align the passes: lay pass 1, spray, lift, lay pass 2 on
-the same crosses. The part outline is the datum, so each mask lands without measuring.
+The six generated masks cover the rectangular colour geometry only. The wordmark and motto remain
+a separate hand-cut type step from the colour sheet; they are not included in these files.
 
 ## Printed masks
 
 ```bash
-python3 cad/tools/stencil_stl.py                  # five masks, 1.2 mm thick
-python3 cad/tools/stencil_stl.py --part cover      # one part
+python3 cad/tools/stencil_stl.py                  # twelve Strata masks, 1.2 mm thick
+python3 cad/tools/stencil_stl.py --part cover      # six cover masks
+python3 cad/tools/stencil_stl.py --pass amber      # one pass on both parts
 python3 cad/tools/stencil_stl.py --thickness 2.0   # stiffer
 ```
 
-Writes `stl/stencil_{deck,cover}_{amber,seam}.stl` and `stl/stencil_cover_bezel.stl`: the part
-outline with that pass's slots cut straight through and no handling margin — 243.3 × 186.8 mm for
-the deck, 233.5 × 178.1 mm for the cover. They land on the part with their own outline as the
-datum, exactly like the sheets. The deck mask still fits a 256 mm bed (6 mm a side to spare).
-
-**The ash pass is not printed, and cannot be.** A mask is the sheet minus its slots, so it holds
-together only if the slots do not close a loop. The graticule does: 8 horizontal rows and 10
-vertical columns on the deck, which divides the panel into ~80 cells. Measured on the deck's ash
-mask: 23 separate solids with no ligament, 11 at 0.8 mm, and still 11 at 4.0 mm — the cuts meet
-each other in the middle of the plate, so the split is inherent to the artwork rather than to the
-tie width. Ash therefore stays vinyl: 0.5 mm pinstripe tape on a 17.81 mm pitch, as the note above
-already suggests. `--include-vinyl` will emit it anyway if you want to see the strips.
+Writes `stl/stencil_{deck,cover}_{deep_amber,slate,amber,ash,hairline,ink}.stl`: the part outline
+with that pass's slots cut straight through and no handling margin — 243.3 × 186.8 mm for the deck,
+233.5 × 178.1 mm for the cover. The deck fits a 256 mm bed. Full-length cuts make some masks
+multi-piece; arrange those pieces against the part outline, or use the registered SVG sheet with
+transfer tape when a single handling assembly is preferable.
 
 **Every cover mask lies on the same flat front at `z = 14.50 mm`.** The display recess extends
 10.50 mm down to the 4.00 mm rear skin, and the glass is flush with the surrounding front. There
-is no raised bezel step for a rigid mask to bridge. The non-border cover masks retain the painted
-border's footprint instead of cutting it away; their own paint slots, the actual display opening,
-cable notch and finger slots still pass through, and the type block stays reserved. The separate
-`stencil_cover_bezel.stl` remains a ring-shaped mask for the flat 7 mm slate border, on that same
-plane and with the same filename. `cover_hit()` applies the same single-plane rule to the artwork.
+is no raised bezel step to bridge. The display opening and cable notch pass through every mask;
+Strata has no separate bezel-ring pass.
 
 Two earlier corrections in the sheet output remain relevant:
 
 - **The cover's apertures were not mirrored with its marks.** The cover is drawn mirrored in y on
   the open-flat sheet, so that its hinge edge meets the deck's at the seam, and the marks were
-  flipped while the cut-outs were not — the DSI notch appeared at the latch end and both finger
-  slots at the hinge. Apertures are now one `Aperture` shape rendered for both consumers.
+  flipped while the cut-outs were not — the DSI notch appeared at the latch end instead of the
+  hinge. Apertures are now one `Aperture` shape rendered for both consumers.
 - **The deck's apertures were drawn one height too low.** `Aperture.d()` applied the mirror
   unconditionally: right for the cover (drawn flipped) and wrong for the deck, so the keyboard hole
   landed at the latch edge and the Pi opening 20 mm inside the plate instead of on it. The STL
@@ -236,9 +221,23 @@ the part's real apertures (`deck_holes_d`, `cover_holes_d`), so a line that reac
 or the power button **stops there** in the drawing exactly as it would under tape. Nothing in these
 sheets is "touched up by hand" after masking.
 
-## Meridian: what to spray
+## Strata: what to spray
 
-The chosen scheme, in the order the sheet gives:
+The chosen scheme has six generated colour masks on each part:
+
+1. Scuff 400, adhesion promoter, **graphite** (`#151b21`) over the whole face.
+2. **Deep amber**: the 8 mm outer rails and the 2.6 mm latch band at `y 2.6`.
+3. **Slate**: the 5 mm rail bands immediately inboard of the deep amber.
+4. **Amber**: the 12 mm rail bands.
+5. **Ash**: the 3 mm rail bands; the innermost 4 mm remains the graphite base.
+6. **Light amber**: the 0.6 mm hairlines at `x 8` and `x W-8`.
+7. **Graphite shadow**: the 0.6 mm latch line at `y 5.2`.
+8. Finish and lettering follow **Paint order and finish** above. The wordmark, motto and `r5`
+   lettering are separate from the six rectangular colour masks; take their type from the sheet.
+
+## Meridian (alternative): what to spray
+
+The alternative scheme, in the order its sheet gives:
 
 1. Scuff 400, adhesion promoter, **graphite** (`#151b21`) over the whole face.
 2. **Ash** pass: the graticule at 17.81 mm pitch, 0.5 mm lines.
