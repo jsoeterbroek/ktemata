@@ -12,13 +12,13 @@ $fn = 48;
 
 // Showcase composition and host exterior (the fit-check host remains schematic).
 CASE_W = 270;
-CASE_D = 215;
+CASE_D = 225;
 CASE_X = (R5_W - CASE_W) / 2;
 CASE_Y = (R5_L - CASE_D) / 2;
 CASE_LID_WALL = 4;
 CASE_SEAL_Z = HOST_BOT;
 CASE_TOP_Z = HOST_BOT + HOST_LID + CASE_LID_WALL;
-OPEN_ANGLE = 100;
+OPEN_ANGLE = -100;
 FOAM_Z = R5_PAD;
 PAINT_Z = 0.08;
 YELLOW = "#f1c40f";
@@ -35,23 +35,32 @@ STRATA_COVER = is_undef(STRATA_COVER) ? [] : STRATA_COVER;
 module prism(w, d, h, r) linear_extrude(h) rrect(w, d, r);
 module span(x0, y0, x1, y1, z, h) translate([x0, y0, z]) cube([x1-x0, y1-y0, h]);
 module at3(x, y, z) translate([x, y, z]) children();
+module vertical_prism(w, h, d, r) rotate([90, 0, 0]) linear_extrude(d) rrect(w, h, r);
 
 module peli_base() {
-    // Hollow base: cavity floor is the foam top, matching the cassette's 8 mm pad.
-    difference() {
-        at3(CASE_X, CASE_Y, 0) prism(CASE_W, CASE_D, HOST_BOT, 12);
+    // The real shell is narrower at the feet and flares to a broad sealing flange.
+    color(YELLOW) difference() {
+        hull() {
+            at3(CASE_X+6, CASE_Y+5, 0) prism(CASE_W-12, CASE_D-10, 3, 10);
+            at3(CASE_X, CASE_Y, HOST_BOT-5) prism(CASE_W, CASE_D, 5, 10);
+        }
         at3((R5_W-HOST_TOP[0])/2, (R5_L-HOST_TOP[1])/2, FOAM_Z)
             prism(HOST_TOP[0], HOST_TOP[1], HOST_BOT-FOAM_Z+1, 10);
     }
-    // Moulded vertical ribs on all four outside walls.
-    for (x=[CASE_X+30, CASE_X+62, CASE_W+CASE_X-67, CASE_W+CASE_X-35])
-        for (y=[CASE_Y-1.5, CASE_Y+CASE_D-1.5])
-            at3(x, y, 10) cube([5, 3, HOST_BOT-22]);
-    for (y=[CASE_Y+32, CASE_Y+70, CASE_Y+108, CASE_Y+146])
-        for (x=[CASE_X-1.5, CASE_X+CASE_W-1.5])
-            at3(x, y, 10) cube([3, 5, HOST_BOT-22]);
-    // Feet and the dark sealing bead at the mouth.
-    for (x=[CASE_X+22, CASE_X+CASE_W-34])
+    // Raised sealing flange around the mouth, not just a thin box rim.
+    color(YELLOW) difference() {
+        at3(CASE_X-3, CASE_Y-3, HOST_BOT-5) prism(CASE_W+6, CASE_D+6, 5, 11);
+        at3((R5_W-HOST_TOP[0])/2-1, (R5_L-HOST_TOP[1])/2-1, HOST_BOT-6)
+            prism(HOST_TOP[0]+2, HOST_TOP[1]+2, 8, 9);
+    }
+    // Broad moulded columns at the corners and along the sides.
+    color(YELLOW) for (x=[CASE_X+18, CASE_X+CASE_W-30])
+        for (y=[CASE_Y-2, CASE_Y+CASE_D-3])
+            at3(x, y, 6) cube([12, 5, HOST_BOT-14]);
+    color(YELLOW) for (y=[CASE_Y+34, CASE_Y+83, CASE_Y+132])
+        for (x=[CASE_X-2, CASE_X+CASE_W-3])
+            at3(x, y, 7) cube([5, 12, HOST_BOT-17]);
+    color(YELLOW) for (x=[CASE_X+22, CASE_X+CASE_W-34])
         for (y=[CASE_Y+22, CASE_Y+CASE_D-34])
             at3(x, y, -2) prism(12, 12, 2, 3);
     color(GASKET) difference() {
@@ -63,35 +72,57 @@ module peli_base() {
 
 module peli_lid() {
     // Closed-pose lid, ceiling at HOST_BOT+HOST_LID and a 4 mm outer skin above it.
-    difference() {
-        at3(CASE_X, CASE_Y, CASE_SEAL_Z) prism(CASE_W, CASE_D, HOST_LID+CASE_LID_WALL, 12);
+    color(YELLOW) difference() {
+        at3(CASE_X, CASE_Y, CASE_SEAL_Z) prism(CASE_W, CASE_D, HOST_LID+CASE_LID_WALL, 10);
         at3((R5_W-HOST_TOP[0])/2, (R5_L-HOST_TOP[1])/2, CASE_SEAL_Z-1)
             prism(HOST_TOP[0], HOST_TOP[1], HOST_LID+1, 10);
     }
-    // Exterior lid channels, visible on the closed orange case.
-    for (x=[CASE_X+28, CASE_X+62, CASE_W+CASE_X-67, CASE_W+CASE_X-35])
+    color(YELLOW) for (x=[CASE_X+28, CASE_X+62, CASE_W+CASE_X-67, CASE_W+CASE_X-35])
         at3(x, CASE_Y+18, CASE_TOP_Z) cube([5, CASE_D-36, 2]);
+    // The O-ring is in the lid, so this black seal follows it when opened.
+    color(GASKET) difference() {
+        at3((R5_W-HOST_TOP[0])/2-2, (R5_L-HOST_TOP[1])/2-2, CASE_SEAL_Z+HOST_LID-1.5)
+            prism(HOST_TOP[0]+4, HOST_TOP[1]+4, 1.5, 11);
+        at3((R5_W-HOST_TOP[0])/2+3, (R5_L-HOST_TOP[1])/2+3, CASE_SEAL_Z+HOST_LID-2)
+            prism(HOST_TOP[0]-6, HOST_TOP[1]-6, 3, 8);
+    }
+    // Peli's two double-throw latch leaves travel with the lid.
+    for (x=[CASE_X+38, CASE_X+CASE_W-56]) {
+        color(YELLOW) at3(x, CASE_Y+2, CASE_SEAL_Z-7) vertical_prism(16, 34, 5, 4);
+        color(YELLOW) at3(x+2, CASE_Y-2, CASE_SEAL_Z+18) cube([12, 7, 6]);
+        color(GASKET) at3(x+8, CASE_Y+2, CASE_SEAL_Z+4)
+            rotate([90, 0, 0]) cylinder(d=3, h=3);
+    }
 }
 
 module peli_hardware() {
-    // Hinge barrels share the actual showcase pivot at y=0, z=HOST_BOT.
-    for (x=[CASE_X+28, CASE_X+104, CASE_X+CASE_W-68]) {
-        at3(x, -4, CASE_SEAL_Z) rotate([0, 90, 0]) cylinder(d=10, h=40);
-        at3(x+5, -4, CASE_SEAL_Z) rotate([0, 90, 0]) cylinder(d=6, h=45);
+    // Two compact multi-knuckle hinges, with stainless pins, on the actual pivot line.
+    for (x=[CASE_X+42, CASE_X+CASE_W-64]) {
+        color(YELLOW) for (k=[0:2]) at3(x+k*10, R5_L+3, CASE_SEAL_Z)
+            rotate([0, 90, 0]) cylinder(d=8, h=8);
+        color("#a9afb2") at3(x-2, R5_L+3, CASE_SEAL_Z)
+            rotate([0, 90, 0]) cylinder(d=3, h=32);
     }
-    // Two front latches and a carrying handle.
-    for (x=[CASE_X+42, CASE_X+CASE_W-62]) {
-        at3(x, CASE_Y+CASE_D-1, CASE_SEAL_Z-24) prism(20, 7, 27, 2);
-        color(GASKET) at3(x+3, CASE_Y+CASE_D+5, CASE_SEAL_Z-20) cube([14, 3, 15]);
+    // Fixed catches under the lid's double-throw leaves.
+    for (x=[CASE_X+40, CASE_X+CASE_W-54]) {
+        color(YELLOW) at3(x, CASE_Y-4, CASE_SEAL_Z-17) prism(12, 8, 17, 2);
+        color(GASKET) at3(x+6, CASE_Y+1, CASE_SEAL_Z-5)
+            rotate([90, 0, 0]) cylinder(d=3, h=3);
     }
-    for (x=[R5_W/2-39, R5_W/2+34])
-        at3(x, CASE_Y+CASE_D+1, 25) prism(5, 8, 17, 1.5);
-    color(GASKET) at3(R5_W/2-36, CASE_Y+CASE_D+7, 27) prism(72, 6, 10, 3);
+    // Central automatic purge valve, a prominent black circle on the real front wall.
+    color(GASKET) at3(R5_W/2, CASE_Y+1, CASE_SEAL_Z-23)
+        rotate([90, 0, 0]) cylinder(d=11, h=5);
+    color("#090b0c") at3(R5_W/2, CASE_Y-4, CASE_SEAL_Z-23)
+        rotate([90, 0, 0]) cylinder(d=5, h=1);
+    // Wide rubber-overmoulded handle and its two pinned mounts.
+    color(YELLOW) for (x=[R5_W/2-53, R5_W/2+45])
+        at3(x, CASE_Y-7, 17) prism(8, 10, 21, 2);
+    color(GASKET) at3(R5_W/2-50, CASE_Y-15, 17) prism(100, 8, 12, 3);
 }
 
 module open_lid() {
-    translate([0, 0, CASE_SEAL_Z]) rotate([OPEN_ANGLE, 0, 0])
-        translate([0, 0, -CASE_SEAL_Z]) children();
+    translate([0, R5_L, CASE_SEAL_Z]) rotate([OPEN_ANGLE, 0, 0])
+        translate([0, -R5_L, -CASE_SEAL_Z]) children();
 }
 
 module deck_mark(m) {
@@ -114,13 +145,12 @@ module cover_paint_local() {
 }
 
 module cover_text_local() {
-    at3(COVER_W/2, COVER_L/2, 0) rotate([0, 0, 180])
-        at3(-COVER_W/2, -COVER_L/2, 0) {
-            color(SCREEN_TEXT) at3(COVER_W/2, COVER_L-17, COVER_FRONT_Z+0.07)
-                linear_extrude(0.03) text("KTEMATA", size=5, halign="center", font="DejaVu Sans:style=Bold");
-            color(SCREEN_ACCENT) at3(COVER_W/2, COVER_L-23, COVER_FRONT_Z+0.07)
-                linear_extrude(0.03) text("A POSSESSION FOR ALL TIME", size=2.5, halign="center");
-        }
+    // Same sticker as brand_cover(): Greek motto, with the translation beneath it.
+    color("#f2ebe0") at3(COVER_W/2, COVER_L-17, COVER_FRONT_Z+0.07)
+        linear_extrude(0.03) text("κτῆμα ἐς ἀεί", size=8, halign="center",
+                                  font="DejaVu Sans:style=Italic");
+    color("#a9b2bb") at3(COVER_W/2, COVER_L-23, COVER_FRONT_Z+0.07)
+        linear_extrude(0.03) text("KTEMATA  ·  A POSSESSION FOR ALL TIME", size=1.9, halign="center");
 }
 
 module closed_painted_cover() {
@@ -132,9 +162,9 @@ module closed_painted_cover() {
 }
 
 module deck_lettering() {
-    color(SCREEN_TEXT) r5_at(R5_W/2, 82, R5_DECK_TOP+0.08) rotate([0, 0, 180])
+    color(SCREEN_TEXT) r5_at(R5_W/2, 82, R5_DECK_TOP+0.08)
         linear_extrude(0.03) text("KTEMATA", size=8, halign="center", font="DejaVu Sans:style=Bold");
-    color(SCREEN_ACCENT) r5_at(R5_W/2, 89, R5_DECK_TOP+0.08) rotate([0, 0, 180])
+    color(SCREEN_ACCENT) r5_at(R5_W/2, 89, R5_DECK_TOP+0.08)
         linear_extrude(0.03) text("A POSSESSION FOR ALL TIME", size=2.6, halign="center");
 }
 
@@ -156,11 +186,11 @@ module oled_detail() {
          + (R5_OLED_GLASS[1]-R5_OLED_ACTIVE[1])/2;
     oz = R5_OLED_SEAT + R5_OLED_GLASS[2] + 0.04;
     color("#02090a") r5_box(ox, oy, ox+R5_OLED_ACTIVE[0], oy+R5_OLED_ACTIVE[1], oz, 0.06);
-    color("#a9d6c4") r5_at(ox+3, oy+10.5, oz+0.07) rotate([0, 0, 180])
+    color("#a9d6c4") r5_at(ox+3, oy+10.5, oz+0.07)
         linear_extrude(0.02) text("12:34", size=4.2, font="DejaVu Sans:style=Bold");
-    color("#a9d6c4") r5_at(ox+26.5, oy+10.5, oz+0.07) rotate([0, 0, 180])
+    color("#a9d6c4") r5_at(ox+26.5, oy+10.5, oz+0.07)
         linear_extrude(0.02) text("87%", size=3.4, halign="right");
-    color("#6c9b8b") r5_at(ox+3, oy+4.0, oz+0.07) rotate([0, 0, 180])
+    color("#6c9b8b") r5_at(ox+3, oy+4.0, oz+0.07)
         linear_extrude(0.02) text("7.9 V  ·  READY", size=2.2);
 }
 
@@ -187,7 +217,6 @@ module screen_local() {
     sw = R5_PANEL_ACTIVE[0];
     sh = R5_PANEL_ACTIVE[1];
     sz = COVER_FRONT_Z + 0.10;
-    at3(sx+sw/2, sy+sh/2, 0) rotate([0, 0, 180]) at3(-sx-sw/2, -sy-sh/2, 0) {
     color(SCREEN) at3(sx, sy, sz) linear_extrude(0.05) rrect(sw, sh, 2);
     color("#20333e") at3(sx, sy+sh-16, sz+0.05) cube([sw, 16, 0.03]);
     color(SCREEN_ACCENT) at3(sx+8, sy+sh-11.5, sz+0.09)
@@ -208,7 +237,6 @@ module screen_local() {
     color("#8a6234") at3(sx+7, sy+5, sz+0.07) cube([sw-14, 6, 0.03]);
     color(SCREEN_TEXT) at3(sx+sw/2, sy+7, sz+0.11)
         linear_extrude(0.02) text("AVAILABLE WITHOUT POWER OR NETWORK", size=2.6, halign="center");
-    }
 }
 
 module closed_screen() {
@@ -216,10 +244,11 @@ module closed_screen() {
 }
 
 module foreground_case() {
-    color(YELLOW) { peli_base(); peli_hardware(); }
+    peli_base();
+    peli_hardware();
     translate([0, 0, FOAM_Z]) cassette_base();
     open_lid() {
-        color(YELLOW) peli_lid();
+        peli_lid();
         closed_painted_cover();
         color("#050708") c_display();
         closed_screen();

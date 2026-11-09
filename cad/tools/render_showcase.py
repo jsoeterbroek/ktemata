@@ -21,7 +21,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--output", type=Path,
                     default=REPO / "renders" / "r5" / "site_r5_showcase.png")
-    ap.add_argument("--camera", default="0,0,0,45,0,215,0")
+    ap.add_argument("--camera", default="0,0,0,45,0,35,0")
     ap.add_argument("--imgsize", default="1800,1400")
     args = ap.parse_args()
 
