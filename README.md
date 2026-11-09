@@ -111,6 +111,9 @@ caps with [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md) (a retrofit accessory; 
 To re-export the STLs: `python3 cad/tools/export.py` (use `--r2`, `--r1` or `--r5` for the other sets).
 To refresh images afterwards: `python3 cad/tools/render.py` (r5 images go in `renders/r5/`, older
 variants in `renders/archive/`; add `--r1` for r1-only views; previews follow the exported STLs).
+For the open-case website showcase, run `python3 cad/tools/render_showcase.py`; it uses the real r5
+geometry and current Strata marks, writes `renders/r5/site_r5_showcase.png`, and `site/build.sh`
+copies it to `site/img/`.
 `R1=1 bash work/scripts/check.sh` runs the old interference set; the default is the r4 set
 (`R4=0` for the r2/r3 pairs).
 

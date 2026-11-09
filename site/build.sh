@@ -10,5 +10,7 @@ root=$(dirname "$here")
 python3 "$root/work/scripts/power_chart.py" --site
 python3 "$root/cad/tools/render.py" site_r5            # needs `export.py --r5` first
 cp "$root/renders/r5/site_r5_exploded.png" "$here/img/"
+python3 "$root/cad/tools/render_showcase.py"
+cp "$root/renders/r5/site_r5_showcase.png" "$here/img/"
 
 echo "site images rebuilt in $here/img"
