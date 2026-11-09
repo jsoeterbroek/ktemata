@@ -48,6 +48,10 @@ assert(COVER_FRONT_Z + 4 <= HOST_LID,
            COVER_FRONT_Z + 4));
 // The cable notch must reach the recess from the hinge edge without severing the cover.
 assert(PANEL_Y > COVER_FRAME, "the panel's hinge-side front border would reach the cover edge");
+assert(R5_4PIN_X0 >= -COVER_GAP && R5_4PIN_Y0 >= -COVER_GAP
+       && R5_4PIN_X0 + R5_4PIN_W <= R5_PANEL[0] + COVER_GAP
+       && R5_4PIN_Y0 + R5_4PIN_H <= R5_PANEL[1] + COVER_GAP,
+       "the 4PIN relief must stay inside the display recess");
 
 // ---------------- geometry ----------------
 module cover_outline() rrect(COVER_W, COVER_L, COVER_R);
@@ -82,7 +86,7 @@ module post_reliefs() for (p=R5_DISP_POSTS)
 
 // Panel leads: the Waveshare's 15-pin DSI socket is on the right-hand rear PCB; the 4-pin
 // 5 V/I2C lead is routed inside the case. The cover is taped to the lid, so the FPC cannot pass
-// under it. The 46 mm notch runs from the panel edge to the hinge edge at R5_CABLE_X = 140.60,
+// under it. The 20 mm notch runs from the panel edge to the hinge edge at R5_CABLE_X = 140.60,
 // placing its centre over the existing deck/tray opening overlap at x 160.87 on the default host.
 // The cut over-runs the recess by 0.5 mm, so no web remains; the cover stays one piece.
 module cable_relief() {
@@ -90,11 +94,28 @@ module cable_relief() {
         cube([R5_CABLE_W, PANEL_Y - COVER_GAP + 1.5, COVER_FRONT_Z + 2]);
 }
 
+// The 4PIN connector protrudes into the rear skin inside the display recess.
+module aux_relief() translate([PANEL_X + R5_4PIN_X0, PANEL_Y + R5_4PIN_Y0, -1])
+    cube([R5_4PIN_W, R5_4PIN_H, COVER_FRONT_Z + 2]);
+
 module r5_lid_cover() difference() {
     cover_body();
     panel_screws();
     post_reliefs();
     cable_relief();
+    aux_relief();
+}
+
+// Thin dimension template: all eight positions and the connector relief are through-cuts.
+// Keep the display seat solid so those positions can be tested; the unchanged recess is omitted.
+module r5_lid_cover_test_dimensions() difference() {
+    linear_extrude(COVER_TEST_T) cover_outline();
+    for (p=R5_DISP_HOLES)
+        translate([PANEL_X + p[0], PANEL_Y + p[1], -1]) cylinder(d=M3_CLR, h=COVER_TEST_T + 2);
+    for (p=R5_DISP_POSTS)
+        translate([PANEL_X + p[0], PANEL_Y + p[1], -1]) cylinder(d=5.8, h=COVER_TEST_T + 2);
+    cable_relief();
+    aux_relief();
 }
 
 if (is_undef(ASSEMBLY)) r5_lid_cover();

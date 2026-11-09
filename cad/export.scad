@@ -27,6 +27,7 @@ if (PART=="r5_tray")          r5_tray();
 if (PART=="r5_deck")          rotate([180,0,0]) r5_deck();
 if (PART=="r5_lid_plate")     r5_lid_plate();                      // plate flat, lid/tape side down
 if (PART=="r5_lid_cover")     r5_lid_cover();                      // cover flat, lid/tape side down
+if (PART=="r5_lid_cover_test_dimensions") r5_lid_cover_test_dimensions(); // 1.5 mm fit template
 // corner overmould tool (one corner at a time); print the cap in TPU for a test fit.
 // The cup and lid print as modelled (open face up); the plate flips flat.
 if (PART=="corner_cap")       mirror([0,0,1]) corner_mould_part("cap");   // flip z only, keep handedness

@@ -96,7 +96,7 @@ chosen airbrush scheme, with 1:1 colour sheets and per-pass mask cut files from
 analysed — and deliberately not done — in [`docs/SLIMMING.md`](docs/SLIMMING.md). Cast soft-rubber corner
 caps with [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md) (a retrofit accessory; the case STLs are unchanged).
 
-| STL (`stl/`) | Source (`cad/`) | Print orientation | r4 |
+| STL (`stl/archive/`) | Source (`cad/`) | Print orientation | r4 |
 |---|---|---|---|
 | `ktemata_bottom.stl` – back shell | `bottom.scad` | back plate down, no supports | yes |
 | `ktemata_face.stl` – front face | `face.scad` | face plate down | yes |
@@ -109,8 +109,8 @@ caps with [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md) (a retrofit accessory; 
 `cad/assembly.scad` shows everything with stand-in components (`-D EXPLODE=40`).
 `-D 'CHECK="bottom:pi"'` intersects one part with another, which is handy for clearance checks.
 To re-export the STLs: `python3 cad/tools/export.py` (use `--r2`, `--r1` or `--r5` for the other sets).
-To refresh the images in `renders/` afterwards: `python3 cad/tools/render.py` (add `--r1` to include the r1-only views;
-the previews follow whatever is in `stl/`, so export the set you want rendered).
+To refresh images afterwards: `python3 cad/tools/render.py` (r5 images go in `renders/r5/`, older
+variants in `renders/archive/`; add `--r1` for r1-only views; previews follow the exported STLs).
 `R1=1 bash work/scripts/check.sh` runs the old interference set; the default is the r4 set
 (`R4=0` for the r2/r3 pairs).
 

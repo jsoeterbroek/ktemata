@@ -53,12 +53,12 @@ For development phase use:
 ## Commands
 
 ```bash
-python3 cad/tools/export.py              # export all r4 parts to stl/ (binary, centred, on z=0), prints size + open-edge count
-python3 cad/tools/export.py --r2         # export the previous r2/r3 set instead (DFR0550 + HAT (E) + Phistone)
-python3 cad/tools/export.py --r1         # export the original r1 set instead (pull_switch, power_button)
+python3 cad/tools/export.py              # export r4 to stl/archive/ (binary, centred, z=0), print size + open edges
+python3 cad/tools/export.py --r2         # export r2/r3 to stl/archive/ (DFR0550 + HAT (E) + Phistone)
+python3 cad/tools/export.py --r1         # export r1 to stl/archive/ (pull_switch, power_button)
 python3 cad/tools/export.py --r5         # export the r5 set to stl/r5/ (tray, deck, lid plate, lid cover)
 python3 cad/tools/export.py face bottom  # export only some parts (names: bottom face keyboard_support charge_plug)
-python3 cad/tools/render.py              # regenerate renders/*.png (after export; ktemata_* views use the STLs); args filter by name, e.g. asm_iso
+python3 cad/tools/render.py              # legacy: renders/archive/; r5: renders/r5/; args filter by name
 bash work/scripts/check.sh               # r4 interference check (slow, minutes); R4=0 for r2/r3, R1=1 for r1
 bash work/scripts/check_r5.sh            # r5 cassette interference check (HOST=1400 for the bigger host)
 openscad -D 'CHECK="bottom:pi"' -o /tmp/x.stl cad/assembly.scad   # single interference pair

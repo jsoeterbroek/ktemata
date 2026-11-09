@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export parts to ../stl (r5: ../stl/r5) as binary STL, dropped onto z=0 and centred on x/y.
+"""Export parts to ../stl/archive (r5: ../stl/r5), binary, centred on x/y and dropped to z=0.
 
   python3 cad/tools/export.py                 # r4 parts (default: TD2 + UPS HAT (B) + K06)
   python3 cad/tools/export.py --r2            # previous r2/r3 set (DFR0550 + HAT (E) + Phistone)
@@ -14,15 +14,18 @@ import subprocess, struct, sys, os, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__)); CAD = os.path.dirname(HERE)
 OUT = os.path.join(os.path.dirname(CAD), 'stl')
 OUT_R5 = os.path.join(OUT, 'r5')
+OUT_ARCHIVE = os.path.join(OUT, 'archive')
 PARTS = {'bottom':'ktemata_bottom', 'face':'ktemata_face', 'keyboard_support':'ktemata_keyboard_support',
          'charge_plug':'ktemata_charge_plug',
          'corner_cap':'ktemata_corner_cap', 'corner_plate':'ktemata_corner_plate',
          'corner_cup':'ktemata_corner_cup', 'corner_lid':'ktemata_corner_lid',
          'r5_tray':'ktemata_r5_tray', 'r5_deck':'ktemata_r5_deck',
          'r5_lid_plate':'ktemata_r5_lid_plate', 'r5_lid_cover':'ktemata_r5_lid_cover',
+         'r5_lid_cover_test_dimensions':'ktemata_r5_lid_cover_test_dimensions',
          'pull_switch':'ktemata_pull_switch', 'power_button':'ktemata_power_button'}
 LEGACY = {'pull_switch', 'power_button'}
-R5_PARTS = {'r5_tray', 'r5_deck', 'r5_lid_plate', 'r5_lid_cover'}
+R5_PARTS = {'r5_tray', 'r5_deck', 'r5_lid_plate', 'r5_lid_cover', 'r5_lid_cover_test_dimensions'}
+R5_TEST_PARTS = {'r5_lid_cover_test_dimensions'}
 # the corner tool is a per-corner accessory, not part of the case; skip it unless asked for
 TOOLING = {'corner_cap', 'corner_plate', 'corner_cup', 'corner_lid'}
 
@@ -66,11 +69,12 @@ extra = ['-D', 'R2=false'] if r1 else (['-D', 'R4=false'] if r2 else [])
 if r5:
     extra += ['-D', 'R5=true']
 
-out_dir = OUT_R5 if r5 else OUT
+out_dir = OUT_R5 if r5 else OUT_ARCHIVE
 os.makedirs(out_dir, exist_ok=True)
 for part, fname in PARTS.items():
     if r1 is False and part in LEGACY: continue
     if not args and part in TOOLING: continue
+    if not args and part in R5_TEST_PARTS: continue
     # r5 is a separate part set; r4 parts are not valid with it and vice versa
     if (part in R5_PARTS) != r5: continue
     if args and part not in args: continue

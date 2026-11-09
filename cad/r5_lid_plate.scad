@@ -33,6 +33,9 @@ module cable_relief() {
     translate([6 + R5_CABLE_X0, -1, -1]) cube([R5_CABLE_W, 1.01 + 10, R5_LID_T + 2]);
 }
 
+module aux_relief() translate([6 + R5_4PIN_X0, 6 + R5_4PIN_Y0, -1])
+    cube([R5_4PIN_W, R5_4PIN_H, R5_LID_T + 2]);
+
 // ---- finger slots: 10 mm holes to lift the assembly off the lid tape line ----
 module finger_slots() for (x=[14, R5_LID_PLATE[0] - 24])
     translate([x, R5_LID_PLATE[1] - 10, -1]) cylinder(d=10, h=R5_LID_T + 2);
@@ -42,6 +45,7 @@ module r5_lid_plate() difference() {
     for (p=R5_DISP_HOLES) screw_cut([p[0] + 6, p[1] + 6]);
     for (p=R5_DISP_POSTS) post_relief([p[0] + 6, p[1] + 6]);
     cable_relief();
+    aux_relief();
     finger_slots();
 }
 

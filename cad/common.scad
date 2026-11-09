@@ -572,10 +572,11 @@ R5_PANEL_DEPTH  = 10.50;                                // front glass to PCB ba
 R5_PANEL_STUD   = 3.5;                                  // M2.5 Pi standoffs behind the PCB
 // The four M3 inserts and the four M2.5 standoffs, relative to the panel's top-left in the
 // drawing, measured from Waveshare's STEP (the pattern is not symmetric about the glass centre).
-R5_DISP_HOLES = [[34.42, 21.58], [160.67, 21.58],
-                 [34.42, 87.07], [160.67, 87.07]];
-R5_DISP_POSTS = [[73.97, 27.43], [131.97, 27.43],
-                 [73.97, 76.43], [131.97, 76.43]];
+// Fit-check correction: all eight positions are 5 mm towards the latch/top from the STEP values.
+R5_DISP_HOLES = [[34.42, 26.58], [160.67, 26.58],
+                 [34.42, 92.07], [160.67, 92.07]];
+R5_DISP_POSTS = [[73.97, 32.43], [131.97, 32.43],
+                 [73.97, 81.43], [131.97, 81.43]];
 // The display's PCB back sits on the plate/lid; the glass faces the base.
 R5_LID_T = 4;
 R5_DISP_DEEP = R5_LID_T + R5_PANEL_DEPTH;               // 14.50 mm from the lid wall to the glass
@@ -590,9 +591,14 @@ R5_LID_PLATE = [R5_PANEL[0] + 12, R5_PANEL[1] + 12];    // 204.96 x 122.76, 6 mm
 // centre is x 160.87: inside both the deck's x 150..203.4 opening and the tray's x 61.75..171.75
 // rim notch, instead of the old centred x 116.75 route. This moves the hinge crossing 44.12 mm
 // right and shortens the FPC run without moving the tray notch into its deck-screw boss.
-R5_CABLE_W  = 46;                                        // covers the 15-pin DSI FPC
+R5_CABLE_W  = 20;                                        // 16 mm FFC + 2 mm clearance per side
 R5_CABLE_X  = 140.60;                                    // notch centre, from the panel's left edge
 R5_CABLE_X0 = R5_CABLE_X - R5_CABLE_W/2;                 // its left edge, in panel coords
+// 4PIN 5 V/I2C connector relief, panel-relative; measured from the fit-check annotation.
+R5_4PIN_X0 = 114;
+R5_4PIN_Y0 = 86;
+R5_4PIN_W  = 30;
+R5_4PIN_H  = 25;
 
 // deck screws: on the straight wall runs only (a boss in a 14 mm corner would break the
 // outer radius). Each is a Ø9 column whose centre sits 2.5 mm inside the inner face, so it
@@ -696,6 +702,7 @@ COVER_T     = R5_LID_T;   // rear mounting skin: tape face and print bed
 COVER_FRAME = 7;          // minimum front border / painted band outside the display opening
 COVER_GAP   = 0.5;        // clearance per side around the panel module
 COVER_R     = 8;          // cover corner radius
+COVER_TEST_T = 1.5;       // dimension-only test template; not a functional display mount
 
 COVER_W = HOST_L - 2*HOST_CLR;      // the same 1.5 mm clearance the cassette uses
 COVER_L = HOST_W - 2*HOST_CLR;

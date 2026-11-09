@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the case preview images to ../renders. Run export.py first (the ktemata_* views use the STLs).
+"""Render previews to ../renders/archive (r5: ../renders/r5). Export STL-backed views first.
    python3 cad/tools/render.py            # everything (r4)
    python3 cad/tools/render.py --r5       # the r5 cassette views (after export.py --r5)
    python3 cad/tools/render.py asm_iso    # only images whose name contains one of the arguments
@@ -10,7 +10,10 @@ import subprocess, sys, os, tempfile
 from concurrent.futures import ThreadPoolExecutor
 HERE = os.path.dirname(os.path.abspath(__file__)); CAD = os.path.dirname(HERE); ROOT = os.path.dirname(CAD)
 OUT = os.path.join(ROOT, 'renders'); STL = os.path.join(ROOT, 'stl')
+OUT_R5 = os.path.join(OUT, 'r5')
+OUT_ARCHIVE = os.path.join(OUT, 'archive')
 STL_R5 = os.path.join(STL, 'r5')
+STL_ARCHIVE = os.path.join(STL, 'archive')
 ISO, BACK = '0,0,0,55,0,25,0', '0,0,0,125,0,205,0'   # gimbal camera rotations used with --viewall
 
 # name: (source, size, camera, extra args, full CGAL render?)
@@ -43,6 +46,7 @@ VIEWS = {
     'ktemata_r5_deck':          ('stl:r5_deck',      (1200, 950), ISO, [], True),
     'ktemata_r5_lid_plate':     ('stl:r5_lid_plate', (1200, 950), ISO, [], True),
     'ktemata_r5_lid_cover':     ('stl:r5_lid_cover', (1200, 950), ISO, [], True),
+    'ktemata_r5_lid_cover_test_dimensions': ('stl:r5_lid_cover_test_dimensions', (1200, 950), ISO, [], True),
     'ktemata_corner_lid':       ('stl:corner_lid',   (900, 700), ISO, [], True),
     # r5 internal cassette (needs `export.py --r5` first); render with --r5
     'r5_assembly':  ('assembly_r5.scad', (1400, 1100), '0,0,0,55,0,25,0', [], True),
@@ -54,7 +58,8 @@ VIEWS = {
 }
 
 R5_ONLY = {'r5_assembly', 'r5_cassette', 'r5_exploded', 'ktemata_r5_tray', 'ktemata_r5_deck',
-           'ktemata_r5_lid_plate', 'ktemata_r5_lid_cover', 'site_r5_exploded'}
+           'ktemata_r5_lid_plate', 'ktemata_r5_lid_cover', 'ktemata_r5_lid_cover_test_dimensions',
+           'site_r5_exploded'}
 
 # The site is dark; the default Tomorrow scheme renders on white and clashes with it.
 DARK = {'site_r5_exploded'}
@@ -72,14 +77,15 @@ def render(name, td):
         extra += ['-D', 'R5=true']
     if src.startswith('stl:'):
         src = os.path.join(td, name + '.scad')
-        stl_dir = STL_R5 if name in R5_ONLY else STL
+        stl_dir = STL_R5 if name in R5_ONLY else STL_ARCHIVE
         stl = os.path.join(stl_dir, "ktemata_" + VIEWS[name][0][4:] + ".stl")
         open(src, 'w').write(f'color("#4a72b0") import("{stl}");\n')
     else:
         src = os.path.join(CAD, src)
     view = ['--camera=' + cam] + (['--viewall', '--autocenter'] if cam.count(',') == 6 and cam.startswith('0,0,0,') else [])
     scheme = 'Tomorrow Night' if name in DARK else 'Tomorrow'
-    cmd = ['openscad', '-o', os.path.join(OUT, name + '.png'), f'--imgsize={w},{h}', f'--colorscheme={scheme}',
+    out_dir = OUT_R5 if name in R5_ONLY else OUT_ARCHIVE
+    cmd = ['openscad', '-o', os.path.join(out_dir, name + '.png'), f'--imgsize={w},{h}', f'--colorscheme={scheme}',
            *(['--render'] if full else []), *view, *extra, src]
     r = subprocess.run(cmd, capture_output=True, text=True)
     return name, r.returncode, r.stderr.strip().splitlines()[-1:] if r.returncode else ''
@@ -92,6 +98,9 @@ else:
     # no arguments: render this build's set only (r5 views need export.py --r5 first)
     skip = R5_ONLY if not r5 else set(VIEWS) - R5_ONLY
     names = [n for n in VIEWS if n not in skip and (n not in R1_ONLY or '--r1' in sys.argv[1:])]
+os.makedirs(OUT_ARCHIVE, exist_ok=True)
+if any(n in R5_ONLY for n in names):
+    os.makedirs(OUT_R5, exist_ok=True)
 with tempfile.TemporaryDirectory() as td, ThreadPoolExecutor(os.cpu_count() or 4) as ex:
     for name, rc, err in ex.map(lambda n: render(n, td), names):
         print(f'{"ok  " if rc == 0 else "FAIL"} {name}.png {err or ""}')
