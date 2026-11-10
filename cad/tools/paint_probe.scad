@@ -59,8 +59,9 @@ echo(P_CHG_X = R5_CHG_X);
 echo(P_CHG_Y = R5_CHG_Y);
 echo(P_CHG_D = R5_CHG_D);
 echo(P_CHG_NUT_D = R5_CHG_NUT_D);
-// the DSI notch: from the cover's hinge edge to the panel, through bezel wall and plate
-echo(P_CABLE_X = PANEL_X + R5_CABLE_X0);
+// the DSI notch: from the cover's hinge edge to the panel, through bezel wall and plate. Its x is
+// a cover coordinate, not a panel one: it lines up with the deck and tray openings, not the panel.
+echo(P_CABLE_X = R5_CABLE_X0);
 echo(P_CABLE_Y = 0);
 echo(P_CABLE_W = R5_CABLE_W);
 echo(P_CABLE_H = PANEL_Y - COVER_GAP);

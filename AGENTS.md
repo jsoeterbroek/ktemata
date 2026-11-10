@@ -9,7 +9,7 @@ Be direct, ultra-concise, and straight to the point. Skip all pleasantries, intr
 
 Parametric OpenSCAD re-creation of the 3D-printed case for the **Ktemata** handheld (formerly "Pi Flux"/"Pi Fluks"): a rugged offline library device — Wikipedia, maps, Gutenberg — that keeps its content when power and networking are gone. The name is Greek κτήματα, "possessions"; the README opens with Thucydides' κτῆμα ἐς ἀεί, "a possession for all time". The r1 geometry (Pi 5 + 5" Waveshare DSI display + mini keyboard + INIU power bank) is reverse-engineered from the photos in `Pi_Flux_r1_-_Build_Guide.pdf` (text in `build_guide.txt`, page images in `work/pages/`); no original CAD exists. r2 retargets the same exterior to the DFR0550-V2 display, UPS HAT (E) + 4× 21700 and FireBeetle status OLED. **r4 is the current default**: the ordered hardware is Raspberry Pi Touch Display 2 (5", 143.4 × 91.46, native portrait), Waveshare UPS HAT (B) with 2× 18650 in 2S, and the Rii K06 keyboard (155 × 89 × 16.5, touchpad), giving a 172 × 237 × 53 mm case. Many dimensions are estimates; see the "r4 CAD implementation" section in `README.md` and `docs/R4.md`. The device has a rugged/military styling (corner bumpers, chamfered edges, grip ribs). Imprinted branding is "π·FLUKS/AI".
 
-**r5 (new) removes the printed exterior entirely.** `-D R5=true` (or `export.py --r5`) builds an internal cassette — `r5_tray`, `r5_deck`, `r5_lid_cover` (plus the simpler `r5_lid_plate`) — that drops into a bought waterproof hard case, with the **7"** Waveshare 7inch DSI LCD (C) (192.96 × 110.76, four M3 rear inserts) centred in the lid. The 16 mm IP67 power button is on the **deck**, not the lid: a centred 7" panel leaves 33.7 mm of latch band and the button needs 34.2 mm. r5 keeps r4's electronics but **drops the air-quality sensor**. Only `HOST = "1200"` (Peli 1200, default) and `"1400"` are accepted; the **Peli R40/R60 are rejected by `assert()`** because their base cannot take the 52.9 mm cassette and neither publishes a lid split; the 14.5 mm display assembly is no longer the blocker.
+**r5 (new) removes the printed exterior entirely.** `-D R5=true` (or `export.py --r5`) builds an internal cassette — `r5_tray`, `r5_deck`, `r5_lid_cover` (plus the simpler `r5_lid_plate`) — that drops into a bought waterproof hard case, with the **5"** Raspberry Pi Touch Display 2 (143.4 × 91.46, 14.92 mm deep, four M2.5 standoffs) centred in the lid and sunk flush; the **7"** Waveshare 7inch DSI LCD (C) cover is kept as a separate part, `r5_lid_cover_waveshare_7in` (192.96 × 110.76, four M3 rear inserts, its own panel numbers in its own file). The 16 mm IP67 power button is on the **deck**, not the lid: it only had to leave because a centred 7" panel leaves 33.7 mm of latch band and the button needs 34.2 mm, and it stays there now. r5 keeps r4's electronics but **drops the air-quality sensor**. Only `HOST = "1200"` (Peli 1200, default) and `"1400"` are accepted; the **Peli R40/R60 are rejected by `assert()`** because their base cannot take the 52.9 mm cassette and neither publishes a lid split; the 14.5 mm display assembly is no longer the blocker.
 
 **Strata is the chosen paint scheme for r5's two visible faces** (`docs/PAINT.md`): the deck's top
 face and the lid cover's bezel face are painted as one surface across the hinge. The artwork is
@@ -29,7 +29,7 @@ mark that meets a fan, a screw or the Pi opening stops at the mask edge.
 
 Hardware, design and build stay simple.
 
-- Core: Pi 5 4 GB, 7" Waveshare DSI display (5" Touch Display 2 on r4), K06 keyboard, UPS HAT (B) with 2× 18650, NVMe SSD, RTC.
+- Core: Pi 5 4 GB, 5" Touch Display 2 (the 7" Waveshare cover is an alternative r5 part), K06 keyboard, UPS HAT (B) with 2× 18650, NVMe SSD, RTC.
 - Allowed exceptions, each with a job: the status OLED with its button (battery state without booting the
   Pi), the K06's 2.4 GHz dongle, and the library hotspot — a local
   access point with no uplink (`ipv4.ip-forward 0`), installed by `post-install.sh --hotspot`.
@@ -57,6 +57,7 @@ python3 cad/tools/export.py              # export r4 to stl/archive/ (binary, ce
 python3 cad/tools/export.py --r2         # export r2/r3 to stl/archive/ (DFR0550 + HAT (E) + Phistone)
 python3 cad/tools/export.py --r1         # export r1 to stl/archive/ (pull_switch, power_button)
 python3 cad/tools/export.py --r5         # export the r5 set to stl/r5/ (tray, deck, lid plate, lid cover)
+python3 cad/tools/export.py --r5 r5_lid_cover_waveshare_7in   # the 7" lid cover alternative (also r5_lid_cover_test_dimensions)
 python3 cad/tools/export.py face bottom  # export only some parts (names: bottom face keyboard_support charge_plug)
 python3 cad/tools/render.py              # legacy: renders/archive/; r5: renders/r5/; args filter by name
 python3 cad/tools/render_showcase.py     # open-case Strata website image -> renders/r5/site_r5_showcase.png

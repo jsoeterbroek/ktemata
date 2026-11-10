@@ -1043,7 +1043,7 @@ def cover_features(p: Surface) -> None:
     aw, ah = m.active
     p.rect(px + (pw - aw) / 2, py + (ph - ah) / 2, aw, ah, "none", 0.8,
            layer="features", stroke="#2b353e", sw=0.6, dash="3 2")
-    p.text("WAVESHARE  DSI  LCD  (C)  ·  7\"", 2.8, m.w / 2, py + ph / 2 - 3.4, LABEL,
+    p.text("RASPBERRY  PI  TOUCH  DISPLAY  2  ·  5\"", 2.8, m.w / 2, py + ph / 2 - 3.4, LABEL,
            layer="features", track=1.5, anchor="middle")
     p.text(f"{f(pw)} × {f(ph)}  ·  image {f(aw)} × {f(ah)}", 2.1, m.w / 2,
            py + ph / 2 + 3.0, LABEL, layer="features", anchor="middle")

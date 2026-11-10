@@ -5,7 +5,7 @@ of the alternatives and because the generator still produces them.
 
 Three airbrush designs for the two printed surfaces you actually look at: the **deck** (keyboard
 side, seen when the case is open) and the **lid cover** (one flat front panel around the recessed
-Waveshare 7inch DSI LCD (C), seen when it is closed). Each scheme is one continuous design across
+Touch Display 2, 5", seen when it is closed). Each scheme is one continuous design across
 both parts, not two decorations that happen to share a palette.
 
 ```
@@ -57,16 +57,16 @@ These are the constraints the artwork obeys, and `cad/tools/paint_probe.scad` fe
 generator straight from `common.scad`. Change a part and the sheets follow; the assertions fail
 rather than drawing a line through a fan.
 
-- **The cover has one flat front at `z = 14.50 mm`.** Its rear mounting skin is **4.00 mm** thick
-  (`z = 0..4.00`), and the display recess is **10.50 mm** deep (`z = 4.00..14.50`). The display
-  glass and the entire broad cover front are coplanar; there is no raised bezel. The **194.96 ×
-  112.76 mm display opening** (`R5_PANEL` + 1.0 mm clearance per side) is centred at
-  `x 19.27..214.23`, `y 32.67..145.43`. Meridian's **7 mm slate border** around that opening is
+- **The cover has one flat front at `z = 18.92 mm`.** Its rear mounting skin is **4.00 mm** thick
+  (`z = 0..4.00`), and the display recess is **14.92 mm** deep (`z = 4.00..18.92`). The display
+  glass and the entire broad cover front are coplanar; there is no raised bezel. The **145.4 ×
+  93.46 mm display opening** (`R5_PANEL` + 1.0 mm clearance per side) is centred at
+  `x 44.05..189.45`, `y 42.32..135.78`. Meridian's **7 mm slate border** around that opening is
   flat paint and a layout datum, not a keep-out. Marks may cross it; only the display opening,
-  cable notch and reserved type interrupt them. The default layout leaves **12.27 mm
-  outside the painted border in x** and a **26.17 mm latch band** below it, all on that same face.
-  The FFC fold pocket (`R5_RIBBON_*`) is blind and stays under the seat skin, so it never reaches
-  the painted face and adds no keep-out to the artwork.
+  cable notch and reserved type interrupt them. The default layout leaves **37.05 mm
+  outside the painted border in x** and a **35.32 mm latch band** below it, all on that same face.
+  Nothing else on the cover breaks the painted face: the 7" build's FFC fold pocket is blind and
+  lives in `cad/r5_lid_cover_waveshare_7in.scad`, and the 5" cover has no pocket at all.
 - **The deck's free fields** are the **40.95 mm side rails**, the **35.6 mm strip** between the OLED
   window (ends `y 66.9`) and the keyboard pocket (starts `y 102.5`), and the **16 mm** between the
   keyboard pocket (ends `y 162.1`) and the latch edge. The right rail carries the power button
@@ -178,8 +178,8 @@ with that pass's slots cut straight through and no handling margin — 243.3 × 
 multi-piece; arrange those pieces against the part outline, or use the registered SVG sheet with
 transfer tape when a single handling assembly is preferable.
 
-**Every cover mask lies on the same flat front at `z = 14.50 mm`.** The display recess extends
-10.50 mm down to the 4.00 mm rear skin, and the glass is flush with the surrounding front. There
+**Every cover mask lies on the same flat front at `z = 18.92 mm`.** The display recess extends
+14.92 mm down to the 4.00 mm rear skin, and the glass is flush with the surrounding front. There
 is no raised bezel step to bridge. The display opening and cable notch pass through every mask;
 Strata has no separate bezel-ring pass.
 

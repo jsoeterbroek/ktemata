@@ -551,70 +551,46 @@ R5_FB_X = 8;  R5_FB_Y = 104;                            // 25.4 x 60 FireBeetle,
 R5_RTC_X = 40; R5_RTC_Y = 104;                          // DS3231, turned 90 deg (22 along x)
 R5_MPPT_X = 40; R5_MPPT_Y = 150;                        // 26 x 20 tray, below the RTC
 
-// ---- r5 display: Touch Display 2, 7" ----
-// r5 hangs the 7" TD2 in the host lid, not the 5" of r4. Raspberry Pi's 7" brief (RP-010429):
-//   189.32 x 120.24 mm module, corners R8, glass = module outline
-//   active area 154.6 (along 189.32) x 86.9, so a 17.4 / 16.7 mm glass border all round
-//   standoffs 168.55 x 99.71, insets 10.385 / 10.265 (drawing: 10.265 +/-0.5 and 18.21+6.45)
-//   8.5 mm standoffs + 6.42 mm body = 14.92 mm deep, exactly the 5" stack
-//   backlight 2.4 W (the 5" is 1.4 W), same 720 x 1280, same J1 + FFC cabling
-// The 189.32 mm axis MUST run along x: 189.32 alone is more than the 178.1 mm cassette length,
-// so a portrait mount cannot fit any accepted host. The panel therefore sits landscape, as r4's
-// does, with the 120.24 mm axis across the cassette.
-// Waveshare 7inch DSI LCD (C), 1024 x 600, DSI + I2C touch. Overall 192.96 x 110.76 with R8
-// corners; active area 154.88 x 86.72 (top margin 11.00, bottom 13.04, sides 19.04). The
-// front glass is 10.50 mm above the PCB back; the four M3 threaded inserts sit 9.54 mm behind
-// the glass (their openings are 0.96 mm inside the PCB back), and the unused 58 x 49 Pi
-// standoffs (M2.5) protrude 3.5 mm behind the PCB.
-R5_PANEL        = [192.96, 110.76, 8];                  // w (along x), h (along y), corner R
-R5_PANEL_ACTIVE = [154.88, 86.72];                      // lit area, same axes
-R5_PANEL_DEPTH  = 10.50;                                // front glass to PCB back
-R5_PANEL_STUD   = 3.5;                                  // M2.5 Pi standoffs behind the PCB
-// The four M3 inserts and the four M2.5 standoffs, relative to the panel's top-left in the
-// drawing, measured from Waveshare's STEP (the pattern is not symmetric about the glass centre).
-// Two fit checks corrected them, both towards the latch/top: the first moved all eight positions
-// 5 mm off the STEP values, the second moved the four M3 inserts another 5 mm because the screws
-// still missed the tapped inserts. The standoffs keep the first correction only, so the two
-// patterns are now 7.4 mm out of step; they are independent features of the panel and only the
-// inserts are tapped, so nothing has to line up between them.
-R5_DISP_HOLES = [[34.42, 31.58], [160.67, 31.58],
-                 [34.42, 97.07], [160.67, 97.07]];
-R5_DISP_POSTS = [[73.97, 32.43], [131.97, 32.43],
-                 [73.97, 81.43], [131.97, 81.43]];
-// The display's PCB back sits on the plate/lid; the glass faces the base.
+// ---- r5 display: Touch Display 2, 5" ----
+// r5's shipped lid part carries the Raspberry Pi Touch Display 2, 5" - the panel r4 uses - sunk
+// into the cover so its glass is flush with the whole front face. The 7" Waveshare build r5 was
+// first drawn for is kept as its own part, cad/r5_lid_cover_waveshare_7in.scad, with that panel's
+// numbers and its connector reliefs in that file.
+//
+// TD2, from the r4 block above and Pi's 5" mechanical drawing:
+//   body/glass outline 143.4 x 91.46, corners R5, 720 x 1280 portrait
+//   active area 110.7 x 62.3 (16:9 at 5"), so a 16.35 / 14.58 mm glass border all round
+//   6.42 body behind the glass + 8.5 M2.5 standoffs = 14.92 deep
+//   the 1280 axis runs along the 143.4 mm one, so the panel sits landscape in this drawing
+//   four standoffs at 122.74 x 72.96, insets 10.33 / 9.25 - centred on the body
+// The standoffs' end faces are the mounting interface: they land on the cover's rear skin (or on
+// the plate's front) and four DIN 7991 M2.5 x 8 screws pass through that skin into them. Nothing
+// protrudes behind the body, so there are no reliefs to cut.
+R5_PANEL        = [143.4, 91.46, 5];                    // w (along x), h (along y), corner R
+R5_PANEL_ACTIVE = [110.7, 62.3];                        // lit area, same axes
+R5_PANEL_BODY   = 6.42;                                 // glass front to the body's back
+R5_PANEL_STUD   = 8.5;                                  // M2.5 standoffs behind the body
+R5_PANEL_DEPTH  = R5_PANEL_BODY + R5_PANEL_STUD;        // 14.92, glass front to the seat
+R5_PANEL_STUD_D = 7;                                    // standoff OD, estimated; stand-in only
+// Panel-relative hole pattern, i.e. (143.4 - 122.74)/2 and (91.46 - 72.96)/2 in from the glass.
+R5_DISP_HOLES = [[10.33, 9.25], [133.07, 9.25], [10.33, 82.21], [133.07, 82.21]];
+// The standoffs sit on the plate/lid seat; the glass faces the base.
 R5_LID_T = 4;
-R5_DISP_DEEP = R5_LID_T + R5_PANEL_DEPTH;               // 14.50 mm from the lid wall to the glass
-// Centred in both axes. The lid has no hardware left to dodge: the 7" panel eats the latch band
-// the 16 mm power button needed, so the button moved to the deck (see R5_BTN_* below).
-R5_DISP_X0 = (R5_W - R5_PANEL[0])/2;                    // 18.77
-R5_DISP_Y0 = (R5_L - R5_PANEL[1])/2;                    // 32.17
-R5_LID_PLATE = [R5_PANEL[0] + 12, R5_PANEL[1] + 12];    // 204.96 x 122.76, 6 mm border
-// The DSI/GPIO leads leave the panel's right-hand rear PCB area and turn towards the hinge/base,
-// so the full-height cover and the simple plate are both notched there. The notch is R5_CABLE_W
-// wide, centred at R5_CABLE_X from the panel's left edge. At 140.60 the default cover's cable
-// centre is x 160.87: inside both the deck's x 150..203.4 opening and the tray's x 61.75..171.75
-// rim notch, instead of the old centred x 116.75 route. This moves the hinge crossing 44.12 mm
-// right and shortens the FPC run without moving the tray notch into its deck-screw boss.
+R5_DISP_DEEP = R5_LID_T + R5_PANEL_DEPTH;               // 18.92 mm from the lid wall to the glass
+// Centred in both axes: 45.05 mm of plate either side, 43.32 mm above and below. The lid has no
+// hardware left to dodge - the panel eats the latch band the 16 mm power button needed, so the
+// button moved to the deck (see R5_BTN_* below).
+R5_DISP_X0 = (R5_W - R5_PANEL[0])/2;                    // 45.05
+R5_DISP_Y0 = (R5_L - R5_PANEL[1])/2;                    // 43.32
+R5_LID_PLATE = [R5_PANEL[0] + 12, R5_PANEL[1] + 12];    // 155.40 x 103.46, 6 mm border
+// The DSI lead leaves the panel's rear and turns towards the hinge/base, so the cover and the
+// plate are both notched there. The notch is placed by the CASE, not by the panel: it has to land
+// inside the deck's hinge opening (x 150..203.4) and the tray's rim notch (x 61.75..171.75), and
+// neither moves with the display. Its x is therefore a cover coordinate - 20 mm wide at
+// 150.87..170.87, centre 160.87, which gives the 16 mm FFC 2 mm clearance per side.
 R5_CABLE_W  = 20;                                        // 16 mm FFC + 2 mm clearance per side
-R5_CABLE_X  = 140.60;                                    // notch centre, from the panel's left edge
-R5_CABLE_X0 = R5_CABLE_X - R5_CABLE_W/2;                 // its left edge, in panel coords
-// 4PIN 5 V/I2C connector relief, panel-relative; measured from the fit-check annotation.
-R5_4PIN_X0 = 114;
-R5_4PIN_Y0 = 86;
-R5_4PIN_W  = 30;
-R5_4PIN_H  = 25;
-// DSI FFC fold pocket, also panel-relative and off the same fit check: the 15-pin lead has to
-// fold on itself between the panel's rear PCB and the hinge-edge notch, and the 4 mm skin the
-// display seats on gives the fold no room. The area marked on the printed cover is pocketed from
-// the recess side, leaving R5_RIBBON_SKIN on the tape face: 3 mm of depth for the fold, with the
-// flat painted/tape face intact. The pocket sits between the right-hand display positions, clear
-// of all eight (nearest: the M3 insert at y 31.58 and the standoff at y 81.43).
-R5_RIBBON_X0   = 132;
-R5_RIBBON_Y0   = 41;
-R5_RIBBON_W    = 36;
-R5_RIBBON_H    = 33;
-R5_RIBBON_R    = 3;                                      // corner radius of the pocket
-R5_RIBBON_SKIN = 1;                                      // skin left under it, tape face stays flat
+R5_CABLE_X0 = 150.87;                                    // notch left edge, cover coords
+R5_CABLE_C  = R5_CABLE_X0 + R5_CABLE_W/2;                // 160.87, its centre
 
 // deck screws: on the straight wall runs only (a boss in a 14 mm corner would break the
 // outer radius). Each is a Ø9 column whose centre sits 2.5 mm inside the inner face, so it
@@ -630,6 +606,11 @@ M3_HEAD  = 6.2;                                        // DIN 7991 dk 6.0 + 0.2;
 M3_CSK_T = (M3_HEAD - M3_CLR)/2;                       // 1.4, 90 deg; head seats 0.1 below face
 M3_INS_D = 4.2;                                        // heat-set insert hole: 4.6 OD - 0.4 melt
 M3_INS_H = 6.0;                                        // insert depth: 5.7 mm insert + margin
+// The lid's display screws are M2.5, not M3: the Touch Display 2's own standoffs carry the M2.5
+// threads, and those standoffs are the mount. Same DIN 7991 family, so the same 90-degree seats
+// (M25_CLR, the 2.8 mm clearance hole, is in the board-post block above).
+M25_CSK   = 4.7;                                       // DIN 7991 dk 4.7 for M2.5
+M25_CSK_T = (M25_CSK - M25_CLR)/2;                     // 0.95, 90 deg
 R5_BOSS_D = 9;                                         // deck boss (2.4 mm wall round the insert)
 // The inset stays at 2.5, not R5_BOSS_D/2 - 1: at 3.5 the left-wall bosses would reach x 10.6
 // and eat 0.6 mm into the FireBeetle's floor pad (module at x 10). At 2.5 the boss tops out at
@@ -727,20 +708,21 @@ COVER_TEST_T = 1;         // dimension-only test template; not a functional disp
 COVER_W = HOST_L - 2*HOST_CLR;      // the same 1.5 mm clearance the cassette uses
 COVER_L = HOST_W - 2*HOST_CLR;
 
-// A full-height front panel, not a raised rim on a thin plate. The 10.50 mm display recess starts
+// A full-height front panel, not a raised rim on a thin plate. The 14.92 mm display recess starts
 // at COVER_T and ends at the broad front, so the glass and the whole cover face are coplanar.
 // This is the same overall stack as r5_lid_plate and leaves the host/tape interface unchanged.
-COVER_FRONT_Z = R5_DISP_DEEP;
+COVER_FRONT_Z = R5_DISP_DEEP;                           // 18.92 with the TD2
 
-// The 7" panel, centred in both axes - the operator's call, and the lid has nothing left to
-// dodge now that the power button is on the deck. The actual front border follows the host size.
+// The panel, centred in both axes - the operator's call, and the lid has nothing left to dodge
+// now that the power button is on the deck. The actual front border follows the host size: 45.05
+// mm either side and 43.32 mm above and below on the 1200.
 PANEL_X = (COVER_W - R5_PANEL[0]) / 2;
 PANEL_Y = (COVER_L - R5_PANEL[1]) / 2;
 
 // Power button: 16 mm IP67 panel button, moved from the lid to the deck's right rail. A centred
-// 7" panel leaves 28.93 mm of latch band and the button needs 16.2 + 2*9 = 34.2 mm, so the two
-// cannot share a 178.1 mm lid. On the deck it is reachable with the case open, and its two leads
-// reach the Pi's J2 pads (external power button) under the plate.
+// 7" panel (the cover r5 was first drawn for) left 28.93 mm of latch band and the button needs
+// 16.2 + 2*9 = 34.2 mm, so the two cannot share a 178.1 mm lid. On the deck it is reachable with
+// the case open, and its two leads reach the Pi's J2 pads (external power button) under the plate.
 // Placed at the latch end of the right rail, on free floor: the boards and cells all end at
 // y 101, and the rail's own deck screws are at (207.5, 5.1), (228.4, 40) and (228.4, 138.1).
 // 9.5 mm of half-nut keeps it 11.4 mm inside the right edge and 18.1 mm off the latch edge,
@@ -809,14 +791,14 @@ assert(R5_OPEN_D >= R5_PI_Y,
        str("the hinge opening is ", R5_OPEN_D, " mm deep, the Pi's connectors need ", R5_PI_Y));
 assert(R5_SCREWS[5][0] - M3_HEAD/2 >= R5_OPEN_X1,
        "the hinge opening runs into deck screw 5's countersink");
-// The lid notch's centreline must fit both existing openings with 8 mm half-width for the FPC.
-assert(!R5 || (R5_CABLE_X0 >= 0 && R5_CABLE_X0 + R5_CABLE_W <= R5_PANEL[0]),
-       "the lid cable notch runs outside the display outline");
-assert(!R5 || (R5_DISP_X0 + R5_CABLE_X >= R5_OPEN_X0 + 8
-               && R5_DISP_X0 + R5_CABLE_X <= R5_OPEN_X1 - 8),
+// The lid notch has to reach the recess from the hinge edge, stay inside it in x, and keep 8 mm
+// of half-width for the FPC inside both case-side openings.
+assert(!R5 || (R5_CABLE_X0 >= PANEL_X - COVER_GAP
+               && R5_CABLE_X0 + R5_CABLE_W <= PANEL_X + R5_PANEL[0] + COVER_GAP),
+       "the lid cable notch is not inside the display recess in x");
+assert(!R5 || (R5_CABLE_C >= R5_OPEN_X0 + 8 && R5_CABLE_C <= R5_OPEN_X1 - 8),
        "the lid cable route does not fit the deck's hinge opening");
-assert(!R5 || (R5_DISP_X0 + R5_CABLE_X >= R5_W/2 - 55 + 8
-               && R5_DISP_X0 + R5_CABLE_X <= R5_W/2 + 55 - 8),
+assert(!R5 || (R5_CABLE_C >= R5_W/2 - 55 + 8 && R5_CABLE_C <= R5_W/2 + 55 - 8),
        "the lid cable route does not fit the tray's rim notch");
 
 // ---- charge socket: 5.5 x 2.1 DC jack through the deck's right rail ----

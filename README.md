@@ -4,7 +4,7 @@
 
 # Ktemata
 
-A rugged offline-library handheld (Pi 5, 7" Waveshare DSI display for r5 / 5" Touch Display 2 for r4, 2S 18650 UPS). Parametric OpenSCAD case; keeps Wikipedia, maps and Gutenberg when power and networking are gone.
+A rugged offline-library handheld (Pi 5, 5" Touch Display 2 on r5 and r4, 2S 18650 UPS). Parametric OpenSCAD case; keeps Wikipedia, maps and Gutenberg when power and networking are gone.
 
 ## Ktemata
 
@@ -17,8 +17,9 @@ you can carry. The phrase is engraved on the face, and `KTEMATA` is the wordmark
 
 The r1 geometry was rebuilt from the photos in `Pi_Flux_r1_-_Build_Guide.pdf`. The guide has no CAD
 drawings, so this is a **functional re-creation**, not a copy of the original files. The **r5** build is the
-current target: the **Waveshare 7inch DSI LCD (C)** in the host lid, the Waveshare UPS HAT (B) with 2× 18650,
-and the Rii K06 keyboard with touchpad. The **r4** printed case keeps the 5" Touch Display 2. r2/r3
+current target: the **Raspberry Pi Touch Display 2, 5"** in the host lid, the Waveshare UPS HAT (B) with
+2× 18650, and the Rii K06 keyboard with touchpad. The **r4** printed case keeps the same 5" display; the
+7" Waveshare cover is kept as an alternative part (`ktemata_r5_lid_cover_waveshare_7in`). r2/r3
 (DFR0550-V2 + UPS HAT (E) + 4× 21700 + Phistone) and r1 remain selectable. Everything is parametric OpenSCAD: measure your own parts, edit `cad/common.scad`, then
 re-export.
 
@@ -68,7 +69,7 @@ the images and `bash site/deploy.sh` rebuilds then uploads them.
 | **r2** | Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700; same geometry and STLs as r3 | Wired USB keyboard; optional Pimoroni trackball; hotspot optional (`--hotspot`) |
 | **r3** | Same mechanical build and STLs as r2 | Phistone Mini Keyboard (2.4 GHz USB dongle or Bluetooth 5.0); no Pimoroni trackball; hotspot optional |
 | **r4** | **Current target and default CAD:** Pi 5 + Touch Display 2 (5", landscape) + UPS HAT (B) with 2× 18650 (2S); 172 × 237 × 53 mm | **Rii K06** 151 × 59 × 11 mm, 2.4 GHz dongle or Bluetooth; touchpad replaces the trackball; hotspot optional |
-| **r5** | Same electronics as r4 but the **Waveshare 7inch DSI LCD (C)**, **no air-quality sensor**; no printed exterior: an internal cassette (tray + deck + lid cover) drops into a bought Peli 1200, the 7" panel centred in the lid. The UPS HAT (B) and the Pi 5 + M.2 BASE + SSD sit **side by side on the tray floor**, each screwed to four posts, with power on soldered wires instead of pogo pins; the deck bolts down with **seven countersunk M3 × 10** (DIN 7991 / ISO 10642) into heat-set inserts | K06 on the deck; see [`docs/R5.md`](docs/R5.md) |
+| **r5** | Same electronics as r4 and the same **5" Touch Display 2**, **no air-quality sensor**; no printed exterior: an internal cassette (tray + deck + lid cover) drops into a bought Peli 1200, the panel centred in the lid (the 7" Waveshare cover is kept as an alternative part). The UPS HAT (B) and the Pi 5 + M.2 BASE + SSD sit **side by side on the tray floor**, each screwed to four posts, with power on soldered wires instead of pogo pins; the deck bolts down with **seven countersunk M3 × 10** (DIN 7991 / ISO 10642) into heat-set inserts | K06 on the deck; see [`docs/R5.md`](docs/R5.md) |
 
 The default CAD is the **r4 build**. Two switches in `cad/common.scad` select the others: `R4` (`true`,
 the default) turns the r4 retarget off, and `R2` (`false`) selects the original r1 case. `R5`
@@ -230,7 +231,7 @@ r1 pull-switch slot, side cutout and battery button are not used in r2/r3/r4; th
 
 ## KISS principle
 
-Hardware choices, design and build stay simple. The core is the Pi 5 4 GB, the 7" Waveshare display (5" Touch Display 2 on r4), the K06
+Hardware choices, design and build stay simple. The core is the Pi 5 4 GB, the 5" Touch Display 2, the K06
 keyboard, the UPS HAT (B) with 2× 18650, the NVMe SSD and the RTC. Everything else in the tables below is an
 exception with a job: the status OLED and its button (battery state with the Pi off), the K06's 2.4 GHz dongle, and the library hotspot — a local AP with no uplink, off by default
 and installed with `post-install.sh --hotspot`. Charging is one input fed by mains, solar or the external
@@ -247,7 +248,7 @@ Project N.O.M.A.D. (custom ARM64 build)
 - local offline maps, wikipedia, prepper, medical
 - power by battery (UPS board); recharge by solar (main) + separate hand crank generator (backup); optional solar cells on backside
 - Raspberry PI 5 4 GB
-- 7" sunlight-readable LCD (DSI)
+- 5" sunlight-readable LCD (DSI), Touch Display 2
 - wired USB keyboard (no Bluetooth)
 - nice to have: extra small OLED screen (FireBeetle 2 ESP32-UE) for battery status and warnings (important); cycles through 4 screens: time (default), power, storage %, Wi-Fi state; auto-switches to the relevant screen when a threshold is passed
 - 512 GB SSD storage (NVMe 2242 fitted; 1 TB as the later upgrade, SATA possible)
@@ -262,7 +263,7 @@ Project N.O.M.A.D. (custom ARM64 build)
 | Function | Choice | Notes |
 |---|---|---|
 | Board | Raspberry Pi 5, 4 GB | Pi 4 was considered for lower power and rejected: idle draw is about the same (Pi 4 ≈ 2.9 W, Pi 5 ≈ 2.7–3.0 W), and the Pi 4 lacks PCIe (NVMe) and the built-in RTC. RAM size barely affects power. 4 GB covers the expected 2–4 GB use (desktop, NOMAD without AI under 1 GB, Chromium with Wikipedia + maps); keep browser tabs modest. 16 GB only pays off for local AI, which is out of scope. Project NOMAD is officially x86-64 only for now. ARM64 support is being built by the maintainers (no date). Until then, run Kiwix (Wikipedia, medical, prepper) and ProtoMaps directly, or use a community ARM build. |
-| Display | **Waveshare 7inch DSI LCD (C)** for r5 (the 5" Touch Display 2 for r4): 1024 × 600 IPS DSI, 5-point capacitive touch, 192.96 × 110.76 mm, active 154.88 × 86.72, 10.50 mm front glass to PCB back, 5 V / 0.5 A, software backlight | **7" (r5):** 4× M3 rear inserts (126.25 × 65.49 span) and a 15-pin DSI FPC + 4-pin 5 V/I²C lead; the lid cover screws through its 4 mm rear skin and sinks the display 10.50 mm into the 14.50 mm panel, leaving the glass **flush with the entire front face**. Its 4-pin 5 V/I²C lead uses the Pi's I²C1 (GPIO2/3) for the Goodix touch; with no 40-pin header, solder it to the pads. It runs landscape and centred in both axes; the 192.96 mm axis is longer than the cassette's 178.1 mm length, so portrait cannot fit. The panel's 110.76 mm height leaves a 33.67 mm latch band, which is still short of the 34.2 mm a 16 mm IP67 button needs, so r5's power button is on the **deck**. **5" (r4):** 143.4 × 91.46, standoffs 122.74 × 72.96, 1.4 W, 237 mm case, panel in the face; its Pi pattern is 51 × 49 mm, so the Pi is held by the case posts (see [`docs/R4.md`](docs/R4.md)). |
+| Display | **Raspberry Pi Touch Display 2, 5"** for r5 and r4: 720 × 1280 IPS DSI, 5-point capacitive touch, 143.4 × 91.46 mm, active 110.7 × 62.3, 14.92 mm deep (6.42 body + 8.5 standoffs), 1.4 W | **r5 and r4:** 4× **M2.5** standoffs (122.74 × 72.96 span) and it is the mount: the lid cover screws through its 4 mm rear skin and sinks the display 14.92 mm into the 18.92 mm panel, leaving the glass **flush with the entire front face**. It runs landscape (the 1280 axis along the 143.4 mm one) and centred in both axes. Its touch I²C uses the Pi's I²C1 (GPIO2/3); with no 40-pin header, solder it to the pads. Its Pi pattern is 51 × 49 mm, so the Pi is held by the case posts, not by the display (see [`docs/R4.md`](docs/R4.md)). The **7" Waveshare 7inch DSI LCD (C)** cover is kept as an alternative part, `stl/r5/ktemata_r5_lid_cover_waveshare_7in.stl` (192.96 × 110.76, 10.50 mm to the PCB back, 4× M3 inserts, 33.67 mm latch band - which is why the power button is on the **deck**). |
 | Power | **Waveshare UPS HAT (B)**: 2× 18650 in **2S** (7.4 V nominal), 5 V 5 A out, **8.4 V / 2 A barrel-jack charge input**, INA219 gauge at I²C **0x42** | Charges and powers the Pi at the same time, so connecting a charger does not reboot it. 85 × 56 mm board with pogo pins to the Pi; the cells hang below the board in its own holders (23.35 mm holder/cell side, measured on Waveshare's 3D drawing; mounted rotated 90° to clear the Pi's ports). **Two consequences versus r2:** about **2–2.5 h** Pi 5 runtime instead of ~6–7 h (23 Wh vs 70 Wh), and **no USB-C PD input** — the charge port is a 5.5 × 2.1 mm DC socket (r4: through the printed case wall; r5: in the deck, so the bought host stays unmodified) and solar/crank must deliver **8.4 V** (through the internal MPPT/charger module) instead of PD. Alternative if runtime matters more: the HAT (E) with 4× 21700 (r2/r3). |
 | Solar | Foldable 20–30 W panel **plus** a 2S/8.4 V regulator or MPPT module into the internal charger | r4 has no PD input: the HAT (B) charges from 8.4 V at up to 2 A, so a PD panel cannot feed it directly. The internal module (`MPPT_*`) must output 8.4 V; a bare panel still needs a charge controller in between. Budget for a 2S MPPT module, not a USB-C PD trigger. |
 | Hand crank (backup, nice to have) | **Separate** crank generator with rectifier + buffer capacitor, feeding the **same charger input** as solar, into the one sealed charge port | Emergency top-up for night and clouds, not a main source. Rough estimate: 10–20 W of arm effort gives about 5–10 W into the battery after losses, so 1 minute of cranking ≈ 1 minute of use, and a full charge (about 23 Wh on r4, 70 Wh on r2) would take roughly 3–5 h (r4) or 7–14 h (r2). Sellers' "20 W" ratings are peaks. Kept outside the case: there's no room next to the 21700 cells, you can't hold the device steady against the crank torque, a shaft would break the seal, and it would add weight all the time. Build options: the 3D-printed axial-flux design in the separate [handcrank](https://github.com/jsoeterbroek/handcrank) project (N52 magnets, 8 coils × 350 turns, gearbox, full-bridge rectifier), or a commercial USB-C crank generator. The MPPT/input-voltage regulation matters: without it the input collapses whenever cranking slows (in the video the phone kept showing "USB disconnected"). Later option: a clip-on module on the (not yet modelled) back attachment. A pedal generator gives several times more power. |

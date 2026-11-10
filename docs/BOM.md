@@ -15,7 +15,7 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | # | Part | Qty | Spec / role | ≈ Price |
 |---|---|---|---|---|
 | 1 | Raspberry Pi 5, 4 GB | 1 | 58 × 49 mm. **No 40-pin header** — the UPS HAT sits on the component side. | € 121 |
-| 2 | Waveshare **7inch DSI LCD (C)**, 1024 × 600 | 1 | **192.96 × 110.76 mm**, active **154.88 × 86.72**, front glass to PCB back **10.50 mm**, 4× **M3** rear inserts (126.25 × 65.49 span), 5 V / 0.5 A. Includes DSI-Cable-12cm, two FPC leads, a 6 cm 4-pin 5 V/I²C lead and a screws pack. r5 hangs it landscape in the lid, glass flush; r4 keeps the 5" Touch Display 2 (143.4 × 91.46), selectable with `-D R5=false`. | € 62 |
+| 2 | **Raspberry Pi Touch Display 2, 5"** (the 7" Waveshare 7inch DSI LCD (C) is the alternative lid part) | 1 | **143.4 × 91.46 mm**, active **110.7 × 62.3**, **14.92 mm** deep (6.42 body + 8.5 M2.5 standoffs), 4× **M2.5** standoffs at a 122.74 × 72.96 span, 1.4 W. r5 and r4 both hang it landscape with its glass flush; the lid cover screws through its 4 mm rear skin with **M2.5 × 8**. The 7" Waveshare module (192.96 × 110.76, 10.50 mm to the PCB back, M3 inserts) needs its own cover part and **M3 × 6** screws. | € 62 |
 | 3 | 4-pin 5 V / I²C lead, 30 cm | 1 | The display's included lead is only 6 cm; the display's 4-pin header is at the corner opposite the hinge, so a longer lead is needed to reach the Pi. Header is `GND SDA SCL 5V`; the Pi end is soldered to the 40-pin pads (5 V, GND, GPIO2/3) because the build has no 40-pin header. | € 3 |
 | 4 | Waveshare UPS HAT (B) | 1 | 2S 18650, 5 V / 5 A out, **8.4 V / 2 A barrel input**, INA219 at 0x42. Cells not included; its 8.4 V / 2 A supply is. In future Waveshare UPS module 3S when available.| € 27.82 |
 | 5 | 18650 Li-ion cells, flat-top, unprotected, matched pair | 2 | Same batch, ≤ 67 mm long, 3.0–3.5 Ah. | € 5 ea |
@@ -38,7 +38,7 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | 22 | USB-A → 2-pin 5 V lead (JST-XH / dupont) | 1 | UPS USB-A 5 V → FireBeetle 5 V/GND; keeps the OLED alive with the Pi off. | € 5 |
 | 23 | [M3 × 10 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/bzk-inbus-verzonkenkopschroef-staal-din-7991-m3x10.html) | **7** | DIN 7991 / ISO 10642; **dk 6.0 mm, k 1.7 mm, 2.0 mm hex**. Seven deck screws into the heat-set inserts. Sold in packs of 25. | € 2.60 / 25 |
 | 23a | [M3 × 6 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/inbus-torx-schroeven/inbusbout-met-verzonken-kop-staal/inbusbout-verzonkenkop-m3/) | **4** | Same DIN 7991 head and 2.0 mm hex. For the 4 mm lid cover **or** alternate plate into the display's rear inserts; gives ≈1.04 mm engagement. **Do not substitute M3 × 8**, which can bottom out. Sold in packs of 25. | € 2.45 / 25 |
-| 23b | 16 mm IP67 metal panel button (momentary NO) | 1 | r5 power button, on the deck's right rail (`R5_BTN_D`). Two leads to the Pi 5's **J2** pads. A centred 7" panel leaves no latch band for it on the lid. | € 8 |
+| 23b | 16 mm IP67 metal panel button (momentary NO) | 1 | r5 power button, on the deck's right rail (`R5_BTN_D`). Two leads to the Pi 5's **J2** pads. It went to the deck because the 7" cover's latch band was 33.7 mm against the 34.2 mm the button needs; it stays there now the 5" cover is the shipped part. | € 8 |
 | 24 | Fuse + holder, 3–5 A | 1 | On the 2S pack lead. | € 4 |
 | 25 | Silicone O-ring / gasket assortment | 1 | Case seam, DC socket, button. | € 10 |
 | 26 | Filament, PETG/PLA + TPU | ≈ 500 g | The r4 shells or the r5 cassette; the TPU is only for the charge plug. | € 15 + € 20 |
@@ -62,16 +62,16 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
 
 ## Notes
 
-1. **Display.** The r5 7" is the **Waveshare 7inch DSI LCD (C)**: 192.96 × 110.76 mm, 1024 × 600,
-   active 154.88 × 86.72 (top 11.00, bottom 13.04, sides 19.04), 10.50 mm front glass to PCB back, four
-   **M3** rear inserts at a 126.25 × 65.49 span (not symmetric), and unused 58 × 49 M2.5 Pi standoffs
-   that protrude 3.5 mm behind the PCB. Four **DIN 7991 M3 × 6** screws pass through the 4 mm rear
-   skin into those inserts; their heads sit in 90° countersinks on the tape side, and the display
-   glass is **flush with the entire front face**. It runs landscape in the host lid
-   and is thinner than the old TD2, so the lid clearance improves. Pi 5 DSI1 + I2C1 (`i2c1` overlay
-   parameter); the touch is a Goodix at 0x14. 5 V / 0.5 A, 2.5 W.
-   The **5" Touch Display 2** (143.4 × 91.46, standoffs 122.74 × 72.96, 1.4 W) is the r4 target; the r4
-   case is 172 × 237 mm and the panel runs landscape in the face, auto-detected by Pi OS.
+1. **Display.** r5 and r4 both use the **Raspberry Pi Touch Display 2, 5"**: 143.4 × 91.46 mm,
+   720 × 1280, active 110.7 × 62.3, 14.92 mm deep (6.42 body + 8.5 **M2.5** standoffs), four standoffs
+   on a 122.74 × 72.96 pattern, 1.4 W. In r5 four **DIN 7991 M2.5 × 8** screws pass through the lid
+   cover's 4 mm rear skin into those standoffs; their heads sit in 90° countersinks on the tape side,
+   and the display glass is **flush with the entire front face**. It runs landscape in the host lid,
+   auto-detected by Pi OS. DSI1 + I2C1 (`i2c1` overlay parameter); the touch is a Goodix at 0x14.
+   The **7" Waveshare 7inch DSI LCD (C)** (192.96 × 110.76, 1024 × 600, 10.50 mm to the PCB back, four
+   **M3** inserts at a 126.25 × 65.49 span) is kept as an alternative lid part,
+   `ktemata_r5_lid_cover_waveshare_7in`; it needs **M3 × 6** screws instead and its 33.67 mm latch band
+   is what pushed the power button onto the deck.
    *One consequence (r4 only):* the 5" TD2's **inner** Pi hole pattern is 51 × 49 mm (the Pi is 58 × 49),
    so the Pi is held by the case posts and the display by its own **outer** standoffs (122.74 × 72.96 mm).
    Check [`R4.md`](R4.md) before printing that variant.

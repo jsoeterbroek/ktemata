@@ -95,14 +95,13 @@ module c_oled() {
            R5_OLED_SEAT, R5_OLED_GLASS[2]);
 }
 module c_display() {
-    // Glass at R5_GLASS, PCB back R5_PANEL_DEPTH above it on the lid part's recess seat. This is
-    // only the Waveshare module; the selected lid part is modelled separately.
+    // The Touch Display 2: glass at R5_GLASS, the 6.42 mm body above it, then the four M2.5
+    // standoffs rising to the lid part's seat. Nothing else protrudes, so there are no reliefs.
     r5_at(R5_DISP_X0, R5_DISP_Y0 + R5_PANEL[1], R5_GLASS)
-        linear_extrude(R5_PANEL_DEPTH) rrect(R5_PANEL[0], R5_PANEL[1], R5_PANEL[2]);
-    // The four unused Pi standoffs project 3.5 mm behind the PCB into the lid part's reliefs.
-    for (p=R5_DISP_POSTS)
-        r5_at(R5_DISP_X0 + p[0], R5_DISP_Y0 + p[1], R5_GLASS + R5_PANEL_DEPTH)
-            cylinder(d=5.5, h=R5_PANEL_STUD);
+        linear_extrude(R5_PANEL_BODY) rrect(R5_PANEL[0], R5_PANEL[1], R5_PANEL[2]);
+    for (p=R5_DISP_HOLES)
+        r5_at(R5_DISP_X0 + p[0], R5_DISP_Y0 + p[1], R5_GLASS + R5_PANEL_BODY)
+            cylinder(d=R5_PANEL_STUD_D, h=R5_PANEL_STUD);
 }
 
 // Both lid parts are modelled with z = 0 on the host/tape face and grow towards the display.

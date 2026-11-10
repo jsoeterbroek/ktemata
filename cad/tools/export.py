@@ -22,10 +22,13 @@ PARTS = {'bottom':'ktemata_bottom', 'face':'ktemata_face', 'keyboard_support':'k
          'r5_tray':'ktemata_r5_tray', 'r5_deck':'ktemata_r5_deck',
          'r5_lid_plate':'ktemata_r5_lid_plate', 'r5_lid_cover':'ktemata_r5_lid_cover',
          'r5_lid_cover_test_dimensions':'ktemata_r5_lid_cover_test_dimensions',
+         'r5_lid_cover_waveshare_7in':'ktemata_r5_lid_cover_waveshare_7in',
          'pull_switch':'ktemata_pull_switch', 'power_button':'ktemata_power_button'}
 LEGACY = {'pull_switch', 'power_button'}
-R5_PARTS = {'r5_tray', 'r5_deck', 'r5_lid_plate', 'r5_lid_cover', 'r5_lid_cover_test_dimensions'}
-R5_TEST_PARTS = {'r5_lid_cover_test_dimensions'}
+R5_PARTS = {'r5_tray', 'r5_deck', 'r5_lid_plate', 'r5_lid_cover', 'r5_lid_cover_test_dimensions',
+            'r5_lid_cover_waveshare_7in'}
+# alternatives that are not part of the shipped set: the 1 mm fit template and the 7" cover
+R5_TEST_PARTS = {'r5_lid_cover_test_dimensions', 'r5_lid_cover_waveshare_7in'}
 # the corner tool is a per-corner accessory, not part of the case; skip it unless asked for
 TOOLING = {'corner_cap', 'corner_plate', 'corner_cup', 'corner_lid'}
 
