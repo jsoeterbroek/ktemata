@@ -572,9 +572,13 @@ R5_PANEL_DEPTH  = 10.50;                                // front glass to PCB ba
 R5_PANEL_STUD   = 3.5;                                  // M2.5 Pi standoffs behind the PCB
 // The four M3 inserts and the four M2.5 standoffs, relative to the panel's top-left in the
 // drawing, measured from Waveshare's STEP (the pattern is not symmetric about the glass centre).
-// Fit-check correction: all eight positions are 5 mm towards the latch/top from the STEP values.
-R5_DISP_HOLES = [[34.42, 26.58], [160.67, 26.58],
-                 [34.42, 92.07], [160.67, 92.07]];
+// Two fit checks corrected them, both towards the latch/top: the first moved all eight positions
+// 5 mm off the STEP values, the second moved the four M3 inserts another 5 mm because the screws
+// still missed the tapped inserts. The standoffs keep the first correction only, so the two
+// patterns are now 7.4 mm out of step; they are independent features of the panel and only the
+// inserts are tapped, so nothing has to line up between them.
+R5_DISP_HOLES = [[34.42, 31.58], [160.67, 31.58],
+                 [34.42, 97.07], [160.67, 97.07]];
 R5_DISP_POSTS = [[73.97, 32.43], [131.97, 32.43],
                  [73.97, 81.43], [131.97, 81.43]];
 // The display's PCB back sits on the plate/lid; the glass faces the base.
@@ -599,6 +603,18 @@ R5_4PIN_X0 = 114;
 R5_4PIN_Y0 = 86;
 R5_4PIN_W  = 30;
 R5_4PIN_H  = 25;
+// DSI FFC fold pocket, also panel-relative and off the same fit check: the 15-pin lead has to
+// fold on itself between the panel's rear PCB and the hinge-edge notch, and the 4 mm skin the
+// display seats on gives the fold no room. The area marked on the printed cover is pocketed from
+// the recess side, leaving R5_RIBBON_SKIN on the tape face: 3 mm of depth for the fold, with the
+// flat painted/tape face intact. The pocket sits between the right-hand display positions, clear
+// of all eight (nearest: the M3 insert at y 31.58 and the standoff at y 81.43).
+R5_RIBBON_X0   = 132;
+R5_RIBBON_Y0   = 41;
+R5_RIBBON_W    = 36;
+R5_RIBBON_H    = 33;
+R5_RIBBON_R    = 3;                                      // corner radius of the pocket
+R5_RIBBON_SKIN = 1;                                      // skin left under it, tape face stays flat
 
 // deck screws: on the straight wall runs only (a boss in a 14 mm corner would break the
 // outer radius). Each is a Ø9 column whose centre sits 2.5 mm inside the inner face, so it
@@ -700,9 +716,13 @@ assert(R5_BTN_Y + R5_BTN_BODY/2 < R5_L - 2.5,
 // guard these values stay in r5_lid_cover.scad, next to the geometry they protect.
 COVER_T     = R5_LID_T;   // rear mounting skin: tape face and print bed
 COVER_FRAME = 7;          // minimum front border / painted band outside the display opening
-COVER_GAP   = 0.5;        // clearance per side around the panel module
+// Was 0.5. The first fit check found the 193.96 x 111.76 opening tight all round - the panel's
+// glass outline is its own tolerance - so the opening is now the glass + 1.0 mm per side
+// (194.96 x 112.76). It stays inside the 19.04 / 11.00 / 13.04 mm glass border, so no printed
+// edge reaches the image; the paint masks read this same value.
+COVER_GAP   = 1.0;        // clearance per side around the panel module
 COVER_R     = 8;          // cover corner radius
-COVER_TEST_T = 1.5;       // dimension-only test template; not a functional display mount
+COVER_TEST_T = 1;         // dimension-only test template; not a functional display mount
 
 COVER_W = HOST_L - 2*HOST_CLR;      // the same 1.5 mm clearance the cassette uses
 COVER_L = HOST_W - 2*HOST_CLR;

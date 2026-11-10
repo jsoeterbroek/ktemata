@@ -59,12 +59,14 @@ rather than drawing a line through a fan.
 
 - **The cover has one flat front at `z = 14.50 mm`.** Its rear mounting skin is **4.00 mm** thick
   (`z = 0..4.00`), and the display recess is **10.50 mm** deep (`z = 4.00..14.50`). The display
-  glass and the entire broad cover front are coplanar; there is no raised bezel. The **193.96 ×
-  111.76 mm display opening** (`R5_PANEL` + 0.5 mm clearance per side) is centred at
-  `x 19.77..213.73`, `y 33.17..144.93`. Meridian's **7 mm slate border** around that opening is
+  glass and the entire broad cover front are coplanar; there is no raised bezel. The **194.96 ×
+  112.76 mm display opening** (`R5_PANEL` + 1.0 mm clearance per side) is centred at
+  `x 19.27..214.23`, `y 32.67..145.43`. Meridian's **7 mm slate border** around that opening is
   flat paint and a layout datum, not a keep-out. Marks may cross it; only the display opening,
-  cable notch and reserved type interrupt them. The default layout leaves **12.77 mm
+  cable notch and reserved type interrupt them. The default layout leaves **12.27 mm
   outside the painted border in x** and a **26.17 mm latch band** below it, all on that same face.
+  The FFC fold pocket (`R5_RIBBON_*`) is blind and stays under the seat skin, so it never reaches
+  the painted face and adds no keep-out to the artwork.
 - **The deck's free fields** are the **40.95 mm side rails**, the **35.6 mm strip** between the OLED
   window (ends `y 66.9`) and the keyboard pocket (starts `y 102.5`), and the **16 mm** between the
   keyboard pocket (ends `y 162.1`) and the latch edge. The right rail carries the power button

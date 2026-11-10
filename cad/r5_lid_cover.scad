@@ -24,12 +24,18 @@
 //   M3 inserts            126.25 x 65.49 span            (R5_DISP_HOLES)
 //   Pi standoffs (unused) 58 x 49, 3.5 mm behind the PCB (R5_DISP_POSTS, R5_PANEL_STUD)
 //   panel position        centred in both axes           (PANEL_X/Y)
+//   recess opening        the module + 1.0 mm a side     (COVER_GAP)
+//   FFC fold pocket       36 x 33, 3 mm deep             (R5_RIBBON_*)
 //
 // There is no power button here any more. A centred 7" panel leaves 28.93 mm of latch band and a
 // 16 mm IP67 button needs 34.2 mm, so the button moved to the deck's right rail (R5_BTN_*).
 include <common.scad>
 
 assert(R5, "r5 parts need -D R5=true");
+
+// Distance from a point to an axis-aligned rectangle in the panel's drawing plane; zero inside.
+function rect_gap(p, x0, y0, w, h) =
+    norm([max(x0 - p[0], p[0] - (x0 + w), 0), max(y0 - p[1], p[1] - (y0 + h), 0)]);
 
 // ---------------- guards ----------------
 // The values themselves are in common.scad (see the note there); these are the checks that make
@@ -52,6 +58,18 @@ assert(R5_4PIN_X0 >= -COVER_GAP && R5_4PIN_Y0 >= -COVER_GAP
        && R5_4PIN_X0 + R5_4PIN_W <= R5_PANEL[0] + COVER_GAP
        && R5_4PIN_Y0 + R5_4PIN_H <= R5_PANEL[1] + COVER_GAP,
        "the 4PIN relief must stay inside the display recess");
+// The fold pocket is a blind cut in the seat skin: it has to stay inside the recess (or it would
+// break the tape/painted face at the front border) and clear every screw and standoff seat.
+assert(R5_RIBBON_X0 >= -COVER_GAP && R5_RIBBON_Y0 >= -COVER_GAP
+       && R5_RIBBON_X0 + R5_RIBBON_W <= R5_PANEL[0] + COVER_GAP
+       && R5_RIBBON_Y0 + R5_RIBBON_H <= R5_PANEL[1] + COVER_GAP,
+       "the FFC fold pocket must stay inside the display recess");
+assert(R5_RIBBON_SKIN >= 0.8 && R5_RIBBON_SKIN <= COVER_T - 2,
+       str("the FFC fold pocket leaves ", R5_RIBBON_SKIN, " mm of the ", COVER_T,
+           " mm skin: keep it between 0.8 and ", COVER_T - 2));
+for (p = concat(R5_DISP_HOLES, R5_DISP_POSTS))
+    assert(rect_gap(p, R5_RIBBON_X0, R5_RIBBON_Y0, R5_RIBBON_W, R5_RIBBON_H) >= 4,
+           str("the FFC fold pocket reaches the display seat at ", p));
 
 // ---------------- geometry ----------------
 module cover_outline() rrect(COVER_W, COVER_L, COVER_R);
@@ -88,7 +106,7 @@ module post_reliefs() for (p=R5_DISP_POSTS)
 // 5 V/I2C lead is routed inside the case. The cover is taped to the lid, so the FPC cannot pass
 // under it. The 20 mm notch runs from the panel edge to the hinge edge at R5_CABLE_X = 140.60,
 // placing its centre over the existing deck/tray opening overlap at x 160.87 on the default host.
-// The cut over-runs the recess by 0.5 mm, so no web remains; the cover stays one piece.
+// The cut over-runs the recess edge by 1.5 mm, so no web remains; the cover stays one piece.
 module cable_relief() {
     translate([PANEL_X + R5_CABLE_X0, -1, -1])
         cube([R5_CABLE_W, PANEL_Y - COVER_GAP + 1.5, COVER_FRONT_Z + 2]);
@@ -98,16 +116,26 @@ module cable_relief() {
 module aux_relief() translate([PANEL_X + R5_4PIN_X0, PANEL_Y + R5_4PIN_Y0, -1])
     cube([R5_4PIN_W, R5_4PIN_H, COVER_FRONT_Z + 2]);
 
+// The 15-pin DSI lead has to fold on itself before it reaches the hinge-edge notch, and the seat
+// skin is only COVER_T thick. Pocket it from the recess side down to R5_RIBBON_SKIN, so the fold
+// gets 3 mm and the tape face stays one flat, painted surface. Blind, not through: the display
+// bridges the pocket on the surrounding seat.
+module ribbon_relief() translate([PANEL_X + R5_RIBBON_X0, PANEL_Y + R5_RIBBON_Y0, R5_RIBBON_SKIN])
+    linear_extrude(COVER_T - R5_RIBBON_SKIN + 1)
+        rrect(R5_RIBBON_W, R5_RIBBON_H, R5_RIBBON_R);
+
 module r5_lid_cover() difference() {
     cover_body();
     panel_screws();
     post_reliefs();
     cable_relief();
     aux_relief();
+    ribbon_relief();
 }
 
 // Thin dimension template: all eight positions and the connector relief are through-cuts.
-// Keep the display seat solid so those positions can be tested; the unchanged recess is omitted.
+// Keep the display seat solid so those positions can be tested; the unchanged recess is omitted,
+// and so is the fold pocket, which is deeper than this template is thick.
 module r5_lid_cover_test_dimensions() difference() {
     linear_extrude(COVER_TEST_T) cover_outline();
     for (p=R5_DISP_HOLES)

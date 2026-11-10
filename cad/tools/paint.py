@@ -15,8 +15,8 @@ hinge, latch end at y = R5_L).  Paint that crosses the centre line therefore con
 printed part into the other - the three schemes are built on that.
 
 Two facts drive the artwork and are enforced in code, not by eye:
-  * the cover has one flat front at z = 14.50 mm. Its 193.96 x 111.76 mm display opening (the
-    module plus 0.5 mm clearance per side) recedes 10.50 mm to the 4.00 mm rear skin. The 7 mm
+  * the cover has one flat front at z = 14.50 mm. Its 194.96 x 112.76 mm display opening (the
+    module plus 1.0 mm clearance per side) recedes 10.50 mm to the 4.00 mm rear skin. The 7 mm
     slate border is paint on that same front, not a keep-out; only the opening, cable notch and
     reserved type interrupt marks;
   * the deck's own free fields are the 40.95 mm side rails, the strip between the OLED and the
@@ -182,9 +182,9 @@ class Model:
         self.rail_r = self.w - (x + bw)       # 40.95
         # Cover margin outside the painted border. The border remains a layout datum, not an
         # aperture or a separate surface.
-        self.cover_margin = px - self.gap - self.frame
-        self.band_x0 = px - self.gap          # 19.77: display opening, left edge
-        self.band_x1 = px + pw + self.gap      # 213.73: display opening, right edge
+        self.cover_margin = px - self.gap - self.frame   # 12.27
+        self.band_x0 = px - self.gap          # 19.27: display opening, left edge
+        self.band_x1 = px + pw + self.gap      # 214.23: display opening, right edge
         assert self.cover_margin >= 10.0, \
             f"only {self.cover_margin:.1f} mm of cover plate outside the painted border"
 
