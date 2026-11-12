@@ -36,12 +36,40 @@ stay valid for that build.
 | Charger → UPS | 5 V → UPS USB-C input | The UPS charges its 4S pack and powers the Pi simultaneously. |
 | UPS → Pi | Pogo pins: 5 V + GND | No cable; the UPS HAT sits on the Pi component side. |
 | UPS → FireBeetle | USB-A 5 V + GND → FireBeetle 5 V/GND | Keeps the status OLED alive when the Pi is off. |
+| Charger rail → FireBeetle | R1 30k / R2 10k divider → `A0` (ADC1) | Sense tap on the HAT (B)'s DC input: **is a source connected, and is it steady or sagging**. 210 µA from the charger, nothing from the pack when the rail is dead. See [charge-input sense](#charge-input-sense-r4--r5). |
 | Pi → RTC cell | ML-2020 2-pin JST → Pi J5 | Enable `dtparam=rtc_bbat_vchg=3000000`. |
 | Keyboard power | None | The r3 Phistone runs from its own 100 h battery and charges over its USB-C; it has no wire to the case. Charge and set its 2.4G/BT switch before closing (no side cutout). |
 
 **Bench charging:** a 27 W USB-C PD PSU gives the UPS its full fast-charge input only if it reaches the
 UPS USB-C input directly. The sealed charge port is intended for solar/crank through the internal
 charger, so expect slow charging through that path. Charge the UPS directly before final assembly.
+
+### Charge-input sense (r4 / r5)
+
+![Charge-input sense divider](charge_sense.svg)
+
+The HAT (B)'s INA219 sits on the **pack** branch, so pack current alone cannot say whether a source is
+connected — a full pack on a charger reads near zero. One ADC channel taps the DC input instead, so the
+status OLED and the telemetry can answer "on battery, on external, or external too weak to carry the
+load" without waiting for current to flow.
+
+| | |
+|---|---|
+| Divider | `R1` 30k rail → pin, `R2` 10k pin → GND, `C1` 100 nF across `R2` |
+| Scale | `(R1 + R2) / R2` = 4.0, so 8.4 V reads 2.10 V — the middle of the ADC's 11 dB range |
+| Pin | `A0` / GPIO36 (`ADC1_CH0`); `A1`/`A2`/`A3` = 39/34/35 are the alternates, `-DPIN_CHG_SENSE=<gpio>` overrides |
+| Load | 210 µA at 8.4 V, drawn from the charger. With the rail dead the divider sees 0 V and the pack is untouched |
+| Thresholds | present above **3.0 V**, absent below **2.5 V** (hysteresis); "steady" when the spread over 12 samples (60 s) is within **4 %** of the median |
+
+**What it can and cannot tell.** Present/absent and steady/varying are measured. **Mains vs solar vs
+crank is not** — all three arrive on the same socket and a voltage cannot distinguish them; the OLED and
+the JSON therefore say `steady` / `varying` (and `external` / `external-weak`) and never claim a source
+type. A source that holds the rail steady is almost certainly a regulated supply; one that sags under
+load or dips periodically is a panel in cloud or a crank between turns.
+
+The r3 block diagrams above predate this line (they still show the HAT (E)'s USB-C input) and are not
+regenerated from source for it; the netlist tables are authoritative. Add the two resistors and the
+capacitor to the KiCad sheet if you keep it in step with r4/r5.
 
 ---
 
@@ -79,6 +107,7 @@ charger, so expect slow charging through that path. Charge the UPS directly befo
 | `GPIO21` / `SDA` | `I2C_SDA` | OLED SDA, BME688 SDA, DS3231 SDA, trackball SDA (r2 only, DNP), UPS I²C SDA |
 | `GPIO22` / `SCL` | `I2C_SCL` | OLED SCL, BME688 SCL, DS3231 SCL, trackball SCL (r2 only, DNP), UPS I²C SCL |
 | `GPIO4` | `BTN` | PBS-33B terminal 1; terminal 2 to GND |
+| `A0` / `GPIO36` | `CHG_SENSE` | Divider from the UPS HAT (B) DC input: 30k to the rail, 10k to GND, 100 nF across the 10k. ADC1_CH0 |
 | `5V` / `VCC` | `UPS_USBA_5V` | UPS HAT USB-A 5 V output |
 | `USB-C` | `USB_FB_SERIAL` | Pi 5 USB-A (serial data; data-only preferred) |
 

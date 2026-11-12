@@ -18,6 +18,24 @@
 // it for the external button unless you want both to work in parallel.
 #define PIN_BUTTON 4
 
+// Charge-input sense line: one ADC channel on a divider from the UPS HAT (B)'s DC input. It answers
+// "is a source connected", which pack current alone cannot (a full pack on a charger reads zero
+// current), and it shows whether the supply is steady or sagging.
+//   rail -- R1 30k --+-- 100 nF --+-- GND
+//                     |           |
+//                  ADC pin      R2 10k -- GND
+// 8.4 V divides to 2.10 V, the middle of the 11 dB range. ADC1 only: GPIO 36/37/38/39/32/33/34/35.
+// A0 = 36, A1 = 39, A2 = 34, A3 = 35 on the FireBeetle 2; A6 is GPIO4 and is the button.
+#ifndef PIN_CHG_SENSE
+#define PIN_CHG_SENSE 36        // A0 / ADC1_CH0
+#endif
+#ifndef CHG_SENSE_R1
+#define CHG_SENSE_R1 30000.0f   // rail -> pin
+#endif
+#ifndef CHG_SENSE_R2
+#define CHG_SENSE_R2 10000.0f   // pin -> GND
+#endif
+
 // I2C addresses on the internal bus.
 #define I2C_ADDR_OLED 0x3C
 // 0 = connector at the bottom, 2 = rotated 180 degrees. Change if the module

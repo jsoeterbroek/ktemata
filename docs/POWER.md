@@ -1,6 +1,6 @@
 # Power budget — Ktemata r5 vs Project NOMAD, all running 24/7, no AI
 
-Ktemata r5 is the internal-cassette build: r4's electronics (Pi 5, 7" Waveshare DSI display, UPS HAT (B)
+Ktemata r5 is the internal-cassette build: r4's electronics (Pi 5, 5" Touch Display 2, UPS HAT (B)
 with 2× 18650, Rii K06) in a bought hard case, and **no air-quality sensor**. This page prices
 its energy against Project NOMAD's three hardware tiers with the AI left off, which NOMAD's own
 FAQ supports ("the AI is 100% optional").
@@ -75,6 +75,25 @@ Pi 5 reaches its 80 °C throttle point under sustained load instead of holding b
 change idle or reading draw — it caps the *heavy* row in time rather than in watts. The removed
 air-quality sensor saves nothing measurable. The 12.5 W heavy figure is therefore an upper bound
 that the thermal limit enforces.
+
+## What the build can measure
+
+The numbers above are a model. The parts that can be measured on the device, and where they come from:
+
+| quantity | source | note |
+|---|---|---|
+| pack voltage, current, power | UPS HAT (B) INA219 at 0x42 | 4 mV / 0.5 mA resolution, on the **pack branch** |
+| total system draw | pack power × η | exact on battery; **not observable on mains**, where the gauge sits in the charge branch and the charger feeds the regulator |
+| a source is connected | charge-input sense line, `A0` (ADC1) | one divider from the HAT's DC input; present above 3.0 V, absent below 2.5 V |
+| the source is steady or sagging | the same line, 60 s window | spread within 4 % of the median reads `steady` |
+| mains vs solar vs crank | **no** | one socket, one voltage; the OLED and the telemetry say `steady`/`varying` rather than claim a type |
+| Pi per-rail current | Pi 5 PMIC (`vcgencmd pmic_read_adc`) | the basis for attributing draw to the Pi rather than the panel or the drive |
+| display backlight, NVMe, ESP32 | A/B bench runs + datasheets | the ESP32's floor is measurable directly: switch the Pi off and the INA219 reads what is left |
+
+Buck efficiency (η 0.88), usable depth of discharge (0.85) and the pack's capacity are still
+**assumptions**, and every table here labels them as such. They are the first things to replace once
+the logger in `status-oled.py` has a discharge run to fit; see [`WIRING.md`](WIRING.md#charge-input-sense-r4--r5)
+for the sense line and `docs/R5.md` for the deck socket it taps.
 
 ## Project NOMAD, AI off
 

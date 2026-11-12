@@ -154,11 +154,14 @@ area about 23.7 × 13.2 mm) behind a 26 × 15 mm window, and the FireBeetle
   beside it when external power is attached, and `CHG` is appended while
   current flows into the pack.
 - The **power** screen (header `POWER`) packs its rows from the top: percent and
-  pack voltage, current and power, then — on battery only — `OB` (with `LB`
-  below 10 %) and the load, and always the state line `discharging`, `charging`
-  or `battery full`, then the runtime or the time to full. `OL` is not printed:
-  the state line already says the pack is on external power, and the load is
-  unmeasurable on mains.
+  pack voltage, current and power, then the charge input when a source is
+  connected (`IN 8.2 V steady`, `IN 6.1 V varying`, or no adjective until the
+  one-minute window fills) — otherwise, on battery, `OB` and the load — and
+  always the state line `discharging`, `charging` or `battery full`, then the
+  runtime or the time to full. Input present while the pack still discharges
+  reads `disch. weak in`: a source that cannot carry the load. `OL` is not
+  printed: the state line already says the pack is on external power, and the
+  load is unmeasurable on mains.
 - The **wifi** screen mirrors the Pi's radio, which the board does not have:
   `off`, `station mode` or `access point` and the interface's IPv4 address.
   Until the Pi has sent a report it shows `no wifi data yet`.
@@ -244,7 +247,9 @@ ESP32 → Pi every 10 s (and after `status`):
             "charging":false,"mains":false,"ol":false,"ob":true,"lb":false,
             "status":"OB","load_pct":11,"fast":false,"vbus":false,
             "vbus_mv":7660,"remaining_mah":2500,
-            "runtime_s":21000,"charge_min":0},
+            "runtime_s":21000,"charge_min":0,
+            "source":"battery","input_mv":0,"input_stable":false},
+ "input":{"present":false,"rail_mv":0,"stable":false,"samples":12},
  "storage":{"present":true,"used_pct":42.5,"free_gb":580.2,"age_s":12},
  "wifi":{"present":true,"state":"ap","age_s":4},
  "alerts":[0,0]}
@@ -262,6 +267,17 @@ mains its `charging` / `battery full` line carries the same information, so the
 5 A (25 W) output, assuming 88 % buck efficiency. The INA219 sits on the **pack**
 branch, so the load is only measurable while the pack supplies it; on mains the
 charger feeds the regulator and `load_pct` is `null` (the OLED omits the load).
+
+`source` and the `input` block come from the charge-input sense line (one ADC
+channel on a 30k/10k divider from the HAT's DC input, `PIN_CHG_SENSE`):
+`input.rail_mv` is the rail in millivolts, `input.stable` says its spread over
+the last 12 samples (60 s) is within 4 %, and `source` is `battery`, `external`
+or `external-weak` (rail present but the pack still discharging). One voltage
+cannot tell mains from solar from crank, so nothing in the JSON claims to: it
+reports the rail and whether it is steady. `battery.input_mv` and
+`battery.input_stable` duplicate the two most-used fields for the Pi's log.
+The boot banner prints `{"type":"log","msg":"charge sense","pin_mv":…,
+"rail_mv":…}` once, which is how a wrong pin or a missing resistor is caught.
 
 `runtime_s` is NUT's `battery.runtime`: seconds left at the measured discharge
 current, from the voltage-derived remaining capacity (3200 mAh constant) divided

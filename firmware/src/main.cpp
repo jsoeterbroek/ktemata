@@ -10,6 +10,7 @@
  *   - one sealed push button: short press = next screen, long press = ack alert
  *   - DS3231 on the internal I2C bus
  *   - Waveshare UPS HAT (B) INA219 gauge at 0x42 (2S 18650)
+ *   - charge-input sense line on ADC1: is a source connected, and is it steady or sagging
  *   - newline-delimited JSON over USB CDC to/from the Raspberry Pi
  *
  * The firmware deliberately keeps Wi-Fi and Bluetooth off. Do not add radio
@@ -26,6 +27,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "chg_sense.h"
 #include "config.h"
 #include "fonts/Roboto18pt7b.h"
 #include "fonts/Roboto5pt7b.h"
@@ -120,6 +122,7 @@ struct WifiReading {
 };
 
 UpsStatus upsData;
+ChargeInput chargeIn;
 StorageReading storage;
 WifiReading wifi;
 AlertState alerts[ALERT_COUNT];
@@ -564,6 +567,10 @@ void renderPowerScreen() {
   // Rows are packed from the top so a state that has nothing to report does not leave a
   // gap: on mains there is no load (the charger feeds the regulator) and no OL flag (the
   // charging / battery full row already says the pack is on external power).
+  //
+  // The charge-input sense line takes the third row whenever a source is connected, in place of
+  // the load percentage: on a weak source the input voltage is the number that explains why the
+  // pack is still draining, and on mains the load % is not observable anyway.
   int y = 12;
 
   bodyCursor(0, y);
@@ -579,7 +586,16 @@ void renderPowerScreen() {
   display.print(buf);
   y += 10;
 
-  if (!upsData.mains) {
+  const bool showInput = chargeIn.valid && chargeIn.present;
+  if (showInput) {
+    bodyCursor(0, y);
+    // No adjective until the window has filled: "varying" from two samples would be a guess.
+    const char* quality = chargeIn.stable ? "steady"
+                          : (chargeIn.samples >= chgs::WINDOW ? "varying" : "");
+    snprintf(buf, sizeof(buf), "IN %4.1f V %s", chargeIn.railMv / 1000.0f, quality);
+    display.print(buf);
+    y += 10;
+  } else if (!upsData.mains) {
     bodyCursor(0, y);
     if (upsData.loadValid) {
       snprintf(buf, sizeof(buf), "OB%s  load %u%%", lowBattery() ? " LB" : "",
@@ -593,7 +609,7 @@ void renderPowerScreen() {
 
   bodyCursor(0, y);
   if (!upsData.mains) {
-    display.print("discharging");
+    display.print(showInput ? "disch. weak in" : "discharging");
   } else if (upsData.charging) {
     display.print("charging");
   } else {
@@ -812,6 +828,23 @@ void sendTelemetry() {
   battery["remaining_mah"] = upsData.remainingMah;
   battery["charge_min"] = upsData.chargeMin;
 
+  // Charge-input sense line. "source" is what the hardware can actually prove: no rail, a rail
+  // that is carrying the load, or a rail that is present while the pack still discharges (a source
+  // too weak to cover the load - a shaded panel, a crank between turns). Mains vs solar vs crank is
+  // not knowable from one voltage, so the JSON says "steady"/"varying" instead of guessing.
+  JsonObject input = doc["input"].to<JsonObject>();
+  input["present"] = chargeIn.present;
+  input["rail_mv"] = chargeIn.valid ? chargeIn.railMv : 0;
+  input["stable"] = chargeIn.present && chargeIn.stable;
+  input["samples"] = chargeIn.samples;
+  const char* source = "battery";
+  if (chargeIn.present) {
+    source = (upsOk && !upsData.mains) ? "external-weak" : "external";
+  }
+  battery["source"] = source;
+  battery["input_mv"] = chargeIn.valid ? chargeIn.railMv : 0;
+  battery["input_stable"] = chargeIn.present && chargeIn.stable;
+
   JsonObject disk = doc["storage"].to<JsonObject>();
   disk["present"] = storage.valid;
   disk["used_pct"] = storage.usedPct;
@@ -955,6 +988,12 @@ void setup() {
 
   pinMode(PIN_BUTTON, INPUT_PULLUP);
 
+  // Charge-input sense line: the boot log carries the raw value so a wrong pin or a missing
+  // resistor shows up here instead of being inferred from a state that never changes.
+  chgSenseBegin();
+  Serial.printf("{\"type\":\"log\",\"msg\":\"charge sense\",\"pin_mv\":%u,\"rail_mv\":%u}\n",
+                chgSensePinMv(), chgSenseRailMv());
+
   // The Adafruit begin() can return true even when nothing ACKs, so probe
   // the address first. Some modules are strapped to 0x3D.
   uint8_t oledAddress = 0;
@@ -1029,6 +1068,7 @@ void loop() {
 
   if (now - lastUpsTickMs >= UPS_PERIOD_MS) {
     lastUpsTickMs = now;
+    chgSensePoll(chargeIn);   // independent of the gauge: works with the UPS absent
     pollUps();
     updateAlerts();
   }

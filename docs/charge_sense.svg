@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="DejaVu Sans, Helvetica, Arial, sans-serif">
+  <title id="title">Charge-input sense divider</title>
+  <desc id="desc">The UPS HAT (B)'s DC input feeds a 30k / 10k divider into ADC1 on the FireBeetle 2, with 100 nF to ground. 8.4 V reads 2.10 V. The divider draws 210 uA from the charger and nothing from the pack when the rail is dead.</desc>
+
+  <text x="20" y="30" font-size="17" font-weight="bold" fill="#111">Charge-input sense</text>
+  <text x="20" y="50" font-size="12" fill="#666">r4 / r5 · one ADC channel · 8.4 V rail → 2.10 V → A0 (ADC1_CH0)</text>
+
+  <!-- rail -->
+  <line x1="60" y1="90" x2="520" y2="90" stroke="#c0392b" stroke-width="2.5"/>
+  <text x="60" y="80" font-size="12" fill="#c0392b">UPS HAT (B) DC input · 5.5×2.1 mm socket in the deck · 0–8.4 V</text>
+
+  <!-- R1 -->
+  <rect x="250" y="100" width="46" height="26" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <text x="273" y="117" font-size="12" text-anchor="middle" fill="#111">30k</text>
+  <text x="312" y="117" font-size="11" fill="#666">R1</text>
+  <line x1="273" y1="90" x2="273" y2="100" stroke="#333" stroke-width="1.5"/>
+
+  <!-- node -->
+  <line x1="273" y1="126" x2="273" y2="250" stroke="#333" stroke-width="1.5"/>
+  <circle cx="273" cy="150" r="3.5" fill="#333"/>
+  <circle cx="273" cy="215" r="3.5" fill="#333"/>
+
+  <!-- to ADC -->
+  <line x1="273" y1="150" x2="430" y2="150" stroke="#1f6feb" stroke-width="2"/>
+  <text x="440" y="146" font-size="12" fill="#1f6feb">A0 · GPIO36 · ADC1_CH0</text>
+  <text x="440" y="162" font-size="11" fill="#666">A1/A2/A3 = 39/34/35 are alternates</text>
+
+  <!-- cap -->
+  <line x1="330" y1="150" x2="330" y2="178" stroke="#333" stroke-width="1.5"/>
+  <line x1="316" y1="178" x2="344" y2="178" stroke="#333" stroke-width="2"/>
+  <line x1="316" y1="186" x2="344" y2="186" stroke="#333" stroke-width="2"/>
+  <line x1="330" y1="186" x2="330" y2="250" stroke="#333" stroke-width="1.5"/>
+  <text x="352" y="188" font-size="11" fill="#666">100 nF</text>
+
+  <!-- R2 -->
+  <rect x="250" y="215" width="46" height="26" fill="#fff" stroke="#333" stroke-width="1.5"/>
+  <text x="273" y="232" font-size="12" text-anchor="middle" fill="#111">10k</text>
+  <text x="312" y="232" font-size="11" fill="#666">R2</text>
+
+  <!-- R2 to the ground rail, then the ground symbol under the same node -->
+  <line x1="273" y1="241" x2="273" y2="250" stroke="#333" stroke-width="1.5"/>
+  <line x1="180" y1="250" x2="400" y2="250" stroke="#333" stroke-width="1.5"/>
+  <line x1="273" y1="250" x2="273" y2="262" stroke="#333" stroke-width="1.5"/>
+  <line x1="253" y1="262" x2="293" y2="262" stroke="#333" stroke-width="2"/>
+  <line x1="261" y1="268" x2="285" y2="268" stroke="#333" stroke-width="2"/>
+  <line x1="269" y1="274" x2="277" y2="274" stroke="#333" stroke-width="2"/>
+  <text x="300" y="268" font-size="11" fill="#666">GND (FireBeetle)</text>
+
+  <!-- notes -->
+  <text x="20" y="292" font-size="11" fill="#666">210 µA at 8.4 V, drawn from the charger only. Above 3.0 V the rail counts as present, below 2.5 V as absent (hysteresis).</text>
+</svg>
