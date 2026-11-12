@@ -838,9 +838,14 @@ void sendTelemetry() {
   input["rail_mv"] = chargeIn.valid ? chargeIn.railMv : 0;
   input["stable"] = chargeIn.present && chargeIn.stable;
   input["samples"] = chargeIn.samples;
-  const char* source = "battery";
+  // "battery" is only a claim we can back: no rail AND a gauge that says the pack is supplying.
+  // With the gauge absent (bench, or 0x42 unwired) neither source of truth exists, so say unknown
+  // rather than infer "battery" from a board that may be running off its USB lead.
+  const char* source = "unknown";
   if (chargeIn.present) {
     source = (upsOk && !upsData.mains) ? "external-weak" : "external";
+  } else if (upsOk) {
+    source = "battery";
   }
   battery["source"] = source;
   battery["input_mv"] = chargeIn.valid ? chargeIn.railMv : 0;

@@ -55,6 +55,21 @@ Component draws, from measurements where measurements exist:
 | UPS HAT (B) 2S → 5 V buck | — | η ≈ 0.88 **assumed** | not measured |
 | ~~BME688~~ | — | — | **removed in r5**; it was milliwatts in forced mode, so its absence does not move these numbers |
 
+**The Pi 5 will say its supply is not 5 A capable, and it is right.** The HAT (B) delivers 5 V onto the
+header; the Pi 5 can only certify a 5 A supply by negotiating USB-C PD, which no header feed can do. So
+the firmware assumes a lesser supply and limits **USB peripheral current to 600 mA**, and the desktop
+raises the "not capable of supplying 5 A" notice. That notice is about *capability*, not sag: the CPU is
+not limited and the pack still feeds the board. This build's USB load is a 2.4 GHz dongle and a data-only
+serial lead, so 600 mA is ample and the notice can be ignored. If it must go, the Pi documents
+`usb_max_current_enable=1` in `/boot/firmware/config.txt` (re-check the notice after a reboot — the
+override is not universal across OS releases).
+
+The number that *does* matter is sag: `vcgencmd get_throttled` must read `0x0`; bits 0 and 16
+(under-voltage now / since boot) are a supply fault and would also explain a status-OLED board that
+reboots on its own (both hang off the same HAT 5 V rail — see the firmware's `reset` log line). The
+installer's hardware test already fails on those bits and only warns on the thermal ones
+(`docs/POST_INSTALL.md`).
+
 States and runtime. The pack column applies η = 0.88 and 0.85 usable depth of discharge, so 22.2 Wh
 gives ≈ 16.6 Wh at the 5 V rail:
 

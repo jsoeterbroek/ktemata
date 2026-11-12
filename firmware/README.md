@@ -271,8 +271,10 @@ charger feeds the regulator and `load_pct` is `null` (the OLED omits the load).
 `source` and the `input` block come from the charge-input sense line (one ADC
 channel on a 30k/10k divider from the HAT's DC input, `PIN_CHG_SENSE`):
 `input.rail_mv` is the rail in millivolts, `input.stable` says its spread over
-the last 12 samples (60 s) is within 4 %, and `source` is `battery`, `external`
-or `external-weak` (rail present but the pack still discharging). One voltage
+the last 12 samples (60 s) is within 4 %, and `source` is `battery` (no rail and
+the gauge confirms the pack is supplying), `external`, `external-weak` (rail
+present but the pack still discharging) or `unknown` (no rail and no gauge, so
+nothing can be claimed). One voltage
 cannot tell mains from solar from crank, so nothing in the JSON claims to: it
 reports the rail and whether it is steady. `battery.input_mv` and
 `battery.input_stable` duplicate the two most-used fields for the Pi's log.
