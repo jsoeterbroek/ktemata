@@ -44,6 +44,7 @@ WIFI_PERIOD = 15          # cheap read-only queries; the state only changes on u
 WIFI_IFACE = "wlan0"
 BOOT_BANNER = "Ktemata r2 status OLED"
 TIME_ACK = "time synced"
+RESET_LOG = "reset"
 MIN_EPOCH = 1_700_000_000  # the firmware ignores anything earlier (Nov 2023)
 # Opening the CH340 can pulse the ESP32 reset; writing during the boot loses or truncates the
 # first line, so wait before the first command. A command that is not confirmed within
@@ -309,6 +310,12 @@ def run_forever(port, path, args):
                             continue        # boot ROM noise, or another writer on the port
                         kind = msg.get("type")
                         name = msg.get("msg")
+                        if kind == "log" and name == RESET_LOG:
+                            # Why the board came up: a reboot loop is either the port resetting it
+                            # (external pin), a sagging 5 V from the HAT (brownout) or a crash
+                            # (panic / watchdog). Worth a journald line even without -v.
+                            log(f"board reset: {msg.get('name', 'unknown')}"
+                                f" (reason {msg.get('reason')})")
                         if kind == "log" and name == BOOT_BANNER:
                             restart = True     # the board rebooted: clock and storage are cold
                         elif kind == "log" and name == TIME_ACK:
