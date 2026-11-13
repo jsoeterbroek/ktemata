@@ -844,6 +844,9 @@ void sendTelemetry() {
   const char* source = "unknown";
   if (chargeIn.present) {
     source = (upsOk && !upsData.mains) ? "external-weak" : "external";
+  } else if (upsOk && upsData.mains) {
+    // No sense line (or a dead one), but the gauge sees no discharge: the pack is being fed.
+    source = "external";
   } else if (upsOk) {
     source = "battery";
   }
@@ -1005,11 +1008,14 @@ void setup() {
   tzset();
   Serial.printf(
       "{\"type\":\"log\",\"msg\":\"mcu\",\"model\":\"%s\",\"cores\":%u,"
-      "\"flash\":%lu,\"psram_found\":%s,\"psram\":%lu}\n",
+      "\"flash\":%lu,\"psram_found\":%s,\"psram\":%lu,"
+      "\"auto_cycle_ms\":%lu,\"screen_off_ms\":%lu}\n",
       ESP.getChipModel(), ESP.getChipCores(),
       static_cast<unsigned long>(ESP.getFlashChipSize()),
       psramFound() ? "true" : "false",
-      static_cast<unsigned long>(ESP.getPsramSize()));
+      static_cast<unsigned long>(ESP.getPsramSize()),
+      static_cast<unsigned long>(AUTO_CYCLE_MS),
+      static_cast<unsigned long>(SCREEN_OFF_MS));
 
   Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL, I2C_CLOCK_HZ);
   scanI2C();

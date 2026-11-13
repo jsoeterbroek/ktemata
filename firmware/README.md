@@ -363,7 +363,7 @@ Boot log is newline-delimited JSON too. With the OLED fitted:
 
 ```json
 {"type":"log","msg":"reset","reason":9,"name":"brownout"}
-{"type":"log","msg":"mcu","model":"ESP32-D0WDR2-V3","cores":2,"flash":16777216,"psram_found":true,"psram":2095103}
+{"type":"log","msg":"mcu","model":"ESP32-D0WDR2-V3","cores":2,"flash":16777216,"psram_found":true,"psram":2095103,"auto_cycle_ms":30000,"screen_off_ms":0}
 {"type":"log","msg":"I2C scan"}
 {"type":"log","msg":"I2C device","addr":60,"hex":"0x3C"}
 {"type":"log","msg":"OLED ready","addr":60,"hex":"0x3C"}
@@ -372,6 +372,11 @@ Boot log is newline-delimited JSON too. With the OLED fitted:
 
 The UPS is retried once every 30 s. If the scan says `no I2C devices`, check
 VCC/GND/SDA/SCL and that SDA is on GPIO21 and SCL on GPIO22.
+
+`auto_cycle_ms` / `screen_off_ms` are the compile-time UI timings from `platformio.ini`. A build
+that lost those build flags (flashed from an IDE, or an old copy) reports `0` here even though the
+display still works — which is exactly how "the screens stopped rotating" looks, because
+`AUTO_CYCLE_MS 0` means "stay on the time screen".
 
 `reset` is the second line after every power-up: `power-on` / `external pin` (the CH340's EN pulse
 when the port opens), `brownout` (the 5 V from the HAT sagged — check the pack and the USB-A lead),
