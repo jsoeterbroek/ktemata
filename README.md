@@ -197,8 +197,8 @@ marked `21/SDA` and `22/SCL`. Still to wire: DS3231 `0x68` and the PBS-33B butto
 storage is `work/scripts/status-oled.py`, installed as
 `ktemata-status-oled.service` by `work/scripts/post-install.sh`; it pushes UTC
 at start and hourly and the library free space every 60 s, and re-syncs after
-the board reboots. Idle blanking is currently disabled (`-DSCREEN_OFF_MS=0UL`)
-because the button is not fitted; the earlier blank screen was the OLED
+the board reboots. Idle blanking is on (`-DSCREEN_OFF_MS=60000UL`) and the fitted
+PBS-33B wakes the panel; the earlier blank screen was the OLED
 display-off command, not an ESP32 sleep. Set it to `60000UL` when the button
 works.
 
@@ -294,7 +294,7 @@ Four screens, cycled with a button (or the auto-cycle until it is fitted: time 6
 | 3 | **Storage** | % used and free GB of the 512 GB SSD | Pi over USB; with the Pi off, shows the last value, and `stale: Pi not sending` once it is over 10 min old |
 | 4 | **Wi-Fi** | `off`, `on (client)` or `on (AP mode)` and the interface's IP | Pi over USB (`nmcli`, else `hostapd`/`iw`); the FireBeetle has no radio and never initialises one |
 
-**Navigation:** one 12 mm panel button on the case (TinyTronics PBS-33B; add a rubber boot for sealing), wired to ESP32 GPIO4. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert. Until the button is fitted the build sets `AUTO_CYCLE_MS=30000UL`, so time stays 60 s and power/storage/wifi 30 s (alerts still take over); set it to `0UL` when the button is wired.
+**Navigation:** one 12 mm panel button on the case (TinyTronics PBS-33B; add a rubber boot for sealing), wired to ESP32 GPIO4. Short press: next screen. After about 30 s without a press, back to the time screen. Long press: acknowledge an alert. The build sets `AUTO_CYCLE_MS=0UL` now that the button is fitted in the deck (`R5_OLED_BTN_*`); before it was wired the screens walked on a 30 s timer.
 
 **Auto-switch on thresholds:** when a value passes a threshold, the OLED jumps to that screen and marks the value (inverted/blinking). It stays there until the condition clears or the alert is acknowledged, then returns to the time screen. An acknowledged alert comes back only if it gets worse (warning → critical). With several alerts at once, priority is battery > storage. Thresholds use hysteresis so a value hovering at the limit doesn't flap. Thresholds are stored in the ESP32 (NVS) and can be changed from the Pi over USB.
 

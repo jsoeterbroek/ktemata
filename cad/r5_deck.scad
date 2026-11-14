@@ -208,13 +208,14 @@ module fan_grille() {
     }
 }
 
-// ---- charge socket: 5.5 x 2.1 DC jack through the right rail ----
+// ---- charge socket: 5.5 x 2.1 DC-099 jack through the right rail ----
 // The host stays sealed: the 8.4 V charge lead ends here instead of through a hole in the Peli
 // wall. The socket goes in from the TOP - bezel on the painted face, nut on the underside - and
 // its plug is fitted with the lid open (the display is only 4.6 mm above this face when shut).
 // R5_CHG_* in common.scad derives the position and guards it against the Pi's plugs, the right
-// rail's screws, the keyboard pocket, the fan and the button. Printed top-face down, the hole is
-// a vertical wall in the plate and needs no support.
+// rail's screws, the keyboard pocket, the fan and the button. The ordered socket is a DC-099:
+// 11 mm mounting hole, so R5_CHG_D = 11.2 where the r4 socket needed 9.5. Printed top-face down,
+// the hole is a vertical wall in the plate and needs no support.
 module charge_cut() r5_at(R5_CHG_X, R5_CHG_Y, R5_DECK_Z - 1)
     cylinder(d=R5_CHG_D, h=R5_DECK_T + 2);
 
@@ -230,6 +231,22 @@ module charge_cut() r5_at(R5_CHG_X, R5_CHG_Y, R5_DECK_Z - 1)
 module button_cut() r5_at(R5_BTN_X, R5_BTN_Y, R5_DECK_Z - 1)
     cylinder(d=R5_BTN_D, h=R5_DECK_T + 2);
 
+// ---- OLED button: the PBS-33B that cycles the screens ----
+// A 12 mm hole through the plate, plus a 16 x 2 mm spot face on the underside: the PBS-33B's
+// thread is 6 mm long and its nut takes a panel no thicker than 3.0 mm, while the deck is 4.5 mm.
+// The spot face leaves 2.5 mm, so the nut has full engagement; the visible top face keeps a plain
+// 12.2 mm hole and the button's 18 mm cap covers it. It sits to the RIGHT of the OLED and centred
+// on it, the body hanging in the empty channel between the HAT (B) (ends x 132) and the Pi (starts
+// x 152). The spot face only thins the plate, 4.5 mm above either board, so it may reach over the
+// Pi's x - what it must clear is the OLED pcb pocket in that same underside. Printed top-face down
+// the spot face opens upward, so it needs no support either.
+module oled_button_cut() {
+    r5_at(R5_OLED_BTN_X, R5_OLED_BTN_Y, R5_DECK_Z - 1)
+        cylinder(d=R5_OLED_BTN_D, h=R5_DECK_T + 2);
+    r5_at(R5_OLED_BTN_X, R5_OLED_BTN_Y, R5_DECK_Z)
+        cylinder(d=R5_OLED_BTN_CB_D, h=R5_OLED_BTN_CB_T + 0.01);
+}
+
 module r5_deck() union() {
     difference() {
         union() {
@@ -243,6 +260,7 @@ module r5_deck() union() {
         fan_holes();
         kb_plate_cut();
         button_cut();
+        oled_button_cut();
         charge_cut();
     }
     // the grille goes in after the cut: the bars occupy the plate's own volume inside the

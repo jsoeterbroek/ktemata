@@ -641,6 +641,44 @@ assert((R5_BOSS_D - M3_INS_D)/2 >= 2,
            " boss leaves less than 2 mm of wall"));
 assert(R5_INSET >= 1, "the deck bosses must overlap the wall by at least 1 mm");
 
+// r5 OLED button: the PBS-33B that cycles the screens and wakes the display. It is a 12 mm
+// panel button with only 6 mm of M12x0.75 thread and a 3.0 mm maximum panel thickness, so the
+// 4.5 mm deck cannot take it as it stands: a spot face 2 mm deep from the underside drops the
+// plate to 2.5 mm there and the nut keeps its full engagement.
+//
+// Position: to the RIGHT of the OLED and CENTRED on it (same y as the window's centre), which is
+// where the eye looks for it beside the display. The body hangs into the 20 mm channel between the
+// HAT (B) (ends x 132) and the Pi (starts x 152), so the body is only 12.2 wide and sits at 144.5:
+// 6.4 mm of air on the HAT side, 1.4 mm on the Pi side. The spot face only thins the PLATE (z 42.4..44.9) - it cannot foul either board, which
+// are 4.5 mm lower - so it may reach over the Pi's x; what it must not touch is the OLED pcb
+// pocket in that same underside (ends x 135.9, y 37..73.5). That is what sets the 16 mm width:
+// the spot face has to contain the button's nut (measure yours; 16 mm fits the M12 nuts these
+// switches ship with) and clear the pocket by >= 0.5 mm.
+R5_OLED_BTN_X     = 144.5;             // centre, in the HAT/Pi channel
+R5_OLED_BTN_Y     = R5_OLED_WIN_Y0 + R5_OLED_WIN[1]/2;   // centred on the OLED window
+R5_OLED_BTN_D     = 12.2;              // M12x0.75 thread + print clearance
+R5_OLED_BTN_CB_D  = 16;                // spot face that takes the nut, on the underside
+R5_OLED_BTN_CB_T  = 2.0;               // its depth: leaves 2.5 mm of plate, under the 3.0 limit
+R5_OLED_BTN_BODY  = 14;                // barrel + terminals below the nut (stand-in only)
+assert(R5_DECK_T - R5_OLED_BTN_CB_T <= 3.0,
+       str("the deck leaves ", R5_DECK_T - R5_OLED_BTN_CB_T, " mm at the OLED button, the ",
+           "PBS-33B nut needs a panel no thicker than 3.0 mm"));
+assert(R5_OLED_BTN_X - R5_OLED_BTN_CB_D/2 >= R5_OLED_X0 + R5_OLED_PCB[0] + 0.5,
+       str("the OLED button's spot face starts at x ", R5_OLED_BTN_X - R5_OLED_BTN_CB_D/2,
+           ", into the OLED pcb pocket which ends at ", R5_OLED_X0 + R5_OLED_PCB[0]));
+assert(R5_OLED_BTN_X + R5_OLED_BTN_D/2 <= R5_PI_X - 1,
+       str("the OLED button's body ends at x ", R5_OLED_BTN_X + R5_OLED_BTN_D/2,
+           ", the Pi pcb starts at ", R5_PI_X));
+assert(R5_OLED_BTN_X - R5_OLED_BTN_D/2 >= R5_UPS_X + R5_UPS_W + 1,
+       str("the OLED button's body starts at x ", R5_OLED_BTN_X - R5_OLED_BTN_D/2,
+           ", the HAT (B) ends at ", R5_UPS_X + R5_UPS_W));
+assert(R5_OLED_BTN_Y + R5_OLED_BTN_D/2 <= R5_KB_Y0 - 1,
+       str("the OLED button reaches y ", R5_OLED_BTN_Y + R5_OLED_BTN_D/2,
+           ", into the keyboard pocket at ", R5_KB_Y0));
+assert(min([for (c=DECK_FAN_CTRL) sqrt((c[0]-R5_OLED_BTN_X)^2 + (c[1]-R5_OLED_BTN_Y)^2)])
+       >= DECK_FAN_D/2 + R5_OLED_BTN_CB_D/2 + 1,
+       "the OLED button runs into a fan opening");
+
 // ---- closed-case clearance ----
 // The base and the lid meet at the seal plane (z = HOST_BOT), so the lid ceiling sits HOST_LID
 // above it. The plate is taped to that ceiling and the display hangs down from it, which puts
@@ -669,13 +707,12 @@ assert(R5_KB_WELL_BOT - R5_KB_SEAT > R5_FLOOR,
        str("the seat ledge reaches down to ", R5_KB_WELL_BOT - R5_KB_SEAT,
            ", at or through the tray floor (", R5_FLOOR, ")"));
 
-// The 7" panel must fit the cassette plan and the cassette must still fit the host: the glass is
-// 189.32 x 120.24 against a 233.5 x 178.1 cassette, so there is 22.09 / 28.93 a side, not much -
-// check it rather than trust it, since R5_W/R5_L move with HOST. 20 mm of cassette either side is
-// the floor: a 7 mm front border, the 8 mm tape border round it and the 5 mm of wall the panel's
-// own standoff screws need.
+// The panel must fit the cassette plan and the cassette must still fit the host: 143.4 x 91.46
+// against a 233.5 x 178.1 cassette leaves 45 / 43.3 a side - check it rather than trust it, since
+// R5_W/R5_L move with HOST. 20 mm of cassette either side is the floor: a 7 mm front border, the
+// 8 mm tape border round it and the 5 mm of wall the panel's own standoff screws need.
 assert(!R5 || R5_W - R5_PANEL[0] >= 20 && R5_L - R5_PANEL[1] >= 20,
-       str("host ", HOST, ": the 7\" panel (", R5_PANEL[0], " x ", R5_PANEL[1],
+       str("host ", HOST, ": the panel (", R5_PANEL[0], " x ", R5_PANEL[1],
            ") leaves only ", (R5_W - R5_PANEL[0])/2, " / ", (R5_L - R5_PANEL[1])/2,
            " mm a side in the ", R5_W, " x ", R5_L, " cassette, needs 10"));
 // The power button is 16 mm IP67: bore plus nut, plus the plate that has to survive round it.
@@ -816,7 +853,10 @@ assert(!R5 || (R5_CABLE_C >= R5_W/2 - 55 + 8 && R5_CABLE_C <= R5_W/2 + 55 - 8),
 // The socket's plug cannot be fitted with the lid shut - by design; see docs/R5.md.
 R5_CHG_X = 216;                        // right rail centre, on free floor
 R5_CHG_Y = 90;                         // between the Pi's ports and the keyboard pocket
-R5_CHG_D = 9.5;                        // barrel hole, the same socket as r4's CHG_W
+// The ordered socket is a DC-099: 5.5 x 2.1 mm barrel, 11 mm mounting hole + M11 nut, 30 V / 5 A,
+// solder lugs behind. The r4 build used a 9.5 mm socket, so this hole grew. 11.2 = the 11 mm
+// recommendation + the same 0.2 mm print allowance R5_BTN_D uses for a 16 mm thread.
+R5_CHG_D = 11.2;                       // DC-099 mounting hole
 R5_CHG_NUT_D = 14;                     // nut/bezel envelope, the clearance that matters
 assert(R5_CHG_X - R5_CHG_NUT_D/2 >= R5_PI_X + R5_PI_W,
        str("the charge socket (", R5_CHG_X, ") overlaps the Pi pcb edge (", R5_PI_X + R5_PI_W, ")"));

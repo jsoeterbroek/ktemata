@@ -129,6 +129,15 @@ module c_button() {
 
 // The 5.5 x 2.1 mm charge socket through the deck's right rail: barrel and nut below the plate,
 // tags towards the Pi. The plug is not drawn - it is only fitted with the lid open.
+// The PBS-33B: 12 mm barrel through the deck, its nut inside the spot face, body + terminals
+// hanging into the channel between the HAT (B) and the Pi.
+module c_oled_button() {
+    r5_at(R5_OLED_BTN_X, R5_OLED_BTN_Y, R5_DECK_Z - 1)
+        cylinder(d=R5_OLED_BTN_CB_D - 0.5, h=3);                        // nut, in the spot face
+    r5_at(R5_OLED_BTN_X, R5_OLED_BTN_Y, R5_DECK_Z - 1 - R5_OLED_BTN_BODY)
+        cylinder(d=R5_OLED_BTN_D - 0.4, h=R5_OLED_BTN_BODY);            // barrel + terminals
+}
+
 module c_charger() {
     r5_at(R5_CHG_X, R5_CHG_Y, R5_DECK_Z - 14) cylinder(d=R5_CHG_D - 0.2, h=14);
     r5_at(R5_CHG_X, R5_CHG_Y, R5_DECK_Z - 2.1) cylinder(d=R5_CHG_NUT_D, h=2.0);
@@ -146,6 +155,7 @@ module components() {
     color("darkgreen") c_keyboard(); color("purple") c_oled();
     color("black") c_display(); color("teal") c_floor();
     color("#b0b6bc") c_button(); color("#b0b6bc") c_charger();
+    color("#202020") c_oled_button();
 }
 
 module all() {
@@ -173,6 +183,7 @@ module part(n) {
     if (n=="pi") c_pi(); if (n=="ups") c_ups(); if (n=="cells") c_cells();
     if (n=="keyboard") c_keyboard(); if (n=="oled") c_oled(); if (n=="display") c_display();
     if (n=="button") c_button();
+    if (n=="oledbutton") c_oled_button();
     if (n=="charger") c_charger();
     if (n=="floor") c_floor();
 }

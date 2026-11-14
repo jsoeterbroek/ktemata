@@ -36,6 +36,8 @@ stay valid for that build.
 | Charger → UPS | 5 V → UPS USB-C input | The UPS charges its 4S pack and powers the Pi simultaneously. |
 | UPS → Pi | Pogo pins: 5 V + GND | No cable; the UPS HAT sits on the Pi component side. |
 | UPS → FireBeetle | USB-A 5 V + GND → FireBeetle 5 V/GND | Keeps the status OLED alive when the Pi is off. |
+| Sealed charge socket → HAT | DC-099 5.5 × 2.1 panel jack → HAT (B) 8.4 V barrel jack | The DC-099 is the **panel** socket in the deck (11 mm hole); the HAT's own jack stays. **Centre-positive**, and confirm the HAT's polarity before the first plug. A **2 A fuse** in the charge lead is not covered by the pack fuse. |
+| 16 mm latching switch | in the **8.4 V charge lead** (or a ≥5 A switch in the 5 V rail) | ABS16CG11ZCB3V is rated **3 A / 24 V DC**: fine in the 2 A charge path, **not** in the Pi's 5 V rail (5 A spec, ~2.8 A in this build). LED: 3–6 V, 15 mA, built-in resistor, either polarity — feed it from the 5 V rail, not the 8.4 V one, or add ≈220 Ω. Latching = hard cut: shut the Pi down in software first. |
 | Charger rail → FireBeetle | R1 30k / R2 10k divider → `A0` (ADC1) | Sense tap on the HAT (B)'s DC input: **is a source connected, and is it steady or sagging**. 210 µA from the charger, nothing from the pack when the rail is dead. See [charge-input sense](#charge-input-sense-r4--r5). |
 | Pi → RTC cell | ML-2020 2-pin JST → Pi J5 | Enable `dtparam=rtc_bbat_vchg=3000000`. |
 | Keyboard power | None | The r3 Phistone runs from its own 100 h battery and charges over its USB-C; it has no wire to the case. Charge and set its 2.4G/BT switch before closing (no side cutout). |
@@ -106,7 +108,7 @@ capacitor to the KiCad sheet if you keep it in step with r4/r5.
 | `GND` | `GND` | Common ground: OLED, BME688, DS3231, trackball (r2 only, DNP), UPS I²C GND, button, UPS USB-A GND |
 | `GPIO21` / `SDA` | `I2C_SDA` | OLED SDA, BME688 SDA, DS3231 SDA, trackball SDA (r2 only, DNP), UPS I²C SDA |
 | `GPIO22` / `SCL` | `I2C_SCL` | OLED SCL, BME688 SCL, DS3231 SCL, trackball SCL (r2 only, DNP), UPS I²C SCL |
-| `GPIO4` | `BTN` | PBS-33B terminal 1; terminal 2 to GND |
+| `GPIO4` | `BTN` | PBS-33B (OLED screens) terminal 1; terminal 2 to GND. Fitted in the deck at `R5_OLED_BTN_*`, so set `AUTO_CYCLE_MS=0UL` and `SCREEN_OFF_MS=60000UL` |
 | `A0` / `GPIO36` | `CHG_SENSE` | Divider from the UPS HAT (B) DC input: 30k to the rail, 10k to GND, 100 nF across the 10k. ADC1_CH0 |
 | `5V` / `VCC` | `UPS_USBA_5V` | UPS HAT USB-A 5 V output |
 | `USB-C` | `USB_FB_SERIAL` | Pi 5 USB-A (serial data; data-only preferred) |
