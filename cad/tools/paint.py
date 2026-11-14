@@ -72,7 +72,7 @@ def probe() -> dict:
     if not shutil.which("openscad"):
         sys.exit("openscad not found: the sheets are generated from the model")
     res = subprocess.run(
-        ["openscad", "-D", "R5=true", "-o", "/tmp/ktemata_paint_probe.csg",
+        ["openscad", "-o", "/tmp/ktemata_paint_probe.csg",
          str(HERE / "paint_probe.scad")],
         capture_output=True, text=True,
     )
@@ -127,6 +127,8 @@ class Model:
         self.active = (g("P_ACTIVE_W"), g("P_ACTIVE_H"))
         # the button is on the DECK now (a centred 7" panel leaves no latch band for it)
         self.btn = (g("P_BTN_X"), g("P_BTN_Y"), g("P_BTN_D"))
+        # the 12 mm OLED button: a plain hole through the plate, no bezel to paint round
+        self.obtn = (g("P_OBTN_X"), g("P_OBTN_Y"), g("P_OBTN_D"))
         self.btn_body = g("P_BTN_BODY")
         # 8.4 V charge socket through the deck's right rail: hole + the bezel/nut envelope
         self.chg = (g("P_CHG_X"), g("P_CHG_Y"), g("P_CHG_D"), g("P_CHG_NUT_D"))
@@ -590,8 +592,9 @@ def deck_apertures(m: Model) -> list[Aperture]:
     out = [Aperture.rrect(kx, ky, kw, kh, kr), Aperture.rrect(ox, oy, ow, oh, 0.8),
            Aperture.rrect(px, py, pw - px, ph - py, 0.0), Aperture.circle(fx, fy, fd)]
     out += [Aperture.circle(sx, sy, 2 * 3.1) for sx, sy in m.screws]
-    # the 16 mm power button lives on the deck now, and so does the charge socket
+    # the 16 mm power button, the 12 mm OLED button and the charge socket all live on the deck
     out.append(Aperture.circle(m.btn[0], m.btn[1], m.btn[2]))
+    out.append(Aperture.circle(m.obtn[0], m.obtn[1], m.obtn[2]))
     out.append(Aperture.circle(m.chg[0], m.chg[1], m.chg[2]))
     return out
 

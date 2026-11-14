@@ -1,12 +1,11 @@
 # Ktemata — BOM
 
-Parts for the current build. **r5** (default) is the same electronics and display inside a bought Peli case;
-**r4** (`-D R5=false`) is the printed exterior. r2/r3 are selectable in the CAD (`export.py --r2`) and their
-parts are listed at the end.
+Parts for the current build. **One build: r5.** The electronics and display inside a bought Peli case; the earlier printed
+exteriors (r1–r4) are no longer modelled, and their parts are gone from this list.
 
 Prices are indicative, in euro, for scale only.
 
-Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design notes: [`R5.md`](R5.md).
+Wiring: [`WIRING.md`](WIRING.md). Design notes: [`R5.md`](R5.md).
 
 ---
 
@@ -78,7 +77,6 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
    is what pushed the power button onto the deck.
    *One consequence (r4 only):* the 5" TD2's **inner** Pi hole pattern is 51 × 49 mm (the Pi is 58 × 49),
    so the Pi is held by the case posts and the display by its own **outer** standoffs (122.74 × 72.96 mm).
-   Check [`R4.md`](R4.md) before printing that variant.
 2. **UPS.** The UPS HAT (B) is a different power architecture from the HAT (E), not a drop-in swap:
    - **2× 18650 in 2S** (7.4 V nominal, ≈ 23 Wh) instead of 4× 21700 (≈ 70 Wh). Expect **≈ 2–2.5 h** of Pi 5
      use rather than ≈ 6–7 h.
@@ -116,7 +114,7 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
 
 ## C. r2/r3 reference list
 
-For the older build (`export.py --r2`, `-D R4=false`): DFRobot **DFR0550-V2** display + Standard–Mini
+Earlier-build parts, kept only as history (the CAD no longer models them): DFRobot **DFR0550-V2** display + Standard–Mini
 cable, **Waveshare UPS HAT (E)** + 4× 21700 (in printed cradles, wired to V1–V4), **Phistone Mini Keyboard**,
 optional Pimoroni trackball, Pi 5 + ML-2020, Seeed M.2 BASE + 2230 SSD, DS3231 + CR1220, FireBeetle +
 OLED, PBS-33B button, sealed **USB-C** panel port + MPPT module (5 V out), M2.5 set.

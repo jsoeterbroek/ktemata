@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Describe an STL intersection exported by check.sh.
+"""Describe an STL intersection exported by check_r5.sh.
 
   python3 work/scripts/stl_report.py bbox  <file>   # bounding box of the overlap
   python3 work/scripts/stl_report.py vol   <file>   # intersection volume in cm3

@@ -10,8 +10,6 @@
 // support.
 include <common.scad>
 
-assert(R5, "r5 parts need -D R5=true");
-
 module plate2d() rrect(R5_LID_PLATE[0], R5_LID_PLATE[1], 8);
 
 module plate() linear_extrude(R5_LID_T) plate2d();

@@ -4,7 +4,7 @@ Written 24 Oct 2026, when the r4 dimensions were **accepted as they are** (172 �
 records the analysis of the two obvious ways to make the device flatter, the numbers behind them, and what a
 future attempt would have to change. Nothing here is implemented; the CAD still models the r4 stack.
 
-Read [`R4.md`](R4.md) first for the parts and the derived stack.
+Read [`R5.md`](R5.md) first for the parts and the derived stack.
 
 ## 1. Where the thickness actually goes
 
@@ -39,7 +39,7 @@ Replace the pogo connection with 5 V/GND wires and lay the HAT beside the Pi ins
 **What it wins**
 
 * The Pi's underside is free — the ordered **Seeed M.2 BASE + SN740** (≈10 mm with the card) finally has a home,
-  which `docs/BOM.md` note 7 and `R4.md` item 6 currently record as unsolved.
+  which `docs/BOM.md` note 7 currently records as unsolved.
 * No pogo contact. Waveshare's own FAQ names pogo seating as the cause of undervoltage reports
   ("The pogo pin contact is not good, please reassemble the UPS").
 * Room for a 40-pin header if wanted (do **not** add a second I²C master; the FireBeetle stays the master).
@@ -114,7 +114,7 @@ only combination that reaches `T ≈ 35`, and it needs the HAT's power path rewo
 
 ## 5. Numbers worth keeping
 
-Measured from Waveshare's `ups_hat_b__asm.stp` (see `R4.md` for the source):
+Measured from Waveshare's `ups_hat_b__asm.stp`:
 
 | | mm |
 |---|---|

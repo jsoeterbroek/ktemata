@@ -25,10 +25,10 @@ re-export.
 
 ## Files
 
-Design notes, one page per concern: [`docs/R4.md`](docs/R4.md) (current hardware),
-[`docs/R5.md`](docs/R5.md) (internal cassette), [`docs/POWER.md`](docs/POWER.md) (r5 power budget,
-24/7, against all three Project NOMAD tiers), [`docs/COMPARISON-PREPPERDISK.md`](docs/COMPARISON-PREPPERDISK.md)
-(pros and cons against the commercial Prepper Disk), [`docs/WIRING.md`](docs/WIRING.md), [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md),
+Design notes, one page per concern: [`docs/R5.md`](docs/R5.md) (the build),
+[`docs/POWER.md`](docs/POWER.md) (power budget, 24/7, against all three Project NOMAD tiers),
+[`docs/COMPARISON-PREPPERDISK.md`](docs/COMPARISON-PREPPERDISK.md) (pros and cons against the
+commercial Prepper Disk), [`docs/WIRING.md`](docs/WIRING.md),
 [`docs/SLIMMING.md`](docs/SLIMMING.md).
 
 ## Build guide
@@ -63,60 +63,45 @@ the images and `bash site/deploy.sh` rebuilds then uploads them.
 
 ### Build variants
 
+**One build: r5.** No earlier revision is modelled any more — there is no switch to select one, and
+no plan to build one.
+
 | Build | Mechanics | Keyboard / radios |
 |---|---|---|
-| **r1** | Original reverse-engineered Waveshare 5" DSI + INIU power bank case; r1-only pull switch and battery button | Original r1 keyboard; no r2 electronics |
-| **r2** | Pi 5 + DFR0550-V2 + UPS HAT (E) + 4× 21700; same geometry and STLs as r3 | Wired USB keyboard; optional Pimoroni trackball; hotspot optional (`--hotspot`) |
-| **r3** | Same mechanical build and STLs as r2 | Phistone Mini Keyboard (2.4 GHz USB dongle or Bluetooth 5.0); no Pimoroni trackball; hotspot optional |
-| **r4** | **Current target and default CAD:** Pi 5 + Touch Display 2 (5", landscape) + UPS HAT (B) with 2× 18650 (2S); 172 × 237 × 53 mm | **Rii K06** 151 × 59 × 11 mm, 2.4 GHz dongle or Bluetooth; touchpad replaces the trackball; hotspot optional |
-| **r5** | Same electronics as r4 and the same **5" Touch Display 2**, **no air-quality sensor**; no printed exterior: an internal cassette (tray + deck + lid cover) drops into a bought Peli 1200, the panel centred in the lid (the 7" Waveshare cover is kept as an alternative part). The UPS HAT (B) and the Pi 5 + M.2 BASE + SSD sit **side by side on the tray floor**, each screwed to four posts, with power on soldered wires instead of pogo pins; the deck bolts down with **seven countersunk M3 × 10** (DIN 7991 / ISO 10642) into heat-set inserts | K06 on the deck; see [`docs/R5.md`](docs/R5.md) |
+| **r5** | Internal cassette (tray + deck + lid plate/cover) that drops into a bought Peli 1200: Pi 5 + **5" Touch Display 2** in the lid (the 7" Waveshare cover is kept as an alternative part), UPS HAT (B) with 2× 18650 (2S), **no air-quality sensor**. The HAT and the Pi 5 + M.2 BASE + SSD sit **side by side on the tray floor**, each screwed to four posts, power on soldered wires; the deck bolts down with **seven countersunk M3 × 10** (DIN 7991 / ISO 10642) into heat-set inserts | **Rii K06** 151 × 59 × 11 mm, 2.4 GHz dongle or Bluetooth, on the deck; hotspot optional |
 
-The default CAD is the **r4 build**. Two switches in `cad/common.scad` select the others: `R4` (`true`,
-the default) turns the r4 retarget off, and `R2` (`false`) selects the original r1 case. `R5`
-(`-D R5=true`, or `export.py --r5`) switches to the internal-cassette build, which needs the r4
-mechanics and a host hard case (`HOST` = `"1200"` by default). **The Peli R40 proposed for r5 cannot
-host the build** — its whole interior (48.3 mm) is shallower than the display plus the cell stack; see
-[`docs/R5.md`](docs/R5.md) for the measurements and for the cases that do fit.
+The host is the **Peli 1200** (`HOST = "1200"`, or `"1400"`); the Peli R40 cannot host it — its whole
+interior (48.3 mm) is shallower than the display plus the cell stack. See [`docs/R5.md`](docs/R5.md).
 
 ```bash
-python3 cad/tools/export.py           # r4 parts (default)
-python3 cad/tools/export.py --r2      # r2/r3 parts (DFR0550 + HAT (E) + Phistone)
-python3 cad/tools/export.py --r1      # original r1 set
-python3 cad/tools/export.py --r5      # r5 cassette (tray, deck, lid plate)
-python3 cad/tools/paint.py            # r5 airbrush paint schemes, 1:1 sheets -> docs/paint/
+python3 cad/tools/export.py           # the shipped set -> stl/r5/ (tray, deck, lid plate, lid cover)
+python3 cad/tools/paint.py            # airbrush paint schemes, 1:1 sheets -> docs/paint/
 python3 cad/tools/paint.py --stickers # the two Meridian type blocks as print-ready sticker PDFs
-openscad -D R4=false -o out.png cad/assembly.scad      # r2/r3 assembly preview
-openscad -D R2=false -o out.png cad/assembly.scad      # r1 assembly preview
+openscad -o out.png --render cad/assembly_r5.scad      # cassette assembly preview
 ```
 
-The r1 parts are still in the repository and export with `export.py --r1`. r3 is a keyboard/radio variant of
-r2 and shares its STLs (see [`docs/R3.md`](docs/R3.md)); r4 has its own geometry because the display, the
-power board, the cells and the keyboard all changed (see [`docs/R4.md`](docs/R4.md)). Finishes for r5's two visible faces are in [`docs/PAINT.md`](docs/PAINT.md): **Strata** is the
-chosen airbrush scheme, with 1:1 colour sheets and per-pass mask cut files from
-`cad/tools/paint.py`. Making r4 flatter is
-analysed — and deliberately not done — in [`docs/SLIMMING.md`](docs/SLIMMING.md). Cast soft-rubber corner
-caps with [`docs/CORNER_MOULD.md`](docs/CORNER_MOULD.md) (a retrofit accessory; the case STLs are unchanged).
+Finishes for r5's two visible faces are in [`docs/PAINT.md`](docs/PAINT.md): **Strata** is the chosen
+airbrush scheme, with 1:1 colour sheets and per-pass mask cut files from `cad/tools/paint.py`.
 
-| STL (`stl/archive/`) | Source (`cad/`) | Print orientation | r4 |
-|---|---|---|---|
-| `ktemata_bottom.stl` – back shell | `bottom.scad` | back plate down, no supports | yes |
-| `ktemata_face.stl` – front face | `face.scad` | face plate down | yes |
-| `ktemata_keyboard_support.stl` | `keyboard_support.scad` | flat | yes |
-| `ktemata_charge_plug.stl` – sealed charge plug | `charge_plug.scad` | flange down (TPU) | yes |
-| `ktemata_corner_{cap,cup,plate,lid}.stl` – silicone corner overmould | `corner_mould.scad` | as exported | accessory |
-| `ktemata_pull_switch.stl` – USB-C U-adapter pull switch | `pull_switch.scad` | top face (ring tab) down | r1 only |
-| `ktemata_power_button.stl` – battery button plunger | `power_button.scad` | cap end down | r1 only |
+| STL (`stl/r5/`) | Source (`cad/`) | Print orientation |
+|---|---|---|
+| `ktemata_r5_tray.stl` – floor tray | `r5_tray.scad` | floor down |
+| `ktemata_r5_deck.stl` – keyboard / OLED / button deck | `r5_deck.scad` | **top face down** |
+| `ktemata_r5_lid_cover.stl` – recessed 5" display cover | `r5_lid_cover.scad` | lid/tape face down |
+| `ktemata_r5_lid_plate.stl` – plain 4 mm display plate | `r5_lid_plate.scad` | flat |
+| `ktemata_r5_lid_cover_waveshare_7in.stl` – the 7" alternative | `r5_lid_cover_waveshare_7in.scad` | lid/tape face down |
+| `ktemata_r5_lid_cover_test_dimensions.stl` – 1 mm fit template | `r5_lid_cover.scad` | flat |
 
-`cad/assembly.scad` shows everything with stand-in components (`-D EXPLODE=40`).
-`-D 'CHECK="bottom:pi"'` intersects one part with another, which is handy for clearance checks.
-To re-export the STLs: `python3 cad/tools/export.py` (use `--r2`, `--r1` or `--r5` for the other sets).
-To refresh images afterwards: `python3 cad/tools/render.py` (r5 images go in `renders/r5/`, older
-variants in `renders/archive/`; add `--r1` for r1-only views; previews follow the exported STLs).
+`cad/assembly_r5.scad` shows everything with stand-in components (`-D EXPLODE=60`).
+`-D 'CHECK="tray:deck"'` intersects one part with another, which is handy for clearance checks
+(`bash work/scripts/check_r5.sh` runs the whole set).
+To re-export the STLs: `python3 cad/tools/export.py`.
+To refresh images afterwards: `python3 cad/tools/render.py` (renders/r5/; previews follow the
+exported STLs).
 For the open-case website showcase, run `python3 cad/tools/render_showcase.py`; it uses the real r5
 geometry and current Strata marks, writes `renders/r5/site_r5_showcase.png`, and `site/build.sh`
 copies it to `site/img/`.
-`R1=1 bash work/scripts/check.sh` runs the old interference set; the default is the r4 set
-(`R4=0` for the r2/r3 pairs).
+`bash work/scripts/check_r5.sh` is the interference set (`HOST=1400` for the bigger host).
 
 ### Hand crank generator (separate project)
 
@@ -257,13 +242,13 @@ Project N.O.M.A.D. (custom ARM64 build)
 - clock important (correct date and time RTC)
 - preferred hardware shops: [tinytronics.nl](https://www.tinytronics.nl), [bol.com](https://www.bol.com) (no Amazon)
 
-## Target hardware (r4, Pi 5 route)
+## Target hardware (Pi 5 route)
 
 
 | Function | Choice | Notes |
 |---|---|---|
 | Board | Raspberry Pi 5, 4 GB | Pi 4 was considered for lower power and rejected: idle draw is about the same (Pi 4 ≈ 2.9 W, Pi 5 ≈ 2.7–3.0 W), and the Pi 4 lacks PCIe (NVMe) and the built-in RTC. RAM size barely affects power. 4 GB covers the expected 2–4 GB use (desktop, NOMAD without AI under 1 GB, Chromium with Wikipedia + maps); keep browser tabs modest. 16 GB only pays off for local AI, which is out of scope. Project NOMAD is officially x86-64 only for now. ARM64 support is being built by the maintainers (no date). Until then, run Kiwix (Wikipedia, medical, prepper) and ProtoMaps directly, or use a community ARM build. |
-| Display | **Raspberry Pi Touch Display 2, 5"** for r5 and r4: 720 × 1280 IPS DSI, 5-point capacitive touch, 143.4 × 91.46 mm, active 110.7 × 62.3, 14.92 mm deep (6.42 body + 8.5 standoffs), 1.4 W | **r5 and r4:** 4× **M2.5** standoffs (122.74 × 72.96 span) and it is the mount: the lid cover screws through its 4 mm rear skin and sinks the display 14.92 mm into the 18.92 mm panel, leaving the glass **flush with the entire front face**. It runs landscape (the 1280 axis along the 143.4 mm one) and centred in both axes. Its touch I²C uses the Pi's I²C1 (GPIO2/3); with no 40-pin header, solder it to the pads. Its Pi pattern is 51 × 49 mm, so the Pi is held by the case posts, not by the display (see [`docs/R4.md`](docs/R4.md)). The **7" Waveshare 7inch DSI LCD (C)** cover is kept as an alternative part, `stl/r5/ktemata_r5_lid_cover_waveshare_7in.stl` (192.96 × 110.76, 10.50 mm to the PCB back, 4× M3 inserts, 33.67 mm latch band - which is why the power button is on the **deck**). |
+| Display | **Raspberry Pi Touch Display 2, 5"** for r5 and r4: 720 × 1280 IPS DSI, 5-point capacitive touch, 143.4 × 91.46 mm, active 110.7 × 62.3, 14.92 mm deep (6.42 body + 8.5 standoffs), 1.4 W | **r5 and r4:** 4× **M2.5** standoffs (122.74 × 72.96 span) and it is the mount: the lid cover screws through its 4 mm rear skin and sinks the display 14.92 mm into the 18.92 mm panel, leaving the glass **flush with the entire front face**. It runs landscape (the 1280 axis along the 143.4 mm one) and centred in both axes. Its touch I²C uses the Pi's I²C1 (GPIO2/3); with no 40-pin header, solder it to the pads. Its Pi pattern is 51 × 49 mm, so the Pi is held by the case posts, not by the display (see [`docs/R5.md`](docs/R5.md)). The **7" Waveshare 7inch DSI LCD (C)** cover is kept as an alternative part, `stl/r5/ktemata_r5_lid_cover_waveshare_7in.stl` (192.96 × 110.76, 10.50 mm to the PCB back, 4× M3 inserts, 33.67 mm latch band - which is why the power button is on the **deck**). |
 | Power | **Waveshare UPS HAT (B)**: 2× 18650 in **2S** (7.4 V nominal), 5 V 5 A out, **8.4 V / 2 A barrel-jack charge input**, INA219 gauge at I²C **0x42** | Charges and powers the Pi at the same time, so connecting a charger does not reboot it. 85 × 56 mm board with pogo pins to the Pi; the cells hang below the board in its own holders (23.35 mm holder/cell side, measured on Waveshare's 3D drawing; mounted rotated 90° to clear the Pi's ports). **Two consequences versus r2:** about **2–2.5 h** Pi 5 runtime instead of ~6–7 h (23 Wh vs 70 Wh), and **no USB-C PD input** — the charge port is a 5.5 × 2.1 mm DC socket (r4: through the printed case wall; r5: in the deck, so the bought host stays unmodified) and solar/crank must deliver **8.4 V** (through the internal MPPT/charger module) instead of PD. Alternative if runtime matters more: the HAT (E) with 4× 21700 (r2/r3). |
 | Solar | Foldable 20–30 W panel **plus** a 2S/8.4 V regulator or MPPT module into the internal charger | r4 has no PD input: the HAT (B) charges from 8.4 V at up to 2 A, so a PD panel cannot feed it directly. The internal module (`MPPT_*`) must output 8.4 V; a bare panel still needs a charge controller in between. Budget for a 2S MPPT module, not a USB-C PD trigger. |
 | Hand crank (backup, nice to have) | **Separate** crank generator with rectifier + buffer capacitor, feeding the **same charger input** as solar, into the one sealed charge port | Emergency top-up for night and clouds, not a main source. Rough estimate: 10–20 W of arm effort gives about 5–10 W into the battery after losses, so 1 minute of cranking ≈ 1 minute of use, and a full charge (about 23 Wh on r4, 70 Wh on r2) would take roughly 3–5 h (r4) or 7–14 h (r2). Sellers' "20 W" ratings are peaks. Kept outside the case: there's no room next to the 21700 cells, you can't hold the device steady against the crank torque, a shaft would break the seal, and it would add weight all the time. Build options: the 3D-printed axial-flux design in the separate [handcrank](https://github.com/jsoeterbroek/handcrank) project (N52 magnets, 8 coils × 350 turns, gearbox, full-bridge rectifier), or a commercial USB-C crank generator. The MPPT/input-voltage regulation matters: without it the input collapses whenever cranking slows (in the video the phone kept showing "USB disconnected"). Later option: a clip-on module on the (not yet modelled) back attachment. A pedal generator gives several times more power. |
@@ -309,14 +294,12 @@ Starting thresholds (tune them in use):
 
 ### r4 CAD implementation
 
-r4 has its own geometry because the display, the power board, the cells and the keyboard all changed from
-r2/r3. `cad/common.scad` holds one parameter set with two switches: **`R4`** (`true` by default) selects the
-r4 stack, **`R2`** selects the r2/r3 or (`false`) the r1 case. `pick(a, b, c)` returns the r4, r2/r3 or r1
-value, so a parameter is written once in each variant's terms. `export.py` defaults to r4 and takes `--r2` or
-`--r1`.
+`cad/common.scad` holds one parameter set — one value per dimension, no build switches. The parts are
+`r5_tray`, `r5_deck`, `r5_lid_plate`/`r5_lid_cover` (plus the 7" cover and the 1 mm fit template), and
+`export.py` lists them by name.
 
-**r4 envelope: 172 × 237 × 53 mm** (r2/r3: 150 × 205 × 46.5; **r5 prints no exterior** — its tray is
-233.5 × 178.1 inside the bought host, and the deck is 243.3 × 186.8, cut to the host's cavity at its own
+**r5 prints no exterior**: its tray is 233.5 × 178.1 inside the bought host, and the deck is
+243.3 × 186.8, cut to the host's cavity at its own
 height). Width comes from the 143.4 mm display plus the
 3 mm walls and window border (the 151 mm K06 body fits inside that); length from the 143.4 mm portrait display,
 a 35.5 mm status-OLED band and the 59 mm K06; depth from the HAT (B) holder stack. Width and length are
@@ -342,8 +325,8 @@ z=0   back plate (FLOOR 2 mm)
 - **Display:** the TD2's **outer** standoffs (122.74 × 72.96 mm) carry the case posts. Its **inner** Pi
   pattern is 51 × 49 mm, while the Pi's is 58 × 49 mm, so the Pi cannot use the display's inner holes; the
   Pi is fixed to the case posts and the display stands on its own outer standoffs. Verify against your unit
-  (`docs/R4.md` has the drawing numbers). The DSI (22→15 pin) and GPIO J1 power cable run in the face cavity
-  below the display. The Pi 5 auto-detects the panel.
+  (the drawing numbers are in `cad/common.scad`). The DSI (22→15 pin) and GPIO J1 power cable run to the
+  Pi. The Pi 5 auto-detects the panel.
 - **Battery/UPS:** the HAT (B) uses its own soldered 18650 holders, so **there is no printed cell tray** in
   r4 (r2's `cell_tray()` is skipped). The board pogo-pins to the Pi's component side. The stock acrylic base
   and standoffs are not used. 2S means 7.4 V nominal, 5 V/5 A out, ≈2–2.5 h Pi 5 runtime.
@@ -378,9 +361,6 @@ z=0   back plate (FLOOR 2 mm)
    r4 band has ~0.7 mm of slack round the 34 mm module. Also check the PBS-33B nut clearance.
 5. **18650 length** (65 mm nominal) and whether your Pi 5 has a 40-pin header fitted (it must be removed or
    low-profile).
-
-r2/r3 remain fully modelled: `python3 cad/tools/export.py --r2` reproduces the 150 × 205 × 46.5 mm set with
-`bad edges: 0`, and the r2/r3 assembly still passes the interference checks.
 
 ## Use at your own risk
 

@@ -220,7 +220,7 @@ system.
 ### Heat is expected here
 
 There is **no cooler in this build** — the UPS HAT (B) occupies the Pi's component side, so neither the Active
-Cooler nor a heatsink fits (see `R4.md`). The Pi 5's soft limit is 80 °C and its hard limit 85 °C, so a bare
+Cooler nor a heatsink fits. The Pi 5's soft limit is 80 °C and its hard limit 85 °C, so a bare
 board under load sits at 85 °C and throttles. That is the design, not a defect: the check reports it as a
 warning with the load average, and only treats **undervoltage** as a fault.
 

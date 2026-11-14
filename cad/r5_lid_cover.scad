@@ -3,8 +3,8 @@
 // The cassette holds the electronics in the base; this is the other half. A full-face cover taped
 // into the host lid carries the Raspberry Pi Touch Display 2, 5", the same panel r4 hangs.
 //
-//   openscad -D R5=true cad/r5_lid_cover.scad                   # the default build
-//   openscad -D R5=true -D 'HOST="1400"' cad/r5_lid_cover.scad   # the larger host
+//   openscad cad/r5_lid_cover.scad                   # the default build
+//   openscad -D 'HOST="1400"' cad/r5_lid_cover.scad   # the larger host
 //
 // Orientation as modelled: z = 0 is the LID side (the tape face and the print bed) and z grows
 // into the case. The rear mounting skin is on the bed and the display recess opens upwards.
@@ -31,8 +31,6 @@
 // Waveshare build was the default) leaves 28.93 mm of latch band and a 16 mm IP67 button needs
 // 34.2 mm, so the button moved to the deck's right rail (R5_BTN_*).
 include <common.scad>
-
-assert(R5, "r5 parts need -D R5=true");
 
 // ---------------- guards ----------------
 // The values themselves are in common.scad (see the note there); these are the checks that make

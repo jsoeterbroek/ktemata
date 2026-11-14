@@ -5,8 +5,8 @@
 // Touch Display 2 cover (cad/r5_lid_cover.scad); this one is the alternative, and it carries its
 // own panel numbers because nothing else uses them.
 //
-//   openscad -D R5=true cad/r5_lid_cover_waveshare_7in.scad
-//   python3 cad/tools/export.py --r5 r5_lid_cover_waveshare_7in
+//   openscad cad/r5_lid_cover_waveshare_7in.scad
+//   python3 cad/tools/export.py r5_lid_cover_waveshare_7in
 //
 // Orientation as modelled: z = 0 is the LID side (the tape face and the print bed) and z grows
 // into the case. The rear mounting skin is on the bed and the display recess opens upwards.
@@ -27,8 +27,6 @@
 //   Pi standoffs (unused) 58 x 49, 3.5 mm behind the PCB (W7_POSTS, W7_STUD)
 //   panel position        centred in both axes           (W7_X0/Y0)
 include <common.scad>
-
-assert(R5, "r5 parts need -D R5=true");
 
 // ---------------- the 7" panel ----------------
 W7_PANEL        = [192.96, 110.76, 8];                  // w (along x), h (along y), corner R

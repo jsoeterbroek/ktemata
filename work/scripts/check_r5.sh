@@ -1,12 +1,12 @@
 #!/bin/bash
-# r5 interference check: the cassette's printed parts against each other and the components.
+# Interference check: the cassette's printed parts against each other and the components.
 #   bash work/scripts/check_r5.sh            # default host (1200)
 #   HOST=1400 bash work/scripts/check_r5.sh  # bigger host interior
 # A "HIT" whose bbox is flat in one axis is a zero-volume (tangent) contact and expected.
 cd "$(dirname "$0")/../../cad"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
-extra="-D R5=true"
+extra=""
 [ -n "$HOST" ] && extra="$extra -D HOST=\"$HOST\""
 pairs="tray:deck tray:pi tray:ups tray:cells tray:floor tray:keyboard tray:display
 deck:pi deck:ups deck:cells deck:floor deck:keyboard deck:oled deck:display deck:lid lid:display

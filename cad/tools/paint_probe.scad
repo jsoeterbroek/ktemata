@@ -1,8 +1,7 @@
 // Echoes the r5 paint-relevant dimensions so paint.py never hardcodes a number that common.scad
 // already owns.  Driven by cad/tools/paint.py; runnable on its own for a quick look:
-//   openscad -D R5=true -o /tmp/x.csg cad/tools/paint_probe.scad
+//   openscad -o /tmp/y.csg cad/tools/paint_probe.scad
 include <../common.scad>
-assert(R5, "the paint schemes are r5: use -D R5=true");
 
 echo(P_W = R5_W);
 echo(P_L = R5_L);
@@ -55,6 +54,10 @@ echo(P_BTN_X = R5_BTN_X);
 echo(P_BTN_Y = R5_BTN_Y);
 echo(P_BTN_D = R5_BTN_D);
 echo(P_BTN_BODY = R5_BTN_BODY);
+// the 12 mm OLED button is a through-hole in the painted face too
+echo(P_OBTN_X = R5_OLED_BTN_X);
+echo(P_OBTN_Y = R5_OLED_BTN_Y);
+echo(P_OBTN_D = R5_OLED_BTN_D);
 echo(P_CHG_X = R5_CHG_X);
 echo(P_CHG_Y = R5_CHG_Y);
 echo(P_CHG_D = R5_CHG_D);

@@ -12,8 +12,6 @@
 // Print floor down. Every wall is vertical, no supports, nothing overhangs the bed face.
 include <common.scad>
 
-assert(R5, "r5 parts need -D R5=true");
-
 module cassette2d(d=0) offset(delta=d) rrect(R5_W, R5_L, R5_R);
 
 module tray_shell() difference() {

@@ -120,7 +120,8 @@ therefore say `steady` / `varying` (and `external` / `external-weak`) and never 
 | DC-099 shell | `GND` | HAT DC input sleeve |
 | 16 mm switch `C` | `CHG_8V4` (from the jack) | — |
 | 16 mm switch `NO` | `CHG_8V4` (to the HAT) | Use NO + C, not NC |
-| 16 mm switch `LED+` / `LED−` | 5 V / GND | Lights when the unit is on |
+| 16 mm switch `NC` | — | Unused; insulate the end. The 5-wire harness is `C`, `NO`, `NC`, `LED±`, but its colours change per batch — identify them with a meter (see note below) |
+| 16 mm switch `LED+` / `LED−` | 5 V / GND | 3–6 V only, built-in resistor, ~15 mA; either polarity. Lights when the unit is on |
 | PBS-33B terminal 1 / 2 | `GPIO4` / `GND` | FireBeetle |
 
 ---
@@ -143,7 +144,12 @@ therefore say `steady` / `varying` (and `external` / `external-weak`) and never 
 8. **Pack.** 2S = 7.4 V nominal, 8.4 V full. Matched cells, insulation rings, 5 A fuse in the positive lead,
    and never assemble or rewire the pack with the HAT powered.
 9. **Buttons and switch.** The PBS-33B is not IP-rated — fit the 12 mm rubber boot. The 16 mm switch is
-   **latching**: shut the Pi down in software, then cut.
+   **latching**: shut the Pi down in software, then cut. Its 5-wire harness colours are not standard:
+   buzz it out before soldering — the wire that is common to the closed pair in **both** latch states is
+   `C`, the partner closed with the button out is `NC`, the one closed with it in is `NO`, and the
+   remaining two are the LED (either polarity, 3–6 V). Never put 8.4 V across the LED pair.
+   FILN's harness FAQ gives **red = LED+, black = LED−, green = C, blue = NO, yellow = NC**; a
+   **white** lead usually stands in for the blue `NO`. Treat that as a starting guess, not a spec.
 10. **NVMe.** Check the M.2 BASE plus card stack against the tray before final assembly ([`BOM.md`](BOM.md)
     note 7).
 11. **First power-up:** Pi disconnected. Feed 8.4 V and check the pack voltage, the fused + lead and the

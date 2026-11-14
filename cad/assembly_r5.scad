@@ -1,8 +1,8 @@
 // Ktemata r5 - assembly / fit check with stand-in components
 //
-//   openscad -D R5=true cad/assembly_r5.scad                          # whole cassette + host
-//   openscad -D R5=true -D 'CHECK="tray:deck"' cad/assembly_r5.scad    # one interference pair
-//   openscad -D R5=true -D 'HOST="1170"' cad/assembly_r5.scad          # another host interior
+//   openscad cad/assembly_r5.scad                          # whole cassette + host
+//   openscad -D 'CHECK="tray:deck"' cad/assembly_r5.scad    # one interference pair
+//   openscad -D 'HOST="1170"' cad/assembly_r5.scad          # another host interior
 //
 // The host case itself is a transparent box showing its real interior (HOST_* in common.scad),
 // so the fit against the published dimensions is visible, not assumed.

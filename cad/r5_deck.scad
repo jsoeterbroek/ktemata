@@ -13,8 +13,6 @@
 // how that is kept flush.
 include <common.scad>
 
-assert(R5, "r5 parts need -D R5=true");
-
 // The plate overhangs the cassette: R5_DECK_* (common.scad) is the host's cavity at the height the
 // plate lands at, centred on the cassette, with a corner radius big enough to clear the host's
 // moulded corners. Every cut below is placed in absolute coordinates, so growing the rim leaves

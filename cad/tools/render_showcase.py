@@ -32,7 +32,7 @@ def main() -> None:
     cmd = [
         "openscad", "-o", str(args.output), "--render", f"--imgsize={args.imgsize}",
         "--colorscheme=Tomorrow", f"--camera={args.camera}", "--viewall", "--autocenter",
-        "-D", "R5=true", "-D", f"STRATA_DECK={deck}", "-D", f"STRATA_COVER={cover}",
+        "-D", f"STRATA_DECK={deck}", "-D", f"STRATA_COVER={cover}",
         str(REPO / "cad" / "r5_showcase.scad"),
     ]
     result = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True)
