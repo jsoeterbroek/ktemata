@@ -34,7 +34,7 @@ Wiring: [`WIRING.md`](WIRING.md). r4 design notes: [`R4.md`](R4.md). r5 design n
 | 18 | STEMMA QT / Qwiic JST-SH 4-pin cable, 200 mm | 2 | I²C chain: DS3231, OLED (FireBeetle side uses the header cable below). | € 1.44 ea |
 | 19 | STEMMA QT / Qwiic → male headers, 150 mm | 1 | FireBeetle header → Qw/ST bus. | € 1.15 |
 | 20 | Dupont jumpers, female–female, 20 cm | 1 set | UPS INA219 I²C (0x42) + 5 V to the FireBeetle. | € 5 |
-| 20a | Resistors **30k** and **10k** (1 %, 0.25 W) + **100 nF** ceramic | 1 + 1 + 1 | Charge-input sense divider on the HAT (B)'s DC input → `A0` (ADC1). 8.4 V → 2.10 V, 210 µA. Soldered inline; see [`WIRING.md`](WIRING.md#charge-input-sense-r4--r5). | € 0.30 |
+| 20a | Resistors **30k** and **10k** (1 %, 0.25 W) + **100 nF** ceramic | 1 + 1 + 1 | Charge-input sense divider on the HAT (B)'s DC input → `A0` (ADC1). 8.4 V → 2.10 V, 210 µA. Soldered inline; see [`WIRING.md`](WIRING.md#charge-input-sense). | € 0.30 |
 | 21 | USB-A → USB-C data cable, 20–30 cm | 1 | FireBeetle ↔ Pi serial. **Data-only** (VBUS disconnected) — the FireBeetle is powered from the UPS. | € 5 |
 | 22 | USB-A → 2-pin 5 V lead (JST-XH / dupont) | 1 | UPS USB-A 5 V → FireBeetle 5 V/GND; keeps the OLED alive with the Pi off. | € 5 |
 | 23 | [M3 × 10 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/bzk-inbus-verzonkenkopschroef-staal-din-7991-m3x10.html) | **7** | DIN 7991 / ISO 10642; **dk 6.0 mm, k 1.7 mm, 2.0 mm hex**. Seven deck screws into the heat-set inserts. Sold in packs of 25. | € 2.60 / 25 |

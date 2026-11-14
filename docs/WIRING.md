@@ -1,101 +1,65 @@
-# Ktemata r3 — wiring / connection diagram
+# Ktemata r5 — wiring / connections
 
-> **r4 changes the power side.** The r4 build (Touch Display 2 + **UPS HAT (B)** + Rii K06) replaces the
-> HAT (E)'s USB-C PD input with an **8.4 V / 2 A DC barrel input**, uses a **2S 18650** pack and an
-> **INA219 gauge at 0x42** instead of the BQ4050 at 0x2D, and takes display power from the **GPIO header**
-> (3-pin J1 cable) rather than only DSI. The r4-specific tables are in section 5; sections 1–4 describe the
-> r2/r3 build and the parts of the wiring that did **not** change (I²C bus, FireBeetle, sensors, OLED).
-
-Two block diagrams: **power** and **data/I²C/USB**, plus an editable **KiCad 10 schematic** and a
-netlist-style CSV. The block diagrams are generated from [`wiring_power.dot`](wiring_power.dot) and
-[`wiring_data.dot`](wiring_data.dot) with `dot -Tsvg …` + `rsvg-convert`; the PNG versions are next to the
-SVGs. The schematic, PDF, PNG and CSV are named `ktemata_r3_*`; r3 uses the same mechanics and wiring as r2
-and differs only in the keyboard. The r4 power/data deltas are listed in section 5 so the r2/r3 diagrams
-stay valid for that build.
-
-> The single **sensor** I²C master is the **FireBeetle 2 ESP32-UE**. The Pi 5 has **no 40-pin header** in
-> this build; the DS3231, OLED and UPS fuel gauge sit on the FireBeetle bus. The **r5 Waveshare display**
-> adds one separate Pi bus: its 4-pin 5 V/I²C lead uses **I²C1** (SDA GPIO2, SCL GPIO3) for the Goodix
-> touch at 0x14, soldered to the 40-pin pads (5 V, GND, GPIO2/3) because there is no header. That bus is
-> not shared with the FireBeetle. The Pimoroni trackball is **r2 only** (0x0A, firmware forwarding pending)
-> and is marked DNP in the r3 schematic; **r3 does not use it** — the Phistone keyboard's air mouse and
-> the touchscreen provide pointer input.
+The r5 build is an internal cassette that drops into a bought hard case: one external input (8.4 V), one
+I²C master (the FireBeetle), and no cable to the keyboard. This page is the r5 netlist. Design notes are in
+[`R5.md`](R5.md), parts in [`BOM.md`](BOM.md), energy in [`POWER.md`](POWER.md).
 
 ---
 
 ## 1. Power distribution
 
-![Power wiring](wiring_power.svg)
-
-*[PNG version](wiring_power.png)*
-
 | Path | Connection | Notes |
 |---|---|---|
-| Solar / crank → case | USB-C → sealed panel port | Foldable 20–30 W panel with regulated USB-C PD, or a USB-C hand crank. One sealed port only. |
-| Sealed port → charger | 5–20 V → MPPT/bq25185 input | Use a **true MPPT** module if you want maximum panel efficiency; the bq25185 is a small 5 V-boost/power-path alternative. |
-| Charger → UPS | 5 V → UPS USB-C input | The UPS charges its 4S pack and powers the Pi simultaneously. |
-| UPS → Pi | Pogo pins: 5 V + GND | No cable; the UPS HAT sits on the Pi component side. |
-| UPS → FireBeetle | USB-A 5 V + GND → FireBeetle 5 V/GND | Keeps the status OLED alive when the Pi is off. |
-| Pack + lead → HAT | **BLX-A 5 × 20 holder with a 5 A fast-acting fuse** | In series with the pack's positive lead, before the HAT. 5 A is 40–75 % of this build's draw (≈3.8 A at the pack for a full 5 V/5 A output) and it is the only protection the cells and pack wiring have. |
-| Sealed charge socket → HAT | DC-099 5.5 × 2.1 panel jack → HAT (B) 8.4 V barrel jack | The DC-099 is the **panel** socket in the deck (11 mm hole); the HAT's own jack stays. **Centre-positive**, and confirm the HAT's polarity before the first plug. A **2 A fuse** in the charge lead is not covered by the pack fuse. |
-| 16 mm latching switch | in the **8.4 V charge lead** (or a ≥5 A switch in the 5 V rail) | ABS16CG11ZCB3V is rated **3 A / 24 V DC**: fine in the 2 A charge path, **not** in the Pi's 5 V rail (5 A spec, ~2.8 A in this build). LED: 3–6 V, 15 mA, built-in resistor, either polarity — feed it from the 5 V rail, not the 8.4 V one, or add ≈220 Ω. Latching = hard cut: shut the Pi down in software first. |
-| Charger rail → FireBeetle | R1 30k / R2 10k divider → `A0` (ADC1) | Sense tap on the HAT (B)'s DC input: **is a source connected, and is it steady or sagging**. 210 µA from the charger, nothing from the pack when the rail is dead. See [charge-input sense](#charge-input-sense-r4--r5). |
-| Pi → RTC cell | ML-2020 2-pin JST → Pi J5 | Enable `dtparam=rtc_bbat_vchg=3000000`. |
-| Keyboard power | None | The r3 Phistone runs from its own 100 h battery and charges over its USB-C; it has no wire to the case. Charge and set its 2.4G/BT switch before closing (no side cutout). |
+| 8.4 V source → deck | mains PSU, **MPPT solar** or crank converter, 8.4 V / 2 A → **DC-099** panel jack | One input for all three. A USB-C PD panel cannot feed this: the HAT's input is 8.4 V DC. |
+| DC-099 → HAT (B) | jack **centre +**, **shell −** → HAT 8.4 V barrel jack | **Centre-positive** — meter both jacks before the first plug. A 2 A fuse in this lead is optional; the pack fuse does not cover the input. |
+| 16 mm latching switch | in the **8.4 V lead**, or a ≥5 A latching switch in the 5 V pair | The fitted ABS16CG11ZCB3V is rated **3 A / 24 V DC**, which suits the 2 A input and does **not** suit the Pi rail (5 A spec, ≈2.8 A here). LED 3–6 V, 15 mA, built-in resistor, either polarity — feed it from **5 V**, not the 8.4 V rail. Latching = hard cut: shut the Pi down in software first. |
+| Cells → HAT | 2× 18650 in **2S** in the HAT's own holders | Matched pair, insulation rings. |
+| Pack **+** → HAT | **BLX-A 5 × 20 holder, 5 A fast-acting fuse** | In series in the positive lead, before the HAT: the only protection the cells and pack wiring have. 5 A is 40–75 % of this build's draw. |
+| HAT (B) **5 V / GND** → Pi 5 | soldered pair, **20–22 AWG**, short | Pi header pins **2/4** (5 V) and **6/9** (GND), or the underside pads. This is the Pi's only supply. |
+| HAT (B) **USB-A 5 V / GND** → FireBeetle | 2-wire lead to `5V` / `GND` | Keeps the status OLED alive with the Pi off. |
+| Charge rail → FireBeetle | `R1` 30k / `R2` 10k divider → `A0` (ADC1) | Sense tap on the HAT's DC input — see below. |
+| Pi → RTC cell | ML-2020 2-pin JST → Pi **J5** | `dtparam=rtc_bbat_vchg=3000000` (rechargeable cell only). |
+| Keyboard power | none | The Rii K06 has its own cell and charges over its USB port. In r5 it lifts out of the deck recess, so charge it outside the case. |
 
-**Bench charging:** a 27 W USB-C PD PSU gives the UPS its full fast-charge input only if it reaches the
-UPS USB-C input directly. The sealed charge port is intended for solar/crank through the internal
-charger, so expect slow charging through that path. Charge the UPS directly before final assembly.
+**Bench charging:** the HAT charges from its 8.4 V input only; a USB-C supply cannot reach it. Charge the
+pack before final assembly, or through the deck's DC-099 with the lid open.
 
-### Charge-input sense (r4 / r5)
+### Charge-input sense
 
 ![Charge-input sense divider](charge_sense.svg)
 
 The HAT (B)'s INA219 sits on the **pack** branch, so pack current alone cannot say whether a source is
 connected — a full pack on a charger reads near zero. One ADC channel taps the DC input instead, so the
-status OLED and the telemetry can answer "on battery, on external, or external too weak to carry the
-load" without waiting for current to flow.
+status OLED and the telemetry can answer "on battery, on external, or external too weak to carry the load"
+without waiting for current to flow.
 
 | | |
 |---|---|
 | Divider | `R1` 30k rail → pin, `R2` 10k pin → GND, `C1` 100 nF across `R2` |
 | Scale | `(R1 + R2) / R2` = 4.0, so 8.4 V reads 2.10 V — the middle of the ADC's 11 dB range |
 | Pin | `A0` / GPIO36 (`ADC1_CH0`); `A1`/`A2`/`A3` = 39/34/35 are the alternates, `-DPIN_CHG_SENSE=<gpio>` overrides |
-| Load | 210 µA at 8.4 V, drawn from the charger. With the rail dead the divider sees 0 V and the pack is untouched |
+| Load | 210 µA at 8.4 V, taken from the charger. With the rail dead the divider sees 0 V and the pack is untouched |
 | Thresholds | present above **3.0 V**, absent below **2.5 V** (hysteresis); "steady" when the spread over 12 samples (60 s) is within **4 %** of the median |
 
-**What it can and cannot tell.** Present/absent and steady/varying are measured. **Mains vs solar vs
-crank is not** — all three arrive on the same socket and a voltage cannot distinguish them; the OLED and
-the JSON therefore say `steady` / `varying` (and `external` / `external-weak`) and never claim a source
-type. A source that holds the rail steady is almost certainly a regulated supply; one that sags under
-load or dips periodically is a panel in cloud or a crank between turns.
-
-The r3 block diagrams above predate this line (they still show the HAT (E)'s USB-C input) and are not
-regenerated from source for it; the netlist tables are authoritative. Add the two resistors and the
-capacitor to the KiCad sheet if you keep it in step with r4/r5.
+**What it can and cannot tell.** Present/absent and steady/varying are measured. **Mains vs solar vs crank
+is not** — all three arrive on the same socket and a voltage cannot distinguish them; the OLED and the JSON
+therefore say `steady` / `varying` (and `external` / `external-weak`) and never claim a source type.
 
 ---
 
 ## 2. Data, USB and I²C
 
-![Data wiring](wiring_data.svg)
-
-*[PNG version](wiring_data.png)*
-
 | Link | Cable / interface | Notes |
 |---|---|---|
-| Pi ↔ display | 15-pin DSI FFC (Pi 5 22-pin → 15-pin adapter) | r2/r3: DFR0550-V2 (touch on the FFC — verify your batch). r4: Touch Display 2, auto-detected, **plus** the 3-pin GPIO power cable. **r5:** Waveshare 7inch DSI LCD (C) with the included 22→15-pin DSI-Cable-12cm, **plus** its 4-pin 5 V/I²C lead (GND SDA SCL 5V) to the Pi's 40-pin pads; `dtoverlay=vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1`. |
-| Pi ↔ NVMe | PCIe FPC → Seeed M.2 BASE → WD SN740 512 GB (M.2 **2242**) | BASE is back-mounted under the Pi; it needs ≈10 mm with the card, which the current r4 stack does not have (the UPS HAT (B) is in that space). Mount the SSD at the 42 mm hole. |
-| Keyboard → Pi | 2.4 GHz USB-A dongle **or** Pi Bluetooth | r3: Phistone; r4: Rii K06. The dongle goes in the second Pi USB-A port; Bluetooth needs no wire and the Pi's BT enabled (Wi-Fi stays off). No internal keyboard cable. |
-| FireBeetle ↔ Pi | USB-C → Pi USB-A, **serial** | Telemetry/commands. Prefer a **data-only** cable (VBUS disconnected) because the FireBeetle is separately powered from the UPS. |
-| FireBeetle → OLED | I²C: SDA GPIO21 / SCL GPIO22, 3V3, GND | 0x3C; 1.3" 128×64, SH1106 default. |
-| FireBeetle → BME688 | I²C, 3V3, GND | 0x76 or 0x77. |
-| FireBeetle → DS3231 | I²C, 3V3, GND | 0x68; CR1220 backup cell. |
-| FireBeetle → trackball | I²C, 3V3, GND | **r2 only**; 0x0A, firmware forwarding pending. Marked DNP in the r3 schematic; not fitted in r3. |
-| FireBeetle → UPS HAT | I²C, GND | 0x2D fuel gauge on r2/r3, **0x42** (INA219) on r4; UPS I²C logic is 3.3 V. Do **not** also connect to the Pi. |
-| Button → FireBeetle | GPIO4 → GND | PBS-33B momentary NO; firmware uses `INPUT_PULLUP`. |
-
-> **r3 keyboard:** the **Phistone Mini Keyboard** uses its 2.4 GHz USB-A dongle on the `USB_KEYBOARD` net or Bluetooth (no cable; enable the Pi's Bluetooth and pair). Both options are wireless — there is no keyboard cable in the case. The FireBeetle radios stay off either way, and the keyboard's own radio is the project's single radio exception (see [`R3.md`](R3.md)).
+| Pi ↔ display | 22→15-pin **DSI FFC** + **3-pin GPIO power cable** | The lid cover carries the **Touch Display 2, 5"**: GPIO **J1 → pins 2 (5 V) and 6 (GND)**, and the panel is auto-detected — no overlay. Nothing else is wired to it. |
+| *7" cover alternative* | 22→15-pin DSI FFC + its 4-pin `GND SDA SCL 5V` lead | Only for `ktemata_r5_lid_cover_waveshare_7in`: solder the four wires to Pi pads 6, 3 (GPIO2/SDA), 5 (GPIO3/SCL) and 2/4 (5 V) and add `dtoverlay=vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1`. |
+| Pi ↔ NVMe | PCIe FPC → **Seeed M.2 BASE** → WD SN740 (M.2 2242) | The BASE is back-mounted; check the ≈10 mm stack against the tray before assembly ([`BOM.md`](BOM.md) note 7). |
+| FireBeetle ↔ Pi | **USB-C → Pi USB-A, serial** | Newline-delimited JSON: telemetry out, commands in. Prefer a **data-only** cable (VBUS cut) — the FireBeetle is powered from the HAT. |
+| FireBeetle → OLED | I²C `3V3`, `GND`, SDA GPIO21, SCL GPIO22 | **0x3C** (0x3D fallback), 1.3" 128×64, SH1106 by default. |
+| FireBeetle → DS3231 | I²C `3V3`, `GND`, GPIO21, GPIO22 | **0x68**, CR1220 backup. |
+| FireBeetle → HAT (B) gauge | I²C `GND`, GPIO21, GPIO22 — **logic is 3.3 V** | **0x42** INA219: pack V/I/W. Do **not** also connect this bus to the Pi. |
+| OLED button → FireBeetle | **GPIO4 → GND** | PBS-33B momentary NO in the deck (`R5_OLED_BTN_*`), `INPUT_PULLUP`: short press next screen, long press acknowledge. |
+| Keyboard → Pi | 2.4 GHz USB-A dongle in a Pi USB-A, **or** Pi Bluetooth | The K06 has no cable. Bluetooth needs the Pi's BT enabled and a wired keyboard for recovery; Wi-Fi stays off. |
 
 ---
 
@@ -105,147 +69,86 @@ capacitor to the KiCad sheet if you keep it in step with r4/r5.
 
 | FireBeetle | Net | Goes to |
 |---|---|---|
-| `3V3` | `3V3` | OLED VCC, BME688 VCC, DS3231 VCC, trackball VCC (r2 only, DNP) |
-| `GND` | `GND` | Common ground: OLED, BME688, DS3231, trackball (r2 only, DNP), UPS I²C GND, button, UPS USB-A GND |
-| `GPIO21` / `SDA` | `I2C_SDA` | OLED SDA, BME688 SDA, DS3231 SDA, trackball SDA (r2 only, DNP), UPS I²C SDA |
-| `GPIO22` / `SCL` | `I2C_SCL` | OLED SCL, BME688 SCL, DS3231 SCL, trackball SCL (r2 only, DNP), UPS I²C SCL |
-| `GPIO4` | `BTN` | PBS-33B (OLED screens) terminal 1; terminal 2 to GND. Fitted in the deck at `R5_OLED_BTN_*`, so set `AUTO_CYCLE_MS=0UL` and `SCREEN_OFF_MS=60000UL` |
-| `A0` / `GPIO36` | `CHG_SENSE` | Divider from the UPS HAT (B) DC input: 30k to the rail, 10k to GND, 100 nF across the 10k. ADC1_CH0 |
-| `5V` / `VCC` | `UPS_USBA_5V` | UPS HAT USB-A 5 V output |
-| `USB-C` | `USB_FB_SERIAL` | Pi 5 USB-A (serial data; data-only preferred) |
+| `3V3` | `3V3` | OLED VCC, DS3231 VCC |
+| `GND` | `GND` | Common ground: OLED, DS3231, HAT I²C GND, OLED button, HAT USB-A GND, charge-sense divider |
+| `GPIO21` / `SDA` | `I2C_SDA` | OLED SDA, DS3231 SDA, HAT I²C SDA |
+| `GPIO22` / `SCL` | `I2C_SCL` | OLED SCL, DS3231 SCL, HAT I²C SCL |
+| `GPIO4` | `BTN` | PBS-33B terminal 1; terminal 2 to GND. Fitted at `R5_OLED_BTN_*`, so `AUTO_CYCLE_MS=0UL` and `SCREEN_OFF_MS=60000UL` |
+| `A0` / `GPIO36` | `CHG_SENSE` | 30k from the 8.4 V rail, 10k to GND, 100 nF across the 10k. ADC1_CH0 |
+| `5V` / `VCC` | `UPS_USBA_5V` | HAT (B) USB-A 5 V output |
+| `USB-C` | `USB_FB_SERIAL` | Pi 5 USB-A (serial; data-only cable preferred) |
 
 ### I²C modules
 
 | Module | VCC | GND | SDA | SCL | Address |
 |---|---|---|---|---|---|
 | 1.3" OLED | 3V3 | GND | GPIO21 | GPIO22 | 0x3C (0x3D fallback) |
-| BME688 | 3V3 | GND | GPIO21 | GPIO22 | 0x76 / 0x77 |
 | DS3231 | 3V3 | GND | GPIO21 | GPIO22 | 0x68 |
-| Pimoroni Trackball (r2 only, DNP in r3) | 3V3 | GND | GPIO21 | GPIO22 | 0x0A |
-| UPS HAT (E) fuel gauge | — (from UPS) | GND | GPIO21 | GPIO22 | 0x2D |
+| UPS HAT (B) INA219 | — (from the HAT) | GND | GPIO21 | GPIO22 | 0x42 |
 
 ### Raspberry Pi 5
 
 | Pi 5 | Net / connection | Goes to |
 |---|---|---|
-| DSI | `DSI_FPC` | DFR0550-V2 15-pin DSI FFC |
+| DSI | `DSI_FPC` | Touch Display 2 FFC (22→15-pin adapter) |
+| GPIO pin 2 / 4 | `5V` | HAT (B) 5 V out — soldered, 20–22 AWG |
+| GPIO pin 6 / 9 | `GND` | HAT (B) GND |
+| GPIO J1 pin 2 / 6 | `DISP_5V` / `GND` | Display 3-pin power cable |
 | PCIe | `PCIE_FPC` | Seeed M.2 BASE |
-| USB-A 1 | `USB_KEYBOARD` | Phistone 2.4 GHz dongle (r3); wired USB keyboard in r2. Bluetooth alternative uses no port |
+| USB-A 1 | `USB_KEYBOARD` | K06 2.4 GHz dongle (Bluetooth alternative uses no port) |
 | USB-A 2 | `USB_FB_SERIAL` | FireBeetle USB-C (serial) |
-| USB-C | — | Service/flashing only, not used in the case |
-| J5 RTC | `VBAT_PI` | Panasonic ML-2020 2-pin JST |
-| Pogo pad 5 V | `UPS_POGO_5V` | UPS HAT pogo 5 V |
-| Pogo pad GND | `GND` | UPS HAT pogo GND |
-| microSD | — | 32 GB card for initial boot/setup |
+| USB-C | — | Service/flashing and bench power only; not used with the HAT connected |
+| J5 | `VBAT_PI` | Panasonic ML-2020 2-pin JST |
+| microSD | — | card for the initial boot/setup |
 
-### Waveshare UPS HAT (E)
+### Waveshare UPS HAT (B)
 
-| UPS | Net | Goes to |
+| HAT | Net | Goes to |
 |---|---|---|
-| Pogo 5 V | `UPS_POGO_5V` | Pi 5 5 V pogo pad |
-| Pogo GND | `GND` | Pi 5 GND pogo pad |
-| USB-C input | `UPS_CHG_VBUS` / `GND` | MPPT/charger 5 V output |
-| USB-A output | `UPS_USBA_5V` / `GND` | FireBeetle 5 V/GND |
-| I²C | `I2C_SDA` / `I2C_SCL` / `GND` | FireBeetle GPIO21/22/GND |
-| V1–V4 | `BATT_4S` | 4× 21700 in series (matched, flat-top, unprotected; fuse the positive lead) |
-| Power switch | — | Leave **ON**; the Pi is shut down in software |
+| DC input (barrel) | `CHG_8V4` / `GND` | DC-099 panel jack in the deck, via the 16 mm switch |
+| 5 V / GND pads | `UPS_5V` / `GND` | Pi 5 5 V / GND |
+| USB-A output | `UPS_USBA_5V` / `GND` | FireBeetle `5V` / `GND` |
+| I²C | `I2C_SDA` / `I2C_SCL` / `GND` | FireBeetle GPIO21 / GPIO22 / GND |
+| Battery + / − | `BATT_2S` | 2× 18650 in its own holders, **5 A fuse in the + lead** |
+| Gauge | — | INA219 at **0x42**; pack V/I/W only, no per-cell or capacity register |
 
-### Sealed USB-C port → MPPT → UPS
+### Deck panel parts
 
-| From | To | Notes |
+| Part | Net | Goes to |
 |---|---|---|
-| Sealed port outside | Solar panel or hand crank USB-C | One port, shared by both. |
-| Sealed port inside (male pigtail) | MPPT/charger `VIN+` / `VIN−` | 5–20 V input. |
-| MPPT/charger `VOUT 5V` / `GND` | UPS USB-C input `VBUS` / `GND` | 5 V, ≤1 A for the bq25185; a true MPPT module may give more. |
+| DC-099 centre pin | `CHG_8V4` | 16 mm switch → HAT DC input |
+| DC-099 shell | `GND` | HAT DC input sleeve |
+| 16 mm switch `C` | `CHG_8V4` (from the jack) | — |
+| 16 mm switch `NO` | `CHG_8V4` (to the HAT) | Use NO + C, not NC |
+| 16 mm switch `LED+` / `LED−` | 5 V / GND | Lights when the unit is on |
+| PBS-33B terminal 1 / 2 | `GPIO4` / `GND` | FireBeetle |
 
 ---
 
 ## 4. Wiring rules / checks
 
-1. **Common ground everywhere.** The UPS, Pi, FireBeetle, sensors, OLED and charge port must share GND. Use
-   one star point at the UPS HAT and keep the 4S pack wiring short. The r3 keyboard is the exception: it is
-   wireless and has no electrical connection to the case, so it also does not share this ground (its USB-C
-   is for charging only, with the keyboard outside the case).
-2. **Only one I²C master.** The FireBeetle owns the bus. Do not also connect the UPS, BME688, DS3231 or OLED
-   to the Pi. Two masters on one bus will corrupt traffic.
-3. **Pull-ups:** BME688, DS3231, OLED and UPS breakouts often each fit 4.7–10 kΩ pull-ups. In parallel they
-   can overload the bus. Keep **one** set (or remove the extra resistors); check with a meter before powering.
-4. **3.3 V only** on the I²C modules. The UPS I²C logic is 3.3 V; the FireBeetle is 3.3 V. Do not power the
-   OLED/BME688/DS3231 from 5 V.
-5. **FireBeetle power vs USB:** the FireBeetle is powered from UPS USB-A 5 V so the OLED works with the Pi
-   off. The USB-C link to the Pi is for serial data; use a data-only cable or disconnect VBUS to avoid
-   backfeeding the Pi USB port when the Pi is off.
-6. **Display FFC:** the Pi 5 DSI connector is 22-pin; the DFR0550 is 15-pin. Use the Pi 5 Standard–Mini
-   adapter cable. The DFR0550 listing currently warns about Pi 5 compatibility — verify the driver before
-   closing the case. **r4:** the Touch Display 2 is auto-detected from the DSI and additionally needs its
-   **3-pin GPIO power cable** on J1 → pins 2 (5 V) and 6 (GND); the 22→15 pin FFC is the same kind.
-7. **r5 display power/touch:** the Waveshare's 4-pin lead is `GND SDA SCL 5V`; use Pi 5 pads 6 (GND), 3 (GPIO2/SDA), 5 (GPIO3/SCL) and 2 or 4 (5 V). There is no 40-pin header: solder the four wires before fitting the UPS HAT. The DSI FFC is the 12 cm cable in the display kit.
-8. **Battery pack:** 4S = 14.4 V nominal / 16.8 V full. Use matched cells, insulation rings, a fuse in the
-   positive lead, and verify the V1–V4 order before connecting. Never assemble the pack with the UPS
-   switched on.
-9. **Buttons/switches:** the PBS-33B is not IP-rated; fit a 12 mm rubber boot. The UPS power switch stays on;
-   the Pi is shut down via software. The status button is GPIO4 to GND.
-10. **NVMe:** the Seeed M.2 BASE is back-mounted; its ≈10 mm with the SN740 does not fit the 6.5 mm
-   gap between the Pi and the UPS HAT (B). Resolve the mounting before final assembly — see `docs/BOM.md`
-   note 7.
-11. **First power-up:** leave the Pi disconnected, connect the UPS with a current-limited/bench supply,
-    check 5 V rails and I²C addresses, then connect the Pi and display.
-12. **r3 keyboard link:** put the Phistone's 2.4 GHz dongle in the second Pi USB-A port, or enable the Pi's
-    Bluetooth only (`dtoverlay=disable-bt` removed) and pair. Wi-Fi stays off and the FireBeetle radios stay
-    off; the keyboard radio is the single allowed radio exception. Keep a wired USB keyboard for first boot
-    and recovery, because Bluetooth is not available before the OS starts.
-
----
-
-## 5. KiCad schematic
-
-A KiCad 10 schematic is included: [`ktemata_r3_wiring.kicad_sch`](ktemata_r3_wiring.kicad_sch)
-([PDF](ktemata_r3_wiring.pdf), [SVG](kicad_wiring/ktemata_r3_wiring.svg), [PNG](ktemata_r3_wiring.png)).
-
-![KiCad wiring schematic](ktemata_r3_wiring.png)
-
-It is a **net-label schematic**: every module is a connector-shaped block with named pins, and a short wire
-plus a net label carries each signal. **Same net label = connected** — there are no routed harness lines.
-This keeps the connection list readable and editable; use the two block diagrams above for the physical
-topology. `ktemata_r3_wiring.kicad_sch` opens directly in KiCad 10. ERC reports only `lib_symbol_issues`
-for the embedded `Ktemata` symbols (they are not in an external library); there are **no electrical errors or
-warnings**. The r3 keyboard block is `J10`, the Phistone 2.4 GHz dongle on the Pi's `USB_KEYBOARD` net; the
-r2-only trackball `J16` is marked DNP (crossed out).
-
-The CSV [`ktemata_r3_connections.csv`](ktemata_r3_connections.csv) lists every net with `From`, `From pin`,
-`To`, `To pin`, and cable/notes for a spreadsheet or for re-drawing the schematic by hand.
-
----
-
-## 5. r4 deltas (Touch Display 2 + UPS HAT (B) + Rii K06)
-
-Everything in sections 2–4 that concerns the **I²C bus, FireBeetle, BME688, DS3231, OLED and the button**
-carries over unchanged. These are the differences:
-
-### Power
-
-| Path | r4 connection | Notes |
-|---|---|---|
-| Sealed port outside | **5.5 × 2.1 mm DC socket** (Ø9.5 mm case hole + O-ring seat) | Was a USB-C panel port. One port, shared by solar and crank. |
-| Sealed port → charger | **8.4 V**, 2 A max | The HAT (B) input. A USB-C PD panel cannot feed it; use a 2S MPPT/CC-CV module with an 8.4 V output. |
-| Charger → UPS | 8.4 V + GND → HAT (B) barrel jack | The HAT charges the 2S pack and powers the Pi simultaneously. |
-| UPS → Pi | Pogo pins 5 V + GND | Same pogo arrangement as the HAT (E). |
-| UPS → FireBeetle | USB-A 5 V + GND | Unchanged. |
-| Cells | **2× 18650, 2S** in the HAT's own holders | No printed tray. Matched pair, fuse the positive lead. |
-| Pi RTC | ML-2020 → Pi J5 | Unchanged (`dtparam=rtc_bbat_vchg=3000000`). |
-
-> **r5:** the 8.4 V socket is in the deck (`R5_CHG_*`), not the host wall. No case hole; the
-> socket's lead runs to the HAT's barrel jack with a service loop (the deck lifts off), and the
-> plug is fitted with the lid open.
-
-### Data
-
-| Link | r4 connection | Notes |
-|---|---|---|
-| Pi ↔ display | 22→15 pin DSI FFC **+ 3-pin GPIO power cable (J1)** | Auto-detected on Pi 5; no overlay needed. |
-| FireBeetle → UPS HAT | I²C SDA/SCL + GND | **0x42** (INA219), not 0x2D. Pack V/I/W; no per-cell or capacity register. |
-| Keyboard → Pi | 2.4 GHz dongle in the spare Pi USB-A, **or** Pi Bluetooth | The K06 has no cable. Charge/switch before closing (no side cutout). |
-| Everything else | — | Pi↔NVMe, Pi↔FireBeetle USB serial, OLED/BME688/DS3231 I²C, button GPIO4: unchanged. |
-
-> The r4 firmware (`firmware/`) reads the gauge at 0x42 and derives the percentage from the 2S pack voltage;
-> see `docs/R4.md` for the register choices and the derived-value caveats.
+1. **One ground node.** HAT, Pi, FireBeetle, OLED, DS3231, both buttons and the charge jack share GND. Star
+   point at the HAT. The keyboard is the exception: it is wireless and has no electrical connection.
+2. **One I²C master.** The FireBeetle owns the bus. Do not connect the HAT's I²C — or anything else on it —
+   to the Pi.
+3. **Pull-ups.** OLED, DS3231 and the HAT's INA219 may each carry 4.7–10 kΩ pull-ups; in parallel they load
+   the bus. Keep **one** set and check with a meter before powering.
+4. **3.3 V only** on the I²C modules and the HAT's I²C logic. Never power the OLED or DS3231 from 5 V.
+5. **FireBeetle power vs USB.** Power comes from the HAT's USB-A so the OLED works with the Pi off; the
+   USB-C link to the Pi is data only. Use a data-only cable, or cut VBUS, so the Pi's port is not backfed.
+6. **Never feed the Pi twice.** With the HAT's 5 V soldered onto the Pi, do not plug a supply into the Pi's
+   USB-C.
+7. **Display.** The Touch Display 2 needs its 3-pin power cable (5 V on J1 pin 2, GND on pin 6) as well as the
+   DSI FFC; it is auto-detected. Do not fit a `vc4-kms-dsi-…` overlay for it.
+8. **Pack.** 2S = 7.4 V nominal, 8.4 V full. Matched cells, insulation rings, 5 A fuse in the positive lead,
+   and never assemble or rewire the pack with the HAT powered.
+9. **Buttons and switch.** The PBS-33B is not IP-rated — fit the 12 mm rubber boot. The 16 mm switch is
+   **latching**: shut the Pi down in software, then cut.
+10. **NVMe.** Check the M.2 BASE plus card stack against the tray before final assembly ([`BOM.md`](BOM.md)
+    note 7).
+11. **First power-up:** Pi disconnected. Feed 8.4 V and check the pack voltage, the fused + lead and the
+    5 V / USB-A outputs; then the I²C scan should show `0x3C`, `0x42`, `0x68`; then connect the Pi and check
+    `vcgencmd get_throttled` = `0x0`.
+12. **Keyboard link.** 2.4 GHz dongle in a Pi USB-A, or Bluetooth with the Pi's radio enabled and a wired
+    keyboard kept for first boot and recovery. Wi-Fi stays off; the FireBeetle radios stay off; the keyboard's
+    own link is the single allowed radio exception.

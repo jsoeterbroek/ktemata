@@ -139,9 +139,9 @@ the 5" r2 design, but the RP2040 USB keyboard is the one part worth prototyping 
 
 ## Wiring
 
-See [`docs/WIRING.md`](docs/WIRING.md) for the power and data/I²C block diagrams, pin-level tables and wiring
-rules. It also links the editable KiCad 10 schematic (`docs/ktemata_r3_wiring.kicad_sch`, PDF/SVG/PNG) and
-the netlist-style [`docs/ktemata_r3_connections.csv`](docs/ktemata_r3_connections.csv).
+See [`docs/WIRING.md`](docs/WIRING.md) for the r5 power and data/I²C tables and the wiring rules: one 8.4 V
+input, the 2S pack and its fuse, the soldered 5 V pair to the Pi, the FireBeetle's I²C bus, both panel
+buttons and the charge-input sense divider.
 
 To prepare a fresh Ubuntu / Raspberry Pi OS install — system update, Kiwix, the ZIM library and the display
 rotation — run [`work/scripts/post-install.sh`](work/scripts/post-install.sh); notes in

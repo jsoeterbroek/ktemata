@@ -107,7 +107,7 @@ The numbers above are a model. The parts that can be measured on the device, and
 
 Buck efficiency (η 0.88), usable depth of discharge (0.85) and the pack's capacity are still
 **assumptions**, and every table here labels them as such. They are the first things to replace once
-the logger in `status-oled.py` has a discharge run to fit; see [`WIRING.md`](WIRING.md#charge-input-sense-r4--r5)
+the logger in `status-oled.py` has a discharge run to fit; see [`WIRING.md`](WIRING.md#charge-input-sense)
 for the sense line and `docs/R5.md` for the deck socket it taps.
 
 ## Project NOMAD, AI off
