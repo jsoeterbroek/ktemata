@@ -23,6 +23,14 @@ mark that meets a fan, a screw or the Pi opening stops at the mask edge.
 
 **r5 has no air-quality sensor.** The r5 cassette leaves the left wall and the sensor chamber out; the BME688/SEN66 pocket only exists in r2/r3/r4 (r4 prints it too, so an r4 bottom shell still has it). Do not reintroduce `SENSOR_*` geometry into r5.
 
+**Wiring lives in KiCad, not in the markdown.** `docs/kicad/` is a KiCad 10 project — `ktemata.kicad_pro`
+with an A3 index sheet and three A4 sheets (`power`, `pi`, `mcu`) — and it is the source of truth for every
+net and pin. The sheets are net-label schematics (one connector-shaped `Ktemata:` symbol per module, a
+global label per pin), so a net name spanning two sheets is one net and nothing is routed. `docs/WIRING.md`
+only says how to open it and lists assembly rules; **do not restate nets, pins or connectors in markdown** —
+link the project instead. Derived files: `docs/kicad/ktemata_r5_connections.csv` from
+`kicad-cli sch export netlist --format kicadxml` plus `work/scripts/kicad_netlist_csv.py`.
+
 **Status OLED firmware (`firmware/`).** The board is the DFR1140 FireBeetle 2 ESP32-UE: **ESP32-WROOM-32UE-N16R2, not an ESP32-S3** (16 MB flash, 2 MB PSRAM, CH340). It needs the project-local board JSON in `firmware/boards/` (`dio_qspi`, `BOARD_HAS_PSRAM`, 16 MB partitions). Verified: 1.3" 4-pin SH1106 OLED at `0x3C`; SDA GPIO21 / SCL GPIO22 (header pins `21/SDA`, `22/SCL`). Button GPIO4 to GND (TinyTronics PBS-33B 12 mm panel button; add a rubber boot for sealing), DS3231 `0x68`, Waveshare UPS HAT (B) INA219 `0x42` (the older HAT (E) was `0x2D`), and the charge-input sense line on `A0`/GPIO36 (ADC1, 30k/10k divider from the HAT's DC input): it tells "source connected" from "none" and steady from sagging, but never mains vs solar vs crank. The display and 16 MB/2 MB PSRAM are confirmed working; the DS3231 and button are still to be brought up, and the Pi-side sender (`work/scripts/status-oled.py`, installed as `ktemata-status-oled.service` by `work/scripts/post-install.sh`) is written and tested against a pty but not yet against the board. Idle blanking is currently disabled with `-DSCREEN_OFF_MS=0UL` because the button is not fitted; the blank-screen report was the OLED display-off command, not ESP32 sleep. Details and serial protocol: `firmware/README.md`. The Pi sends a **UTC** epoch; the DS3231 stores UTC; the OLED applies `TIMEZONE` (default `CET-1CEST,M3.5.0,M10.5.0/3`, Europe/Amsterdam with DST) only when rendering.
 
 ## KISS principle
