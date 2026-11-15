@@ -130,7 +130,7 @@ R5_PAD = 8;                        // closed-cell foam under the tray
 // floor on four posts (see board_post() in r5_tray.scad). Position and orientation come from
 // reference/first_fit.jpg, measured through a homography fitted to the tray's own outline:
 //   - UPS HAT (B), top middle: pcb up, its 2x 18650 cells and holders below it in the cradles,
-//   - Pi 5, top right, with the Seeed PCIe-to-M.2 BASE underneath and the SSD on that.
+//   - Pi 5, top right, with the Pimoroni NVMe Base Duo underneath and its two SSDs on that.
 // Both boards are PORTRAIT: 85 mm along y, 56 mm along x.
 R5_UPS_W = 56;  R5_UPS_L = 85;      // UPS HAT (B) pcb (Waveshare: 56 x 85)
 R5_UPS_X = 76;  R5_UPS_Y = 16;      // left / hinge-side edge  (photo: 76 / 12, nudged clear)
@@ -166,27 +166,24 @@ R5_STACK_AIR = 3;                                       // air over the taller a
 R5_H_BOT   = R5_FLOOR + max(R5_UPS_H_MAX, R5_PI_H_MAX) + R5_STACK_AIR;   // 40.4, was 46.0
 
 // Pi sandwich, built UP from the floor so the derived height can be checked against the measured
-// envelope instead of being assumed. Order: floor -> air -> M.2 BASE pcb -> SSD (in the gap) ->
-// Pi pcb -> 40-pin header.
-//   R5_M2_CLR  air under the BASE for its solder side and the FPC connector,
-//   R5_M2_GAP  the BASE-to-Pi standoff; the SSD lies in this gap, so it must clear 2.38 mm of
-//              drive plus its connector. 11 mm is the Seeed stud pack's; shorten it and the
-//              whole sandwich drops, which is the easiest way to buy vertical room.
-// One M2.5 per hole runs from the top of the Pi pcb, through the Pi, the standoff and the BASE,
-// and threads into the printed post (R5_M2_BOT is that post's top face). Kit the sandwich with
-// the standoffs first, then screw it down through the BASE into the posts.
-// The SSD sits on the BASE's UNDERSIDE (Seeed's board is back-mounted), so it hangs below the
-// BASE and the four posts stand at the corners, clear of its 22 x 42 footprint. R5_M2_CLR is the
-// air under the BASE that the drive and its connector need: 2.38 of drive + 1 of connector + 1.6
-// of margin.
-R5_M2_CLR = 5;                                          // air under the BASE (SSD + connector)
-R5_M2_T   = 1.6;                                        // M.2 BASE pcb
-R5_M2_GAP = 11;                                         // BASE -> Pi standoff (Seeed stud pack)
+// envelope instead of being assumed. Order: floor -> air -> NVMe Base Duo pcb -> the Duo's own
+// standoffs -> Pi pcb -> 40-pin header.
+//   R5_M2_CLR  air under the Duo's pcb: its solder joints and the FPC connector need ~2 mm. The 5
+//              kept here was sized for the earlier board, which carried a drive on its underside;
+//              with the Duo the two SSDs sit on its TOP face, so this is slack now - and it stays,
+//              because it sets the printed post height (R5_M2_BOT) that the tray is drilled for.
+//   R5_M2_GAP  the Duo's own base-to-Pi standoff, 12 mm in the kit. The drives lie in this gap:
+//              2.38 mm of 2280 drive plus its connector, comfortably inside 12.
+// One M2.5 per corner screws the Duo down onto the printed post (R5_M2_BOT is that post's top
+// face); the Pi is then fixed to the Duo's standoffs, not through them to the tray.
+R5_M2_CLR = 5;                                          // air under the Duo pcb (now slack)
+R5_M2_T   = 1.6;                                        // NVMe Base Duo pcb
+R5_M2_GAP = 12;                                         // Duo standoff, base -> Pi (kit 12 mm M2.5)
 R5_PI_HDR = 8.5;                                        // 2x20 header above the Pi pcb
 R5_M2_BOT = R5_FLOOR + R5_M2_CLR;                       // 7.4 = Pi post top face (the BASE seat)
-R5_PI_BOT = R5_M2_BOT + R5_M2_T + R5_M2_GAP;            // 20.0 = Pi pcb underside
+R5_PI_BOT = R5_M2_BOT + R5_M2_T + R5_M2_GAP;            // 21.0 = Pi pcb underside
 R5_PI_TOP = R5_PI_BOT + 1.6;
-R5_PI_TOP_HDR = R5_PI_TOP + R5_PI_HDR;                  // 30.1, the tallest Pi-side point
+R5_PI_TOP_HDR = R5_PI_TOP + R5_PI_HDR;                  // 31.1, the tallest Pi-side point
 // The measured envelope is a tape-measure figure, so allow a millimetre of slack on it. Anything
 // more and the deck would sit on the header instead of on the tray rim.
 assert(R5_PI_TOP_HDR - R5_FLOOR <= R5_PI_H_MAX + 1,

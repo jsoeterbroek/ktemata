@@ -20,7 +20,7 @@ Wiring: [`WIRING.md`](WIRING.md). Design notes: [`R5.md`](R5.md).
 | 5 | 18650 Li-ion cells, flat-top, unprotected, matched pair | 2 | Same batch, ≤ 67 mm long, 3.0–3.5 Ah. | € 5 ea |
 | 6 | DC panel socket, 5.5 × 2.1 mm | 1 | Panel-mount; the CAD hole is **Ø9.5 mm** (`CHG_W` in r4's printed wall, `R5_CHG_D` in r5's deck). r5 needs **no hole in the bought host**. | € 6 |
 | 7 | Rii K06 keyboard | 1 | 151 × 59 × 11 mm, touchpad, 2.4 GHz + Bluetooth. Fits the 172 mm width and the 11 mm pocket. | € 40 |
-| 8 | Seeed PCIe-to-M.2 BASE (103110063) | 1 | NVMe carrier, 2230–2280. Back-mounted under the Pi; **no bay in the CAD yet** — see note 7. | € 6.40 |
+| 8 | **Pimoroni NVMe Base Duo (PIM704)** | 1 | Two M.2 M-key slots (2230–2280) behind an **ASM1182e** PCIe Gen 2 packet switch: ≈450 MB/s total, ≈220 MB/s each with both drives busy, so run it at Gen 2. 85 × 56 mm, mounts **under the Pi on its own 12 mm M2.5 standoffs** with both drives on its top face; power comes over the PCIe FPC (5 V/GND pads on the board if a drive needs more). The straight FPC covers the Pi's microSD slot. Firmware ≥ 2024-05-17 for NVMe boot; **slot B is picked first** at boot. | € 40 |
 | 9 | WD SN740 512 GB, M.2 2242 | 1 | 2.38 mm single-sided, 4.7 W max, 300 TBW. Mount at the **42 mm** hole; the bundled 2280 bracket is unused. | € 40–60 |
 | 10 | microSDHC 32 GB (A1/V30) | 1 | Boot card. Too small for the library; that stays on the NVMe. | € 13 |
 | 11 | Raspberry Pi 5 27 W USB-C supply | 1 | Bench power for the Pi alone. It **cannot charge the HAT (B)**. | € 12 |
@@ -96,27 +96,28 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
 4. **Active Cooler — does not fit.** The Raspberry Pi Active Cooler is 63.5 × 42.5 × 13.7 mm and clips onto the
    Pi's **component side**, which is exactly where the UPS board and its pogo pins sit (6 mm gap). It cannot
    be fitted in r4 or r5, nor in r2/r3. Do not buy it.
-5. **Storage and clocks.** The M.2 BASE + SN740 and the ML-2020 are r4/r5 parts. The 512 GB drive is a
-   deliberate stopgap: it holds the OS, Wikipedia, the maps and the small references, **not** the whole
-   833 GiB library (note 7). The DS3231 still needs its CR1220.
+5. **Storage and clocks.** The NVMe Base Duo + drives and the ML-2020 are the storage side. One 512 GB
+   drive holds the OS, Wikipedia, the maps and the small references, **not** the whole 833 GiB library —
+   the second slot is what closes that gap (note 7). The DS3231 still needs its CR1220.
 6. **The HAT (B) includes its 8.4 V / 2 A supply.** r4's case still needs the **panel socket** through its
    wall; r5's is the deck-mounted one and needs no host hole. Either build needs the solar/crank module if
    you build that path. A 5 V / USB-C or 5.5 × 2.5 mm bench adapter does
    **not** substitute: the HAT needs 8.4 V on a 5.5 × 2.1 mm barrel, and the Pi 5 itself has no barrel input
    at all — it takes USB-C only.
-7. **The NVMe board has no home in the CAD yet.** `cad/` contains no NVMe geometry: the UPS HAT (B) owns the
-   Pi's underside (6.5 mm pogo gap) and the floor is taken by the DS3231, charger module and FireBeetle. The
-   BASE plus a 2.38 mm card is ≈ 10 mm tall, so it cannot simply be stacked under the Pi. Resolve that
-   before printing the bottom shell.
-   Also: the drive formats to ≈ 477 GiB against an 833 GiB library, so Wikipedia + maps + the small
-   references fit, Gutenberg and Khan Academy do not. A 1 TB 2242 or a 2.5" SATA SSD (via a USB adapter) is
-   the upgrade path.
+7. **The NVMe board.** The NVMe Base Duo has a home in the cassette: it sits on the four Ø8 posts under the
+   Pi at x 152–208, y 16–101 (`R5_M2_BOT` is the post top, 7.4 mm), with its own 12 mm standoffs carrying the
+   Pi above it and both SSDs on its top face inside that gap. The four corner screws clamp the Duo; the Pi is
+   fixed to the Duo's standoffs, so nothing passes through to the tray.
+   Capacity: one 512 GB drive formats to ≈477 GiB against an 833 GiB library — Wikipedia + maps + the small
+   references fit, Gutenberg and Khan Academy do not. The second slot closes that: 2× 1 TB is two full
+   copies of the library, and Pimoroni's tested list includes the SN740 512 GB in this very build.
+   Boot order is worth knowing: with two drives the Pi boots from **slot B**, so put the OS there.
 
 ## C. r2/r3 reference list
 
 Earlier-build parts, kept only as history (the CAD no longer models them): DFRobot **DFR0550-V2** display + Standard–Mini
 cable, **Waveshare UPS HAT (E)** + 4× 21700 (in printed cradles, wired to V1–V4), **Phistone Mini Keyboard**,
-optional Pimoroni trackball, Pi 5 + ML-2020, Seeed M.2 BASE + 2230 SSD, DS3231 + CR1220, FireBeetle +
+optional Pimoroni trackball, Pi 5 + ML-2020, DS3231 + CR1220, FireBeetle +
 OLED, PBS-33B button, sealed **USB-C** panel port + MPPT module (5 V out), M2.5 set.
 
 > **Safety.** The HAT (B) is a **2S** pack: 7.4 V nominal, 8.4 V full, and it can deliver 5 A at 5 V out.

@@ -53,7 +53,7 @@ therefore say `steady` / `varying` (and `external` / `external-weak`) and never 
 |---|---|---|
 | Pi ↔ display | 22→15-pin **DSI FFC** + **3-pin GPIO power cable** | The lid cover carries the **Touch Display 2, 5"**: GPIO **J1 → pins 2 (5 V) and 6 (GND)**, and the panel is auto-detected — no overlay. Nothing else is wired to it. |
 | *7" cover alternative* | 22→15-pin DSI FFC + its 4-pin `GND SDA SCL 5V` lead | Only for `ktemata_r5_lid_cover_waveshare_7in`: solder the four wires to Pi pads 6, 3 (GPIO2/SDA), 5 (GPIO3/SCL) and 2/4 (5 V) and add `dtoverlay=vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1`. |
-| Pi ↔ NVMe | PCIe FPC → **Seeed M.2 BASE** → WD SN740 (M.2 2242) | The BASE is back-mounted; check the ≈10 mm stack against the tray before assembly ([`BOM.md`](BOM.md) note 7). |
+| Pi ↔ NVMe | straight **PCIe FPC** → **Pimoroni NVMe Base Duo** → 1–2 M.2 2230–2280 drives | The FPC carries data and power; the base mounts under the Pi on its own 12 mm standoffs with the drives on its top face. It covers the Pi's microSD slot, so fit the card first. Firmware ≥ 2024-05-17 for NVMe boot; with two drives the Pi boots from slot B. |
 | FireBeetle ↔ Pi | **USB-C → Pi USB-A, serial** | Newline-delimited JSON: telemetry out, commands in. Prefer a **data-only** cable (VBUS cut) — the FireBeetle is powered from the HAT. |
 | FireBeetle → OLED | I²C `3V3`, `GND`, SDA GPIO21, SCL GPIO22 | **0x3C** (0x3D fallback), 1.3" 128×64, SH1106 by default. |
 | FireBeetle → DS3231 | I²C `3V3`, `GND`, GPIO21, GPIO22 | **0x68**, CR1220 backup. |
@@ -94,7 +94,7 @@ therefore say `steady` / `varying` (and `external` / `external-weak`) and never 
 | GPIO pin 2 / 4 | `5V` | HAT (B) 5 V out — soldered, 20–22 AWG |
 | GPIO pin 6 / 9 | `GND` | HAT (B) GND |
 | GPIO J1 pin 2 / 6 | `DISP_5V` / `GND` | Display 3-pin power cable |
-| PCIe | `PCIE_FPC` | Seeed M.2 BASE |
+| PCIe | `PCIE_FPC` | NVMe Base Duo (data + power) |
 | USB-A 1 | `USB_KEYBOARD` | K06 2.4 GHz dongle (Bluetooth alternative uses no port) |
 | USB-A 2 | `USB_FB_SERIAL` | FireBeetle USB-C (serial) |
 | USB-C | — | Service/flashing and bench power only; not used with the HAT connected |
@@ -150,7 +150,7 @@ therefore say `steady` / `varying` (and `external` / `external-weak`) and never 
    remaining two are the LED (either polarity, 3–6 V). Never put 8.4 V across the LED pair.
    FILN's harness FAQ gives **red = LED+, black = LED−, green = C, blue = NO, yellow = NC**; a
    **white** lead usually stands in for the blue `NO`. Treat that as a starting guess, not a spec.
-10. **NVMe.** Check the M.2 BASE plus card stack against the tray before final assembly ([`BOM.md`](BOM.md)
+10. **NVMe.** Check the Duo plus drives stack against the tray before final assembly ([`BOM.md`](BOM.md)
     note 7).
 11. **First power-up:** Pi disconnected. Feed 8.4 V and check the pack voltage, the fused + lead and the
     5 V / USB-A outputs; then the I²C scan should show `0x3C`, `0x42`, `0x68`; then connect the Pi and check

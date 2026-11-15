@@ -47,10 +47,11 @@ module host_case() {
 // Both boards are PORTRAIT (85 along y, 56 along x) and stand on the floor, side by side.
 // Port mapping is the r5 one: USB/Ethernet on the +x edge, USB-C/HDMI/DSI on the hinge (-y) edge.
 module c_pi() {
-    // the Seeed PCIe-to-M.2 BASE, bolted under the Pi; the SSD sits on its underside
+    // the Pimoroni NVMe Base Duo, bolted under the Pi; both SSDs sit on its TOP face
     r5_at(R5_PI_X, R5_PI_Y + R5_PI_L, R5_M2_BOT) linear_extrude(R5_M2_T) rrect(R5_PI_W, R5_PI_L, 3);
-    r5_box(R5_PI_X + 18, R5_PI_Y + 20, R5_PI_X + 40, R5_PI_Y + 62, R5_M2_BOT - 2.4, 2.4);   // SSD
-    // Pi pcb, up on the BASE's standoffs
+    r5_box(R5_PI_X + 18, R5_PI_Y + 20, R5_PI_X + 40, R5_PI_Y + 62, R5_M2_BOT + R5_M2_T, 2.4);  // SSD A
+    r5_box(R5_PI_X + 18, R5_PI_Y + 8,  R5_PI_X + 40, R5_PI_Y + 50, R5_M2_BOT + R5_M2_T, 2.4);  // SSD B
+    // Pi pcb, up on the Duo's 12 mm standoffs
     r5_at(R5_PI_X, R5_PI_Y + R5_PI_L, R5_PI_BOT) linear_extrude(1.6) rrect(R5_PI_W, R5_PI_L, 3);
     // right-edge ports: USB 3, USB 2, Ethernet, on the +x edge
     for (p=PI_PORTS) r5_box(R5_PI_X + R5_PI_W - 10, R5_PI_Y + p[0], R5_PI_X + R5_PI_W,
