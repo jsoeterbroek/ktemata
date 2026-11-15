@@ -1,0 +1,38 @@
+From,From pin/pad,Net,To,To pin/pad,Cable / notes
+FireBeetle 2 ESP32-UE,3V3,3V3,DS3231 RTC 0x68,VCC,"FireBeetle 3V3 rail, sensors only"
+FireBeetle 2 ESP32-UE,3V3,3V3,"1.3in OLED 128x64, 0x3C",VCC,
+2x 18650 in 2S + 5 A fuse (BLX-A),-,BATT_2S_N,"Waveshare UPS HAT (B), INA219 0x42",BATT-,"2S pack, 7.4 V nominal, 8.4 V full"
+2x 18650 in 2S + 5 A fuse (BLX-A),+,BATT_2S_P,"Waveshare UPS HAT (B), INA219 0x42",BATT+,5 A BLX-A fuse in this lead
+"Waveshare UPS HAT (B), INA219 0x42",CHG,CHG_8V4,charge sense: 30k / 10k / 100 nF,CHG_8V4,"8.4 V after the latching switch, 2 A max"
+"Waveshare UPS HAT (B), INA219 0x42",CHG,CHG_8V4,16 mm latching switch (C/NO) + LED,NO,
+"DC-099 panel jack in the deck, centre +",+,CHG_8V4_IN,8.4 V source (mains / MPPT solar / crank),CHG_8V4_IN,"8.4 V, centre-positive, 2 A max: the DC-099 jack is the entry"
+"DC-099 panel jack in the deck, centre +",+,CHG_8V4_IN,16 mm latching switch (C/NO) + LED,C,
+charge sense: 30k / 10k / 100 nF,A0,CHG_SENSE,FireBeetle 2 ESP32-UE,A0,"30k/10k divider output, 0-2.1 V, to A0 (ADC1_CH0)"
+Raspberry Pi 5,DSI,DISPLAY_DSI,"Touch Display 2, 5 inch",DSI,"22->15-pin DSI FFC, auto-detected"
+Raspberry Pi 5,DISP_5V,DISP_5V,"Touch Display 2, 5 inch",5V,"3-pin GPIO power cable on J1, pin 2 (+5 V) and pin 6 (GND)"
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,"DC-099 panel jack in the deck, centre +",-,"one node, star point at the HAT; 20-22 AWG for the Pi pair"
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,DS3231 RTC 0x68,GND,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,Pimoroni NVMe Base Duo (PIM704),GND,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,FireBeetle 2 ESP32-UE,GND,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,ML-2020 cell on Pi J5,-,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,"1.3in OLED 128x64, 0x3C",GND,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,PBS-33B 12 mm button,2,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,Raspberry Pi 5,GND,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,charge sense: 30k / 10k / 100 nF,GND,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,8.4 V source (mains / MPPT solar / crank),GND,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,16 mm latching switch (C/NO) + LED,LED-,
+"Waveshare UPS HAT (B), INA219 0x42",GND,GND,"Touch Display 2, 5 inch",GND,
+FireBeetle 2 ESP32-UE,SCL,I2C_SCL,DS3231 RTC 0x68,SCL,"3.3 V, one pull-up set only"
+FireBeetle 2 ESP32-UE,SCL,I2C_SCL,"Waveshare UPS HAT (B), INA219 0x42",SCL,
+FireBeetle 2 ESP32-UE,SCL,I2C_SCL,"1.3in OLED 128x64, 0x3C",SCL,
+FireBeetle 2 ESP32-UE,SDA,I2C_SDA,DS3231 RTC 0x68,SDA,"3.3 V, one pull-up set only, FireBeetle is the only master"
+FireBeetle 2 ESP32-UE,SDA,I2C_SDA,"Waveshare UPS HAT (B), INA219 0x42",SDA,
+FireBeetle 2 ESP32-UE,SDA,I2C_SDA,"1.3in OLED 128x64, 0x3C",SDA,
+FireBeetle 2 ESP32-UE,GPIO4,OLED_BTN,PBS-33B 12 mm button,1,"GPIO4, INPUT_PULLUP, button to GND"
+Raspberry Pi 5,PCIE,PCIE_FPC,Pimoroni NVMe Base Duo (PIM704),FPC,PCIe FFC carries data and power
+"Waveshare UPS HAT (B), INA219 0x42",5V,UPS_5V,Raspberry Pi 5,5V,5 V / 5 A out; soldered 20-22 AWG to the Pi; also feeds the switch LED
+"Waveshare UPS HAT (B), INA219 0x42",5V,UPS_5V,16 mm latching switch (C/NO) + LED,LED+,
+"Waveshare UPS HAT (B), INA219 0x42",USB-A,UPS_USBA_5V,FireBeetle 2 ESP32-UE,5V,"HAT USB-A out, ~0.2 W to the FireBeetle"
+Raspberry Pi 5,USB-A2,USB_FB_SERIAL,FireBeetle 2 ESP32-UE,USB-C,data-only USB cable (VBUS cut)
+Raspberry Pi 5,USB-A1,USB_KEYBOARD,"Rii K06 dongle, or Bluetooth (no wire)",DONGLE,"2.4 GHz dongle in a Pi USB-A, or Bluetooth (no wire)"
+Raspberry Pi 5,J5,VBAT_PI,ML-2020 cell on Pi J5,+,"ML-2020 on Pi J5, dtparam=rtc_bbat_vchg=3000000"

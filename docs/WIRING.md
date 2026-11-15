@@ -158,3 +158,20 @@ therefore say `steady` / `varying` (and `external` / `external-weak`) and never 
 12. **Keyboard link.** 2.4 GHz dongle in a Pi USB-A, or Bluetooth with the Pi's radio enabled and a wired
     keyboard kept for first boot and recovery. Wi-Fi stays off; the FireBeetle radios stay off; the keyboard's
     own link is the single allowed radio exception.
+
+---
+
+## 5. KiCad sheet
+
+`docs/kicad/ktemata_r5_wiring.kicad_sch` is this page as a KiCad 10 schematic. It is a **net-label
+schematic**: one connector-shaped block per module, a short wire and a net label per connection, so
+"same label = connected" and nothing is routed. The `Ktemata:` symbols are embedded in the sheet, so
+it opens with no external library; ERC reports only `lib_symbol_issues` for that embedded library and
+no electrical errors. Move the blocks around freely — the netlist is in the labels, not the geometry.
+
+`docs/kicad/ktemata_r5_connections.csv` is the same list as From / From pin / Net / To / To pin.
+
+```bash
+kicad-cli sch export pdf -o out.pdf docs/kicad/ktemata_r5_wiring.kicad_sch
+kicad-cli sch erc --severity-all -o erc.rpt docs/kicad/ktemata_r5_wiring.kicad_sch
+```
