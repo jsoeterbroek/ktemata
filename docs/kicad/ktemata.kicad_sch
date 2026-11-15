@@ -67,7 +67,7 @@
   )
   (text "Wiring source of truth for the Ktemata r5 build: docs/WIRING.md points here, not the other way round."
     (at 20.32 190.50 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "73fe371b-a168-5484-b96b-9df4a152467e"))
-  (text "Global labels: a net with the same name on two sheets is one net. Blocks are connector-shaped symbols, nothing is routed."
+  (text "Nets with two or more pins on a sheet are routed; a net that leaves the sheet carries a global label."
     (at 20.32 199.39 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "d03d797e-4445-535f-9e42-eb0e2b17bf82"))
   (text "Power sheet: 8.4 V input and the pack. Pi sheet: display, NVMe, keyboard. MCU sheet: FireBeetle and its I2C parts."
     (at 20.32 208.28 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "02f611d9-9a1b-5692-b1a3-7c3708b9e21d"))

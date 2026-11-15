@@ -17,12 +17,12 @@ open docs/kicad/ktemata.kicad_pro          # macOS; or open the folder in KiCad 
 | `/Pi 5 and its peripherals` | `pi.kicad_sch` | Pi 5, Touch Display 2, Pimoroni NVMe Base Duo, K06 dongle, ML-2020 cell |
 | `/FireBeetle …` | `mcu.kicad_sch` | FireBeetle 2, 1.3" OLED, DS3231, PBS-33B button |
 
-It is a **net-label schematic**: one connector-shaped block per module (`Ktemata:` symbols, embedded
-in each sheet, so nothing has to be installed), a short wire and a **global label** per pin. A net with
-the same name on two sheets is one net; nothing is routed, and moving blocks around changes nothing
-electrically. The same 15 symbols are also a real library, `ktemata.kicad_sym`, registered by the
-project's `sym-lib-table`, so the library browser and copy-paste between sheets work — and **ERC is
-clean: 0 violations**.
+One connector-shaped block per module (`Ktemata:` symbols — also a real library, `ktemata.kicad_sym`,
+registered by the project's `sym-lib-table`). Within a sheet the nets are **routed**: each multi-pin net
+gets a vertical trunk in the left gutter with a horizontal tap to every pin, junctions where a tap meets
+the trunk, and its name on a global label at the top of the trunk. Pins whose net leaves the sheet get a
+stub and a global label instead. Global labels throughout means a net keeps one bare name across the
+whole project, which is what the CSV and this page refer to — and **ERC is clean: 0 violations**.
 
 Derived views, generated from the project — never edited by hand:
 

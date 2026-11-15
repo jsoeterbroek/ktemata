@@ -243,7 +243,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": ""
+      "sch_revision": "1"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -515,14 +515,46 @@
         "via_diameter": 0.6,
         "via_drill": 0.3,
         "wire_width": 6
+      },
+      {
+        "bus_width": 12,
+        "line_style": 0,
+        "name": "C",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 0,
+        "schematic_color": "rgb(0, 194, 0)",
+        "tuning_profile": "",
+        "wire_width": 6
+      },
+      {
+        "bus_width": 12,
+        "line_style": 0,
+        "name": "NO",
+        "pcb_color": "rgba(0, 0, 0, 0.000)",
+        "priority": 1,
+        "schematic_color": "rgb(255, 255, 255)",
+        "tuning_profile": "",
+        "wire_width": 6
       }
     ],
     "meta": {
       "version": 5
     },
     "net_colors": {},
-    "netclass_assignments": {},
-    "netclass_patterns": []
+    "netclass_assignments": {
+      "/Power: 8.4 V input, switch, pack, HAT (B)/C": [
+        "C"
+      ],
+      "/Power: 8.4 V input, switch, pack, HAT (B)/NO": [
+        "NO"
+      ]
+    },
+    "netclass_patterns": [
+      {
+        "netclass": "Default",
+        "pattern": ""
+      }
+    ]
   },
   "pcbnew": {
     "last_paths": {
@@ -662,13 +694,30 @@
       {
         "filename": "ktemata.kicad_sch",
         "name": "ktemata",
-        "uuid": "00000000-0000-0000-0000-000000000000"
+        "uuid": "fbcf4daf-0530-54a9-88df-5b7801d859ea"
       }
     ],
     "used_designators": "",
     "variants": []
   },
-  "sheets": [],
+  "sheets": [
+    [
+      "fbcf4daf-0530-54a9-88df-5b7801d859ea",
+      "ktemata"
+    ],
+    [
+      "2df1b01b-f0ab-5bc1-952f-e9105b337cfd",
+      "Power: 8.4 V input, switch, pack, HAT (B)"
+    ],
+    [
+      "ab66b496-3a9e-509d-9ff4-6cbb8c7cf5b7",
+      "Pi 5 and its peripherals"
+    ],
+    [
+      "6e434400-e588-5002-bfa3-704cd148acfe",
+      "FireBeetle 2, OLED, RTC, buttons"
+    ]
+  ],
   "text_variables": {},
   "tuning_profiles": {
     "meta": {
