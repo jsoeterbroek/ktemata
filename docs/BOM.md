@@ -6,7 +6,12 @@ exteriors (r1–r4) are no longer modelled, and their parts are gone from this l
 Prices are indicative, in euro, for scale only.
 
 Wiring: the KiCad project in [`kicad/`](kicad/ktemata.kicad_pro) (the netlist), with [`WIRING.md`](WIRING.md)
-for the assembly rules. Design notes: [`R5.md`](R5.md).
+for the assembly rules. **This list is not derived from the schematic** - it carries prices, suppliers,
+quantities and mechanical parts a schematic has none of - but the two are cross-checked: each schematic
+block names its item here in a `Part` field, and `python3 work/scripts/check_bom.py` fails if a block
+points at an item that does not exist. Re-export the netlist first (see `WIRING.md` §1).
+
+Design notes: [`R5.md`](R5.md).
 
 ---
 
@@ -19,7 +24,6 @@ for the assembly rules. Design notes: [`R5.md`](R5.md).
 | 3 | 4-pin 5 V / I²C lead, 30 cm | 1 | The display's included lead is only 6 cm; the display's 4-pin header is at the corner opposite the hinge, so a longer lead is needed to reach the Pi. Header is `GND SDA SCL 5V`; the Pi end is soldered to the 40-pin pads (5 V, GND, GPIO2/3) because the build has no 40-pin header. | € 3 |
 | 4 | Waveshare UPS HAT (B) | 1 | 2S 18650, 5 V / 5 A out, **8.4 V / 2 A barrel input**, INA219 at 0x42. Cells not included; its 8.4 V / 2 A supply is. In future Waveshare UPS module 3S when available.| € 27.82 |
 | 5 | 18650 Li-ion cells, flat-top, unprotected, matched pair | 2 | Same batch, ≤ 67 mm long, 3.0–3.5 Ah. | € 5 ea |
-| 6 | DC panel socket, 5.5 × 2.1 mm | 1 | Panel-mount; the CAD hole is **Ø9.5 mm** (`CHG_W` in r4's printed wall, `R5_CHG_D` in r5's deck). r5 needs **no hole in the bought host**. | € 6 |
 | 7 | Rii K06 keyboard | 1 | 151 × 59 × 11 mm, touchpad, 2.4 GHz + Bluetooth. Fits the 172 mm width and the 11 mm pocket. | € 40 |
 | 8 | **Pimoroni NVMe Base Duo (PIM704)** | 1 | Two M.2 M-key slots (2230–2280) behind an **ASM1182e** PCIe Gen 2 packet switch: ≈450 MB/s total, ≈220 MB/s each with both drives busy, so run it at Gen 2. 85 × 56 mm, mounts **under the Pi on its own 12 mm M2.5 standoffs** with both drives on its top face; power comes over the PCIe FPC (5 V/GND pads on the board if a drive needs more). The straight FPC covers the Pi's microSD slot. Firmware ≥ 2024-05-17 for NVMe boot; **slot B is picked first** at boot. | € 40 |
 | 9 | WD SN740 512 GB, M.2 2242 | 1 | 2.38 mm single-sided, 4.7 W max, 300 TBW. Mount at the **42 mm** hole; the bundled 2280 bracket is unused. | € 40–60 |
@@ -40,7 +44,7 @@ for the assembly rules. Design notes: [`R5.md`](R5.md).
 | 23 | [M3 × 10 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/bzk-inbus-verzonkenkopschroef-staal-din-7991-m3x10.html) | **7** | DIN 7991 / ISO 10642; **dk 6.0 mm, k 1.7 mm, 2.0 mm hex**. Seven deck screws into the heat-set inserts. Sold in packs of 25. | € 2.60 / 25 |
 | 23a | [M3 × 6 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/inbus-torx-schroeven/inbusbout-met-verzonken-kop-staal/inbusbout-verzonkenkop-m3/) | **4** | Same DIN 7991 head and 2.0 mm hex. For the 4 mm lid cover **or** alternate plate into the display's rear inserts; gives ≈1.04 mm engagement. **Do not substitute M3 × 8**, which can bottom out. Sold in packs of 25. | € 2.45 / 25 |
 | 23b | **Metal push button 16 mm, latching (on-off), blue 3–6 V LED** — ABS16CG11ZCB3V (TinyTronics 003808) | 1 | Fits `R5_BTN_D` = 16.2 mm: M16×1 thread, 12 mm long, panel up to 10 mm, IP66, cap Ø18. **Rating 3 A / ≤24 V DC** — so it may **not** switch the Pi's 5 V rail (the Pi is rated 5 A, and this build peaks near 2.8 A); put it on the 8.4 V charge input (2 A) or order a ≥5 A switch or MOSFET/relay for the main rail (section B, future add). The LED has a built-in resistor, works 3–6 V either polarity, ~15 mA. Note: **latching** means a hard power cut — shut the Pi down in software first. | € 3.50 |
-| 23c | **DC jack 5.5 × 2.1 mm, panel mount** — DC-099 (TinyTronics 001201) | 1 | The 8.4 V charge socket in the deck's right rail (`R5_CHG_*`). **11 mm mounting hole** (the r4 socket needed 9.5), nut behind, 30 V / 5 A, solder lugs. Centre-positive must be confirmed against the HAT's jack. A 2 A fuse in the charge lead protects the input and is not covered by the pack fuse. | € 1.50 |
+| 23c | **DC jack 5.5 × 2.1 mm, panel mount** — DC-099 (TinyTronics 001201) | 1 | The 8.4 V charge socket in the deck's right rail (`R5_CHG_*`). **11 mm mounting hole** (the r4 socket needed 9.5), nut behind, 30 V / 5 A, solder lugs. Centre-positive must be confirmed against the HAT's jack. It is the only hole in the deck: the bought host is not drilled. A 2 A fuse in the charge lead protects the input and is not covered by the pack fuse. | € 1.50 |
 | 24 | **Fuse holder 5×20 mm, PCB, 5 A** — BLX-A-5X20MM (TinyTronics 001195) | 1 | Holds a standard 5 × 20 mm cartridge, **holder rated 5 A / 250 V**, hinged cover so the fuse is replaceable in the field, ~26 × 9 × 18 mm, two 1.2 mm PCB legs. In a wired harness: solder the pack lead to the legs, heat-shrink the joints, and strap the body down. | € 0.50 |
 | 24a | **Fuse 5 × 20 mm, 250 V, 5 A, fast-acting (F)** — FUSE5X20MM5A (TinyTronics 007152) | 1 (spare advised) | ESKA 5 × 20 F, 250 V AC, 5 A, ≈0.03 Ω, IEC 60127-2. Sized for the **pack** lead: a full 5 V/5 A output is ≈3.8 A at the pack (5 A × 5 V ÷ (7.4 V × 0.88)), and this build's steady draw is ≈2.1 A, so it sits at 40–75 % of rating. **Not** for the charge input — 5 A there would not protect a 2 A path; that fuse (2 A) remains optional. | € 0.40 |
 | 25 | Silicone O-ring / gasket assortment | 1 | Case seam, DC socket, button. | € 10 |

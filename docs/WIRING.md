@@ -34,6 +34,16 @@ python3 work/scripts/kicad_netlist_csv.py /tmp/kt.xml -o docs/kicad/ktemata_r5_c
 `docs/kicad/ktemata_r5_connections.csv` is that last step's output: one row per pin on every net, so it
 cannot drift from the schematic. Editing the schematic is how a connection changes.
 
+[`BOM.md`](BOM.md) stays a separate purchasing list — prices, suppliers, mechanical parts, none of which a
+schematic has. The link between the two is a `Part` field on every block naming its BOM item, and
+
+```bash
+python3 work/scripts/check_bom.py /tmp/kt.xml
+```
+
+fails if a block names an item the BOM does not have, or if two blocks claim the same one. BOM items with
+no symbol (screws, cables, the case) are listed, not failed.
+
 ## 2. Assembly rules
 
 These are the constraints the drawing cannot carry. Values live in the schematic; the *practice* is here.
