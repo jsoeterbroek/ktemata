@@ -26,7 +26,9 @@ mark that meets a fan, a screw or the Pi opening stops at the mask edge.
 **Wiring lives in KiCad, not in the markdown.** `docs/kicad/` is a KiCad 10 project — `ktemata.kicad_pro`
 with an A3 index sheet and three A4 sheets (`power`, `pi`, `mcu`) — and it is the source of truth for every
 net and pin. The sheets are net-label schematics (one connector-shaped `Ktemata:` symbol per module, a
-global label per pin), so a net name spanning two sheets is one net and nothing is routed. `docs/WIRING.md`
+global label per pin), so a net name spanning two sheets is one net and nothing is routed. The 15 symbols
+are also `docs/kicad/ktemata.kicad_sym`, registered by the project's `sym-lib-table`, so ERC reports
+0 violations — if that ever goes back to `lib_symbol_issues`, the table or the library file has moved. `docs/WIRING.md`
 only says how to open it and lists assembly rules; **do not restate nets, pins or connectors in markdown** —
 link the project instead. Derived files: `docs/kicad/ktemata_r5_connections.csv` from
 `kicad-cli sch export netlist --format kicadxml` plus `work/scripts/kicad_netlist_csv.py`.

@@ -20,7 +20,9 @@ open docs/kicad/ktemata.kicad_pro          # macOS; or open the folder in KiCad 
 It is a **net-label schematic**: one connector-shaped block per module (`Ktemata:` symbols, embedded
 in each sheet, so nothing has to be installed), a short wire and a **global label** per pin. A net with
 the same name on two sheets is one net; nothing is routed, and moving blocks around changes nothing
-electrically. ERC reports only `lib_symbol_issues` for the embedded library.
+electrically. The same 15 symbols are also a real library, `ktemata.kicad_sym`, registered by the
+project's `sym-lib-table`, so the library browser and copy-paste between sheets work — and **ERC is
+clean: 0 violations**.
 
 Derived views, generated from the project — never edited by hand:
 
