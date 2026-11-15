@@ -1,17 +1,18 @@
 # Ktemata — BOM
 
-Parts for the current build. **One build: r5.** The electronics and display inside a bought Peli case; the earlier printed
-exteriors (r1–r4) are no longer modelled, and their parts are gone from this list.
+Parts for the implemented R5 build and the proposed R6 revision inside a bought Peli case. **R6 power
+substitutions are marked explicitly**; R5 remains the mechanical baseline until the R6 CAD is complete. The
+earlier printed exteriors (r1–r4) are no longer modelled, and their parts are gone from this list.
 
 Prices are indicative, in euro, for scale only.
 
-Wiring: the KiCad project in [`kicad/`](kicad/ktemata.kicad_pro) (the netlist), with [`WIRING.md`](WIRING.md)
+Wiring: the preserved [`R5 KiCad project`](kicad/r5/ktemata.kicad_pro) and proposed [`R6 KiCad project`](kicad/r6/ktemata.kicad_pro), with [`WIRING.md`](WIRING.md)
 for the assembly rules. **This list is not derived from the schematic** - it carries prices, suppliers,
 quantities and mechanical parts a schematic has none of - but the two are cross-checked: each schematic
 block names its item here in a `Part` field, and `python3 work/scripts/check_bom.py` fails if a block
 points at an item that does not exist. Re-export the netlist first (see `WIRING.md` §1).
 
-Design notes: [`R5.md`](R5.md).
+Design notes: [`R5.md`](R5.md) and the proposed [`R6.md`](R6.md).
 
 ---
 
@@ -19,16 +20,16 @@ Design notes: [`R5.md`](R5.md).
 
 | # | Part | Qty | Spec / role | ≈ Price |
 |---|---|---|---|---|
-| 1 | Raspberry Pi 5, 4 GB | 1 | 58 × 49 mm. **No 40-pin header** — the UPS HAT sits on the component side. | € 121 |
+| 1 | Raspberry Pi 5, 4 GB | 1 | 58 × 49 mm mount. R5 uses no 40-pin header because the UPS HAT occupied the component side. In R6 the Pi + Duo instead mount behind the Waveshare 7-inch panel; keep the Pi power and display terminations exactly as shown in the selected revision's KiCad project. | € 121 |
 | 2 | **Raspberry Pi Touch Display 2, 5"** (the 7" Waveshare 7inch DSI LCD (C) is the alternative lid part) | 1 | **143.4 × 91.46 mm**, active **110.7 × 62.3**, **14.92 mm** deep (6.42 body + 8.5 M2.5 standoffs), 4× **M2.5** standoffs at a 122.74 × 72.96 span, 1.4 W. r5 and r4 both hang it landscape with its glass flush; the lid cover screws through its 4 mm rear skin with **M2.5 × 8**. The 7" Waveshare module (192.96 × 110.76, 10.50 mm to the PCB back, M3 inserts) needs its own cover part and **M3 × 6** screws. | € 62 |
 | 3 | 4-pin 5 V / I²C lead, 30 cm | 1 | The display's included lead is only 6 cm; the display's 4-pin header is at the corner opposite the hinge, so a longer lead is needed to reach the Pi. Header is `GND SDA SCL 5V`; the Pi end is soldered to the 40-pin pads (5 V, GND, GPIO2/3) because the build has no 40-pin header. | € 3 |
-| 4 | Waveshare UPS HAT (B) | 1 | 2S 18650, 5 V / 5 A out, **8.4 V / 2 A barrel input**, INA219 at 0x42. Cells not included; its 8.4 V / 2 A supply is. In future Waveshare UPS module 3S when available.| € 27.82 |
-| 5 | 18650 Li-ion cells, flat-top, unprotected, matched pair | 2 | Same batch, ≤ 67 mm long, 3.0–3.5 Ah. | € 5 ea |
+| 4 | **Waveshare UPS Module 3S** | 1 | **R6 power board.** 3S 18650 (9–12.6 V), 5 V / 5 A out, **12.6 V / 2 A charge input**, INA219 at **0x41** with a **0.1 Ω** shunt. 93 × 60 mm board, 86 × 46 mm mounting pattern, Ø3 mm holes. Cells not included. The supplied cable harness, remote output switch, insulating panels and fixings remove R5's custom soldered Pi power feed; use the supplied 12.6 V / 2 A adapter or a verified 3S regulator. | € 22 + adapter |
+| 5 | 18650 Li-ion cells, flat-top, unprotected, matched triple | **3** | Same batch, ≤ 67 mm long, 3.0–3.5 Ah. Three in series for the R6 UPS Module 3S; do not mix old/new or different cell models. | € 5 ea |
 | 7 | Rii K06 keyboard | 1 | 151 × 59 × 11 mm, touchpad, 2.4 GHz + Bluetooth. Fits the 172 mm width and the 11 mm pocket. | € 40 |
 | 8 | **Pimoroni NVMe Base Duo (PIM704)** | 1 | Two M.2 M-key slots (2230–2280) behind an **ASM1182e** PCIe Gen 2 packet switch: ≈450 MB/s total, ≈220 MB/s each with both drives busy, so run it at Gen 2. 85 × 56 mm, mounts **under the Pi on its own 12 mm M2.5 standoffs** with both drives on its top face; power comes over the PCIe FPC (5 V/GND pads on the board if a drive needs more). The straight FPC covers the Pi's microSD slot. Firmware ≥ 2024-05-17 for NVMe boot; **slot B is picked first** at boot. | € 40 |
 | 9 | WD SN740 512 GB, M.2 2242 | 1 | 2.38 mm single-sided, 4.7 W max, 300 TBW. Mount at the **42 mm** hole; the bundled 2280 bracket is unused. | € 40–60 |
 | 10 | microSDHC 32 GB (A1/V30) | 1 | Boot card. Too small for the library; that stays on the NVMe. | € 13 |
-| 11 | Raspberry Pi 5 27 W USB-C supply | 1 | Bench power for the Pi alone. It **cannot charge the HAT (B)**. | € 12 |
+| 11 | Raspberry Pi 5 27 W USB-C supply | 1 | Bench power for the Pi alone. It **cannot charge the R6 UPS Module 3S** and must not be connected simultaneously with the UPS Pi-power lead. | € 12 |
 | 12 | Panasonic ML-2020, JST plug | 1 | Pi 5 clock backup on J5. Enable with `dtparam=rtc_bbat_vchg=3000000`. | € 5.43 |
 | 13 | Adafruit DS3231 RTC breakout | 1 | FireBeetle clock at 0x68, keeps time with the Pi off. **CR1220 not included.** | € 19.35 |
 | 14 | CR1220 coin cell | 1 | DS3231 backup; without it the OLED clock resets on power loss. | € 2.77 |
@@ -37,34 +38,36 @@ Design notes: [`R5.md`](R5.md).
 | 17 | **PBS-33B 12 mm momentary NO button** (TinyTronics 001543) + 12 mm rubber boot | 1 + 1 | Cycles the OLED screens / wakes it (`PIN_BUTTON` GPIO4 → GND). M12×0.75, **thread 6 mm, panel max 3.0 mm**, so the 4.5 mm deck gets a **16 × 2 mm spot face** on the underside at `R5_OLED_BTN_*` (leaves 2.5 mm); cap Ø18, to the right of the OLED and centred on it. The spot face must be wider than your nut — measure it before printing. The boot seals it. | € 0.65 + € 3 |
 | 18 | STEMMA QT / Qwiic JST-SH 4-pin cable, 200 mm | 2 | I²C chain: DS3231, OLED (FireBeetle side uses the header cable below). | € 1.44 ea |
 | 19 | STEMMA QT / Qwiic → male headers, 150 mm | 1 | FireBeetle header → Qw/ST bus. | € 1.15 |
-| 20 | Dupont jumpers, female–female, 20 cm | 1 set | UPS INA219 I²C (0x42) + 5 V to the FireBeetle. | € 5 |
-| 20a | Resistors **30k** and **10k** (1 %, 0.25 W) + **100 nF** ceramic | 1 + 1 + 1 | Charge-input sense divider on the HAT (B)'s DC input → `A0` (ADC1). 8.4 V → 2.10 V, 210 µA. Soldered inline; the circuit is on the `/Power` sheet of [`kicad/`](kicad/ktemata.kicad_pro). | € 0.30 |
+| 20 | Dupont jumpers, female–female, 20 cm | 1 set | R6 UPS INA219 I²C (**0x41**) + auxiliary 5 V to the FireBeetle. The Module 3S gauge has a 0.1 Ω shunt; firmware calibration must change with it. | € 5 |
+| 20a | Resistors **47k** and **10k** (1 %, 0.25 W) + **100 nF** ceramic | 1 + 1 + 1 | R6 charge-input sense divider on the UPS Module 3S input → `A0` (ADC1). **12.6 V → 2.21 V**, 221 µA; leaves ADC margin unlike R5's 30k/10k divider. Soldered inline; the circuit is on the `/Power` sheet of the [`R6 KiCad project`](kicad/r6/ktemata.kicad_pro). | € 0.30 |
 | 21 | USB-A → USB-C data cable, 20–30 cm | 1 | FireBeetle ↔ Pi serial. **Data-only** (VBUS disconnected) — the FireBeetle is powered from the UPS. | € 5 |
-| 22 | USB-A → 2-pin 5 V lead (JST-XH / dupont) | 1 | UPS USB-A 5 V → FireBeetle 5 V/GND; keeps the OLED alive with the Pi off. | € 5 |
+| 22 | 2-pin auxiliary 5 V lead (JST-XH / Dupont, as fitted) | 1 | R6 UPS Module 3S auxiliary 5 V output → FireBeetle; keeps the status system alive with the Pi off. The Module 3S has no R5-style USB-A output; use its header and supplied harness where compatible. | € 5 |
 | 23 | [M3 × 10 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/bzk-inbus-verzonkenkopschroef-staal-din-7991-m3x10.html) | **7** | DIN 7991 / ISO 10642; **dk 6.0 mm, k 1.7 mm, 2.0 mm hex**. Seven deck screws into the heat-set inserts. Sold in packs of 25. | € 2.60 / 25 |
 | 23a | [M3 × 6 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/inbus-torx-schroeven/inbusbout-met-verzonken-kop-staal/inbusbout-verzonkenkop-m3/) | **4** | Same DIN 7991 head and 2.0 mm hex. For the 4 mm lid cover **or** alternate plate into the display's rear inserts; gives ≈1.04 mm engagement. **Do not substitute M3 × 8**, which can bottom out. Sold in packs of 25. | € 2.45 / 25 |
-| 23b | **Metal push button 16 mm, latching (on-off), blue 3–6 V LED** — ABS16CG11ZCB3V (TinyTronics 003808) | 1 | Fits `R5_BTN_D` = 16.2 mm: M16×1 thread, 12 mm long, panel up to 10 mm, IP66, cap Ø18. **Rating 3 A / ≤24 V DC** — so it may **not** switch the Pi's 5 V rail (the Pi is rated 5 A, and this build peaks near 2.8 A); put it on the 8.4 V charge input (2 A) or order a ≥5 A switch or MOSFET/relay for the main rail (section B, future add). The LED has a built-in resistor, works 3–6 V either polarity, ~15 mA. Note: **latching** means a hard power cut — shut the Pi down in software first. | € 3.50 |
-| 23c | **DC jack 5.5 × 2.1 mm, panel mount** — DC-099 (TinyTronics 001201) | 1 | The 8.4 V charge socket in the deck's right rail (`R5_CHG_*`). **11 mm mounting hole** (the r4 socket needed 9.5), nut behind, 30 V / 5 A, solder lugs. Centre-positive must be confirmed against the HAT's jack. It is the only hole in the deck: the bought host is not drilled. A 2 A fuse in the charge lead protects the input and is not covered by the pack fuse. | € 1.50 |
+| 23b | **Metal push button 16 mm, latching (on-off), blue 3–6 V LED** — ABS16CG11ZCB3V (TinyTronics 003808) | 1 | Fits `R5_BTN_D` = 16.2 mm: M16×1 thread, 12 mm long, panel up to 10 mm, IP66, cap Ø18. **Rating 3 A / ≤24 V DC** — so it may **not** switch the Pi's 5 V rail (the Pi is rated 5 A, and this build peaks near 2.8 A); put it on the 12.6 V charge input (2 A) or order a ≥5 A switch or MOSFET/relay for the main rail (section B, future add). The LED has a built-in resistor, works 3–6 V either polarity, ~15 mA. Note: **latching** means a hard power cut — shut the Pi down in software first. | € 3.50 |
+| 23c | **DC jack 5.5 × 2.1 mm, panel mount** — DC-099 (TinyTronics 001201) | 1 | R6's **12.6 V / 2 A** charge input uses the same 30 V / 5 A-rated mechanical socket. **11 mm mounting hole**, nut behind, solder lugs; centre-positive must match the UPS input. Its final cassette position follows the R6 display frame. The bought host remains undrilled. A 2 A charge-path fuse is separate from pack protection. | € 1.50 |
 | 24 | **Fuse holder 5×20 mm, PCB, 5 A** — BLX-A-5X20MM (TinyTronics 001195) | 1 | Holds a standard 5 × 20 mm cartridge, **holder rated 5 A / 250 V**, hinged cover so the fuse is replaceable in the field, ~26 × 9 × 18 mm, two 1.2 mm PCB legs. In a wired harness: solder the pack lead to the legs, heat-shrink the joints, and strap the body down. | € 0.50 |
-| 24a | **Fuse 5 × 20 mm, 250 V, 5 A, fast-acting (F)** — FUSE5X20MM5A (TinyTronics 007152) | 1 (spare advised) | ESKA 5 × 20 F, 250 V AC, 5 A, ≈0.03 Ω, IEC 60127-2. Sized for the **pack** lead: a full 5 V/5 A output is ≈3.8 A at the pack (5 A × 5 V ÷ (7.4 V × 0.88)), and this build's steady draw is ≈2.1 A, so it sits at 40–75 % of rating. **Not** for the charge input — 5 A there would not protect a 2 A path; that fuse (2 A) remains optional. | € 0.40 |
+| 24a | **Fuse 5 × 20 mm, 250 V, 5 A, fast-acting (F)** — FUSE5X20MM5A (TinyTronics 007152) | 1 (spare advised) | ESKA 5 × 20 F, 250 V AC, 5 A, ≈0.03 Ω, IEC 60127-2. R6 retains a 5 A pack-fuse requirement pending physical placement review: full 25 W output is ≈3.2 A at 9 V with 88% conversion efficiency, below 5 A but with less margin than R5. **Not** for the 2 A charge input. Verify the fuse location with the UPS Module 3S factory holders before assembly. | € 0.40 |
 | 25 | Silicone O-ring / gasket assortment | 1 | Case seam, DC socket, button. | € 10 |
 | 26 | Filament, PETG/PLA + TPU | ≈ 500 g | The r4 shells or the r5 cassette; the TPU is only for the charge plug. | € 15 + € 20 |
 | 27 | Peli 1200 hard case (r5 only; a 1400 is also accepted) | 1 | 236.5 × 181.1 × 30.2 mm base + 74.4 mm lid interior. See [`R5.md`](R5.md). | € 100–145 |
 
-Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈ **€ 560–605** complete.
+The historical R5 list totalled ≈ **€ 460** before the Peli. Do not reuse that total for R6: the UPS adapter,
+third cell, 3S regulator, mounting extensions and lid harness change the total; price R6 after those parts are
+selected and bench-verified.
 
 ## B. Nice to have
 
 | Item | Qty | Note | ≈ Price |
 |---|---|---|---|
-| 2S solar/charger module with 8.4 V output (MPPT or CC/CV) | 1 | Solar/crank path. **Must be 8.4 V out**, not USB-C PD. | € 20–35 |
-| Foldable 20–30 W solar panel | 1 | Must reach 8.4 V through the module above; a PD-only panel is useless here. | € 50–80 |
+| **3S solar/charger module with 12.6 V output** (MPPT or CC/CV) | 1 | R6 solar/crank path. **Must be 12.6 V out**, regulated for the UPS Module 3S; R5's 8.4 V module is incompatible. Verify input ripple and simultaneous charge/load operation. | € 20–35 |
+| Foldable 20–30 W solar panel | 1 | Must suit the 3S regulator's input range and provide useful current after conversion to 12.6 V; a PD-only panel is unsuitable. The UPS accepts up to 2 A at 12.6 V (25.2 W input rating). | € 50–80 |
 | 5 W ETFE panel for the case back | 1 | Fits the 172 × 237 mm r4 back. | € 42.34 |
-| Hand crank generator | 1 | Feeds the same charge input. A 2S pack needs roughly 3–5 h of cranking for a full charge. Separate [handcrank](https://github.com/jsoeterbroek/handcrank) project, not part of this repo. | € 30–70 |
+| Hand crank generator | 1 | Feeds the R6 charge input through a suitable **12.6 V / 3S regulator**; the regulator, not the bare crank, sets the UPS input. Expect longer full-charge effort than R5 because the pack has 50% more energy. Separate [handcrank](https://github.com/jsoeterbroek/handcrank) project, not part of this repo. | € 30–70 |
 | M2.5 heat-set inserts | — | Only with `BRASS_INSERT=true` (r4 face). | € 13 |
 | M3 heat-set inserts (4.6 mm OD × 5.7 mm) | 7 | r5 deck bosses, `M3_INS_*` in `common.scad`. The r4 case does not use them. | € 8 |
 | Thin thermal pad | 1 | No active cooler; only if it fits the 6 mm UPS gap. | € 5 |
-| **≥5 A latching switch** (16 mm, M16×1) **or** a **MOSFET/relay module** driven by the fitted button | 1 | **Future add.** The fitted ABS16CG11ZCB3V is rated 3 A / 24 V, so it only switches the 8.4 V charge input. For a real main switch, use a latching switch rated **≥5 A at 5 V DC** (the Pi 5 rail is rated 5 A; this build peaks ≈2.8 A), or keep the button as a low-current control driving a logic-level MOSFET or automotive relay in the 5 V pair. Either way it is still a hard cut — shut the Pi down in software first. | € 5–15 |
+| **≥5 A latching switch** (16 mm, M16×1) **or** a **MOSFET/relay module** driven by the fitted button | 1 | **Future add.** The fitted ABS16CG11ZCB3V is rated 3 A / 24 V, so it only switches the R6 12.6 V charge input. For a real main switch, use a latching switch rated **≥5 A at 5 V DC** (the Pi 5 rail is rated 5 A; this build peaks ≈2.8 A), or keep the button as a low-current control driving a logic-level MOSFET or automotive relay in the 5 V pair. Either way it is still a hard cut — shut the Pi down in software first. | € 5–15 |
 
 ---
 
@@ -82,18 +85,19 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
    is what pushed the power button onto the deck.
    *One consequence (r4 only):* the 5" TD2's **inner** Pi hole pattern is 51 × 49 mm (the Pi is 58 × 49),
    so the Pi is held by the case posts and the display by its own **outer** standoffs (122.74 × 72.96 mm).
-2. **UPS.** The UPS HAT (B) is a different power architecture from the HAT (E), not a drop-in swap:
-   - **2× 18650 in 2S** (7.4 V nominal, ≈ 23 Wh) instead of 4× 21700 (≈ 70 Wh). Expect **≈ 2–2.5 h** of Pi 5
-     use rather than ≈ 6–7 h.
-   - **Charge input is 8.4 V / 2 A on a DC barrel jack**, not USB-C PD. r4's printed case carries a
-     **5.5 × 2.1 mm DC socket** through its top wall; **r5 mounts the same socket in the deck**, so the
-     bought Peli needs no hole (charging is done with the lid open). Any internal solar/crank module must
-     output **8.4 V**; a PD panel cannot feed this HAT directly.
-   - The gauge is an **INA219 at 0x42** (not the BQ4050 at 0x2D), so the firmware driver is
-     `firmware/src/ups_hat_b.cpp`. It reports pack voltage/current/power; **no per-cell data and no
-     capacity percentage** — the percentage is derived from the 2S pack voltage.
-   - The board carries its **own 18650 holders**, so there is no printed cell tray and no 21700 cells in this
-     build.
+2. **UPS — R6 uses the Waveshare UPS Module 3S.** It is not a drop-in HAT (B) replacement:
+   - **3× 18650 in 3S** give approximately 11.1 V nominal, 12.6 V full and 50% more energy than R5 with
+     identical cells. The larger Waveshare 7-inch display consumes part of that gain; see [`R6.md`](R6.md) for the
+     runtime model.
+   - **Charge input is 12.6 V / 2 A.** Replace R5's 8.4 V adapter and 2S solar/crank regulator. The panel or
+     crank can be retained only if the new regulator accepts their output and supplies a clean 12.6 V rail.
+   - The gauge is an **INA219 at 0x41 with a 0.1 Ω shunt**. The firmware must change address, current/power
+     calibration, pack-voltage model and capacity. The current channel can saturate near 3.2 A at low pack
+     voltage and full output; voltage-based protection must remain valid.
+   - The board is **93 × 60 mm**, with an **86 × 46 mm** Ø3 mm mounting pattern and its own three-cell holder.
+     Preserve the supplied insulating panels and access for cell service and initial BOOT activation.
+   - The supplied cable harness powers the Pi without R5's custom soldered feed. No USB-PD capability is
+     documented, so verify loaded voltage and Pi peripheral-current behaviour rather than assuming PD.
 3. **Keyboard.** The **Rii K06** (151 × 59 × 11 mm, touchpad, 2.4 GHz + Bluetooth) replaces the Phistone
    (134 × 74 × 12.7). At 11 mm it sits entirely inside the 14.42 mm face part; the 155 × 89 × 16.5 figure on
    Rii's product page is the **i4**, which is why the pocket used to be described as crossing the split
@@ -104,11 +108,10 @@ Parts ≈ **€ 460**; the r5 build with the Peli adds ≈ € 100–145, so ≈
 5. **Storage and clocks.** The NVMe Base Duo + drives and the ML-2020 are the storage side. One 512 GB
    drive holds the OS, Wikipedia, the maps and the small references, **not** the whole 833 GiB library —
    the second slot is what closes that gap (note 7). The DS3231 still needs its CR1220.
-6. **The HAT (B) includes its 8.4 V / 2 A supply.** r4's case still needs the **panel socket** through its
-   wall; r5's is the deck-mounted one and needs no host hole. Either build needs the solar/crank module if
-   you build that path. A 5 V / USB-C or 5.5 × 2.5 mm bench adapter does
-   **not** substitute: the HAT needs 8.4 V on a 5.5 × 2.1 mm barrel, and the Pi 5 itself has no barrel input
-   at all — it takes USB-C only.
+6. **The UPS Module 3S is offered with a 12.6 V / 2 A supply.** Use that supply or a verified 3S regulator;
+   R5's 8.4 V adapter is incompatible. The panel-mount charge hardware stays inside the cassette so the
+   bought Peli needs no hole. A 5 V USB-C charger cannot charge the 3S pack, and the Pi's bench USB-C supply
+   is not an input to the UPS. The UPS-to-Pi manufactured lead is the normal R6 Pi power path.
 7. **The NVMe board.** The NVMe Base Duo has a home in the cassette: it sits on the four Ø8 posts under the
    Pi at x 152–208, y 16–101 (`R5_M2_BOT` is the post top, 7.4 mm), with its own 12 mm standoffs carrying the
    Pi above it and both SSDs on its top face inside that gap. The four corner screws clamp the Duo; the Pi is
@@ -125,7 +128,8 @@ cable, **Waveshare UPS HAT (E)** + 4× 21700 (in printed cradles, wired to V1–
 optional Pimoroni trackball, Pi 5 + ML-2020, DS3231 + CR1220, FireBeetle +
 OLED, PBS-33B button, sealed **USB-C** panel port + MPPT module (5 V out), M2.5 set.
 
-> **Safety.** The HAT (B) is a **2S** pack: 7.4 V nominal, 8.4 V full, and it can deliver 5 A at 5 V out.
-> Use two matched, unprotected flat-top cells from the same batch, check polarity against the PCB markings
-> (the HAT has reverse-connection warning LEDs **and will be damaged by a reversed cell**), fuse the pack
-> lead, and never assemble or rewire the pack with the board powered.
+> **Safety.** R6's UPS Module 3S uses a **3S** pack: 11.1 V nominal, 12.6 V full, with up to 5 A at 5 V out.
+> Use three matched, unprotected flat-top cells from one batch; check polarity and the module's reverse-warning
+> indicators before charging. Verify pack-fuse placement with the factory holders, keep the supplied insulating
+> panels fitted, and never assemble or rewire the pack powered. Press BOOT only as the manufacturer directs for
+> initial protection-chip activation.

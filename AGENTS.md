@@ -23,16 +23,18 @@ mark that meets a fan, a screw or the Pi opening stops at the mask edge.
 
 **r5 has no air-quality sensor.** The r5 cassette leaves the left wall and the sensor chamber out; the BME688/SEN66 pocket only exists in r2/r3/r4 (r4 prints it too, so an r4 bottom shell still has it). Do not reintroduce `SENSOR_*` geometry into r5.
 
-**Wiring lives in KiCad, not in the markdown.** `docs/kicad/` is a KiCad 10 project — `ktemata.kicad_pro`
-with an A3 index sheet and three A4 sheets (`power`, `pi`, `mcu`) — and it is the source of truth for every
-net and pin. One connector-shaped `Ktemata:` symbol per module; within a sheet every multi-pin net is
-routed (trunk in the left gutter, a tap per pin, junctions at the T's, the name on a global label at the
-trunk top), and a global label also carries the name across sheets. The 15 symbols
-are also `docs/kicad/ktemata.kicad_sym`, registered by the project's `sym-lib-table`, so ERC reports
-0 violations — if that ever goes back to `lib_symbol_issues`, the table or the library file has moved. `docs/WIRING.md`
-only says how to open it and lists assembly rules; **do not restate nets, pins or connectors in markdown** —
-link the project instead. Derived files: `docs/kicad/ktemata_r5_connections.csv` from
-`kicad-cli sch export netlist --format kicadxml` plus `work/scripts/kicad_netlist_csv.py`.
+**Wiring lives in KiCad, not in the markdown.** `docs/kicad/r5/` preserves the implemented R5 project and
+`docs/kicad/r6/` holds the proposed R6 project. Each is a self-contained KiCad 10 project —
+`ktemata.kicad_pro` with an A3 index sheet and three A4 sheets (`power`, `pi`, `mcu`) — and is the source of
+truth for that revision's nets and pins. One connector-shaped `Ktemata:` symbol per module; within a sheet
+every multi-pin net is routed (trunk in the left gutter, a tap per pin, junctions at the T's, the name on a
+global label at the trunk top), and a global label also carries the name across sheets. Each directory has
+its own `ktemata.kicad_sym`, registered by that project's `sym-lib-table`, so ERC reports 0 violations — if
+that ever goes back to `lib_symbol_issues`, the table or library file has moved. `docs/WIRING.md` only says
+how to open them and lists assembly rules; **do not restate nets, pins or connectors in markdown** — link the
+project instead. Derived files: `ktemata_r5_connections.csv` and `ktemata_r6_connections.csv` in their
+respective directories from `kicad-cli sch export netlist --format kicadxml` plus
+`work/scripts/kicad_netlist_csv.py`.
 **The BOM is not derived** - it carries prices, quantities, suppliers and mechanical parts a schematic has
 none of - but every schematic block names its BOM item in a `Part` field, and
 `python3 work/scripts/check_bom.py <netlist.xml>` fails if a block points at an item that does not exist.
@@ -77,7 +79,9 @@ bash work/scripts/check_r5.sh            # r5 cassette interference check (HOST=
 openscad -D 'CHECK="bottom:pi"' -o /tmp/x.stl cad/assembly.scad   # single interference pair
 openscad -o out.png --render --imgsize=1400,1100 --camera=75,90,17,60,0,35,430 cad/assembly.scad  # render preview
 python3 cad/tools/paint.py --stencils    # r5 paint: Strata (chosen) + mask cut files -> docs/paint/
-python3 cad/tools/stencil_stl.py          # the same masks as printable 1.2 mm panels -> stl/stencil/stencil_*.stl
+python3 cad/tools/stencil_stl.py          # R5 printable 1.2 mm panels -> stl/stencil/stencil_*.stl
+python3 cad/tools/paint.py --rev r6 --stencils --stickers  # R6 prototypes -> docs/paint/r6/
+python3 cad/tools/stencil_stl.py --rev r6  # R6 fit/layout masks, not paint-ready -> stl/stencil/r6/
 ```
 
 `bad edges: 0` from export.py means the mesh is manifold (no open edges, no edges shared by >2 faces, which slicers flag as non-manifold). Touching-but-not-overlapping solids (tangent bosses, flush faces) are the usual cause: overlap them by ≥0.5 mm. Any other value is a regression. In `check_r5.sh`, a "HIT" whose bbox is flat in one axis (or that throws an empty-bbox traceback) is a zero-volume contact and is expected. Only volumetric bboxes are real collisions.

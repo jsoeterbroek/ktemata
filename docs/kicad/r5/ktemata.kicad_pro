@@ -541,18 +541,15 @@
       "version": 5
     },
     "net_colors": {},
-    "netclass_assignments": {
-      "/Power: 8.4 V input, switch, pack, HAT (B)/C": [
-        "C"
-      ],
-      "/Power: 8.4 V input, switch, pack, HAT (B)/NO": [
-        "NO"
-      ]
-    },
+    "netclass_assignments": {},
     "netclass_patterns": [
       {
         "netclass": "Default",
         "pattern": ""
+      },
+      {
+        "netclass": "C",
+        "pattern": "GND"
       }
     ]
   },

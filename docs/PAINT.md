@@ -1,4 +1,65 @@
-# r5 paint schemes — deck and lid cover
+# Ktemata paint schemes — R5 and R6 prototype
+
+## Revision selection and output directories
+
+The generator defaults to **R5** and preserves its established files in `docs/paint/` and
+`stl/stencil/`. R6 is explicitly selected and isolated:
+
+```bash
+python3 cad/tools/paint.py --rev r5 --stencils --stickers
+python3 cad/tools/stencil_stl.py --rev r5
+python3 cad/tools/paint.py --rev r6 --stencils --stickers
+python3 cad/tools/stencil_stl.py --rev r6
+# one scheme/pass/part still works, for example:
+python3 cad/tools/paint.py --rev r6 --scheme 2 --stencils
+python3 cad/tools/stencil_stl.py --rev r6 --part deck --pass amber
+```
+
+| Revision | Colour sheets / SVG masks / stickers | Rigid STL masks |
+|---|---|---|
+| R5 | `docs/paint/` (existing paths) | `stl/stencil/` (existing paths) |
+| R6 | `docs/paint/r6/` | `stl/stencil/r6/` |
+
+### R6 prototype — not paint-ready
+
+**R6 output is for fit and layout review, not production painting.** The R6 mechanical CAD and measured
+connector keep-outs do not exist yet. The generated rigid panels are real, manifold-checkable geometry,
+but that does not make them released masks. Do not cut final vinyl or spray a part from them until the
+R6 fit gates in `R6.md` are closed.
+
+R6 uses the same three schemes and shared hinge datum, but swaps the component distribution:
+
+| Surface | R6 prototype contents |
+|---|---|
+| Upper `cover` / **keyboard lid** | K06 opening, OLED window, status button, KTEMATA wordmark |
+| Lower `deck` / **display frame** | Waveshare 7-inch opening, seven proposed frame fasteners, power and charge controls, motto |
+
+The geometry comes from `cad/tools/paint_probe_r6.scad`, not from copies of R5's apertures:
+
+- The lid and frame retain the R5 host-derived outlines: **233.5 × 178.1 mm** for the lid and
+  **243.282 × 186.841 mm** for the cavity-height frame plate.
+- The Waveshare panel is **192.96 × 110.76 mm**, R8, at `x 20.27`, `y 30.0`; with 1 mm clearance its
+  paint opening is **194.96 × 112.76 mm**. The active-area annotation is **154.88 × 86.72 mm**.
+- Power and charge are proposed at `x 225`, `y 160` and `x 225`, `y 90`, respectively. They are marked
+  `12.6 V` where appropriate. These are proposal positions, not measured connector clearances.
+- R5's Pi service opening, deck fan and display DSI hinge notch are **absent**, not zero-sized dummy
+  features. The R6 display wiring remains inside the cassette.
+- The wordmark moves to the keyboard lid. The motto moves to the **hinge-side display band**, above the
+  panel, because the first latch-side placement intersected the middle frame screw. The motto cap and
+  sticker size are fitted to the available band instead of moving that fastener.
+- The two R6 sticker files therefore have physical placement names:
+  `ktemata_sticker_cover_wordmark_91x22.4mm_bleed.pdf` for the lid and
+  `ktemata_sticker_deck_motto_82.1x17.3mm_bleed.pdf` for the frame.
+
+Strata's six SVG passes and six rigid masks are generated for each surface. Meridian's display-border
+pass follows the Waveshare opening to the R6 frame. Bearing retains its proposed `x 215.5` trace, but its
+R6 sheet explicitly downgrades it to an unverified layout lane; it is not a measured final clearance.
+
+Every R6 colour sheet says **R6 PROTOTYPE / NOT PAINT-READY**. R6 stencil sheets carry the same warning,
+and `stencil_stl.py --rev r6` labels every exported rigid mask likewise. The existing `docs/paint/r6/.touch`
+marker is preserved; generators create/populate the directory without cleaning it.
+
+## R5 reference schemes — deck and lid cover
 
 **Strata is the chosen scheme.** It is the design to build; Meridian and Bearing are kept as record
 of the alternatives and because the generator still produces them.

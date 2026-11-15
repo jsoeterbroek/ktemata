@@ -38,6 +38,7 @@ zim/*.zim
 # sweep the deliverables away.
 *.pdf
 !docs/paint/ktemata_sticker_*.pdf
+!docs/paint/r6/ktemata_sticker_*.pdf
 
 # KiCad: the project and its sheets are source; the local UI state and caches are not.
 *.kicad_prl

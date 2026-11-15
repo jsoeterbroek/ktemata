@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Ktemata r5 - the selected paint stencils as printable STL masks (Strata by default).
+"""Ktemata R5 and R6-prototype paint stencils as printable STL masks (Strata by default).
+
+R5 retains the dimensions, paths and cover-plane notes below. `--rev r6` uses the R6 probe, moves the
+keyboard lid/display frame apertures accordingly and writes explicitly provisional masks; those are
+fit/layout tools, not paint-ready production parts.
 
 The SVG cut files in docs/paint/ are 261.5 x 234.1 mm (cover) and 271.3 x 242.8 mm (deck) sheets:
 the part plus a 14 mm handling margin for the title, the caption and the registration crosses.
@@ -14,7 +18,8 @@ outline as the datum - no margin, no measuring, no rescaling.  The deck's plate 
     python3 cad/tools/stencil_stl.py --thickness 2.0    # a stiffer mask (default 1.2 mm)
     python3 cad/tools/stencil_stl.py --scheme 1 --include-vinyl  # Meridian ash as loose strips
 
-Output: stl/stencil/stencil_<part>_<pass>.stl.
+Output: R5 uses stl/stencil/stencil_<part>_<pass>.stl; R6 uses stl/stencil/r6/ and marks every
+mask as a non-production prototype.
 
 WHY THE GEOMETRY COMES FROM paint.py, NOT FROM THE SVG
     An SVG is a drawing: its marks are filled paths and the part is a clip path.  Rasterising it
@@ -138,7 +143,7 @@ def mask_source(m: "paint.Model", cover: bool, group: str,
     if x0 or y0:
         body = f"translate([{-x0:.4f}, {-y0:.4f}]) " + body
 
-    if cover and group == "bezel":
+    if paint.display_on_part(m, cover) and group == "bezel":
         # Keep the separate ring-shaped mask for the slate border. It lies on the same flat front
         # as every other cover mask; only its plan shape is different.
         bx, by, bw, bh, br = m.bezel_ring
@@ -149,16 +154,18 @@ def mask_source(m: "paint.Model", cover: bool, group: str,
                 + rrect_2d(wx, wy, ww, wh, wr) + " }")
 
 
-    desc = f"{scheme_name} {'LID COVER' if cover else 'DECK'} - {group} pass, {thickness} mm mask"
+    desc = f"{scheme_name} {paint.part_name(m, cover, short=True)} - {group} pass, {thickness} mm mask"
+    if m.rev == "r6":
+        desc = "R6 PROTOTYPE / NOT PAINT-READY - " + desc
     return body, desc
 
 
 def emit(m: "paint.Model", cover: bool, group: str, thickness: float,
-         scheme: int = paint.SELECTED_SCHEME) -> Path:
+         scheme: int = paint.SELECTED_SCHEME, out_dir: Path = OUT) -> Path:
     src, desc = mask_source(m, cover, group, thickness, scheme)
     side = "cover" if cover else "deck"
     name = f"stencil_{side}_{group}"
-    out = OUT / f"{name}.stl"
+    out = out_dir / f"{name}.stl"
     with tempfile.TemporaryDirectory() as td:
         scad = Path(td) / "m.scad"
         scad.write_text("$fn = 64;\n" + src + "\n")
@@ -171,7 +178,8 @@ def emit(m: "paint.Model", cover: bool, group: str, thickness: float,
         vols = [ln for ln in res.stderr.splitlines() if "Volumes:" in ln]
         pieces = int(vols[-1].split(":")[1]) - 1 if vols else None
     detail = f"   ({pieces} piece{'s' if pieces != 1 else ''})" if pieces is not None else ""
-    print(f"{out.relative_to(REPO)}   {desc}{detail}")
+    shown = out.relative_to(REPO) if out.is_relative_to(REPO) else out
+    print(f"{shown}   {desc}{detail}")
     return out
 
 
@@ -180,6 +188,8 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     all_groups = tuple(dict.fromkeys(g for _n, _fn, passes in paint.STENCIL_SCHEMES.values()
                                      for g, _title, _blurb in passes))
+    ap.add_argument("--rev", choices=("r5", "r6"), default="r5",
+                    help="R5 uses the existing output directory; R6 writes prototype masks in r6/")
     ap.add_argument("--scheme", type=int, choices=tuple(sorted(paint.STENCIL_SCHEMES)),
                     default=paint.SELECTED_SCHEME, help="1 = Meridian, 2 = Strata (default)")
     ap.add_argument("--part", choices=("deck", "cover", "both"), default="both")
@@ -193,11 +203,14 @@ def main() -> None:
     if args.group and args.group not in {g for g, _n, _b in passes}:
         ap.error(f"{scheme_name} has no {args.group} pass")
 
-    m = paint.Model(paint.probe())
+    m = paint.Model(paint.probe(args.rev), args.rev)
+    out_dir = OUT / "r6" if args.rev == "r6" else OUT
     dx0, dy0, dw, dl, dr = m.deck
-    print(f"{scheme_name}: cassette {m.w} x {m.l} mm, deck {dw} x {dl} mm (R{dr}), "
+    print(f"{scheme_name}: cassette {m.w} x {m.l} mm, lower plate {dw} x {dl} mm (R{dr}), "
           f"cover R{m.cover_r}, mask {args.thickness} mm")
-    OUT.mkdir(parents=True, exist_ok=True)
+    if args.rev == "r6":
+        print("R6 PROTOTYPE: rigid masks are fit/layout tools, not paint-ready production parts")
+    out_dir.mkdir(parents=True, exist_ok=True)
     made = []
     for cover, side in ((False, "deck"), (True, "cover")):
         if args.part not in ("both", side):
@@ -210,8 +223,8 @@ def main() -> None:
                 continue
             if not any(mk.group == group for mk in mark_fn(m, cover)):
                 continue
-            made.append(emit(m, cover, group, args.thickness, args.scheme))
-    print(f"{len(made)} file(s) in {OUT.relative_to(REPO)}/")
+            made.append(emit(m, cover, group, args.thickness, args.scheme, out_dir))
+    print(f"{len(made)} file(s) in {out_dir.relative_to(REPO)}/")
 
 
 if __name__ == "__main__":

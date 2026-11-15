@@ -75,8 +75,10 @@ interior (48.3 mm) is shallower than the display plus the cell stack. See [`docs
 
 ```bash
 python3 cad/tools/export.py           # the shipped set -> stl/r5/ (tray, deck, lid plate, lid cover)
-python3 cad/tools/paint.py            # airbrush paint schemes, 1:1 sheets -> docs/paint/
-python3 cad/tools/paint.py --stickers # the two Meridian type blocks as print-ready sticker PDFs
+python3 cad/tools/paint.py            # R5 airbrush schemes, 1:1 sheets -> docs/paint/
+python3 cad/tools/paint.py --stickers # R5 Meridian type blocks as print-ready sticker PDFs
+python3 cad/tools/paint.py --rev r6 --stencils --stickers  # R6 prototypes -> docs/paint/r6/
+python3 cad/tools/stencil_stl.py --rev r6                  # R6 rigid prototypes -> stl/stencil/r6/
 openscad -o out.png --render cad/assembly_r5.scad      # cassette assembly preview
 ```
 
@@ -124,9 +126,10 @@ the 5" r2 design, but the RP2040 USB keyboard is the one part worth prototyping 
 
 ## Wiring
 
-Wiring is defined in **[`docs/kicad/`](docs/kicad/)** — a KiCad 10 project whose sheets are the netlist:
-open `docs/kicad/ktemata.kicad_pro`. [`docs/WIRING.md`](docs/WIRING.md) says how to open it, what each
-sheet holds, and the assembly rules a schematic cannot state; it does not repeat the netlist.
+Wiring is defined in **KiCad 10 projects** whose sheets are the netlist: open the preserved
+**[`R5 project`](docs/kicad/r5/ktemata.kicad_pro)** or the proposed
+**[`R6 project`](docs/kicad/r6/ktemata.kicad_pro)**. [`docs/WIRING.md`](docs/WIRING.md) says how to open
+and validate them and lists assembly rules; it does not repeat either netlist.
 
 To prepare a fresh Ubuntu / Raspberry Pi OS install — system update, Kiwix, the ZIM library and the display
 rotation — run [`work/scripts/post-install.sh`](work/scripts/post-install.sh); notes in

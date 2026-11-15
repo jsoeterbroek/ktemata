@@ -1,0 +1,80 @@
+(kicad_sch
+  (version 20260306)
+  (generator "eeschema")
+  (generator_version "10.0")
+  (uuid "fbcf4daf-0530-54a9-88df-5b7801d859ea")
+  (paper "A3")
+  (title_block
+    (title "Ktemata r5 - wiring / connections")
+    (date "2026-11-15")
+    (rev "1")
+    (company "Ktemata")
+  )
+
+  (lib_symbols
+  )
+
+  (sheet
+    (at 76.20 50.80)
+    (size 88.90 27.94)
+    (fields_autoplaced yes)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid "2df1b01b-f0ab-5bc1-952f-e9105b337cfd")
+    (property "Sheetname" "Power: 8.4 V input, switch, pack, HAT (B)" (at 76.20 49.53 0)      (effects (font (size 1.27 1.27)) (justify left bottom)))
+    (property "Sheetfile" "power.kicad_sch" (at 76.20 80.01 0)      (effects (font (size 1.27 1.27)) (justify left top)))
+    (instances
+      (project "ktemata"
+        (path "/fbcf4daf-0530-54a9-88df-5b7801d859ea"
+          (page "2")
+        )
+      )
+    )
+  )
+  (sheet
+    (at 76.20 101.60)
+    (size 88.90 27.94)
+    (fields_autoplaced yes)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid "ab66b496-3a9e-509d-9ff4-6cbb8c7cf5b7")
+    (property "Sheetname" "Pi 5 and its peripherals" (at 76.20 100.33 0)      (effects (font (size 1.27 1.27)) (justify left bottom)))
+    (property "Sheetfile" "pi.kicad_sch" (at 76.20 130.81 0)      (effects (font (size 1.27 1.27)) (justify left top)))
+    (instances
+      (project "ktemata"
+        (path "/fbcf4daf-0530-54a9-88df-5b7801d859ea"
+          (page "3")
+        )
+      )
+    )
+  )
+  (sheet
+    (at 76.20 152.40)
+    (size 88.90 27.94)
+    (fields_autoplaced yes)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid "6e434400-e588-5002-bfa3-704cd148acfe")
+    (property "Sheetname" "FireBeetle 2, OLED, RTC, buttons" (at 76.20 151.13 0)      (effects (font (size 1.27 1.27)) (justify left bottom)))
+    (property "Sheetfile" "mcu.kicad_sch" (at 76.20 181.61 0)      (effects (font (size 1.27 1.27)) (justify left top)))
+    (instances
+      (project "ktemata"
+        (path "/fbcf4daf-0530-54a9-88df-5b7801d859ea"
+          (page "4")
+        )
+      )
+    )
+  )
+  (text "Wiring source of truth for the Ktemata r5 build: docs/WIRING.md points here, not the other way round."
+    (at 20.32 190.50 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "73fe371b-a168-5484-b96b-9df4a152467e"))
+  (text "Nets with two or more pins on a sheet are routed; a net that leaves the sheet carries a global label."
+    (at 20.32 199.39 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "d03d797e-4445-535f-9e42-eb0e2b17bf82"))
+  (text "Power sheet: 8.4 V input and the pack. Pi sheet: display, NVMe, keyboard. MCU sheet: FireBeetle and its I2C parts."
+    (at 20.32 208.28 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "02f611d9-9a1b-5692-b1a3-7c3708b9e21d"))
+  (text "Export with: kicad-cli sch export pdf -o ktemata_r5_wiring.pdf docs/kicad/r5/ktemata.kicad_sch"
+    (at 20.32 217.17 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "588ce909-304b-5400-a73b-4ac7e1293f54"))
+  (embedded_fonts no)
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)

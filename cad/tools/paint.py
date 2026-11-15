@@ -1,26 +1,19 @@
 #!/usr/bin/env python3
-"""Ktemata r5 - three airbrush paint schemes for the deck and the lid cover.
+"""Ktemata R5 and R6-prototype airbrush schemes, masks and lettering.
 
-Writes 1:1 SVG artwork and PNG previews into docs/paint/.  Every dimension comes out of the
-OpenSCAD model through cad/tools/paint_probe.scad, so the apertures on the sheet are the real ones and
-the sheet can be printed and used as a masking template without rescaling.
+R5 writes the established docs/paint/ files. `--rev r6` writes docs/paint/r6/ and swaps the visible
+hardware: keyboard/OLED/button on the lid, Waveshare 7-inch display and controls on the cassette frame.
+R6 output is explicitly a fit/layout prototype, not paint-ready production tooling. Every dimension
+comes from the selected OpenSCAD probe; SVG, printable STL and sticker geometry share the same model.
 
-    python3 cad/tools/paint.py             # three schemes + contact sheet
-    python3 cad/tools/paint.py --scheme 2  # one scheme
-    python3 cad/tools/paint.py --no-png    # SVGs only
+    python3 cad/tools/paint.py                         # R5: three schemes + contact sheet
+    python3 cad/tools/paint.py --scheme 2 --stencils   # R5 Strata + cut files
+    python3 cad/tools/paint.py --rev r6 --stencils --stickers
+    python3 cad/tools/paint.py --no-png                # SVGs only
 
-Layout is the case OPEN FLAT: the lid cover above the hinge line, the deck below it, both with the
-hinge edge on that line and y measured from it, exactly as common.scad does it (y = 0 at the
-hinge, latch end at y = R5_L).  Paint that crosses the centre line therefore continues from one
-printed part into the other - the three schemes are built on that.
-
-Two facts drive the artwork and are enforced in code, not by eye:
-  * the cover has one flat front at z = 14.50 mm. Its 194.96 x 112.76 mm display opening (the
-    module plus 1.0 mm clearance per side) recedes 10.50 mm to the 4.00 mm rear skin. The 7 mm
-    slate border is paint on that same front, not a keep-out; only the opening, cable notch and
-    reserved type interrupt marks;
-  * the deck's own free fields are the 40.95 mm side rails, the strip between the OLED and the
-    keyboard (y 72.2..102.5) and the 30 mm along the latch edge.
+Both revisions are drawn OPEN FLAT with a shared x axis and y = 0 at the hinge. R5 places the display
+cover above the deck; R6 places the keyboard lid above the display frame. Apertures, reserved lettering
+and scheme marks are generated from the same data, so no painted line is allowed to cross an opening.
 """
 from __future__ import annotations
 
@@ -67,17 +60,19 @@ LABEL = "#8fa0ad"     # the grey that names printed features
 
 
 # ---------------------------------------------------------------- model probe
-def probe() -> dict:
-    """Geometry, straight from OpenSCAD.  No dimension in this file is guessed."""
+def probe(rev: str = "r5") -> dict:
+    """Geometry from the selected OpenSCAD probe; no dimension is duplicated in Python."""
+    if rev not in ("r5", "r6"):
+        raise ValueError(f"unknown paint revision {rev}")
     if not shutil.which("openscad"):
         sys.exit("openscad not found: the sheets are generated from the model")
+    source = HERE / ("paint_probe.scad" if rev == "r5" else "paint_probe_r6.scad")
     res = subprocess.run(
-        ["openscad", "-o", "/tmp/ktemata_paint_probe.csg",
-         str(HERE / "paint_probe.scad")],
+        ["openscad", "-o", f"/tmp/ktemata_paint_probe_{rev}.csg", str(source)],
         capture_output=True, text=True,
     )
     if res.returncode != 0:
-        sys.exit("probe failed:\n" + (res.stderr or res.stdout).strip())
+        sys.exit(f"{source.name} failed:\n" + (res.stderr or res.stdout).strip())
     # OpenSCAD writes ECHO to stderr and the mesh to -o
     vals: dict[str, object] = {}
     for line in (res.stderr + res.stdout).splitlines():
@@ -88,14 +83,17 @@ def probe() -> dict:
             vals[key.strip()] = ast.literal_eval(raw.strip())
         except (ValueError, SyntaxError):
             # a mangled probe line would otherwise surface as a KeyError far from the cause
-            sys.exit(f"paint_probe.scad emitted an unparsable value: {line!r}")
+            sys.exit(f"{source.name} emitted an unparsable value: {line!r}")
     if "P_W" not in vals:
         sys.exit("probe produced no geometry:\n" + res.stderr[-2000:])
     return vals
 
 
 class Model:
-    def __init__(self, v: dict[str, object]) -> None:
+    def __init__(self, v: dict[str, object], rev: str = "r5") -> None:
+        if rev not in ("r5", "r6"):
+            raise ValueError(f"unknown paint revision {rev}")
+        self.rev = rev
         g = lambda k: float(v[k])  # noqa: E731
         self.w, self.l = g("P_W"), g("P_L")
         # the deck's own plate: (x0, y0, w, l, r) in the cassette frame, so x0/y0 are negative
@@ -108,10 +106,6 @@ class Model:
 
         self.kb = (g("P_KB_X0"), g("P_KB_Y0"), g("P_KB_W"), g("P_KB_H"), g("P_KB_R"))
         self.oled = (g("P_OLED_X0"), g("P_OLED_Y0"), g("P_OLED_W"), g("P_OLED_H"))
-        # the hinge opening runs from the PLATE's edge to R5_OPEN_D (not from y = 0)
-        self.port = (g("P_OPEN_X0"), self.deck[1], g("P_OPEN_X1"), g("P_OPEN_D"))
-        self.fan = (g("P_FAN_X"), g("P_FAN_Y"), g("P_FAN_D"))
-        self.fan_bars, self.fan_bar = int(v["P_FAN_BARS"]), g("P_FAN_BAR")
         self.screws = [(g(f"P_S{i}"), g(f"P_S{i}Y")) for i in range(7)]
 
         self.gap = g("P_C_GAP")
@@ -132,7 +126,16 @@ class Model:
         self.btn_body = g("P_BTN_BODY")
         # 8.4 V charge socket through the deck's right rail: hole + the bezel/nut envelope
         self.chg = (g("P_CHG_X"), g("P_CHG_Y"), g("P_CHG_D"), g("P_CHG_NUT_D"))
-        self.cable = (g("P_CABLE_X"), g("P_CABLE_Y"), g("P_CABLE_W"), g("P_CABLE_H"))
+        if rev == "r5":
+            # R5 deck service/cooling openings and the cover's hinge-side DSI notch.
+            self.port = (g("P_OPEN_X0"), self.deck[1], g("P_OPEN_X1"), g("P_OPEN_D"))
+            self.fan = (g("P_FAN_X"), g("P_FAN_Y"), g("P_FAN_D"))
+            self.fan_bars, self.fan_bar = int(v["P_FAN_BARS"]), g("P_FAN_BAR")
+            self.cable = (g("P_CABLE_X"), g("P_CABLE_Y"), g("P_CABLE_W"), g("P_CABLE_H"))
+        else:
+            # R6 has no display hinge notch or R5 deck port/fan geometry in the prototype model.
+            self.port = self.fan = self.cable = None
+            self.fan_bars, self.fan_bar = 0, 0.0
 
         # ---- the type blocks are part of the mask, not something painted over ----
         # A grid line or a band running under a wordmark reads as a printing error, and no
@@ -146,8 +149,13 @@ class Model:
         # useful layout datum, but it is not a height change: the sticker and every painted pass
         # share the same flat front. The band's top comes from the panel, clearance and frame;
         # its bottom is the part edge.
-        self.cover_band_y0 = py + ph + self.bezel_d
-        self.cover_band = self.l - self.cover_band_y0
+        if rev == "r6":
+            # The R6 motto sits above the display, not behind the latch-side middle screw.
+            self.cover_band_y0 = 0.0
+            self.cover_band = py - self.bezel_d
+        else:
+            self.cover_band_y0 = py + ph + self.bezel_d
+            self.cover_band = self.l - self.cover_band_y0
         # Pick the largest cap whose block, trim and both margins fit the band. Done here, before
         # any box is built, because the sticker, the reserved plate and the sheet all read it.
         self.cover_cap = next((c for c in COVER_CAPS
@@ -160,7 +168,8 @@ class Model:
         _bx0, _by0, _bx1, _by1 = _sticker_box(self.cover_spec())
         _th = sticker_trim("cover", self.cover_cap)[1]
         _top = self.cover_band_y0 + (self.cover_band - _th) / 2
-        self.cover_text_y = _top + _by1 + STICKER_MARGIN
+        self.cover_text_y = (_top - _by0 + STICKER_MARGIN if rev == "r6"
+                             else _top + _by1 + STICKER_MARGIN)
         # drawing y grows hinge -> latch, so a glyph stands ABOVE its baseline at smaller y on
         # the deck (unflipped) and at larger y on the cover (drawn flipped to keep the hinge at
         # the seam).  Build each block in the part's own frame.
@@ -170,9 +179,13 @@ class Model:
         # sticker means a line can never end under the vinyl's edge, and resizing the artwork
         # moves the keep-out with it.
         boxes = {}
-        for side, base in (("deck", self.deck_text_y), ("cover", self.cover_text_y)):
-            tw, th = sticker_trim(side, self.cover_cap)
-            bx0, by0, _bx1, by1 = _sticker_box(self.spec_for(side))
+        text_layout = ((("cover", self.deck_text_y), ("deck", self.cover_text_y))
+                       if rev == "r6" else
+                       (("deck", self.deck_text_y), ("cover", self.cover_text_y)))
+        for side, base in text_layout:
+            spec = self.spec_for(side)
+            tw, th = sticker_trim_spec(spec)
+            bx0, by0, _bx1, by1 = _sticker_box(spec)
             # the deck is drawn upright, so artwork "above the baseline" is at smaller part y;
             # the cover is drawn mirrored, so the same ink sits at larger y there
             y0 = (base - by1 - STICKER_MARGIN) if side == "cover" else (base + by0 - STICKER_MARGIN)
@@ -193,17 +206,31 @@ class Model:
         # The lettering must sit on clean plate, and its block must not swallow a feature - a
         # wordmark that has to dodge a fan is a wordmark in the wrong place.  Only the features
         # of its OWN part matter: the two parts are judged separately.
-        for name, box, own in (("deck", self.type_boxes["deck"],
-                                (self.kb, self.oled)),
-                               ("cover", self.type_boxes["cover"],
-                                (self.well, self.cable))):
-            for h in own:
-                assert not _overlaps(box, h), f"the {name} lettering runs into {h}"
-            if name == "deck":
-                assert not any(_overlaps(box, (sx - 6.0, sy - 6.0, 12.0, 12.0))
-                               for sx, sy in self.screws), "the deck lettering runs into a deck screw"
-            assert 2.0 < box[1] and box[1] + box[3] < self.l - 2.0, \
-                f"the {name} lettering runs off the part: {box}"
+        if rev == "r6":
+            for name, is_cover in (("deck", False), ("cover", True)):
+                box = self.type_boxes[name]
+                for aperture in apertures(self, is_cover):
+                    assert not _overlaps(box, aperture.rect()), \
+                        f"the {name} lettering runs into {aperture.rect()}"
+                if not is_cover:
+                    assert not any(_overlaps(box, (sx - 6.0, sy - 6.0, 12.0, 12.0))
+                                   for sx, sy in self.screws), \
+                        "the display-frame lettering runs into a screw"
+                assert 2.0 < box[1] and box[1] + box[3] < self.l - 2.0, \
+                    f"the {name} lettering runs off the part: {box}"
+        else:
+            for name, box, own in (("deck", self.type_boxes["deck"],
+                                    (self.kb, self.oled)),
+                                   ("cover", self.type_boxes["cover"],
+                                    (self.well, self.cable))):
+                for h in own:
+                    assert not _overlaps(box, h), f"the {name} lettering runs into {h}"
+                if name == "deck":
+                    assert not any(_overlaps(box, (sx - 6.0, sy - 6.0, 12.0, 12.0))
+                                   for sx, sy in self.screws), \
+                        "the deck lettering runs into a deck screw"
+                assert 2.0 < box[1] and box[1] + box[3] < self.l - 2.0, \
+                    f"the {name} lettering runs off the part: {box}"
 
 
     # ---- derived type metrics ----
@@ -217,7 +244,24 @@ class Model:
         return by1 - by0
 
     def spec_for(self, side: str) -> dict:
+        if self.rev == "r6":
+            # R6: wordmark on the keyboard lid, motto on the cassette's display frame.
+            return sticker_specs()[0] if side == "cover" else self.cover_spec()
         return self.cover_spec() if side == "cover" else sticker_specs()[0]
+
+
+def display_on_part(m: Model, cover: bool) -> bool:
+    """Which physical surface carries the main LCD: R5 cover, R6 deck/display frame."""
+    return not cover if m.rev == "r6" else cover
+
+
+def part_name(m: Model, cover: bool, *, short: bool = False) -> str:
+    """Human-readable part name for sheets and masks; R5 names remain unchanged."""
+    if m.rev == "r6":
+        name = "KEYBOARD LID" if cover else "DISPLAY FRAME"
+    else:
+        name = "LID COVER" if cover else "DECK"
+    return name if short else name + ("  ·  front face" if cover else "  ·  top face")
 
 
 # ---------------------------------------------------------------- svg primitives
@@ -354,17 +398,21 @@ def _sticker_box(spec: dict) -> tuple[float, float, float, float]:
             max(x1, half), max(y1, dy + sw / 2))
 
 
-def sticker_trim(side: str, cover_cap: float = STICKER_CAP) -> tuple[float, float]:
-    """Trim size of the sticker for one part: ink + margin, rounded up to 0.1 mm.
+def sticker_trim_spec(spec: dict) -> tuple[float, float]:
+    """Trim size for one block: ink + margin, rounded up to 0.1 mm.
 
     The order form wants whole numbers and the die is placed by eye against a ruler, so a
     sub-0.1 mm trim is false precision. Rounding UP keeps the declared margin instead of eating
-    into it.
+    into it. Taking the spec directly also lets R6 swap which physical part carries each block.
     """
-    bx0, by0, bx1, by1 = _sticker_box(next(s for s in sticker_specs(cover_cap)
-                                            if s["side"] == side))
+    bx0, by0, bx1, by1 = _sticker_box(spec)
     up = lambda v: math.ceil(v * 10.0 - 1e-9) / 10.0  # noqa: E731
     return (up(bx1 - bx0 + 2 * STICKER_MARGIN), up(by1 - by0 + 2 * STICKER_MARGIN))
+
+
+def sticker_trim(side: str, cover_cap: float = STICKER_CAP) -> tuple[float, float]:
+    """Trim one block selected by its R5 source-library side."""
+    return sticker_trim_spec(next(s for s in sticker_specs(cover_cap) if s["side"] == side))
 
 
 _INK: dict[tuple, tuple[float, float, float, float]] = {}
@@ -584,7 +632,15 @@ def part_box(m: Model, cover: bool) -> tuple[float, float, float, float, float]:
 
 
 def deck_apertures(m: Model) -> list[Aperture]:
-    """The deck's openings: paint cannot land where the plate is cut."""
+    """Openings in the lower painted part: R5 deck or R6 display-frame prototype."""
+    if m.rev == "r6":
+        wx, wy, ww, wh, wr = m.well
+        out = [Aperture.rrect(wx, wy, ww, wh, wr)]
+        out += [Aperture.circle(sx, sy, 2 * 3.1) for sx, sy in m.screws]
+        out.append(Aperture.circle(m.btn[0], m.btn[1], m.btn[2]))
+        out.append(Aperture.circle(m.chg[0], m.chg[1], m.chg[2]))
+        return out
+
     kx, ky, kw, kh, kr = m.kb
     ox, oy, ow, oh = m.oled
     px, py, pw, ph = m.port
@@ -600,6 +656,13 @@ def deck_apertures(m: Model) -> list[Aperture]:
 
 
 def cover_apertures(m: Model) -> list[Aperture]:
+    """Openings in the upper part: R5 display cover or R6 keyboard-lid prototype."""
+    if m.rev == "r6":
+        kx, ky, kw, kh, kr = m.kb
+        ox, oy, ow, oh = m.oled
+        return [Aperture.rrect(kx, ky, kw, kh, kr),
+                Aperture.rrect(ox, oy, ow, oh, 0.8),
+                Aperture.circle(m.obtn[0], m.obtn[1], m.obtn[2])]
     wx, wy, ww, wh, wr = m.well
     cx, cy, cw, ch = m.cable
     return [Aperture.rrect(wx, wy, ww, wh, wr), Aperture.rrect(cx, cy, cw, ch, 0.0)]
@@ -628,6 +691,15 @@ def cover_holes_d(m: Model) -> list[str]:
 def deck_hit(m: Model, px, py, pad=0.0) -> bool:
     """True where the deck's top face is interrupted, or is reserved for the lettering."""
     dx0, dy0, dw, dl, dr = m.deck
+    if m.rev == "r6":
+        bx, by, bd = m.btn
+        cx, cy, cd, cnut = m.chg
+        return (_off_plate(px - dx0, py - dy0, dw, dl, dr)
+                or _in_rect(px, py, m.type_boxes["deck"], pad)
+                or _in_rect(px, py, m.well, pad)
+                or _in_circle(px, py, bx, by, bd / 2 + 3.0, pad)
+                or _in_circle(px, py, cx, cy, cnut / 2 + 2.0, pad)
+                or any(_in_circle(px, py, sx, sy, 3.7, pad) for sx, sy in m.screws))
     x0, y0, x1, y1 = m.port
     fx, fy, fd = m.fan
     bx, by, bd = m.btn
@@ -650,6 +722,11 @@ def cover_hit(m: Model, px, py, pad=0.0) -> bool:
     may cross it. Only real apertures (the display opening and cable notch), the part outline and
     the reserved type block interrupt the non-border passes.
     """
+    if m.rev == "r6":
+        return (_off_plate(px, py, m.w, m.l, m.cover_r)
+                or _in_rect(px, py, m.type_boxes["cover"], pad)
+                or _in_rect(px, py, m.kb, pad) or _in_rect(px, py, m.oled, pad)
+                or _in_circle(px, py, m.obtn[0], m.obtn[1], m.obtn[2] / 2, pad))
     return (_off_plate(px, py, m.w, m.l, m.cover_r)
             or _in_rect(px, py, m.type_boxes["cover"], pad)
             or _in_rect(px, py, m.well, pad) or _in_rect(px, py, m.cable, pad))
@@ -704,6 +781,20 @@ def brand_cover(p: Surface, cap: float = 10.0) -> None:
     p.line([(x - rule, yr), (x + rule, yr)], AMBER, 0.8, opacity=0.85, group="word")
     p.text("KTEMATA  ·  A POSSESSION FOR ALL TIME", 2.4, x, yc, GREY_L,
            track=1.1, anchor="middle", group="word")
+
+
+def part_brand(p: Surface, cover: bool, deck_tagline: str) -> None:
+    """Put each type block on its actual component, including R6's swapped surfaces."""
+    m = p.m
+    if m.rev == "r6":
+        if cover:
+            brand_deck(p, deck_tagline, 10.5)
+        else:
+            brand_cover(p, m.cover_cap)
+    elif cover:
+        brand_cover(p, m.cover_cap)
+    else:
+        brand_deck(p, deck_tagline, 10.5)
 
 
 # ---------------------------------------------------------------- scheme 1
@@ -789,7 +880,7 @@ def meridian_marks(m: Model, cover: bool) -> list[Mark]:
         for x0, x1 in runs_clear(lambda x: hit(x, yc), 0.0, w):
             out.append(Mark(x0, y0, x1, y1, AMBER_D, "seam"))
 
-    if cover:
+    if display_on_part(m, cover):
         # The 7 mm border is a flat slate paint pass, not a raised wall. Other passes may cross
         # its footprint; this later pass covers them. The display opening remains a real hole.
         wx, wy, ww, wh, wr = m.well
@@ -808,10 +899,7 @@ def scheme_meridian(p: Surface, cover: bool) -> None:
     p.rect(x0, y0, bw, bl, BASE, br)
     for mk in meridian_marks(m, cover):
         p.path(mk.d(p.y), mk.fill, rule=mk.rule, opacity=mk.opacity, group=mk.group)
-    if cover:
-        brand_cover(p, m.cover_cap)
-    else:
-        brand_deck(p, "OFFLINE  LIBRARY", 10.5)
+    part_brand(p, cover, "OFFLINE  LIBRARY")
 
 
 # ---------------------------------------------------------------- scheme 2
@@ -848,11 +936,9 @@ def scheme_strata(p: Surface, cover: bool) -> None:
     p.rect(x0, y0, bw, bl, BASE, br)
     for mk in strata_marks(m, cover):
         p.path(mk.d(p.y), mk.fill, rule=mk.rule, opacity=mk.opacity, group=mk.group)
-    if cover:
-        brand_cover(p, m.cover_cap)
-    else:
-        brand_deck(p, "A  POSSESSION  FOR  ALL  TIME", 10.5)
-        p.text("r5", 2.8, w / 2, l - 6.5, GREY, track=1.4, anchor="middle")
+    part_brand(p, cover, "A  POSSESSION  FOR  ALL  TIME")
+    if (m.rev == "r6" and cover) or (m.rev == "r5" and not cover):
+        p.text(m.rev, 2.8, w / 2, l - 6.5, GREY, track=1.4, anchor="middle")
 
 
 # ---------------------------------------------------------------- scheme 3
@@ -889,8 +975,7 @@ def scheme_bearing(p: Surface, cover: bool) -> None:
     # The hinge gateway must also clear the plate's 14 mm corner radius, whose tangent is at
     # x = 219.5: an 8 mm square centred here ends on that tangent, so no corner is shaved off.
     tx = 215.5
-    fx, fy, fd = m.fan
-    if cover:
+    if display_on_part(m, cover):
         # The flat painted display border carries the same slate as the outer border, so the
         # cover reads as a frame round a screen without adding a second height.
         wx, wy, ww, wh, wr = m.well
@@ -906,10 +991,7 @@ def scheme_bearing(p: Surface, cover: bool) -> None:
     # case is open the two halves make a single 16 mm port that the trace enters and leaves
     p.rect(tx - 4.0, 0.0, 8.0, 8.0, AMBER)
 
-    if cover:
-        brand_cover(p, m.cover_cap)
-    else:
-        brand_deck(p, "OFFLINE  LIBRARY", 10.5)
+    part_brand(p, cover, "OFFLINE  LIBRARY")
 
 
 SCHEMES = [
@@ -979,7 +1061,73 @@ SCHEMES = [
 ]
 
 
+R6_NOTES = {
+    "MERIDIAN": "R6 PROTOTYPE, not paint-ready: the hinge-ruled chart now crosses from the "
+                "keyboard lid to the cassette display frame. Real component outlines and the "
+                "proposed apertures stop every rule. The flat display border moves with the "
+                "Waveshare panel to the display frame. Measure final R6 CAD before cutting.",
+    "STRATA": "R6 PROTOTYPE, not paint-ready: the selected x-keyed rails run straight from the "
+              "keyboard lid into the cassette display frame. The proposed display, controls, "
+              "keyboard, OLED and fasteners clip the marks. Rigid masks are fit/layout tools "
+              "until the final R6 plate and frame CAD exists.",
+    "BEARING": "R6 PROTOTYPE, not paint-ready: the proposed 3 mm trace at x = 215.5 crosses "
+               "from the keyboard lid to the display frame. It is clipped by the current "
+               "component envelopes, but this is not a final clearance proof. Verify the lane, "
+               "gateway and port rings against measured R6 geometry before cutting.",
+}
+
+
+def revision_scheme(model: Model, sc: dict) -> dict:
+    """Replace R5-specific sheet prose when drawing the R6 prototype."""
+    if model.rev == "r5":
+        return sc
+    out = dict(sc)
+    out["note"] = R6_NOTES[sc["name"]]
+    out["steps"] = [s.replace("cover border", "display-frame border") for s in sc["steps"]]
+    return out
+
+
 # ---------------------------------------------------------------- printed features (overlay)
+def r6_lid_features(p: Surface) -> None:
+    """Keyboard-lid prototype: measured component outlines in their proposed positions."""
+    m = p.m
+    kx, ky, kw, kh, kr = m.kb
+    p.rect(kx, ky, kw, kh, INK, kr, layer="features", stroke="#48545f", sw=1.0)
+    p.rect(kx + 2.0, ky + 2.0, kw - 4.0, kh - 4.0, "#0e141a", kr - 1.6,
+           layer="features", stroke="#2b353e", sw=0.6)
+    p.text("K06  ·  KEYBOARD  LID", 2.6, kx + kw / 2, ky + kh / 2 + 1.0, LABEL,
+           layer="features", track=1.4, anchor="middle")
+
+    ox, oy, ow, oh = m.oled
+    p.rect(ox, oy, ow, oh, INK, 0.8, layer="features", stroke="#48545f", sw=0.8)
+    p.text("OLED", 2.0, ox + ow / 2, oy + oh / 2 + 0.7, LABEL,
+           layer="features", anchor="middle")
+    bx, by, bd = m.obtn
+    p.circle(bx, by, bd / 2, "#111820", layer="features", stroke="#6a7784", sw=0.8)
+    p.text("STATUS", 1.7, bx, by + bd / 2 + 4.0, LABEL, layer="features", anchor="middle")
+
+
+def r6_frame_features(p: Surface) -> None:
+    """Display-frame prototype: real panel outline plus proposed fasteners and controls."""
+    m = p.m
+    cover_features(p)
+    for sx, sy in m.screws:
+        p.circle(sx, sy, 3.1, "#151d25", layer="features", stroke="#48545f", sw=0.6)
+        p.circle(sx, sy, 1.7, INK, layer="features")
+
+    bx, by, bd = m.btn
+    p.circle(bx, by, bd / 2 + 3.4, "none", layer="features", stroke="#48545f", sw=0.8)
+    p.circle(bx, by, bd / 2, "#111820", layer="features", stroke="#6a7784", sw=1.0)
+    p.text("POWER", 1.9, bx, by + bd / 2 + 6.0, LABEL, layer="features",
+           track=0.9, anchor="middle")
+
+    cx, cy, cd, cnut = m.chg
+    p.circle(cx, cy, cnut / 2, "none", layer="features", stroke="#48545f", sw=0.8)
+    p.circle(cx, cy, cd / 2, "#111820", layer="features", stroke="#6a7784", sw=0.9)
+    p.text("CHARGE  12.6 V", 1.9, cx, cy - cnut / 2 - 5.0, LABEL,
+           layer="features", track=0.8, anchor="middle")
+
+
 def deck_features(p: Surface) -> None:
     m = p.m
     kx, ky, kw, kh, kr = m.kb
@@ -1046,7 +1194,9 @@ def cover_features(p: Surface) -> None:
     aw, ah = m.active
     p.rect(px + (pw - aw) / 2, py + (ph - ah) / 2, aw, ah, "none", 0.8,
            layer="features", stroke="#2b353e", sw=0.6, dash="3 2")
-    p.text("RASPBERRY  PI  TOUCH  DISPLAY  2  ·  5\"", 2.8, m.w / 2, py + ph / 2 - 3.4, LABEL,
+    display_label = ("WAVESHARE  7INCH  DSI  LCD  (C)" if m.rev == "r6"
+                     else "RASPBERRY  PI  TOUCH  DISPLAY  2  ·  5\"")
+    p.text(display_label, 2.8, m.w / 2, py + ph / 2 - 3.4, LABEL,
            layer="features", track=1.5, anchor="middle")
     p.text(f"{f(pw)} × {f(ph)}  ·  image {f(aw)} × {f(ah)}", 2.1, m.w / 2,
            py + ph / 2 + 3.0, LABEL, layer="features", anchor="middle")
@@ -1055,10 +1205,12 @@ def cover_features(p: Surface) -> None:
            1.9, m.w / 2, py + ph / 2 + 9.0, LABEL, layer="features", track=0.5,
            anchor="middle")
 
-    cx, cy, cw, ch = m.cable
-    p.rect(cx, cy, cw, ch, INK, layer="features")
-    p.line([(cx, cy + ch), (cx + cw, cy + ch)], "#48545f", 0.8, layer="features")
-    p.text("DSI", 1.8, cx + 6.5, cy + ch / 2 + 0.7, LABEL, layer="features", anchor="middle")
+    if m.rev == "r5":
+        cx, cy, cw, ch = m.cable
+        p.rect(cx, cy, cw, ch, INK, layer="features")
+        p.line([(cx, cy + ch), (cx + cw, cy + ch)], "#48545f", 0.8, layer="features")
+        p.text("DSI", 1.8, cx + 6.5, cy + ch / 2 + 0.7, LABEL,
+               layer="features", anchor="middle")
 
 
 
@@ -1070,6 +1222,7 @@ NOTES = 112.0
 
 
 def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path | None]:
+    sc = revision_scheme(model, sc)
     w, l = model.w, model.l
     dw, dl = model.deck[2], model.deck[3]
     sw = 2 * M + max(w, dw)
@@ -1081,18 +1234,28 @@ def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path
     cover, deck = Surface(model, flipped=True), Surface(model)
     sc["draw"](cover, True)
     sc["draw"](deck, False)
-    cover_features(cover)
-    deck_features(deck)
+    if model.rev == "r6":
+        r6_lid_features(cover)
+        r6_frame_features(deck)
+    else:
+        cover_features(cover)
+        deck_features(deck)
 
     elems: list[str] = [f'<rect x="0" y="0" width="{f(sw)}" height="{f(sh)}" fill="{PAPER}"/>']
-    elems.append(tspan("KTEMATA  ·  r5   PAINT", 3.4, M, M + 4.0, PAPER_MUTED, track=2.4))
+    sheet_mark = "KTEMATA  ·  R6 PROTOTYPE" if model.rev == "r6" else "KTEMATA  ·  r5   PAINT"
+    elems.append(tspan(sheet_mark, 3.4, M, M + 4.0, PAPER_MUTED, track=2.4))
     elems.append(tspan(sc["name"], 11.5, M, M + 17.0, PAPER_INK, track=3.0))
     elems.append(tspan(sc["sub"], 3.6, M, M + 24.6, PAPER_MUTED, italic=True))
-    elems.append(tspan("open flat: the lid cover above the hinge, the deck below   ·   both share "
-                       "one x axis, both are measured from the hinge", 2.7, M, M + 31.4,
-                       PAPER_MUTED, italic=True))
-    elems.append(tspan("scale 1:1  ·  millimetres  ·  y = 0 at the hinge, on both parts", 2.7,
-                       sw - M, M + 4.0, PAPER_MUTED, anchor="end"))
+    if model.rev == "r6":
+        open_flat_text = ("open flat: keyboard lid above, display frame below   ·   "
+                          "shared x axis, both measured from the hinge")
+    else:
+        open_flat_text = ("open flat: the lid cover above the hinge, the deck below   ·   both share "
+                          "one x axis, both are measured from the hinge")
+    elems.append(tspan(open_flat_text, 2.7, M, M + 31.4, PAPER_MUTED, italic=True))
+    scale_note = ("NOT PAINT-READY  ·  1:1  ·  mm" if model.rev == "r6"
+                  else "scale 1:1  ·  millimetres  ·  y = 0 at the hinge, on both parts")
+    elems.append(tspan(scale_note, 2.7, sw - M, M + 4.0, PAPER_MUTED, anchor="end"))
     elems.append(f'<line x1="{f(M)}" y1="{f(M + 37.0)}" x2="{f(sw - M)}" '
                  f'y2="{f(M + 37.0)}" stroke="{PAPER_INK}" stroke-width="0.4"/>')
 
@@ -1130,11 +1293,11 @@ def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path
     elems.append(tspan("HINGE  ·  the pattern crosses this line", 2.6, M + w / 2, hinge_y - 3.4,
                        PAPER_MUTED, track=1.3, anchor="middle"))
 
-    elems.append(tspan("LID COVER  ·  front face", 3.0, M, y_cover - 5.0, PAPER_MUTED,
+    elems.append(tspan(part_name(model, True), 3.0, M, y_cover - 5.0, PAPER_MUTED,
                        track=1.3))
     elems.append(tspan(f"{f(w)} × {f(l)} mm", 2.6, M + w, y_cover - 5.0, PAPER_MUTED,
                        anchor="end"))
-    elems.append(tspan("DECK  ·  top face", 3.0, M, hinge_y + 9.0, PAPER_MUTED, track=1.3))
+    elems.append(tspan(part_name(model, False), 3.0, M, hinge_y + 9.0, PAPER_MUTED, track=1.3))
     elems.append(tspan(f"{f(dw)} × {f(dl)} mm", 2.6, M + dw + model.deck[0], hinge_y + 9.0,
                        PAPER_MUTED, anchor="end"))
     for top, (x0, y0, bw, bl, _r) in ((y_cover, (0, 0, w, l, model.cover_r)),
@@ -1186,7 +1349,7 @@ def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{f(sw)}mm" height="{f(sh)}mm" '
             f'viewBox="0 0 {f(sw)} {f(sh)}">\n'
-            f'<title>Ktemata r5 airbrush scheme - {sc["name"]}</title>\n'
+            f'<title>Ktemata {model.rev} airbrush scheme - {sc["name"]}</title>\n'
             f'<desc>{_esc(sc["note"])}</desc>\n')
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(head + "\n".join(elems) + "\n</svg>\n", encoding="utf-8")
@@ -1314,13 +1477,16 @@ def stencil(model: Model, cover: bool, group: str, path: Path, preview: bool,
     for cx in (pad / 2, sw - pad / 2):
         elems.append(cross(cx, pad + l / 2))
 
-    elems.append(tspan(f"{scheme_name}  ·  STENCIL  {title}  ·  {'LID COVER' if cover else 'DECK'}",
-                       3.2, pad, pad - 9.0, PAPER_INK, track=1.4))
+    stencil_title = (f"{scheme_name}  ·  R6 PROTOTYPE  ·  {title}  ·  "
+                     f"{part_name(model, cover, short=True)}" if model.rev == "r6" else
+                     f"{scheme_name}  ·  STENCIL  {title}  ·  {part_name(model, cover, short=True)}")
+    elems.append(tspan(stencil_title, 3.2, pad, pad - 9.0, PAPER_INK, track=1.4))
     elems.append(tspan(f"{blurb}   ·   cut 1:1, {f(w)} × {f(l)} mm", 2.4, pad,
                        pad + l + 15.0, PAPER_MUTED))
-    elems.append(tspan("black = lay on the part   ·   white = cut away", 2.4, pad,
-                       pad + l + 19.4, PAPER_MUTED))
-    elems.append(tspan("crosses = registration   ·   KTEMATA r5", 2.4, sw - pad,
+    cut_note = ("NOT PAINT-READY  ·  black = material  ·  white = cut away" if model.rev == "r6"
+                else "black = lay on the part   ·   white = cut away")
+    elems.append(tspan(cut_note, 2.4, pad, pad + l + 19.4, PAPER_MUTED))
+    elems.append(tspan(f"crosses = registration   ·   KTEMATA {model.rev}", 2.4, sw - pad,
                        pad + l + 15.0, PAPER_MUTED, anchor="end"))
 
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -1356,7 +1522,7 @@ def sticker(model: Model, spec: dict, path: Path, preview: bool) -> tuple[Path, 
     that is what the order form asks for.
     """
     bx0, by0, bx1, by1 = _sticker_box(spec)
-    tw, th = sticker_trim(spec["side"], spec["lines"][0][1])
+    tw, th = sticker_trim_spec(spec)
     fw, fh = tw + 2 * STICKER_BLEED, th + 2 * STICKER_BLEED
     # block coords -> file coords: the ink is centred in the trim, so the margin is symmetric even
     # where the 0.1 mm round-up gives a little more than STICKER_MARGIN on one axis
@@ -1377,7 +1543,7 @@ def sticker(model: Model, spec: dict, path: Path, preview: bool) -> tuple[Path, 
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{f(fw)}mm" height="{f(fh)}mm" '
             f'viewBox="0 0 {f(fw)} {f(fh)}">\n'
-            f'<title>Ktemata r5 Meridian - {spec["note"]} sticker, trim {trim}, '
+            f'<title>Ktemata {model.rev} Meridian - {spec["note"]} sticker, trim {trim}, '
             f'bleed {f(STICKER_BLEED)} mm</title>\n'
             f'<desc>1:1 vector artwork, RGB, lettering already converted to outlines. '
             f'No cut line and no crop marks: contour-cut to {trim} centred, i.e. '
@@ -1400,6 +1566,8 @@ def sticker(model: Model, spec: dict, path: Path, preview: bool) -> tuple[Path, 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--rev", choices=("r5", "r6"), default="r5",
+                    help="R5 writes the existing paths; R6 writes prototype outputs in r6/")
     ap.add_argument("--scheme", type=int, choices=(1, 2, 3), help="only this scheme")
     ap.add_argument("--no-png", action="store_true", help="skip the raster previews")
     ap.add_argument("--stencils", action="store_true",
@@ -1408,41 +1576,47 @@ def main() -> None:
                     help="also write the two MERIDIAN type blocks as print-ready sticker files")
     args = ap.parse_args()
 
-    model = Model(probe())
+    model = Model(probe(args.rev), args.rev)
+    out_dir = OUT / "r6" if args.rev == "r6" else OUT
+    if args.rev == "r6":
+        print("R6 PROTOTYPE: fit/layout artwork only; not paint-ready until final R6 CAD is verified")
     chosen = [SCHEMES[args.scheme - 1]] if args.scheme else SCHEMES
     pngs: list[Path] = []
     for sc in chosen:
-        svg = OUT / f"ktemata_paint_{sc['slug']}.svg"
+        svg = out_dir / f"ktemata_paint_{sc['slug']}.svg"
         _, png = sheet(model, sc, svg, not args.no_png)
         print(f"{sc['name']:<9} {svg.relative_to(REPO)}" + (f"   +   {png.name}" if png else ""))
         if png:
             pngs.append(png)
     if len(pngs) > 1:
-        contact(pngs, OUT / "ktemata_paint_all.png")
-        print(f"{'contact':<9} {(OUT / 'ktemata_paint_all.png').relative_to(REPO)}")
+        contact(pngs, out_dir / "ktemata_paint_all.png")
+        print(f"{'contact':<9} {(out_dir / 'ktemata_paint_all.png').relative_to(REPO)}")
 
     if args.stencils:
         scheme = args.scheme or SELECTED_SCHEME
         try:
-            scheme_name, mark_fn, passes = stencil_spec(scheme)
+            _scheme_name, mark_fn, passes = stencil_spec(scheme)
         except ValueError as exc:
             ap.error(str(exc))
         for cover, side in ((False, "deck"), (True, "cover")):
-            for group, name, _b in passes:
+            for group, _name, _b in passes:
                 if not any(mk.group == group for mk in mark_fn(model, cover)):
                     continue
-                out = OUT / f"ktemata_stencil_{side}_{group}.svg"
+                out = out_dir / f"ktemata_stencil_{side}_{group}.svg"
                 stencil(model, cover, group, out, not args.no_png, scheme)
                 print(f"{'stencil':<9} {out.relative_to(REPO)}")
 
     if args.stickers:
-        # one file per block, named with its trim size because the order form asks for it and a
-        # file with a cut line in it is rejected outright
-        for spec in sticker_specs(model.cover_cap):
-            tw, th = sticker_trim(spec["side"], spec["lines"][0][1])
-            stem = (f"ktemata_sticker_{spec['side']}_{spec['name']}"
+        # One file per physical placement; R6 swaps the source blocks between lid and frame.
+        for side in ("deck", "cover"):
+            spec = dict(model.spec_for(side))
+            spec["side"] = side
+            if args.rev == "r6":
+                spec["note"] = f"{spec['name']}, {part_name(model, side == 'cover', short=True).lower()}"
+            tw, th = sticker_trim_spec(spec)
+            stem = (f"ktemata_sticker_{side}_{spec['name']}"
                     f"_{f(tw)}x{f(th)}mm")
-            out = OUT / f"{stem}_bleed.svg"
+            out = out_dir / f"{stem}_bleed.svg"
             pdf, png = sticker(model, spec, out, not args.no_png)
             print(f"{'sticker':<9} {pdf.relative_to(REPO)}   ({f(tw)} × {f(th)} mm trim)"
                   + (f"   +   {png.name}" if png else ""))

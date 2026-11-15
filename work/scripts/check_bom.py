@@ -7,7 +7,7 @@ schematic has, and several schematic blocks stand for a connection or a source r
 part. What must not drift is the *link*: every block names its BOM item(s) in a `Part` field, and this
 script fails if a block names an item the BOM does not have, or if two blocks claim the same item.
 
-    kicad-cli sch export netlist --format kicadxml -o /tmp/kt.xml docs/kicad/ktemata.kicad_sch
+    kicad-cli sch export netlist --format kicadxml -o /tmp/kt.xml docs/kicad/r6/ktemata.kicad_sch
     python3 work/scripts/check_bom.py /tmp/kt.xml
 
 Exit status 1 on a broken link; unclaimed BOM items are reported, not failed - they are the mechanical
