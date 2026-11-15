@@ -163,7 +163,8 @@ therefore say `steady` / `varying` (and `external` / `external-weak`) and never 
 
 ## 5. KiCad sheet
 
-`docs/kicad/ktemata_r5_wiring.kicad_sch` is this page as a KiCad 10 schematic. It is a **net-label
+`docs/kicad/ktemata.kicad_sch` is this page as a KiCad 10 schematic, and the root sheet of the
+`ktemata` project in that folder (`ktemata.kicad_pro`; open the project, not the file). It is a **net-label
 schematic**: one connector-shaped block per module, a short wire and a net label per connection, so
 "same label = connected" and nothing is routed. The `Ktemata:` symbols are embedded in the sheet, so
 it opens with no external library; ERC reports only `lib_symbol_issues` for that embedded library and
@@ -172,6 +173,6 @@ no electrical errors. Move the blocks around freely — the netlist is in the la
 `docs/kicad/ktemata_r5_connections.csv` is the same list as From / From pin / Net / To / To pin.
 
 ```bash
-kicad-cli sch export pdf -o out.pdf docs/kicad/ktemata_r5_wiring.kicad_sch
-kicad-cli sch erc --severity-all -o erc.rpt docs/kicad/ktemata_r5_wiring.kicad_sch
+kicad-cli sch export pdf -o out.pdf docs/kicad/ktemata.kicad_sch
+kicad-cli sch erc --severity-all -o erc.rpt docs/kicad/ktemata.kicad_sch
 ```
