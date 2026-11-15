@@ -75,6 +75,7 @@ interior (48.3 mm) is shallower than the display plus the cell stack. See [`docs
 
 ```bash
 python3 cad/tools/export.py           # the shipped set -> stl/r5/ (tray, deck, lid plate, lid cover)
+python3 cad/tools/export.py r6_lid_plate  # R6 keyboard/OLED lid prototype -> stl/r6/
 python3 cad/tools/paint.py            # R5 airbrush schemes, 1:1 sheets -> docs/paint/
 python3 cad/tools/paint.py --stickers # R5 Meridian type blocks as print-ready sticker PDFs
 python3 cad/tools/paint.py --rev r6 --stencils --stickers  # R6 prototypes -> docs/paint/r6/

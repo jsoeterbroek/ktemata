@@ -72,6 +72,7 @@ For development phase use:
 python3 cad/tools/export.py              # export r4 to stl/archive/ (binary, centred, z=0), print size + open edges
 python3 cad/tools/export.py              # export the r5 set to stl/r5/ (tray, deck, lid plate, lid cover)
 python3 cad/tools/export.py r5_lid_cover_waveshare_7in   # the 7" lid cover alternative (also r5_lid_cover_test_dimensions)
+python3 cad/tools/export.py r6_lid_plate                  # R6 keyboard/OLED lid prototype -> stl/r6/
 python3 cad/tools/export.py face bottom  # export only some parts (names: bottom face keyboard_support charge_plug)
 python3 cad/tools/render.py              # legacy: renders/archive/; r5: renders/r5/; args filter by name
 python3 cad/tools/render_showcase.py     # open-case Strata website image -> renders/r5/site_r5_showcase.png

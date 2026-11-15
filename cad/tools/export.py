@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
-"""Export the r5 parts to ../stl/r5, binary, centred on x/y and dropped to z=0.
+"""Export R5 parts to ../stl/r5 and named R6 prototypes to ../stl/r6.
 
-  python3 cad/tools/export.py                                  # the shipped set
-  python3 cad/tools/export.py r5_deck                          # only some parts
-  python3 cad/tools/export.py r5_lid_cover_test_dimensions     # the alternatives, by name
+  python3 cad/tools/export.py                                  # the shipped R5 set
+  python3 cad/tools/export.py r5_deck                          # only some R5 parts
+  python3 cad/tools/export.py r5_lid_cover_test_dimensions     # an R5 alternative, by name
+  python3 cad/tools/export.py r6_lid_plate                     # the R6 keyboard/OLED lid prototype
 
-The 1 mm fit template and the 7" lid cover are alternatives: they are skipped unless named.
+The R5 fit template and 7" lid cover, and all R6 parts, are skipped unless named. Every export is
+binary, centred on x/y, dropped to z=0 and checked for directed-edge manifoldness.
 """
 import subprocess, struct, sys, os, tempfile
 HERE = os.path.dirname(os.path.abspath(__file__)); CAD = os.path.dirname(HERE)
 OUT_R5 = os.path.join(os.path.dirname(CAD), 'stl', 'r5')
+OUT_R6 = os.path.join(os.path.dirname(CAD), 'stl', 'r6')
 PARTS = {'r5_tray':'ktemata_r5_tray', 'r5_deck':'ktemata_r5_deck',
          'r5_lid_plate':'ktemata_r5_lid_plate', 'r5_lid_cover':'ktemata_r5_lid_cover',
          'r5_lid_cover_test_dimensions':'ktemata_r5_lid_cover_test_dimensions',
-         'r5_lid_cover_waveshare_7in':'ktemata_r5_lid_cover_waveshare_7in'}
-# alternatives that are not part of the shipped set: the 1 mm fit template and the 7" cover
-ALTERNATIVES = {'r5_lid_cover_test_dimensions', 'r5_lid_cover_waveshare_7in'}
+         'r5_lid_cover_waveshare_7in':'ktemata_r5_lid_cover_waveshare_7in',
+         'r6_lid_plate':'ktemata_r6_lid_plate'}
+# Alternatives are skipped unless named; R6 prototypes are never in the default R5 export.
+ALTERNATIVES = {'r5_lid_cover_test_dimensions', 'r5_lid_cover_waveshare_7in', 'r6_lid_plate'}
 
 def read_ascii(path):
     tris, cur = [], []
@@ -49,11 +53,11 @@ unknown = [a for a in args if a not in PARTS]
 if unknown:
     sys.exit(f'unknown part(s) {unknown}: choose from {sorted(PARTS)}')
 
-out_dir = OUT_R5
-os.makedirs(out_dir, exist_ok=True)
 for part, fname in PARTS.items():
     if not args and part in ALTERNATIVES: continue
     if args and part not in args: continue
+    out_dir = OUT_R6 if part.startswith('r6_') else OUT_R5
+    os.makedirs(out_dir, exist_ok=True)
     with tempfile.TemporaryDirectory() as td:
         tmp = os.path.join(td, 'p.stl')
         r = subprocess.run(['openscad', '-o', tmp, '-D', f'PART="{part}"', os.path.join(CAD, 'export.scad')],

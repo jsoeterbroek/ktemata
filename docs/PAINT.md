@@ -22,10 +22,11 @@ python3 cad/tools/stencil_stl.py --rev r6 --part deck --pass amber
 
 ### R6 prototype — not paint-ready
 
-**R6 output is for fit and layout review, not production painting.** The R6 mechanical CAD and measured
-connector keep-outs do not exist yet. The generated rigid panels are real, manifold-checkable geometry,
-but that does not make them released masks. Do not cut final vinyl or spray a part from them until the
-R6 fit gates in `R6.md` are closed.
+**R6 output is for fit and layout review, not production painting.** The R6 display-frame CAD and measured
+connector keep-outs are not complete. The keyboard/OLED lid plate now exists as
+[`r6_lid_plate.scad`](../cad/r6_lid_plate.scad), but its physical fit gates remain open. The generated rigid
+panels are real, manifold-checkable geometry, but that does not make them released masks. Do not cut final
+vinyl or spray a part from them until the R6 fit gates in [`R6.md`](R6.md) are closed.
 
 R6 uses the same three schemes and shared hinge datum, but swaps the component distribution:
 

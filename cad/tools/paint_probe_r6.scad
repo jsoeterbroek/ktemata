@@ -2,7 +2,8 @@
 // The visible surfaces swap against R5: the cover is the keyboard/OLED lid; the deck is the
 // cassette's Waveshare 7-inch display frame.  Component dimensions and the host/plate outlines
 // come from common.scad.  Proposed R6-only placements are named here, not hidden in paint.py.
-// Once the R6 mechanical CAD exists, replace these proposal positions with its actual parameters.
+// The keyboard-lid parameters are now shared with r6_lid_plate.scad through common.scad.
+// Display-frame positions and its controls remain proposals until that separate CAD is complete.
 include <../common.scad>
 
 // Waveshare 7inch DSI LCD (C), measured in cad/r5_lid_cover_waveshare_7in.scad.
