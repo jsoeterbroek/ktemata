@@ -1,3 +1,4 @@
 (sym_lib_table
-	(lib (name "Ktemata")(type "KiCad")(uri "${KIPRJMOD}/ktemata.kicad_sym")(options "")(descr "Ktemata r5 wiring blocks"))
+	(version 7)
+	(lib (name "Ktemata") (type "KiCad") (uri "${KIPRJMOD}/ktemata.kicad_sym") (options "") (descr "Ktemata r5 wiring blocks"))
 )
