@@ -21,7 +21,9 @@ One connector-shaped block per module (`Ktemata:` symbols — also a real librar
 registered by the project's `sym-lib-table`). Within a sheet the nets are **routed**: each multi-pin net
 gets a vertical trunk in the left gutter with a horizontal tap to every pin, junctions where a tap meets
 the trunk, and its name on a global label at the top of the trunk. Pins whose net leaves the sheet get a
-stub and a global label instead. Global labels throughout means a net keeps one bare name across the
+stub and a global label instead. Wire colour is cosmetic and per-wire: on the power sheet **J3's four
+terminals are drawn in their bench colours** — C green, NO white, LED+ red, LED− black — so the code
+matches the harness; white disappears on white paper, so read it in the editor. Global labels throughout means a net keeps one bare name across the
 whole project, which is what the CSV and this page refer to — and **ERC is clean: 0 violations**.
 
 Derived views, generated from the project — never edited by hand:
