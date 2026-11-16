@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PCBLayout name="Ktemata R6 - PCH" uuid="fbcf4daf-0530-54a9-88df-5b7801d859ea">
+
+<!-- Ktemata R6 Power Distribution & Communication Hub PCB Layout -->
+<!-- Based on AGENTS.md architecture and ktemata_r6_connections.csv netlist -->
+
+<Board name="Ktemata R6 - PCH" uuid="fbcf4daf-0530-54a9-88df-5b7801d859ea">
+  
+<!-- Board Parameters -->
+  <Parameters>
+    <Parameter value="Power Distribution & Communication Hub" id="BOARD_NAME"/>
+  </Parameters>
+  
+<!-- Layer Definitions -->
+  <Layers>
+    <Layer name="Signal" layer="0">
+      <Description>Top Signal Layer - Traces, Vias</Description>
+    </Layer>
+    <Layer name="Power" layer="16">
+      <Description>Bottom Power Layer - Ground Pours</Description>
+    </Layer>
+  </Layers>
+  
+<!-- Net Classes -->
+  <NetClasses>
+    <NetClass Name="CHG_12V6_IN" color="#00FF00" width="0.5">
+      <Conditions>Charge input power rail</Conditions>
+    </NetClass>
+    <NetClass Name="GND" color="#FF0000" width="0.8">
+      <Condition>All ground planes connect together</Condition>
+    </NetClass>
+  </NetClasses>
+  
+<!-- Footprints -->
+  <Footprints>
+    <Footprint name="Ktemata:DC099" library="Ktemata_Library">
+      <Package name="JST-PH-2.54mm"/>
+    </Footprint>
+    <Footprint name="Ktemata:SW16" library="Ktemata_Library">
+      <Package name="Momentary_Switch_16mm"/>
+    </Footprint>
+    <Footprint name="Ktemata:BATT3S" library="Ktemata_Library">
+      <Package name="JST-PH-9Pin-0.5mm"/>
+    </Footprint>
+    <Footprint name="Ktemata:SENSE" library="Ktemata_Library">
+      <Package name="Resistor_THT_0603"/>
+    </Footprint>
+    <Footprint name="Ktemata:UPS3S" library="Ktemata_Library">
+      <Package name="Waveshare_6Pin_Header"/>
+    </Footprint>
+  </Footprints>
+  
+<!-- Pad Definitions -->
+  <Pads>
+    <Pad name="J1-PIN1" layer="0" number="1">
+      <attribute value="+DC-099 center (+)" text="3.2" height="1.6"/>
+    </Pad>
+    <Pad name="J1-PIN2" layer="1" number="2">
+      <attribute value="-GND" text="4.5" height="1.6"/>
+    </Pad>
+  </Pads>
+  
+<!-- Connections -->
+  <Connections>
+    <Connection ref="J1-PIN1" net="CHG_12V6_IN" width="0.8">
+      <net name="CHG_12V6_IN" color="#00FF00"/>
+    </Connection>
+    <Connection ref="J1-PIN2" net="GND" width="0.8">
+      <net name="GND" color="#FF0000"/>
+    </Connection>
+  </Connections>
+  
+<!-- Net Class Properties -->
+  <NetClassProperties>
+    <NetClassProperty Name="CHG_12V6_IN" Conditions="No nets cross over other classes"/>
+    <NetClassProperty Name="GND" Conditions="All ground planes connect"/>
+  </NetClassProperties>
+  
+<!-- Footprints -->
+  <Footprints>
+    <Footprint name="Ktemata:DC099" at="[82.55 19.05]" layers="0">
+      <description>J1: DC-099 Panel Jack input</description>
+    </Footprint>
+    <Footprint name="Ktemata:SW16" at="[82.55 35.56]" layers="0">
+      <description>J3: Latching Switch + LED</description>
+    </Footprint>
+  </Footprints>
+  
+<!-- Padstacks -->
+  <Padstacks>
+    <Padstack name="Top_Via_Charge" position="[82.55 19.05]">
+      <Layer layer="0"/>
+      <Layer layer="16"/>
+    </Padstack>
+  </Padstacks>
+  
+<!-- Zones -->
+  <Zones>
+    <Zone name="Power_Zone" start="82.55;19.05" end="107.95;52.07">
+      <size width="4.0" height="33.0"/>
+      <color>0xFF0000FF</color>
+    </Zone>
+  </Zones>
+  
+<!-- Copper -->
+  <Copper>
+    <Copper name="CHG_12V6_IN">
+      <Location x="82.55" y="19.05"/>
+    </Copper>
+  </Copper>
+  
+<!-- Connections -->
+  <Connections>
+    <Connection ref="J1-PIN1">
+      <net name="CHG_12V6_IN" width="0.8"/>
+    </Connection>
+  </Connections>
+  
+<!-- Board Outline -->
+  <Outline>
+    <Border type="Rectangle">
+      <Top right="[82.55;19.05]"/>
+      <Bottom left="[86.36;117.05]"/>
+    </Border>
+  </Outline>
+  
+<!-- Footprints -->
+  <Footprints>
+    <Footprint name="Ktemata:DC099" at="[82.55 19.05]" layers="0">
+      <Description>DC-099 jack position</Description>
+    </Footprint>
+  </Footprints>
+  
+<!-- Padstacks -->
+  <Padstacks>
+    <Padstack name="Top_Via_Charge" position="[82.55 19.05]">
+      <Layer layer="0"/>
+      <Layer layer="16"/>
+    </Padstack>
+  </Padstacks>
+  
+<!-- Net Class Properties -->
+  <NetClassProperties>
+    <NetClassProperty Name="CHG_12V6_IN" Conditions="No nets cross over other classes"/>
+  </NetClassProperties>
+  
+<!-- Design Net Classes -->
+  <DesignNetClasses>
+    <DesignNetClass Name="CHG_SENSE">
+      <Color color="#FF0000"/>
+      <Width width="0.3"/>
+    </DesignNetClass>
+  </DesignNetClasses>
+</Board>
+</PCBLayout>
