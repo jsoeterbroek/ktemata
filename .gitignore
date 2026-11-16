@@ -47,3 +47,5 @@ zim/*.zim
 _autosave-*
 *.lck
 fp-info-cache
+
+DELETEME.md
