@@ -1,0 +1,205 @@
+(kicad_pcb
+  (version 202511)
+  (generator "pcbnew")
+  (generator_version "10.0")
+  
+  (layers
+    (Layer.Layer_1 Signal top "")
+    (Layer.Layer_2 Power bottom "")
+  )
+
+  (net_class
+    (NetClass.Net_Conditions "No nets of this class cross over other classes.")
+    (NetClass.Priorities "All nets with higher priority cross over lower priority nets.")
+    (NetClass.Overlapping_Nets "All nets in this class overlap each other.")
+  )
+
+  (footprint
+    (Footprint.FPC_Set_Footprints "Ktemata:DC099")
+    (Footprint.FPC_Set_Footprints "Ktemata:SW16")
+    (Footprint.FPC_Set_Footprints "Ktemata:BATT3S")
+    (Footprint.FPC_Set_Footprints "Ktemata:SENSE")
+    (Footprint.FPC_Set_Footprints "Ktemata:UPS3S")
+  )
+
+  (footprints
+    (Footprint.Pad_Diameter 1.27)
+    (Footprint.Pad_Height 1.27)
+    (Footprint.Pad_Width 1.27)
+    (Footprint.Hole_Diameter 0.8)
+    (Footprint.Hole_Height 1.27)
+    (Footprint.Hole_Width 0.4)
+    (Footprint.Via_Through_Hole "0.6")
+    (Footprint.Via_NPTH "0.6")
+  )
+
+  (vias
+    (via_Top
+      (position 82.55 19.05)
+      (net 1 CHG_SENSE)
+      (size 0.6)
+      (layers Signal Power)
+    )
+    (via_Top
+      (position 82.55 35.56)
+      (net 2 GND)
+      (size 0.6)
+      (layers Signal Power)
+    )
+    (via_Top
+      (position 95.25 19.05)
+      (net 1 CHG_12V6_IN)
+      (size 0.6)
+      (layers Signal Power)
+    )
+    (via_Top
+      (position 95.25 35.56)
+      (net 1 CHG_SENSE)
+      (size 0.6)
+      (layers Signal Power)
+    )
+    (via_Top
+      (position 107.95 19.05)
+      (net 2 GND)
+      (size 0.6)
+      (layers Signal Power)
+    )
+    (via_Top
+      (position 107.95 35.56)
+      (net 2 GND)
+      (size 0.6)
+      (layers Signal Power)
+    )
+  )
+
+  (vias_Trim
+    (via_Top_Through
+      (at 4.0 1.0)
+      (at 360.0 270.0)
+    )
+  )
+
+  (traces
+    (trace_Signal
+      (position 82.55 19.05 1.27)
+      (width 0.4)
+      (layer Signal)
+    )
+    (trace_Signal
+      (position 107.95 19.05 1.27)
+      (width 0.4)
+      (layer Signal)
+    )
+    (trace_Signal
+      (position 82.55 35.56 1.27)
+      (width 0.4)
+      (layer Signal)
+    )
+    (trace_Signal
+      (position 95.25 35.56 1.27)
+      (width 0.4)
+      (layer Signal)
+    )
+  )
+
+  (pads
+    (pad_Copper_Through_Hole)
+  )
+
+  (zones
+    (zone_Copper_Power
+      (location 82.55 19.05 3.0476)
+      (size 1.0)
+      (width 1.27)
+      (thickness 1.0)
+      (color 255 0 0 255)
+    )
+  )
+
+  (copper
+    (copper_Copper_Top
+      (net CHG_12V6_IN "1")
+      (net BATT_3S_N "1")
+      (net GND "1")
+    )
+    (copper_Power_Bottom
+      (net 2087875 "Power")
+      (net CHG_SENSE "Power")
+      (net I2C_SDA "Power")
+      (net I2C_SCL "Power")
+    )
+  )
+
+  (connections
+    (conn_Follows_Net)
+  )
+
+  (connection_Pad_Side_Center)
+  (pad_Trim_Drop_Through_Top)
+
+  (connections
+    (connection_Top_Hole_Are_All_Top_Holes)
+  )
+
+  (clearance
+    (Clearance.Min_Clearance 0.2)
+    (Clearance.Min_Island 1.0)
+  )
+
+  (solder_mask
+    (SolderMask.No_Solder_Mask_Fill)
+  )
+  
+  (board_outline
+    (border_Rectangle "82.55 19.05 86.36 117.05")
+  )
+
+  (padstacks
+    (pad_stack_Pad_Top_Hole
+      (at 82.55 19.05)
+      (size 1.27)
+      (layer Signal Power)
+    )
+    (pad_stack_Copper
+      (size 1.0)
+      (width 0.4)
+      (thickness 1.0)
+      (at 82.55 35.56)
+      (layer Signal Power)
+    )
+  )
+
+  (net_class
+    (NetClass.Charge_Net_Conditions "No nets of this class cross over other classes.")
+  )
+
+  (footprint
+    (Footprint.FPC_Set_Footprints "Ktemata:SW16")
+  )
+
+  (connections
+    (connection_Top_Hole_Bore)
+  )
+
+  (connections
+    (connection_Top_Hole_Are_All_Top_Holes)
+  )
+
+  (pads
+    (pad_Top_Through Hole)
+  )
+
+  (copper_Copper_Top_Layer 1)
+  (copper_Power_Bottom_Layer 2)
+
+  (board_outline
+    (border_Rectangle "82.55 19.05 86.36 117.05")
+  )
+
+  (footprint
+    (Footprint.FPC_Set_Footprints "Ktemata:SENSE")
+  )
+
+  (connections
+    (connection_Top_Hole_Bore)
+  )
