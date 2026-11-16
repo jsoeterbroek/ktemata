@@ -1,3 +1,12 @@
+# KiCad 10.0
+
+## CLI
+Use the cli to edit, create kicad filesm, kicad-cli location:
+/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
+
+## Design rules check
+Check design rules after each edit, eg.:
+/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli pcb drc pch_layout.kicad_pcb
 # Design for Power Distribution & Communication Hub (PCH) carrier board.
 
 This board will serve as the central nervous system for the Ktemata r6, providing structured power rails, a centralized sensing circuit, and the required safety/control features.
