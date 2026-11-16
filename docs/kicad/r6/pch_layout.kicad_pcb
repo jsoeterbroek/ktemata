@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<kicad_pcb
-  [Version: 202511]
-  [Generator: pcbnew]
-  [Generator Version: 10.0]
-  >
-
+<kicad_pcb [Version: 202511] [Generator: pcbnew] [Generator Version: 10.0] [UUID : fbcf4daf-0530-54a9-88df-5b7801d859ea]
+  
 <!-- Ktemata R6 PCH (Power Distribution & Communication Hub) -->
     <Board name="Ktemata R6 - PCH" uuid="fbcf4daf-0530-54a9-88df-5b7801d859ea">
 
@@ -85,9 +81,6 @@
         </Footprint>
         <Footprint name="Ktemata:SW16" at="[82.55 35.56]" layers="0">
           <description>J3: Latching Switch + LED</description>
-        </Footprint>
-        <Footprint name="Ktemata:BATT3S" at="[82.55 52.07]" layers="1">
-          <description>J4: 3S Battery pack (9A fuse inline)</description>
         </Footprint>
       </Footprints>
 
