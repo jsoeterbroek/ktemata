@@ -48,19 +48,18 @@ Adjusted score with GP-001 and VS-001 removed: **98.5** (worst remaining penalty
    `BAT_12V6_OUT` are 0.8 mm on 35 µm = 2.03 A at 10 °C rise (IPC-2221 external);
    `docs/R6.md` specifies the 12.6 V / 2 A charge input. Widen to 1.5–2 mm (there is room) or
    parallel a second run. GND return is fine: 4 × 0.4 mm thermal spokes ≈ 5 A per THT pad.
-3. **+5V ampacity — confirm the intended load.** The board's +5V is 0.8 mm between J5.7/8 and
-   J6.5 (= 2.03 A) and terminates on a single 2.54 mm header pin (~3 A part rating). The r6
-   netlist routes `UPS_5V` through the PCH to the Pi 5, whose supply is 5 V / 5 A. If the Pi
-   really draws through J6.5, that is undersized ~2.5×; if the PCH's +5V is aux only
-   (FireBeetle + OLED), it is fine. Resolve before fab.
+3. **+5V ampacity — sized for the status side, as designed.** 0.8 mm between J5.7/8 and J6.5
+   (2.03 A) and a single 2.54 mm header pin (~3 A) is enough for the aux load only, which is what
+   `docs/WIRING.md` §4.2 requires: "The PCH's 5 V output feeds the status side. The Pi 5 and
+   7-inch display stay on the UPS Module 3S's USB-C lead; do not route the Pi's 5 A through this
+   board." One trap remains: the r6 netlist puts `UPS_5V` on J16 pin 5, which reads as the Pi's
+   5 A passing through the PCH. Keep the Pi off J6.5 — the board is ~2.5× undersized for it.
 4. **No decoupling on the board at all.** Zero capacitors. Not an emissions problem on a passive
    board, but a 10 µF + 100 nF at J5 and J6 costs nothing and drops the rail impedance the harness
    sees. Optional.
-5. **The board does not match its own README.** `docs/kicad/r6/README.md`/`AGENTS.md` specify a
-   47k/10k + 100 nF charge-sense divider, a 5 A fuse and a 3S battery connector; none is in the
-   schematic, and the r6 system sheet puts the sense divider on its own connector instead. J4 is
-   `UPS_SW_EN` and is wired in **parallel** with J3.1/2 (same two nets) — pick one, or a second
-   harness shorts the switch. EMC sign-off is premature until the BOM matches the design.
+5. **J4 duplicates J3's switch nets.** `UPS_SW_1` / `UPS_SW_2` come out on both J3.1/2 and
+   J4.1/2. Fit the switch to one of them: a straight harness on the other shorts the contact pair,
+   and the switch stops switching. One line for the harness list, no hardware change.
 
 ## Not covered by this analysis
 
