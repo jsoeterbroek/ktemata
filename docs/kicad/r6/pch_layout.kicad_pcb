@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<kicad_pcb [Version: 202511] [Generator: pcbnew] [Generator Version: 10.0] [UUID : fbcf4daf-0530-54a9-88df-5b7801d859ea]
+(kicad_pcb [Version: 202511] [Generator: pcbnew] [Generator Version: 10.0] [UUID : fbcf4daf-0530-54a9-88df-5b7801d859ea]
   
 <!-- Ktemata R6 PCH (Power Distribution & Communication Hub) -->
     <Board name="Ktemata R6 - PCH" uuid="fbcf4daf-0530-54a9-88df-5b7801d859ea">
@@ -122,21 +121,6 @@
         </Border>
       </Outline>
 
-<!-- Footprints -->
-      <Footprints>
-        <Footprint name="Ktemata:DC099" at="[82.55 19.05]" layers="0">
-          <Description>DC-099 jack position</Description>
-        </Footprint>
-      </Footprints>
-
-<!-- Padstacks -->
-      <Padstacks>
-        <Padstack name="Top_Via_Charge" position="[82.55 19.05]">
-          <Layer layer="0"/>
-          <Layer layer="16"/>
-        </Padstack>
-      </Padstacks>
-
 <!-- Net Class Properties -->
       <NetClassProperties>
         <NetClassProperty Name="CHG_12V6_IN" Conditions="No nets cross over other classes"/>
@@ -151,4 +135,3 @@
       </DesignNetClasses>
 
 </Board>
-</kicad_pcb>
