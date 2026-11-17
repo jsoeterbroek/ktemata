@@ -145,8 +145,8 @@ Footprints as exported from `PCH.csv`; connectors and passives are not yet price
 | J2 | UPS_12V6_CHG_OUT | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
 | J3 | SW16_LATCH_LED | 1 | `Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical` |
 | J4 | UPS_SW_EN | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
-| J5 | UPS3S_MAIN_HDR | 1 | `Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical` |
-| J6 | HOST_I2C_PWR_OUT | 1 | `Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical` |
-| J7 | UPS_12V6_BAT_IN | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
-| J8 | HUB_12V6_AUX_OUT | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
+| J5 | UPS3S_HDR_2X4 | 1 | `Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical` |
+| J6 | HOST_AUX_PWR_I2C | 1 | `Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical` |
+| J7 | UPS_12V6_IN | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
+| J8 | AUX_12V6_OUT | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
 | R1 | 330R | 1 | `Resistor_SMD:R_0603_1608Metric` |
