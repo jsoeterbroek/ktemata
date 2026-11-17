@@ -2,19 +2,18 @@
 	(version 20260306)
 	(generator "eeschema")
 	(generator_version "10.0")
-	(uuid "b8ed37fe-4100-4417-9584-137497e32b48")
+	(uuid "e39a4fc9-9641-4281-b6cd-b4cba8a4b5da")
 	(paper "A4")
 	(title_block
 		(title "Ktemata R6 - PCH (Power Distribution & Communication Hub)")
 		(date "2026-11-17")
-		(rev "R6")
-		(company "Ktemata")
-		(comment 1 "Waveshare UPS Module 3S Interface Board")
+		(rev "1.1")
 	)
 	(lib_symbols
 		(symbol "Connector_Generic:Conn_01x02"
 			(pin_names
 				(offset 1.016)
+				(hide yes)
 			)
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -22,7 +21,7 @@
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
 			(property "Reference" "J"
-				(at 0 3.81 0)
+				(at 0 2.54 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -32,7 +31,7 @@
 				)
 			)
 			(property "Value" "Conn_01x02"
-				(at 0 -3.81 0)
+				(at 0 -5.08 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -52,7 +51,7 @@
 					)
 				)
 			)
-			(property "Datasheet" ""
+			(property "Datasheet" "~"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -76,8 +75,8 @@
 			)
 			(symbol "Conn_01x02_1_1"
 				(rectangle
-					(start -2.54 2.54)
-					(end 1.27 -2.54)
+					(start -1.27 1.27)
+					(end 1.27 -3.81)
 					(stroke
 						(width 0.254)
 						(type default)
@@ -87,7 +86,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 1.27 0)
+					(at -3.81 0 0)
 					(length 2.54)
 					(name "Pin_1"
 						(effects
@@ -105,7 +104,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 -1.27 0)
+					(at -3.81 -2.54 0)
 					(length 2.54)
 					(name "Pin_2"
 						(effects
@@ -128,6 +127,7 @@
 		(symbol "Connector_Generic:Conn_01x04"
 			(pin_names
 				(offset 1.016)
+				(hide yes)
 			)
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -135,7 +135,7 @@
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
 			(property "Reference" "J"
-				(at 0 6.35 0)
+				(at 0 2.54 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -145,7 +145,7 @@
 				)
 			)
 			(property "Value" "Conn_01x04"
-				(at 0 -6.35 0)
+				(at 0 -10.16 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -165,7 +165,7 @@
 					)
 				)
 			)
-			(property "Datasheet" ""
+			(property "Datasheet" "~"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -189,8 +189,8 @@
 			)
 			(symbol "Conn_01x04_1_1"
 				(rectangle
-					(start -2.54 5.08)
-					(end 1.27 -5.08)
+					(start -1.27 1.27)
+					(end 1.27 -8.89)
 					(stroke
 						(width 0.254)
 						(type default)
@@ -200,7 +200,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 3.81 0)
+					(at -3.81 0 0)
 					(length 2.54)
 					(name "Pin_1"
 						(effects
@@ -218,7 +218,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 1.27 0)
+					(at -3.81 -2.54 0)
 					(length 2.54)
 					(name "Pin_2"
 						(effects
@@ -236,7 +236,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 -1.27 0)
+					(at -3.81 -5.08 0)
 					(length 2.54)
 					(name "Pin_3"
 						(effects
@@ -254,7 +254,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 -3.81 0)
+					(at -3.81 -7.62 0)
 					(length 2.54)
 					(name "Pin_4"
 						(effects
@@ -277,6 +277,7 @@
 		(symbol "Connector_Generic:Conn_01x05"
 			(pin_names
 				(offset 1.016)
+				(hide yes)
 			)
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -284,7 +285,7 @@
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
 			(property "Reference" "J"
-				(at 0 7.62 0)
+				(at 0 2.54 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -294,7 +295,7 @@
 				)
 			)
 			(property "Value" "Conn_01x05"
-				(at 0 -7.62 0)
+				(at 0 -12.7 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -314,7 +315,7 @@
 					)
 				)
 			)
-			(property "Datasheet" ""
+			(property "Datasheet" "~"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -338,8 +339,8 @@
 			)
 			(symbol "Conn_01x05_1_1"
 				(rectangle
-					(start -2.54 6.35)
-					(end 1.27 -6.35)
+					(start -1.27 1.27)
+					(end 1.27 -11.43)
 					(stroke
 						(width 0.254)
 						(type default)
@@ -349,7 +350,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 5.08 0)
+					(at -3.81 0 0)
 					(length 2.54)
 					(name "Pin_1"
 						(effects
@@ -367,7 +368,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 2.54 0)
+					(at -3.81 -2.54 0)
 					(length 2.54)
 					(name "Pin_2"
 						(effects
@@ -385,7 +386,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 0 0)
+					(at -3.81 -5.08 0)
 					(length 2.54)
 					(name "Pin_3"
 						(effects
@@ -403,7 +404,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 -2.54 0)
+					(at -3.81 -7.62 0)
 					(length 2.54)
 					(name "Pin_4"
 						(effects
@@ -421,7 +422,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 -5.08 0)
+					(at -3.81 -10.16 0)
 					(length 2.54)
 					(name "Pin_5"
 						(effects
@@ -444,6 +445,7 @@
 		(symbol "Connector_Generic:Conn_01x06"
 			(pin_names
 				(offset 1.016)
+				(hide yes)
 			)
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -451,7 +453,7 @@
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
 			(property "Reference" "J"
-				(at 0 8.89 0)
+				(at 0 2.54 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -461,7 +463,7 @@
 				)
 			)
 			(property "Value" "Conn_01x06"
-				(at 0 -8.89 0)
+				(at 0 -15.24 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -481,7 +483,7 @@
 					)
 				)
 			)
-			(property "Datasheet" ""
+			(property "Datasheet" "~"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -505,8 +507,8 @@
 			)
 			(symbol "Conn_01x06_1_1"
 				(rectangle
-					(start -2.54 7.62)
-					(end 1.27 -7.62)
+					(start -1.27 1.27)
+					(end 1.27 -13.97)
 					(stroke
 						(width 0.254)
 						(type default)
@@ -516,7 +518,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 6.35 0)
+					(at -3.81 0 0)
 					(length 2.54)
 					(name "Pin_1"
 						(effects
@@ -534,7 +536,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 3.81 0)
+					(at -3.81 -2.54 0)
 					(length 2.54)
 					(name "Pin_2"
 						(effects
@@ -552,7 +554,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 1.27 0)
+					(at -3.81 -5.08 0)
 					(length 2.54)
 					(name "Pin_3"
 						(effects
@@ -570,7 +572,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 -1.27 0)
+					(at -3.81 -7.62 0)
 					(length 2.54)
 					(name "Pin_4"
 						(effects
@@ -588,7 +590,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 -3.81 0)
+					(at -3.81 -10.16 0)
 					(length 2.54)
 					(name "Pin_5"
 						(effects
@@ -606,7 +608,7 @@
 					)
 				)
 				(pin passive line
-					(at -5.08 -6.35 0)
+					(at -3.81 -12.7 0)
 					(length 2.54)
 					(name "Pin_6"
 						(effects
@@ -649,7 +651,7 @@
 				)
 			)
 			(property "Value" "R"
-				(at -1.778 0 90)
+				(at 0 0 90)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -669,7 +671,7 @@
 					)
 				)
 			)
-			(property "Datasheet" ""
+			(property "Datasheet" "~"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -708,7 +710,7 @@
 				(pin passive line
 					(at 0 3.81 270)
 					(length 1.27)
-					(name ""
+					(name "~"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -726,7 +728,7 @@
 				(pin passive line
 					(at 0 -3.81 90)
 					(length 1.27)
-					(name ""
+					(name "~"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -744,22 +746,114 @@
 			)
 			(embedded_fonts no)
 		)
-	)
-	(text "3. WAVESHARE UPS 3S POWER & I2C BUS"
-		(exclude_from_sim no)
-		(at 50.8 134.62 0)
-		(effects
-			(font
-				(size 1.524 1.524)
-				(bold yes)
+		(symbol "power:PWR_FLAG"
+			(power global)
+			(pin_numbers
+				(hide yes)
 			)
-			(justify left bottom)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#FLG"
+				(at 0 1.905 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "PWR_FLAG"
+				(at 0 3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "PWR_FLAG_0_0"
+				(pin power_out line
+					(at 0 0 90)
+					(length 0)
+					(name "pwr"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(symbol "PWR_FLAG_0_1"
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 1.27) (xy -1.016 1.905) (xy 0 2.54) (xy 1.016 1.905) (xy 0 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(embedded_fonts no)
 		)
-		(uuid "3de7539d-2497-4981-aa86-553b8604d2fe")
 	)
 	(text "1. 12.6V CHARGER PASS-THROUGH"
 		(exclude_from_sim no)
-		(at 50.8 38.1 0)
+		(at 30.48 25.4 0)
 		(effects
 			(font
 				(size 1.524 1.524)
@@ -767,11 +861,11 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "8ce3472c-750f-4cb6-95f8-1d0969849849")
+		(uuid "07d61204-664b-4191-b996-abb4e7b043cb")
 	)
-	(text "2. 16MM LATCHING POWER SWITCH & LED"
+	(text "3. 16MM LATCHING SWITCH & LED"
 		(exclude_from_sim no)
-		(at 50.8 81.28 0)
+		(at 30.48 55.88 0)
 		(effects
 			(font
 				(size 1.524 1.524)
@@ -779,471 +873,687 @@
 			)
 			(justify left bottom)
 		)
-		(uuid "a9d14b80-196a-46ec-a5b0-a472efcc2401")
+		(uuid "56f2bec6-2edf-4967-a315-bee01a685be8")
+	)
+	(text "4. WAVESHARE UPS 3S POWER & I2C BUS"
+		(exclude_from_sim no)
+		(at 30.48 91.44 0)
+		(effects
+			(font
+				(size 1.524 1.524)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "dc13e92b-2038-47c5-ab92-0bb969c82c44")
+	)
+	(text "5. ERC POWER FLAGS"
+		(exclude_from_sim no)
+		(at 116.84 55.88 0)
+		(effects
+			(font
+				(size 1.524 1.524)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "e7d83a5e-053e-4b46-9edc-4aae532d4c84")
+	)
+	(text "2. 12.6V UNREGULATED BATTERY BUS (FROM WAVESHARE XH2.54 OUT)"
+		(exclude_from_sim no)
+		(at 116.84 25.4 0)
+		(effects
+			(font
+				(size 1.524 1.524)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+		(uuid "f32be2d9-9de8-45cf-bbe5-2ebbdf1014ff")
 	)
 	(wire
 		(pts
-			(xy 127 95.25) (xy 134.62 95.25)
+			(xy 137.16 66.04) (xy 137.16 68.58)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "054d6e8b-372f-4130-81ec-5b109feca13c")
+		(uuid "03769c87-08ad-4cb1-8f1c-2ecf8c7ab419")
 	)
 	(wire
 		(pts
-			(xy 63.5 95.25) (xy 71.12 95.25)
+			(xy 72.39 35.56) (xy 66.04 35.56)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "0a39c6d8-31ae-491c-832b-1841c7fc0af4")
+		(uuid "061bb3bf-101b-4b01-895e-b23ffb4043b8")
 	)
 	(wire
 		(pts
-			(xy 63.5 52.07) (xy 71.12 52.07)
+			(xy 123.19 38.1) (xy 116.84 38.1)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "11be24fd-e475-49d4-9928-eed8f1bfbea6")
+		(uuid "1a7b3ff3-2986-4b1c-afe0-fd5bae123e39")
 	)
 	(wire
 		(pts
-			(xy 152.4 157.48) (xy 160.02 157.48)
+			(xy 36.83 114.3) (xy 30.48 114.3)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "1627bc0c-78d9-4a67-975b-6587af939a75")
+		(uuid "1c3bed0e-e08d-4448-b19e-16f19a330dd8")
 	)
 	(wire
 		(pts
-			(xy 63.5 100.33) (xy 71.12 100.33)
+			(xy 36.83 111.76) (xy 30.48 111.76)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "16877379-9f2a-4dd3-a71c-4f4d412d8f58")
+		(uuid "30eb0fcf-a0a6-44fb-af95-6d2942e98316")
 	)
 	(wire
 		(pts
-			(xy 152.4 154.94) (xy 160.02 154.94)
+			(xy 121.92 66.04) (xy 121.92 68.58)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "18421600-b7dd-47c1-bbc2-641cf2b22e5b")
+		(uuid "3ac25c81-8895-4c0c-8f3b-86535af2c925")
 	)
 	(wire
 		(pts
-			(xy 152.4 147.32) (xy 160.02 147.32)
+			(xy 123.19 35.56) (xy 116.84 35.56)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "254674b7-7541-4926-98d6-babd0c6b9874")
+		(uuid "43a49ab8-bc97-4b27-8c43-4620932d9412")
 	)
 	(wire
 		(pts
-			(xy 127 49.53) (xy 134.62 49.53)
+			(xy 72.39 101.6) (xy 66.04 101.6)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "28f29f53-9f87-4cf3-815d-c611f793b634")
+		(uuid "46bf1a71-22e7-43aa-a6d4-657a2ab4dd57")
 	)
 	(wire
 		(pts
-			(xy 105.41 107.95) (xy 110.49 107.95)
+			(xy 36.83 73.66) (xy 30.48 73.66)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "38015739-451e-4fe2-acdb-89abedc90ad3")
+		(uuid "54226e3e-5f19-4552-8129-db90d18515e8")
 	)
 	(wire
 		(pts
-			(xy 127 92.71) (xy 134.62 92.71)
+			(xy 163.83 38.1) (xy 157.48 38.1)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "5160216a-7eb6-4d55-b4bb-726d9ca4911d")
+		(uuid "5a416b51-5c2d-48dd-9c6a-3599921eebdd")
 	)
 	(wire
 		(pts
-			(xy 63.5 49.53) (xy 71.12 49.53)
+			(xy 72.39 106.68) (xy 66.04 106.68)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "57c2272e-62ea-49d6-b5be-f2ab4214f8b8")
+		(uuid "5f11c6d4-47a1-41d6-88a0-84fe5c307cc8")
 	)
 	(wire
 		(pts
-			(xy 152.4 152.4) (xy 160.02 152.4)
+			(xy 36.83 104.14) (xy 30.48 104.14)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "6b9e6947-d854-41d3-a6f3-25dc6afd471a")
+		(uuid "65f92722-82d8-426f-ab65-fb2bb2fb74bd")
 	)
 	(wire
 		(pts
-			(xy 63.5 158.75) (xy 71.12 158.75)
+			(xy 96.52 64.77) (xy 96.52 62.23)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "6fc4ccce-04d8-48a5-b5d5-7b1c3540778f")
+		(uuid "7707c0d0-0f64-44d3-90f7-82783f54cba0")
 	)
 	(wire
 		(pts
-			(xy 63.5 146.05) (xy 71.12 146.05)
+			(xy 152.4 66.04) (xy 152.4 68.58)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "7358e4bd-e95a-4bbf-979c-67e30234fe0a")
+		(uuid "7e3a2101-39be-4445-94e9-26a089bd974b")
 	)
 	(wire
 		(pts
-			(xy 127 52.07) (xy 134.62 52.07)
+			(xy 36.83 101.6) (xy 30.48 101.6)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "778c3666-491e-433d-a142-d8196ca4fe46")
+		(uuid "7f9736e9-97db-4cb4-8a11-c948d18627de")
 	)
 	(wire
 		(pts
-			(xy 63.5 156.21) (xy 71.12 156.21)
+			(xy 72.39 38.1) (xy 66.04 38.1)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "84b2b2c5-d4b7-4220-9f1a-36c6bb5217ac")
+		(uuid "8a9ff62b-6931-42f9-8956-30dc7f3218bb")
 	)
 	(wire
 		(pts
-			(xy 63.5 92.71) (xy 71.12 92.71)
+			(xy 30.48 101.6) (xy 30.48 104.14)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "b01de446-ad8c-4b1a-b5d2-ff5c5ad5586a")
+		(uuid "8c87bdba-01cd-417f-9c53-8380e50d5265")
 	)
 	(wire
 		(pts
-			(xy 63.5 151.13) (xy 71.12 151.13)
+			(xy 121.92 81.28) (xy 121.92 83.82)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "b88cec5e-cb81-4bfb-9d3e-4bfbe95b2df9")
+		(uuid "8f380b9a-26fc-4f5e-8861-6cb44e17c148")
 	)
 	(wire
 		(pts
-			(xy 152.4 149.86) (xy 160.02 149.86)
+			(xy 72.39 66.04) (xy 66.04 66.04)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "d11cca50-ff6f-4f04-8e6d-9dda6606741e")
+		(uuid "991e7ac7-a5ec-4765-93fb-ad744559a8d3")
 	)
 	(wire
 		(pts
-			(xy 63.5 97.79) (xy 71.12 97.79)
+			(xy 36.83 109.22) (xy 30.48 109.22)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "d16f2e98-a61c-4702-af37-20a659b9d6d3")
+		(uuid "9a978579-8866-4d3a-8294-d4e520803e34")
 	)
 	(wire
 		(pts
-			(xy 63.5 148.59) (xy 71.12 148.59)
+			(xy 36.83 68.58) (xy 30.48 68.58)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "e12c7d89-d615-4014-803e-596f29e2b697")
+		(uuid "a09bfa49-55a5-4755-aada-0845b7a036bb")
 	)
 	(wire
 		(pts
-			(xy 63.5 153.67) (xy 71.12 153.67)
+			(xy 142.24 81.28) (xy 142.24 83.82)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "ea4cb6a8-0657-4120-b412-bd7f45d24f50")
+		(uuid "b7025395-29a2-40c9-9d5f-b0c1e91db51c")
 	)
 	(wire
 		(pts
-			(xy 118.11 107.95) (xy 123.19 107.95)
+			(xy 72.39 109.22) (xy 66.04 109.22)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "f556270e-2b2b-40b7-b5d4-373b79ba3dbe")
+		(uuid "b7f27097-d4bf-4019-b869-dcc13f282b21")
+	)
+	(wire
+		(pts
+			(xy 163.83 35.56) (xy 157.48 35.56)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bc892e9b-535b-41e3-a07a-361693328aac")
+	)
+	(wire
+		(pts
+			(xy 72.39 111.76) (xy 66.04 111.76)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bfa4a4e3-a680-4389-bce2-e92617b90952")
+	)
+	(wire
+		(pts
+			(xy 36.83 38.1) (xy 30.48 38.1)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c61140b4-a404-4268-8da6-78bddebd9415")
+	)
+	(wire
+		(pts
+			(xy 72.39 68.58) (xy 66.04 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ce144ea2-8e55-4483-bbab-0bada8db13f4")
+	)
+	(wire
+		(pts
+			(xy 36.83 71.12) (xy 30.48 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d5b6e753-880e-4fde-964a-21df5b7955ba")
+	)
+	(wire
+		(pts
+			(xy 36.83 35.56) (xy 30.48 35.56)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d5edfe30-1ad4-464c-9629-b58e1161bca9")
+	)
+	(wire
+		(pts
+			(xy 96.52 72.39) (xy 96.52 74.93)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e7c44314-046f-4c50-a541-5c36a2794965")
+	)
+	(wire
+		(pts
+			(xy 36.83 66.04) (xy 30.48 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e9ae8db3-0350-442a-9eb7-72bee753d854")
+	)
+	(wire
+		(pts
+			(xy 72.39 104.14) (xy 66.04 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ee0940fd-e920-4f32-905f-1a3c3c18942d")
+	)
+	(wire
+		(pts
+			(xy 36.83 106.68) (xy 30.48 106.68)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f6b55646-af5f-4e0c-9e93-b099f2e160de")
 	)
 	(label "CHG_12V6_IN"
-		(at 127 49.53 180)
+		(at 66.04 35.56 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right bottom)
+			(justify left bottom)
 		)
-		(uuid "01fd81dc-ef2f-4a8c-9b5d-6ed5147136dd")
-	)
-	(label "UPS_SW_2"
-		(at 63.5 95.25 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "13418480-15e4-4dd2-9b3a-f55b84a6d594")
-	)
-	(label "GND"
-		(at 63.5 52.07 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "165e01b0-b28e-41d9-985d-2e5795780e85")
-	)
-	(label "+3V3"
-		(at 63.5 153.67 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "1e72143c-416e-40db-8624-42dde5252f22")
-	)
-	(label "UPS_SW_1"
-		(at 63.5 92.71 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "32f01de2-0980-4be9-80bf-45ba3ed4573a")
-	)
-	(label "+5V"
-		(at 63.5 148.59 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "34162e5c-2679-4f80-b523-8e47a08c4f7c")
-	)
-	(label "GND"
-		(at 127 52.07 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "343a6d50-9e88-4e80-b55e-0b33073c9907")
-	)
-	(label "UPS_SW_2"
-		(at 127 95.25 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "4ea156ed-08e4-4a95-af27-3932266d89f0")
-	)
-	(label "+5V"
-		(at 152.4 147.32 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "6792ca99-08c4-4b7a-9b91-229715ed725f")
-	)
-	(label "+3V3"
-		(at 152.4 149.86 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "737c4954-c69f-4bfe-942e-ac97dc0517e3")
-	)
-	(label "I2C_SCL"
-		(at 63.5 158.75 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "79c80267-abf5-4ebc-b7c1-a9badad2f9e2")
-	)
-	(label "+5V"
-		(at 63.5 146.05 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "8440049b-86dd-4706-8254-09258af872c9")
-	)
-	(label "GND"
-		(at 63.5 151.13 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "985f84c4-c594-49f6-8449-fae52c9e7114")
-	)
-	(label "+5V"
-		(at 105.41 107.95 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "caf78072-f6fd-4ba3-8956-3a3970d364cf")
-	)
-	(label "UPS_SW_1"
-		(at 127 92.71 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "cd8e1a16-7a0f-41ff-a6f4-8c0e9e2173c2")
-	)
-	(label "GND"
-		(at 63.5 100.33 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "cfda57ca-7a5b-4c85-b012-799debdc5849")
-	)
-	(label "GND"
-		(at 152.4 152.4 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "d4e49d93-e1e7-4f16-aac4-612386d1ebe3")
-	)
-	(label "SW_LED_ANODE"
-		(at 63.5 97.79 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "d7d99bf9-d842-4518-80ba-a88b8736ad02")
-	)
-	(label "SW_LED_ANODE"
-		(at 123.19 107.95 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "de31f091-1bda-4aaa-abba-8d24c55ab14d")
-	)
-	(label "I2C_SCL"
-		(at 152.4 157.48 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "dee12049-c5c5-4275-b16e-e1c5704f4060")
-	)
-	(label "I2C_SDA"
-		(at 63.5 156.21 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "dff7bcff-854e-41ac-a3a6-5dbf4236a29c")
-	)
-	(label "I2C_SDA"
-		(at 152.4 154.94 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "e4a3c783-ac2d-4e8d-875d-5d254752108a")
+		(uuid "02b9bb2b-3de5-4f0a-a65a-e32918b704a0")
 	)
 	(label "CHG_12V6_IN"
-		(at 63.5 49.53 180)
+		(at 121.92 83.82 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right bottom)
+			(justify left bottom)
 		)
-		(uuid "eab8429c-cc31-4fbd-a8ef-12d8ba37d941")
+		(uuid "1efd4b85-203a-4a17-af5d-e2563c6d8e62")
+	)
+	(label "GND"
+		(at 30.48 38.1 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "29b6633a-4d7b-47cd-a769-9ec61e57865f")
+	)
+	(label "+5V"
+		(at 137.16 68.58 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "42ff9984-8b15-46f0-93bc-51faa60c85a5")
+	)
+	(label "GND"
+		(at 30.48 73.66 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "43d5d658-26f6-4d41-806d-1aed959154c0")
+	)
+	(label "I2C_SDA"
+		(at 30.48 111.76 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "4cc7a498-d03a-4a87-a14f-73c4b35050d4")
+	)
+	(label "UPS_SW_2"
+		(at 66.04 68.58 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "4e986397-4910-4f5b-b812-130c7434f6a6")
+	)
+	(label "BAT_12V6_OUT"
+		(at 142.24 83.82 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "52fe1872-6309-4419-9ada-49eb83c44644")
+	)
+	(label "+3V3"
+		(at 30.48 109.22 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "5457eb44-5998-41d7-bbeb-1e46175ab5b7")
+	)
+	(label "UPS_SW_1"
+		(at 30.48 66.04 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "6086bed5-ae2a-4c12-bfd0-97b04c196b6f")
+	)
+	(label "+5V"
+		(at 66.04 101.6 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "6de6f57c-49ee-4e9e-8e5c-e615ac8528db")
+	)
+	(label "CHG_12V6_IN"
+		(at 30.48 35.56 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "941d284f-fa94-449f-bf32-4f2725812bce")
+	)
+	(label "BAT_12V6_OUT"
+		(at 116.84 35.56 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "97ec6bbb-725a-4ed1-a37f-84515729761b")
+	)
+	(label "GND"
+		(at 30.48 106.68 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "9c6c08d7-6645-4961-a89b-904c817b537f")
+	)
+	(label "I2C_SDA"
+		(at 66.04 109.22 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "9f6d9f89-035d-4727-8ad9-6aa979b46cc4")
+	)
+	(label "GND"
+		(at 66.04 38.1 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "a04c8f59-13bc-4aa3-bdec-39798560b253")
+	)
+	(label "+3V3"
+		(at 152.4 68.58 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "a07c70e9-c6de-456f-b8e1-184205a636d2")
+	)
+	(label "+5V"
+		(at 30.48 101.6 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "a7190865-92da-412c-842d-f92aae75be23")
+	)
+	(label "+3V3"
+		(at 66.04 104.14 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "a7ebe3b3-eae1-4328-9400-5d5b7e8958f1")
+	)
+	(label "UPS_SW_1"
+		(at 66.04 66.04 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "bc181ef5-da1e-4cfc-88f3-e1cec0ac87f7")
+	)
+	(label "BAT_12V6_OUT"
+		(at 157.48 35.56 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "c0ccf31c-e139-4256-af73-624ca697fb6b")
+	)
+	(label "GND"
+		(at 66.04 106.68 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "c22c7e4a-2297-4c41-8b97-c8a492f893cf")
+	)
+	(label "+5V"
+		(at 96.52 62.23 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "c46e62d2-a9b7-4e33-b00d-c3155165a75d")
+	)
+	(label "GND"
+		(at 116.84 38.1 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "cf24d1ef-dc99-46c4-9a59-ee29e186a165")
+	)
+	(label "I2C_SCL"
+		(at 30.48 114.3 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "d0094116-1549-4972-90a4-c2873db255f6")
+	)
+	(label "GND"
+		(at 157.48 38.1 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "da5e658b-a56d-4c84-b850-3d7300aaa2bd")
+	)
+	(label "GND"
+		(at 121.92 68.58 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "dd1a876c-5905-447f-a3eb-ecf260b96335")
+	)
+	(label "UPS_SW_2"
+		(at 30.48 68.58 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "e17afe7e-1f84-4e13-b107-e8e9d92d5711")
+	)
+	(label "SW_LED_ANODE"
+		(at 96.52 74.93 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "f56884e7-d2f1-48b1-bc36-eae09947af53")
+	)
+	(label "SW_LED_ANODE"
+		(at 30.48 71.12 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "f5c7586d-32a5-4305-a593-3298d7ceec73")
+	)
+	(label "I2C_SCL"
+		(at 66.04 111.76 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "f5c9befb-81de-462c-a08e-61183d6c4f3d")
 	)
 	(symbol
-		(lib_id "Connector_Generic:Conn_01x02")
-		(at 139.7 50.8 0)
+		(lib_id "power:PWR_FLAG")
+		(at 152.4 66.04 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -1251,9 +1561,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "2748e51d-a452-4f38-8086-d2a7cfc117ed")
-		(property "Reference" "J2"
-			(at 139.7 45.72 0)
+		(uuid "23e75d06-b2fb-45e5-925e-e5abaff691c8")
+		(property "Reference" "#FLG03"
+			(at 152.4 67.945 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1262,8 +1573,8 @@
 				)
 			)
 		)
-		(property "Value" "UPS_12V6_CHG_OUT"
-			(at 139.7 55.88 0)
+		(property "Value" "PWR_FLAG"
+			(at 152.4 69.85 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1272,8 +1583,8 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
-			(at 139.7 50.8 0)
+		(property "Footprint" ""
+			(at 152.4 66.04 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1284,7 +1595,70 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 139.7 50.8 0)
+			(at 152.4 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 152.4 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "f9afbc8c-6dd0-403a-ad1f-b968b52edec6")
+		)
+		(instances
+			(project "PCH"
+				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
+					(reference "#FLG03")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R")
+		(at 96.52 68.58 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "386327b0-d808-4a5e-b742-3f83a0f0bc58")
+		(property "Reference" "R1"
+			(at 96.52 64.77 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "330R"
+			(at 96.52 72.39 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 96.52 68.58 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1294,8 +1668,18 @@
 				)
 			)
 		)
-		(property "Description" "12.6V Charge Cable to Waveshare DC5521 Input"
-			(at 139.7 50.8 0)
+		(property "Datasheet" ""
+			(at 96.52 68.58 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Current Limiting Resistor for J3 Switch LED"
+			(at 96.52 68.58 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1306,10 +1690,487 @@
 			)
 		)
 		(pin "1"
-			(uuid "2f4c6c97-eca1-43c3-a55b-b476fa419ad7")
+			(uuid "7d35e9f8-eae3-4519-9a6f-df49cab0a21a")
 		)
 		(pin "2"
-			(uuid "4df44286-0fb8-4e25-9040-ca37a2d6477c")
+			(uuid "aa050ae3-e68a-45ee-8d73-0d7e50b21da6")
+		)
+		(instances
+			(project "PCH"
+				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
+					(reference "R1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x04")
+		(at 40.64 66.04 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "43041ea5-e7ea-4c12-bf57-e8e834548c69")
+		(property "Reference" "J3"
+			(at 40.64 62.23 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "SW16_LATCH_LED"
+			(at 40.64 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical"
+			(at 40.64 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 40.64 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "16mm Latching Switch (Pins 1-2) + LED (Pins 3-4)"
+			(at 40.64 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "0bce0c70-f840-402b-847b-6d1af8c99f25")
+		)
+		(pin "2"
+			(uuid "08668fb7-3553-42ba-be05-c2b95ac8ff9a")
+		)
+		(pin "3"
+			(uuid "e8f31e71-d12b-401a-921b-19da30931611")
+		)
+		(pin "4"
+			(uuid "ae0e30dc-3910-4b54-b71a-c9b040068957")
+		)
+		(instances
+			(project "PCH"
+				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
+					(reference "J3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:PWR_FLAG")
+		(at 121.92 66.04 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "62ed0b39-57bb-4647-9e3b-89da0d7525aa")
+		(property "Reference" "#FLG01"
+			(at 121.92 67.945 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "PWR_FLAG"
+			(at 121.92 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 121.92 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 121.92 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 121.92 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "11b75f1c-6055-4e12-a0d6-91b08d4fe0db")
+		)
+		(instances
+			(project "PCH"
+				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
+					(reference "#FLG01")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 76.2 66.04 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "76832565-f1e6-4454-aac8-6bb81419e42c")
+		(property "Reference" "J4"
+			(at 76.2 62.23 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "UPS_SW_EN"
+			(at 76.2 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
+			(at 76.2 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 76.2 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "2-Pin Cable to Waveshare Onboard Switch Header"
+			(at 76.2 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "707154d2-d4f3-4b35-a521-cfc3604bf8ee")
+		)
+		(pin "2"
+			(uuid "4598ea8c-5bc5-43bb-8166-5e84fff871ae")
+		)
+		(instances
+			(project "PCH"
+				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
+					(reference "J4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:PWR_FLAG")
+		(at 142.24 81.28 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "9a729177-a63e-4068-a268-ca1b7780fc7f")
+		(property "Reference" "#FLG05"
+			(at 142.24 83.185 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "PWR_FLAG"
+			(at 142.24 85.09 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 142.24 81.28 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 142.24 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 142.24 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c24e5d4c-c7da-467b-a9b9-12c657a4b492")
+		)
+		(instances
+			(project "PCH"
+				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
+					(reference "#FLG05")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x05")
+		(at 76.2 101.6 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "b342010d-fc56-40ff-982c-32c5159844ca")
+		(property "Reference" "J6"
+			(at 76.2 97.79 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "HOST_I2C_PWR_OUT"
+			(at 76.2 105.41 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
+			(at 76.2 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 76.2 101.6 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Output to Raspberry Pi / Host MCU (5V, 3V3, GND, SDA, SCL)"
+			(at 76.2 101.6 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "41ad296c-0bcc-4733-80ec-4f355b3437e9")
+		)
+		(pin "2"
+			(uuid "26adc5be-c073-40f1-8b22-64ba168b7e5f")
+		)
+		(pin "3"
+			(uuid "e3e5727a-5a20-4585-86b9-ea35461d8da1")
+		)
+		(pin "4"
+			(uuid "490192f4-979a-464a-819e-543f9d7fb98e")
+		)
+		(pin "5"
+			(uuid "c717e41f-935b-4d47-ac9e-ee357ac80f4a")
+		)
+		(instances
+			(project "PCH"
+				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
+					(reference "J6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 76.2 35.56 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "bc1b6c88-50aa-4e1d-af32-ab63ce31e805")
+		(property "Reference" "J2"
+			(at 76.2 31.75 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "UPS_12V6_CHG_OUT"
+			(at 76.2 39.37 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
+			(at 76.2 35.56 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 76.2 35.56 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "12.6V Charge Cable to Waveshare DC5521 Input"
+			(at 76.2 35.56 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "a4c47fa7-dcf9-4a92-aa7e-42031bb24973")
+		)
+		(pin "2"
+			(uuid "857f9a5e-cd6a-40cd-aa6d-d80dc1d498fa")
 		)
 		(instances
 			(project "PCH"
@@ -1322,7 +2183,7 @@
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
-		(at 139.7 93.98 0)
+		(at 167.64 35.56 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -1330,9 +2191,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "69f69f64-d0cf-40da-8953-2214e49b8761")
-		(property "Reference" "J4"
-			(at 139.7 88.9 0)
+		(uuid "c101c6bc-92ab-4a38-8336-8a1a9a6c53b8")
+		(property "Reference" "J8"
+			(at 167.64 31.75 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1341,8 +2202,8 @@
 				)
 			)
 		)
-		(property "Value" "UPS_SW_EN"
-			(at 139.7 99.06 0)
+		(property "Value" "HUB_12V6_AUX_OUT"
+			(at 167.64 39.37 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1352,7 +2213,7 @@
 			)
 		)
 		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
-			(at 139.7 93.98 0)
+			(at 167.64 35.56 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1363,8 +2224,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 139.7 93.98 0)
-			(hide yes)
+			(at 167.64 35.56 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1373,8 +2233,8 @@
 				)
 			)
 		)
-		(property "Description" "2-Pin Cable to Waveshare Onboard Switch Header"
-			(at 139.7 93.98 0)
+		(property "Description" "12.6V Unregulated Output to Hub Peripherals"
+			(at 167.64 35.56 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1385,15 +2245,90 @@
 			)
 		)
 		(pin "1"
-			(uuid "916f0e9a-c210-4a13-a4dc-ee2dc06c3d11")
+			(uuid "45ce3fe5-43de-40cc-8a3f-fec8efd21064")
 		)
 		(pin "2"
-			(uuid "ae82802b-c722-4cee-b539-23534f403f3c")
+			(uuid "ebeb494a-8ef5-4f8b-8c61-250fd0bc53c1")
 		)
 		(instances
 			(project "PCH"
 				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "J4")
+					(reference "J8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:PWR_FLAG")
+		(at 137.16 66.04 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "c314c00f-3d45-40ce-b36c-9c18003f1752")
+		(property "Reference" "#FLG02"
+			(at 137.16 67.945 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "PWR_FLAG"
+			(at 137.16 69.85 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 137.16 66.04 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 137.16 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 137.16 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "f3fac4c0-4288-40e0-b24c-86c100702749")
+		)
+		(instances
+			(project "PCH"
+				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
+					(reference "#FLG02")
 					(unit 1)
 				)
 			)
@@ -1401,7 +2336,7 @@
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
-		(at 76.2 50.8 0)
+		(at 127 35.56 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -1409,9 +2344,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "8c1fdf9c-7cd7-4afc-9e24-871290f1dde6")
-		(property "Reference" "J1"
-			(at 76.2 45.72 0)
+		(uuid "c3db4420-7cd9-46c7-8fe9-7e3decedc383")
+		(property "Reference" "J7"
+			(at 127 31.75 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1420,8 +2355,8 @@
 				)
 			)
 		)
-		(property "Value" "DC-099_12V6_IN"
-			(at 76.2 55.88 0)
+		(property "Value" "UPS_12V6_BAT_IN"
+			(at 127 39.37 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1431,7 +2366,7 @@
 			)
 		)
 		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
-			(at 76.2 50.8 0)
+			(at 127 35.56 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1442,8 +2377,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 76.2 50.8 0)
-			(hide yes)
+			(at 127 35.56 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1452,8 +2386,8 @@
 				)
 			)
 		)
-		(property "Description" "Panel DC-099 Jack to Board Header"
-			(at 76.2 50.8 0)
+		(property "Description" "12.6V Unregulated Input from Waveshare XH2.54 Output"
+			(at 127 35.56 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1464,23 +2398,23 @@
 			)
 		)
 		(pin "1"
-			(uuid "2f59ac11-594c-4493-9007-3739f8a6aa1d")
+			(uuid "4bd66bdf-0fbe-4ff3-8236-79e74590d5a4")
 		)
 		(pin "2"
-			(uuid "8571dd38-764e-431f-bbe4-fd7c74617e58")
+			(uuid "aa80939b-1b53-46eb-bd50-72f9295a77ce")
 		)
 		(instances
 			(project "PCH"
 				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "J1")
+					(reference "J7")
 					(unit 1)
 				)
 			)
 		)
 	)
 	(symbol
-		(lib_id "Connector_Generic:Conn_01x04")
-		(at 76.2 96.52 0)
+		(lib_id "power:PWR_FLAG")
+		(at 121.92 81.28 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -1488,9 +2422,10 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "9d88c16c-d5f0-4eb2-a2c3-827c726ebe68")
-		(property "Reference" "J3"
-			(at 76.2 88.9 0)
+		(uuid "d7d9d731-265a-4395-8a08-595d2b0ca66b")
+		(property "Reference" "#FLG04"
+			(at 121.92 83.185 0)
+			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1499,8 +2434,8 @@
 				)
 			)
 		)
-		(property "Value" "SW16_LATCH_LED"
-			(at 76.2 104.14 0)
+		(property "Value" "PWR_FLAG"
+			(at 121.92 85.09 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1509,8 +2444,8 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical"
-			(at 76.2 96.52 0)
+		(property "Footprint" ""
+			(at 121.92 81.28 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1521,8 +2456,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 76.2 96.52 0)
-			(hide yes)
+			(at 121.92 81.28 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1531,94 +2465,8 @@
 				)
 			)
 		)
-		(property "Description" "16mm Latching Switch (Pins 1-2) + LED (Pins 3-4)"
-			(at 76.2 96.52 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "a4accd58-4cc9-441e-a5d0-f49562db4ddc")
-		)
-		(pin "2"
-			(uuid "26fd033f-1894-4ec5-a215-0a6dc7b00992")
-		)
-		(pin "3"
-			(uuid "c28e3063-766c-48ee-9393-ce946449e8e0")
-		)
-		(pin "4"
-			(uuid "ea63a9ef-ced6-446b-b721-b2a02c7cd260")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "J3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:R")
-		(at 114.3 107.95 90)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "d9c1b79c-a523-477e-a71b-c01a4f5ae5b7")
-		(property "Reference" "R1"
-			(at 114.3 105.41 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "330R"
-			(at 114.3 110.49 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
-			(at 114.3 107.95 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 114.3 107.95 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Current Limiting Resistor for J3 Switch LED"
-			(at 114.3 107.95 0)
-			(hide yes)
+		(property "Description" ""
+			(at 121.92 81.28 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1628,103 +2476,12 @@
 			)
 		)
 		(pin "1"
-			(uuid "7a361252-5e9e-45e3-8d5e-a23b93d4ae17")
-		)
-		(pin "2"
-			(uuid "feccb62c-0c55-49b8-8c5d-0eb77fd1def9")
+			(uuid "87e6b503-2154-458b-870c-e4f1b0663ab0")
 		)
 		(instances
 			(project "PCH"
 				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "R1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector_Generic:Conn_01x05")
-		(at 165.1 152.4 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "fca8892d-ccd7-4cd1-ba0c-3242f8f6c642")
-		(property "Reference" "J6"
-			(at 165.1 143.51 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "HOST_I2C_PWR_OUT"
-			(at 165.1 161.29 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
-			(at 165.1 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 165.1 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Output to Raspberry Pi / Host MCU (5V, 3V3, GND, SDA, SCL)"
-			(at 165.1 152.4 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "77de352b-7717-4ed8-8b4e-09e6c91f549d")
-		)
-		(pin "2"
-			(uuid "609bed56-1825-4f32-9ab3-109eefccdd47")
-		)
-		(pin "3"
-			(uuid "ca73b790-776a-4f03-80a5-d18a30bba223")
-		)
-		(pin "4"
-			(uuid "8316889b-53f8-451d-84f0-09a5b83b4850")
-		)
-		(pin "5"
-			(uuid "f1146fc5-513b-4861-931a-10b078bd32fc")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "J6")
+					(reference "#FLG04")
 					(unit 1)
 				)
 			)
@@ -1732,7 +2489,7 @@
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x06")
-		(at 76.2 152.4 0)
+		(at 40.64 101.6 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -1740,9 +2497,9 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "fef55e93-087d-4344-bc01-e328809fac38")
+		(uuid "f1ccc844-0058-4172-bc5b-cf058a473bd3")
 		(property "Reference" "J5"
-			(at 76.2 142.24 0)
+			(at 40.64 97.79 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1752,7 +2509,7 @@
 			)
 		)
 		(property "Value" "UPS3S_MAIN_HDR"
-			(at 76.2 162.56 0)
+			(at 40.64 105.41 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1762,7 +2519,7 @@
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
-			(at 76.2 152.4 0)
+			(at 40.64 101.6 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1773,8 +2530,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 76.2 152.4 0)
-			(hide yes)
+			(at 40.64 101.6 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -1784,7 +2540,7 @@
 			)
 		)
 		(property "Description" "Waveshare UPS 3S Header (1:5V, 2:5V, 3:GND, 4:3V3, 5:SDA, 6:SCL)"
-			(at 76.2 152.4 0)
+			(at 40.64 101.6 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -1795,27 +2551,105 @@
 			)
 		)
 		(pin "1"
-			(uuid "a5954114-1ace-4361-b75f-c4f3fb58e26f")
+			(uuid "e32aa11d-97b3-494a-8ee3-067e954ec906")
 		)
 		(pin "2"
-			(uuid "813fdd34-0e43-4556-8cd1-e576eb8bdf0c")
+			(uuid "1793413e-29d1-4ea3-8c72-d437572f8a5d")
 		)
 		(pin "3"
-			(uuid "5bdde14f-704c-4288-b65e-1cd02a992d69")
+			(uuid "e785598f-a804-4b2f-b1d5-617076237213")
 		)
 		(pin "4"
-			(uuid "309f8d2a-7597-4c4e-8c49-20b8a6d6738c")
+			(uuid "b9f0355b-f7f0-4c1c-ba8b-a59b7e663881")
 		)
 		(pin "5"
-			(uuid "78d08856-6519-4158-87c1-667d0de12a14")
+			(uuid "f2a1c575-6614-453b-a5b5-bc5673a89e0c")
 		)
 		(pin "6"
-			(uuid "e26dd63e-bd08-4417-8813-de85487536b2")
+			(uuid "e2f68206-569a-4542-9f94-34866438c7ae")
 		)
 		(instances
 			(project "PCH"
 				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
 					(reference "J5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 40.64 35.56 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "f36bd257-5388-4298-87d5-06db1b9cf434")
+		(property "Reference" "J1"
+			(at 40.64 31.75 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "DC-099_12V6_IN"
+			(at 40.64 39.37 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
+			(at 40.64 35.56 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 40.64 35.56 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Panel DC-099 Jack to Board Header"
+			(at 40.64 35.56 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "05634bf1-86ab-49bc-b74a-5b66265ba3c0")
+		)
+		(pin "2"
+			(uuid "18da9fd6-4dfd-4308-ac27-346f595e4a3d")
+		)
+		(instances
+			(project "PCH"
+				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
+					(reference "J1")
 					(unit 1)
 				)
 			)
