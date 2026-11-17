@@ -196,7 +196,7 @@
         (effects (font (size 1.27 1.27)))
       )
       (symbol "UPS3S_1_1"
-        (rectangle (start -1.27 1.27) (end 26.67 -26.67)
+        (rectangle (start -1.27 1.27) (end 26.67 -29.21)
           (stroke (width 0.254) (type default))
           (fill (type background))
         )
@@ -243,6 +243,10 @@
         (pin passive line (at -5.08 -25.40 0) (length 3.81)
           (name "12V6_OUT" (effects (font (size 1.27 1.27))))
           (number "11" (effects (font (size 1.27 1.27))))
+        )
+        (pin passive line (at -5.08 -27.94 0) (length 3.81)
+          (name "3V3" (effects (font (size 1.27 1.27))))
+          (number "12" (effects (font (size 1.27 1.27))))
         )
       )
     )
@@ -546,6 +550,7 @@
     (pin "9" (uuid "33173bc5-4f3b-4416-af5b-3e50d238a773"))
     (pin "10" (uuid "6de77fd9-c987-41e0-8420-493ff9dbf694"))
     (pin "11" (uuid "57afe01d-2148-4673-8b85-6a3dbf458f87"))
+    (pin "12" (uuid "4a5fa4a5-183d-4f3f-b7ff-69d329774147"))
     (instances
       (project "ktemata"
         (path "/0eabccf7-1a01-5ba0-a33e-5faba2798686"
@@ -632,6 +637,8 @@
   (wire (pts (xy 168.91 123.19) (xy 158.75 123.19)) (stroke (width 0) (type solid)) (uuid "4dcd50a1-5086-46f6-ba34-1f67c16fb806"))
   (wire (pts (xy 168.91 125.73) (xy 158.75 125.73)) (stroke (width 0) (type solid)) (uuid "d6baa7f6-8caf-4201-b386-cb40d325255a"))
   (wire (pts (xy 168.91 128.27) (xy 158.75 128.27)) (stroke (width 0) (type solid)) (uuid "dbe1486c-9681-4fe6-aeb3-bd97e1bb567e"))
+  (wire (pts (xy 168.91 130.81) (xy 158.75 130.81)) (stroke (width 0) (type solid)) (uuid "6809ec5b-4150-46c4-98dc-c1f01daff3a5"))
+  (wire (pts (xy 168.91 160.02) (xy 158.75 160.02)) (stroke (width 0) (type solid)) (uuid "0773fdf5-9b10-4b55-80fc-b9a9f7973088"))
   (wire (pts (xy 168.91 134.62) (xy 158.75 134.62)) (stroke (width 0) (type solid)) (uuid "e986c9e4-3f8d-4812-b2e7-7106e25dd8aa"))
   (wire (pts (xy 168.91 137.16) (xy 158.75 137.16)) (stroke (width 0) (type solid)) (uuid "1db88f73-ef27-4b42-b096-7ac88ab560dd"))
   (wire (pts (xy 168.91 139.70) (xy 158.75 139.70)) (stroke (width 0) (type solid)) (uuid "671304cc-97b6-43f5-af67-9c316b2d1840"))
@@ -675,10 +682,21 @@
   (global_label "I2C_SCL" (shape bidirectional) (at 158.75 149.86 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "9144e3a7-d448-4a7b-bb2c-60810111f406"))
   (global_label "GND" (shape bidirectional) (at 158.75 152.40 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "abc7c3cd-cd29-413a-813a-d2bf21bf9a4b"))
   (global_label "UPS_12V6" (shape bidirectional) (at 158.75 154.94 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4cbd62df-89f5-4b2c-a331-ae00fc608289"))
+  (global_label "UPS_3V3" (shape bidirectional) (at 158.75 130.81 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4724eda1-f743-4509-9848-a49cff9141a0"))
+  (global_label "UPS_3V3" (shape bidirectional) (at 158.75 160.02 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "f61f45cd-4364-443b-88da-1b2adde289b7"))
   (no_connect (at 168.91 157.48) (uuid "02a2469b-c15f-4d13-8999-00111320badd"))
-  (no_connect (at 168.91 160.02) (uuid "4d3a412d-bdfd-4dfd-8780-71069aed006c"))
   (text "12.6 V input, centre-positive, 2 A: mains PSU, MPPT solar or crank converter."
     (at 20.32 166.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "16f8cb47-1c6b-5d9a-819e-145305eb2455"))
+  (text "PCH <-> UPS cables"
+    (at 20.32 134.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "03e92052-3f1a-4168-934d-b123b27f94ae"))
+  (text "C1 charge: PCH J2 -> UPS DC5521; CHG_12V6_IN + GND"
+    (at 20.32 138.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "9aa20ec9-3a26-4885-b0f4-84f9f9d68ba3"))
+  (text "C2 switch: PCH J4 -> UPS switch port; SW_1 + SW_2"
+    (at 20.32 142.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "79acc7a5-3ba9-4d06-ae91-c4ef9721212a"))
+  (text "C3 header: PCH J5 -> UPS 2x4; UPS_5V + UPS_3V3 + I2C_SDA/SCL + GND"
+    (at 20.32 146.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "752a3b39-b164-41aa-8fc4-653a2d5cb417"))
+  (text "C4 12.6 V: UPS XH2.54 -> PCH J7; UPS_12V6 + GND"
+    (at 20.32 150.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "2f71ec05-6562-4420-9cff-6866b4ff52d2"))
   (text "The 16 mm switch drives the UPS switch input through the PCH; its LED is fed from UPS_5V via R1."
     (at 20.32 172.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "75607315-e804-533b-b665-2c43db92601f"))
   (text "No fuse on the PCH; the Module 3S protects the pack. CHG_SENSE taps the unswitched input."
@@ -687,7 +705,7 @@
     (at 20.32 184.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "4ac0a306-058b-5928-98cb-1f690c4882b7"))
   (text "J3 colours: C green, NO white, LED+ red, LED- black."
     (at 20.32 190.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "6a8ab1fa-a774-51ad-acd0-07058887537b"))
-  (text "J16 is the PCH. Its J8 12.6 V aux and J5/J6 3V3 are spares (NC); 3.3 V stays the FireBeetle's."
+  (text "J16 is the PCH. UPS_3V3 is now wired to the UPS header; its host side and the J8 12.6 V aux are unused; 3.3 V stays the FireBeetle's."
     (at 20.32 196.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "b4291d4c-7a0b-41e1-9575-b0a8f93a47ae"))
   (embedded_fonts no)
   (sheet_instances

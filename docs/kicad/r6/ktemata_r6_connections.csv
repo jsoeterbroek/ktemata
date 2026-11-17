@@ -59,6 +59,8 @@ SW_LED,J16,"PCH power/comm hub (J1-J8, R1)",4
 SW_LED,J3,16 mm latching switch (C/NO) + LED,3
 UPS_12V6,J16,"PCH power/comm hub (J1-J8, R1)",9
 UPS_12V6,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",11
+UPS_3V3,J16,"PCH power/comm hub (J1-J8, R1)",11
+UPS_3V3,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",12
 UPS_5V,J16,"PCH power/comm hub (J1-J8, R1)",5
 UPS_5V,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",5
 UPS_5V,J7,Raspberry Pi 5,1
@@ -71,4 +73,3 @@ USB_KEYBOARD,J7,Raspberry Pi 5,6
 VBAT_PI,J11,ML-2020 cell on Pi J5,1
 VBAT_PI,J7,Raspberry Pi 5,8
 unconnected-(J16-AUX_12V6-Pad10),J16,"PCH power/comm hub (J1-J8, R1)",10
-unconnected-(J16-UPS_3V3-Pad11),J16,"PCH power/comm hub (J1-J8, R1)",11

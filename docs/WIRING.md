@@ -156,3 +156,6 @@ The PCH is a passive connector hub — no conversion, no fuse, no protection of 
    the four M2.5 holes with nylon standoffs so the JST shells cannot touch the tray or shielding.
 6. **First power-up.** With the UPS output off, check the 12.6 V branches for shorts. Then connect the charge
    source and the UPS and confirm the aux rails and the UPS gauge at `0x41`; connect the Pi last.
+7. **PCH↔UPS cables.** The `/Power` sheet groups the interface into four cables — C1 charge, C2 switch,
+   C3 header, C4 12.6 V — with their conductor lists. Follow that table; there are no other PCH↔UPS links.
+   The host-side 3.3 V and the J8 12.6 V aux remain unused.
