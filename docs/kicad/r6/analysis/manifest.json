@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "project": "ktemata.kicad_pro",
+  "current": "2026-11-17_2005",
+  "runs": {
+    "2026-11-17_2005": {
+      "source_hashes": {
+        "ktemata.kicad_sch": "sha256:c86f22200fb07e200451083fbd9551626bcab3c719e65c5f7f2674acaebcd80a",
+        "ktemata.kicad_pcb": "sha256:9732c37867cd081621490a6345db7caeb4599f087175afcdd57d0df064127de4",
+        "schematic.json": "sha256:0d11e467ff16f970195f8a114ee3ea0e31b3d92d8acf6b50277f4cf455590646",
+        "pcb.json": "sha256:700168c5b2afb10d0eca1adf4fd330f87d1a1fc622b2276ce8f2ba3113a5d8f2"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "emc": "emc.json"
+      },
+      "scripts": {
+        "schematic": "analyze_schematic.py ktemata.kicad_sch"
+      },
+      "generated": "2026-11-17T20:06:00+01:00",
+      "pinned": false
+    }
+  }
+}
