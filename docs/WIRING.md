@@ -24,14 +24,15 @@ Both revisions use an A3 index and three A4 sheets:
 | sheet | file | R5 | R6 |
 |---|---|---|---|
 | `/` | `ktemata.kicad_sch` | Index and reading notes | Same structure, R6 titles and export path |
-| `/Power` | `power.kicad_sch` | 2S pack, 8.4 V charging, UPS HAT (B) | **3S pack, 12.6 V charging, UPS Module 3S**, revised sensing |
+| `/Power` | `power.kicad_sch` | 2S pack, 8.4 V charging, UPS HAT (B) | **3S pack, 12.6 V charging, UPS Module 3S, PCH block (J16)**, revised sensing |
 | `/Pi 5 and its peripherals` | `pi.kicad_sch` | Touch Display 2, NVMe, keyboard, RTC | **Waveshare 7inch DSI LCD (C)** including its touch interface; other functions retained |
 | `/FireBeetle …` | `mcu.kicad_sch` | Controller and status components on the deck | FireBeetle/RTC in the base; OLED/button in the lid through a serviceable harness |
 
 The **R6 PCH** is a separate single-sheet project and a 50 × 50 mm two-layer board. It carries the charge
 pass-through, the UPS header, the panel switch/LED and the 12.6 V auxiliary output. Its schematic, exported
 netlist and board are `PCH.kicad_sch`, `PCH.net` and `PCH.kicad_pcb`; parts are in
-[`BOM.md`](BOM.md) section D. Connector pinouts stay in the project, not in this page.
+[`BOM.md`](BOM.md) section D. The R6 `/Power` sheet includes it as block **J16**; the Pi and MCU sheets use
+the same global nets, so they do not repeat the block. Connector pinouts stay in the project, not in this page.
 
 In the two system projects, one connector-shaped block per module (`Ktemata:` symbols — also a real library, `ktemata.kicad_sym`,
 registered by the project's `sym-lib-table`). Within a sheet the nets are **routed**: each multi-pin net
@@ -117,7 +118,8 @@ over automatically. The separate PCH board has its own rules in §4.
 
 1. **Pack and charging.** Three matched cells in 3S, with 12.6 V / 2 A charge equipment. The R5 adapter and
    2S regulator are incompatible. Keep the insulating panels fitted and verify pack-fuse placement with the
-   factory holders before assembly.
+   factory holders before assembly. The PCH sits in the charge path; the 16 mm switch is on the UPS switch
+   input, not the charge lead (§4).
 2. **Pi power.** Use the UPS manufacturer's Pi power lead. Never connect the bench USB-C supply and the UPS
    to the Pi simultaneously. No USB-PD capability is documented; verify loaded voltage, peripheral-current
    behaviour and `vcgencmd get_throttled` rather than relying on the desktop warning.

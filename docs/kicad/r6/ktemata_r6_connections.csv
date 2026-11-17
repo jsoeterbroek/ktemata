@@ -6,12 +6,11 @@ BATT_3S_N,J4,3x 18650 in 3S + 5 A fuse (verify placement),2
 BATT_3S_N,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",4
 BATT_3S_P,J4,3x 18650 in 3S + 5 A fuse (verify placement),1
 BATT_3S_P,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",3
-CHG_12V6,J3,16 mm latching switch (C/NO) + LED,2
-CHG_12V6,J5,charge sense: 47k / 10k / 100 nF,1
-CHG_12V6,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",1
 CHG_12V6_IN,J1,12.6 V source (mains / MPPT solar / crank),1
+CHG_12V6_IN,J16,"PCH power/comm hub (J1-J8, R1)",1
 CHG_12V6_IN,J2,"DC-099 panel jack in the cassette, centre +",1
-CHG_12V6_IN,J3,16 mm latching switch (C/NO) + LED,1
+CHG_12V6_IN,J5,charge sense: 47k / 10k / 100 nF,1
+CHG_12V6_IN,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",1
 CHG_SENSE,J12,FireBeetle 2 ESP32-UE,5
 CHG_SENSE,J5,charge sense: 47k / 10k / 100 nF,3
 DISPLAY_DSI,J7,Raspberry Pi 5,3
@@ -28,6 +27,7 @@ GND,J12,FireBeetle 2 ESP32-UE,2
 GND,J13,"1.3in OLED 128x64, 0x3C",2
 GND,J14,DS3231 RTC 0x68,2
 GND,J15,PBS-33B 12 mm button,2
+GND,J16,"PCH power/comm hub (J1-J8, R1)",8
 GND,J2,"DC-099 panel jack in the cassette, centre +",2
 GND,J3,16 mm latching switch (C/NO) + LED,4
 GND,J5,charge sense: 47k / 10k / 100 nF,2
@@ -38,16 +38,28 @@ GND,J9,Pimoroni NVMe Base Duo (PIM704),2
 I2C_SCL,J12,FireBeetle 2 ESP32-UE,4
 I2C_SCL,J13,"1.3in OLED 128x64, 0x3C",4
 I2C_SCL,J14,DS3231 RTC 0x68,4
+I2C_SCL,J16,"PCH power/comm hub (J1-J8, R1)",7
 I2C_SCL,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",8
 I2C_SDA,J12,FireBeetle 2 ESP32-UE,3
 I2C_SDA,J13,"1.3in OLED 128x64, 0x3C",3
 I2C_SDA,J14,DS3231 RTC 0x68,3
+I2C_SDA,J16,"PCH power/comm hub (J1-J8, R1)",6
 I2C_SDA,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",7
 OLED_BTN,J12,FireBeetle 2 ESP32-UE,6
 OLED_BTN,J15,PBS-33B 12 mm button,1
 PCIE_FPC,J7,Raspberry Pi 5,5
 PCIE_FPC,J9,Pimoroni NVMe Base Duo (PIM704),1
-UPS_5V,J3,16 mm latching switch (C/NO) + LED,3
+SW_1,J16,"PCH power/comm hub (J1-J8, R1)",2
+SW_1,J3,16 mm latching switch (C/NO) + LED,1
+SW_1,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",9
+SW_2,J16,"PCH power/comm hub (J1-J8, R1)",3
+SW_2,J3,16 mm latching switch (C/NO) + LED,2
+SW_2,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",10
+SW_LED,J16,"PCH power/comm hub (J1-J8, R1)",4
+SW_LED,J3,16 mm latching switch (C/NO) + LED,3
+UPS_12V6,J16,"PCH power/comm hub (J1-J8, R1)",9
+UPS_12V6,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",11
+UPS_5V,J16,"PCH power/comm hub (J1-J8, R1)",5
 UPS_5V,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",5
 UPS_5V,J7,Raspberry Pi 5,1
 UPS_AUX_5V,J12,FireBeetle 2 ESP32-UE,1
@@ -58,3 +70,5 @@ USB_KEYBOARD,J10,"Rii K06 dongle, or Bluetooth (no wire)",1
 USB_KEYBOARD,J7,Raspberry Pi 5,6
 VBAT_PI,J11,ML-2020 cell on Pi J5,1
 VBAT_PI,J7,Raspberry Pi 5,8
+unconnected-(J16-AUX_12V6-Pad10),J16,"PCH power/comm hub (J1-J8, R1)",10
+unconnected-(J16-UPS_3V3-Pad11),J16,"PCH power/comm hub (J1-J8, R1)",11

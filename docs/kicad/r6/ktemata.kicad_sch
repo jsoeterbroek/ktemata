@@ -69,7 +69,7 @@
     (at 20.32 190.50 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "73fe371b-a168-5484-b96b-9df4a152467e"))
   (text "Nets with two or more pins on a sheet are routed; a net that leaves the sheet carries a global label."
     (at 20.32 199.39 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "d03d797e-4445-535f-9e42-eb0e2b17bf82"))
-  (text "Power sheet: 12.6 V input and 3S UPS. Pi sheet: Waveshare 7-inch display, NVMe, keyboard. MCU sheet: base controller and lid OLED/button."
+  (text "Power sheet: 12.6 V input, PCH and 3S UPS. Pi sheet: Waveshare 7-inch display, NVMe, keyboard. MCU sheet: base controller and lid OLED/button."
     (at 20.32 208.28 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "02f611d9-9a1b-5692-b1a3-7c3708b9e21d"))
   (text "Export with: kicad-cli sch export pdf -o ktemata_r6_wiring.pdf docs/kicad/r6/ktemata.kicad_sch"
     (at 20.32 217.17 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "588ce909-304b-5400-a73b-4ac7e1293f54"))
