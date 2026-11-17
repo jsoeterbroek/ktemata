@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Turn a KiCad netlist into a flat, spreadsheet-friendly table.
 
-The projects in docs/kicad/r5/ and docs/kicad/r6/ are the wiring sources of truth; this script only
+The projects in cad/kicad/r5/ and cad/kicad/r6/ are the wiring sources of truth; this script only
 reads their exports, so each table cannot drift from its schematic. Example for R6 (use r5 for R5):
 
-    kicad-cli sch export netlist --format kicadxml -o /tmp/kt.xml docs/kicad/r6/ktemata.kicad_sch
-    python3 work/scripts/kicad_netlist_csv.py /tmp/kt.xml -o docs/kicad/r6/ktemata_r6_connections.csv
+    kicad-cli sch export netlist --format kicadxml -o /tmp/kt.xml cad/kicad/r6/ktemata.kicad_sch
+    python3 work/scripts/kicad_netlist_csv.py /tmp/kt.xml -o cad/kicad/r6/ktemata_r6_connections.csv
 
 One row per pin on every net: Net, Ref, Part, Pin. No pairing is invented, so nothing implies a
 connection that the schematic does not have.

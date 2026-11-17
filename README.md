@@ -128,8 +128,8 @@ the 5" r2 design, but the RP2040 USB keyboard is the one part worth prototyping 
 ## Wiring
 
 Wiring is defined in **KiCad 10 projects** whose sheets are the netlist: open the preserved
-**[`R5 project`](docs/kicad/r5/ktemata.kicad_pro)** or the proposed
-**[`R6 project`](docs/kicad/r6/ktemata.kicad_pro)**. [`docs/WIRING.md`](docs/WIRING.md) says how to open
+**[`R5 project`](cad/kicad/r5/ktemata.kicad_pro)** or the proposed
+**[`R6 project`](cad/kicad/r6/ktemata.kicad_pro)**. [`docs/WIRING.md`](docs/WIRING.md) says how to open
 and validate them and lists assembly rules; it does not repeat either netlist.
 
 To prepare a fresh Ubuntu / Raspberry Pi OS install — system update, Kiwix, the ZIM library and the display

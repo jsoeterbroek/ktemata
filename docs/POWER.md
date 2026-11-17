@@ -108,7 +108,7 @@ The numbers above are a model. The parts that can be measured on the device, and
 Buck efficiency (η 0.88), usable depth of discharge (0.85) and the pack's capacity are still
 **assumptions**, and every table here labels them as such. They are the first things to replace once
 the logger in `status-oled.py` has a discharge run to fit; the divider itself is on the `/Power` sheet
-of the [`R5 KiCad project`](kicad/r5/ktemata.kicad_pro)
+of the [`R5 KiCad project`](../cad/kicad/r5/ktemata.kicad_pro)
 for the sense line and `docs/R5.md` for the deck socket it taps.
 
 ## Project NOMAD, AI off

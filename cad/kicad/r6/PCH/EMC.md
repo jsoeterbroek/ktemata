@@ -1,6 +1,6 @@
 # EMC pre-compliance — PCH (r6)
 
-Analysed `docs/kicad/r6/PCH/PCH.kicad_pcb` + `PCH.kicad_sch` as saved 2026-11-17 17:07
+Analysed `cad/kicad/r6/PCH/PCH.kicad_pcb` + `PCH.kicad_sch` as saved 2026-11-17 17:07
 (DRC.rpt: 0 violations, 0 unconnected pads). Target: EN 55032 / CISPR 32 Class B (EU market).
 
 **Verdict: low EMC risk — no emissions action required before fab.** The analyzer's three
@@ -86,7 +86,7 @@ Bands 30–1000 MHz from this board alone: `risk_level: none`, 0 sources.
 ## Reproduce
 
 ```bash
-cd docs/kicad/r6/PCH
+cd cad/kicad/r6/PCH
 python3 ~/.omp/agent/skills/kicad/scripts/analyze_schematic.py PCH.kicad_sch --analysis-dir analysis/
 python3 ~/.omp/agent/skills/kicad/scripts/analyze_pcb.py PCH.kicad_pcb --full \
         --schematic analysis/<run>/schematic.json --analysis-dir analysis/

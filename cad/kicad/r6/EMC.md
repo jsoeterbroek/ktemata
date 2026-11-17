@@ -109,7 +109,7 @@ Pre-scan probe points before the lab: DSI FFC tail, the PCIe FPC at both ends, t
 ## Reproduce
 
 ```bash
-cd docs/kicad/r6
+cd cad/kicad/r6
 python3 ~/.omp/agent/skills/kicad/scripts/analyze_schematic.py ktemata.kicad_sch --analysis-dir analysis/
 python3 ~/.omp/agent/skills/kicad/scripts/analyze_pcb.py ktemata.kicad_pcb --full \
         --schematic analysis/<run>/schematic.json --analysis-dir analysis/

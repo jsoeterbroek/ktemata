@@ -263,7 +263,7 @@
       (property "Datasheet" "" (at 0 0 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
-      (property "Description" "Ktemata r6 PCH board; see docs/kicad/r6/PCH" (at 0 0 0) (show_name)
+      (property "Description" "Ktemata r6 PCH board; see cad/kicad/r6/PCH" (at 0 0 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
       (symbol "PCH_1_1"

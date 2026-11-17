@@ -6,7 +6,7 @@ earlier printed exteriors (r1–r4) are no longer modelled, and their parts are 
 
 Prices are indicative, in euro, for scale only.
 
-Wiring: the preserved [`R5 KiCad project`](kicad/r5/ktemata.kicad_pro) and proposed [`R6 KiCad project`](kicad/r6/ktemata.kicad_pro), with [`WIRING.md`](WIRING.md)
+Wiring: the preserved [`R5 KiCad project`](../cad/kicad/r5/ktemata.kicad_pro) and proposed [`R6 KiCad project`](../cad/kicad/r6/ktemata.kicad_pro), with [`WIRING.md`](WIRING.md)
 for the assembly rules. **This list is not derived from the schematic** - it carries prices, suppliers,
 quantities and mechanical parts a schematic has none of - but the two are cross-checked: each schematic
 block names its item here in a `Part` field, and `python3 work/scripts/check_bom.py` fails if a block
@@ -39,7 +39,7 @@ Design notes: [`R5.md`](R5.md) and the proposed [`R6.md`](R6.md).
 | 18 | STEMMA QT / Qwiic JST-SH 4-pin cable, 200 mm | 2 | I²C chain: DS3231, OLED (FireBeetle side uses the header cable below). | € 1.44 ea |
 | 19 | STEMMA QT / Qwiic → male headers, 150 mm | 1 | FireBeetle header → Qw/ST bus. | € 1.15 |
 | 20 | Dupont jumpers, female–female, 20 cm | 1 set | R6 UPS INA219 I²C (**0x41**) + auxiliary 5 V to the FireBeetle. The Module 3S gauge has a 0.1 Ω shunt; firmware calibration must change with it. | € 5 |
-| 20a | Resistors **47k** and **10k** (1 %, 0.25 W) + **100 nF** ceramic | 1 + 1 + 1 | R6 charge-input sense divider on the UPS Module 3S input → `A0` (ADC1). **12.6 V → 2.21 V**, 221 µA; leaves ADC margin unlike R5's 30k/10k divider. Soldered inline; the circuit is on the `/Power` sheet of the [`R6 KiCad project`](kicad/r6/ktemata.kicad_pro). | € 0.30 |
+| 20a | Resistors **47k** and **10k** (1 %, 0.25 W) + **100 nF** ceramic | 1 + 1 + 1 | R6 charge-input sense divider on the UPS Module 3S input → `A0` (ADC1). **12.6 V → 2.21 V**, 221 µA; leaves ADC margin unlike R5's 30k/10k divider. Soldered inline; the circuit is on the `/Power` sheet of the [`R6 KiCad project`](../cad/kicad/r6/ktemata.kicad_pro). | € 0.30 |
 | 21 | USB-A → USB-C data cable, 20–30 cm | 1 | FireBeetle ↔ Pi serial. **Data-only** (VBUS disconnected) — the FireBeetle is powered from the UPS. | € 5 |
 | 22 | 2-pin auxiliary 5 V lead (JST-XH / Dupont, as fitted) | 1 | R6 UPS Module 3S auxiliary 5 V output → FireBeetle; keeps the status system alive with the Pi off. The Module 3S has no R5-style USB-A output; use its header and supplied harness where compatible. | € 5 |
 | 23 | [M3 × 10 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/bzk-inbus-verzonkenkopschroef-staal-din-7991-m3x10.html) | **7** | DIN 7991 / ISO 10642; **dk 6.0 mm, k 1.7 mm, 2.0 mm hex**. Seven deck screws into the heat-set inserts. Sold in packs of 25. | € 2.60 / 25 |
@@ -136,7 +136,7 @@ OLED, PBS-33B button, sealed **USB-C** panel port + MPPT module (5 V out), M2.5 
 
 ## D. PCH board
 
-Carrier board for the R6 power/communication hub — project [`kicad/r6/PCH/PCH.kicad_pro`](kicad/r6/PCH/PCH.kicad_pro).
+Carrier board for the R6 power/communication hub — project [`cad/kicad/r6/PCH/PCH.kicad_pro`](../cad/kicad/r6/PCH/PCH.kicad_pro).
 Parts as exported from `PCH.csv`; connectors and passives are not yet priced.
 
 | Ref | Value | Qty | Part |

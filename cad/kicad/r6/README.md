@@ -12,7 +12,7 @@ Check design rules after each edit, eg.:
 
 The PCH is the r6's **passive** 12.6 V / aux-rail / I2C hub: a single-sheet, 50 × 50 mm two-layer
 board with no conversion, no protection and no active parts. Nets and pins are in
-[`PCH.kicad_pro`](PCH/PCH.kicad_pro); assembly practice is [`../../WIRING.md`](../../WIRING.md) §4.
+[`PCH.kicad_pro`](PCH/PCH.kicad_pro); assembly practice is [`../../docs/WIRING.md`](../../docs/WIRING.md) §4.
 
 | Connector | Pads | Nets | Job |
 |---|---|---|---|

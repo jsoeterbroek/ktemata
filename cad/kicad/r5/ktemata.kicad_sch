@@ -71,7 +71,7 @@
     (at 20.32 199.39 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "d03d797e-4445-535f-9e42-eb0e2b17bf82"))
   (text "Power sheet: 8.4 V input and the pack. Pi sheet: display, NVMe, keyboard. MCU sheet: FireBeetle and its I2C parts."
     (at 20.32 208.28 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "02f611d9-9a1b-5692-b1a3-7c3708b9e21d"))
-  (text "Export with: kicad-cli sch export pdf -o ktemata_r5_wiring.pdf docs/kicad/r5/ktemata.kicad_sch"
+  (text "Export with: kicad-cli sch export pdf -o ktemata_r5_wiring.pdf cad/kicad/r5/ktemata.kicad_sch"
     (at 20.32 217.17 0) (effects (font (size 1.8 1.8)) (justify left)) (uuid "588ce909-304b-5400-a73b-4ac7e1293f54"))
   (embedded_fonts no)
   (sheet_instances

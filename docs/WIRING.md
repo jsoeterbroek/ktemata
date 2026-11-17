@@ -7,14 +7,14 @@ right.**
 
 | Revision | Project | Status |
 |---|---|---|
-| R5 | `docs/kicad/r5/ktemata.kicad_pro` | Preserved implemented build |
-| R6 | `docs/kicad/r6/ktemata.kicad_pro` | Proposed layout and UPS/display revision; bench verification still required |
-| R6 PCH | `docs/kicad/r6/PCH/PCH.kicad_pro` | Proposed connector hub; single-sheet schematic + 50 × 50 mm PCB |
+| R5 | `cad/kicad/r5/ktemata.kicad_pro` | Preserved implemented build |
+| R6 | `cad/kicad/r6/ktemata.kicad_pro` | Proposed layout and UPS/display revision; bench verification still required |
+| R6 PCH | `cad/kicad/r6/PCH/PCH.kicad_pro` | Proposed connector hub; single-sheet schematic + 50 × 50 mm PCB |
 
 ```bash
-open docs/kicad/r5/ktemata.kicad_pro
-open docs/kicad/r6/ktemata.kicad_pro       # macOS; or pick each project in KiCad
-open docs/kicad/r6/PCH/PCH.kicad_pro
+open cad/kicad/r5/ktemata.kicad_pro
+open cad/kicad/r6/ktemata.kicad_pro       # macOS; or pick each project in KiCad
+open cad/kicad/r6/PCH/PCH.kicad_pro
 ```
 
 ## 1. The projects
@@ -47,11 +47,11 @@ Derived views, generated from the project — never edited by hand:
 
 ```bash
 for rev in r5 r6; do
-  kicad-cli sch export pdf -o "ktemata_${rev}_wiring.pdf" "docs/kicad/${rev}/ktemata.kicad_sch"
-  kicad-cli sch erc --severity-all -o "/tmp/ktemata_${rev}_erc.rpt" "docs/kicad/${rev}/ktemata.kicad_sch"
-  kicad-cli sch export netlist --format kicadxml -o "/tmp/ktemata_${rev}.xml" "docs/kicad/${rev}/ktemata.kicad_sch"
+  kicad-cli sch export pdf -o "ktemata_${rev}_wiring.pdf" "cad/kicad/${rev}/ktemata.kicad_sch"
+  kicad-cli sch erc --severity-all -o "/tmp/ktemata_${rev}_erc.rpt" "cad/kicad/${rev}/ktemata.kicad_sch"
+  kicad-cli sch export netlist --format kicadxml -o "/tmp/ktemata_${rev}.xml" "cad/kicad/${rev}/ktemata.kicad_sch"
   python3 work/scripts/kicad_netlist_csv.py "/tmp/ktemata_${rev}.xml" \
-    -o "docs/kicad/${rev}/ktemata_${rev}_connections.csv"
+    -o "cad/kicad/${rev}/ktemata_${rev}_connections.csv"
   python3 work/scripts/check_bom.py "/tmp/ktemata_${rev}.xml"
 done
 ```
@@ -59,14 +59,14 @@ done
 The PCH board is checked separately — ERC for the schematic, DRC for the PCB:
 
 ```bash
-kicad-cli sch erc --severity-all -o /tmp/pch_erc.rpt docs/kicad/r6/PCH/PCH.kicad_sch
-kicad-cli pcb drc --severity-all -o docs/kicad/r6/PCH/DRC.rpt docs/kicad/r6/PCH/PCH.kicad_pcb
+kicad-cli sch erc --severity-all -o /tmp/pch_erc.rpt cad/kicad/r6/PCH/PCH.kicad_sch
+kicad-cli pcb drc --severity-all -o cad/kicad/r6/PCH/DRC.rpt cad/kicad/r6/PCH/PCH.kicad_pcb
 ```
 
-`docs/kicad/r6/PCH/PCH.net` is the exported netlist. The PCH uses library symbols embedded in the schematic,
+`cad/kicad/r6/PCH/PCH.net` is the exported netlist. The PCH uses library symbols embedded in the schematic,
 so ERC reports `lib_symbol_mismatch` warnings but no electrical errors; DRC is clean.
 
-`docs/kicad/r5/ktemata_r5_connections.csv` and `docs/kicad/r6/ktemata_r6_connections.csv` are generated
+`cad/kicad/r5/ktemata_r5_connections.csv` and `cad/kicad/r6/ktemata_r6_connections.csv` are generated
 outputs: one row per pin on every net, so they cannot drift from their schematics. Edit the relevant
 schematic to change a connection; never edit either CSV by hand.
 
@@ -141,7 +141,7 @@ over automatically. The separate PCH board has its own rules in §4.
 ## 4. R6 PCH assembly rules
 
 The PCH is a passive connector hub — no conversion, no fuse, no protection of its own. Nets and pins live in
-[`PCH.kicad_pro`](kicad/r6/PCH/PCH.kicad_pro); the practice is here.
+[`PCH.kicad_pro`](../cad/kicad/r6/PCH/PCH.kicad_pro); the practice is here.
 
 1. **Match pin 1.** Mate the PCH's 2×4 UPS header one-to-one with the module's header and mark pin 1 on the
    cable. A reversed ribbon puts 5 V on the clock line; use a keyed connector or a shrouded header if you can.

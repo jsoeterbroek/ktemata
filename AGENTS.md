@@ -23,8 +23,8 @@ mark that meets a fan, a screw or the Pi opening stops at the mask edge.
 
 **r5 has no air-quality sensor.** The r5 cassette leaves the left wall and the sensor chamber out; the BME688/SEN66 pocket only exists in r2/r3/r4 (r4 prints it too, so an r4 bottom shell still has it). Do not reintroduce `SENSOR_*` geometry into r5.
 
-**Wiring lives in KiCad, not in the markdown.** `docs/kicad/r5/` preserves the implemented R5 project and
-`docs/kicad/r6/` holds the proposed R6 project. Each is a self-contained KiCad 10 project —
+**Wiring lives in KiCad, not in the markdown.** `cad/kicad/r5/` preserves the implemented R5 project and
+`cad/kicad/r6/` holds the proposed R6 project. Each is a self-contained KiCad 10 project —
 `ktemata.kicad_pro` with an A3 index sheet and three A4 sheets (`power`, `pi`, `mcu`) — and is the source of
 truth for that revision's nets and pins. One connector-shaped `Ktemata:` symbol per module; within a sheet
 every multi-pin net is routed (trunk in the left gutter, a tap per pin, junctions at the T's, the name on a
