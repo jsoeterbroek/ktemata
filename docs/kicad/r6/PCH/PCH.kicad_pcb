@@ -3016,6 +3016,19 @@
 		(layer "Edge.Cuts")
 		(uuid "221ebfb8-5ce7-4c6e-91fc-5e1a91b63a58")
 	)
+	(gr_text "KTEMATA R6 PCH"
+		(at 122 105.54 0)
+		(layer "F.SilkS")
+		(uuid "9a2ca69c-bc42-4912-bcff-88b00e4270ee")
+		(effects
+			(font
+				(size 1.5 1.5)
+				(thickness 0.3)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
 	(segment
 		(start 124 119)
 		(end 125 118)
