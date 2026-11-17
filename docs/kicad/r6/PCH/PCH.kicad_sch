@@ -628,6 +628,102 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Connector_Generic:Conn_02x04_Odd_Even"
+			(pin_names (offset 1.016) (hide yes))
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 1.27 5.08 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Value" "Conn_02x04_Odd_Even"
+				(at 1.27 -7.62 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Description" "Generic connector, double row, 02x04, odd/even pin numbering scheme"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(symbol "Conn_02x04_Odd_Even_1_1"
+				(rectangle (start -1.27 3.81) (end 3.81 -6.35)
+					(stroke (width 0.254) (type default))
+					(fill (type background))
+				)
+				(pin passive line
+					(at -5.08 2.54 0)
+					(length 3.81)
+					(name "Pin_1" (effects (font (size 1.27 1.27))))
+					(number "1" (effects (font (size 1.27 1.27))))
+				)
+				(pin passive line
+					(at 7.62 2.54 180)
+					(length 3.81)
+					(name "Pin_2" (effects (font (size 1.27 1.27))))
+					(number "2" (effects (font (size 1.27 1.27))))
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_3" (effects (font (size 1.27 1.27))))
+					(number "3" (effects (font (size 1.27 1.27))))
+				)
+				(pin passive line
+					(at 7.62 0 180)
+					(length 3.81)
+					(name "Pin_4" (effects (font (size 1.27 1.27))))
+					(number "4" (effects (font (size 1.27 1.27))))
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_5" (effects (font (size 1.27 1.27))))
+					(number "5" (effects (font (size 1.27 1.27))))
+				)
+				(pin passive line
+					(at 7.62 -2.54 180)
+					(length 3.81)
+					(name "Pin_6" (effects (font (size 1.27 1.27))))
+					(number "6" (effects (font (size 1.27 1.27))))
+				)
+				(pin passive line
+					(at -5.08 -5.08 0)
+					(length 3.81)
+					(name "Pin_7" (effects (font (size 1.27 1.27))))
+					(number "7" (effects (font (size 1.27 1.27))))
+				)
+				(pin passive line
+					(at 7.62 -5.08 180)
+					(length 3.81)
+					(name "Pin_8" (effects (font (size 1.27 1.27))))
+					(number "8" (effects (font (size 1.27 1.27))))
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Device:R"
 			(pin_numbers
 				(hide yes)
@@ -943,7 +1039,17 @@
 	)
 	(wire
 		(pts
-			(xy 36.83 114.3) (xy 30.48 114.3)
+			(xy 48.26 106.68) (xy 53.34 106.68)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a85abe31-08aa-4729-b025-f5ac77a8b472")
+	)
+	(wire
+		(pts
+			(xy 35.56 99.06) (xy 30.48 99.06)
 		)
 		(stroke
 			(width 0)
@@ -953,7 +1059,7 @@
 	)
 	(wire
 		(pts
-			(xy 36.83 111.76) (xy 30.48 111.76)
+			(xy 48.26 99.06) (xy 53.34 99.06)
 		)
 		(stroke
 			(width 0)
@@ -1023,7 +1129,7 @@
 	)
 	(wire
 		(pts
-			(xy 36.83 104.14) (xy 30.48 104.14)
+			(xy 35.56 101.6) (xy 30.48 101.6)
 		)
 		(stroke
 			(width 0)
@@ -1053,7 +1159,7 @@
 	)
 	(wire
 		(pts
-			(xy 36.83 101.6) (xy 30.48 101.6)
+			(xy 48.26 101.6) (xy 53.34 101.6)
 		)
 		(stroke
 			(width 0)
@@ -1073,7 +1179,7 @@
 	)
 	(wire
 		(pts
-			(xy 30.48 101.6) (xy 30.48 104.14)
+			(xy 35.56 106.68) (xy 30.48 106.68)
 		)
 		(stroke
 			(width 0)
@@ -1103,7 +1209,7 @@
 	)
 	(wire
 		(pts
-			(xy 36.83 109.22) (xy 30.48 109.22)
+			(xy 35.56 104.14) (xy 30.48 104.14)
 		)
 		(stroke
 			(width 0)
@@ -1233,13 +1339,43 @@
 	)
 	(wire
 		(pts
-			(xy 36.83 106.68) (xy 30.48 106.68)
+			(xy 48.26 104.14) (xy 53.34 104.14)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "f6b55646-af5f-4e0c-9e93-b099f2e160de")
+	)
+	(label "+3V3"
+		(at 53.34 101.6 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "76e05962-f9b2-4f01-96d9-e024fafa9ac4")
+	)
+	(label "GND"
+		(at 53.34 104.14 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "576d5127-b4a3-4b23-9dff-03552b099b3c")
+	)
+	(label "+5V"
+		(at 53.34 106.68 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "1df6000d-28f2-4853-8dd9-2d0b11685752")
 	)
 	(label "CHG_12V6_IN"
 		(at 66.04 35.56 0)
@@ -1291,8 +1427,8 @@
 		)
 		(uuid "43d5d658-26f6-4d41-806d-1aed959154c0")
 	)
-	(label "I2C_SDA"
-		(at 30.48 111.76 0)
+	(label "+5V"
+		(at 30.48 106.68 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -1321,8 +1457,8 @@
 		)
 		(uuid "52fe1872-6309-4419-9ada-49eb83c44644")
 	)
-	(label "+3V3"
-		(at 30.48 109.22 0)
+	(label "GND"
+		(at 30.48 104.14 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -1341,7 +1477,7 @@
 		)
 		(uuid "6086bed5-ae2a-4c12-bfd0-97b04c196b6f")
 	)
-	(label "+5V"
+	(label "I2C_SCL"
 		(at 66.04 101.6 0)
 		(effects
 			(font
@@ -1371,8 +1507,8 @@
 		)
 		(uuid "97ec6bbb-725a-4ed1-a37f-84515729761b")
 	)
-	(label "GND"
-		(at 30.48 106.68 0)
+	(label "+3V3"
+		(at 30.48 101.6 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -1381,7 +1517,7 @@
 		)
 		(uuid "9c6c08d7-6645-4961-a89b-904c817b537f")
 	)
-	(label "I2C_SDA"
+	(label "GND"
 		(at 66.04 109.22 0)
 		(effects
 			(font
@@ -1411,8 +1547,8 @@
 		)
 		(uuid "a07c70e9-c6de-456f-b8e1-184205a636d2")
 	)
-	(label "+5V"
-		(at 30.48 101.6 0)
+	(label "I2C_SCL"
+		(at 30.48 99.06 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -1421,7 +1557,7 @@
 		)
 		(uuid "a7190865-92da-412c-842d-f92aae75be23")
 	)
-	(label "+3V3"
+	(label "I2C_SDA"
 		(at 66.04 104.14 0)
 		(effects
 			(font
@@ -1451,7 +1587,7 @@
 		)
 		(uuid "c0ccf31c-e139-4256-af73-624ca697fb6b")
 	)
-	(label "GND"
+	(label "+3V3"
 		(at 66.04 106.68 0)
 		(effects
 			(font
@@ -1481,8 +1617,8 @@
 		)
 		(uuid "cf24d1ef-dc99-46c4-9a59-ee29e186a165")
 	)
-	(label "I2C_SCL"
-		(at 30.48 114.3 0)
+	(label "I2C_SDA"
+		(at 53.34 99.06 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -1541,7 +1677,7 @@
 		)
 		(uuid "f5c7586d-32a5-4305-a593-3298d7ceec73")
 	)
-	(label "I2C_SCL"
+	(label "+5V"
 		(at 66.04 111.76 0)
 		(effects
 			(font
@@ -2037,8 +2173,8 @@
 				)
 			)
 		)
-		(property "Value" "HOST_I2C_PWR_OUT"
-			(at 76.2 105.41 0)
+		(property "Value" "HOST_AUX_PWR_I2C"
+			(at 76.2 114.3 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2068,7 +2204,7 @@
 				)
 			)
 		)
-		(property "Description" "Output to Raspberry Pi / Host MCU (5V, 3V3, GND, SDA, SCL)"
+		(property "Description" "Host aux power + I2C: 1 SCL, 2 SDA, 3 3V3, 4 GND, 5 5V"
 			(at 76.2 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -2202,7 +2338,7 @@
 				)
 			)
 		)
-		(property "Value" "HUB_12V6_AUX_OUT"
+		(property "Value" "AUX_12V6_OUT"
 			(at 167.64 39.37 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2355,7 +2491,7 @@
 				)
 			)
 		)
-		(property "Value" "UPS_12V6_BAT_IN"
+		(property "Value" "UPS_12V6_IN"
 			(at 127 39.37 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2488,7 +2624,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector_Generic:Conn_01x06")
+		(lib_id "Connector_Generic:Conn_02x04_Odd_Even")
 		(at 40.64 101.6 0)
 		(unit 1)
 		(body_style 1)
@@ -2499,7 +2635,7 @@
 		(dnp no)
 		(uuid "f1ccc844-0058-4172-bc5b-cf058a473bd3")
 		(property "Reference" "J5"
-			(at 40.64 97.79 0)
+			(at 40.64 95.25 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2508,8 +2644,8 @@
 				)
 			)
 		)
-		(property "Value" "UPS3S_MAIN_HDR"
-			(at 40.64 105.41 0)
+		(property "Value" "UPS3S_HDR_2X4"
+			(at 40.64 110.49 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -2518,7 +2654,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical"
 			(at 40.64 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -2539,7 +2675,7 @@
 				)
 			)
 		)
-		(property "Description" "Waveshare UPS 3S Header (1:5V, 2:5V, 3:GND, 4:3V3, 5:SDA, 6:SCL)"
+		(property "Description" "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 3V3, 4 3V3, 5 GND, 6 GND, 7 5V, 8 5V"
 			(at 40.64 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -2567,6 +2703,12 @@
 		)
 		(pin "6"
 			(uuid "e2f68206-569a-4542-9f94-34866438c7ae")
+		)
+		(pin "7"
+			(uuid "8b5edebd-4ff2-432a-850a-63aec7a8e3df")
+		)
+		(pin "8"
+			(uuid "0fb37472-4059-4908-9791-6e09eb0f72c7")
 		)
 		(instances
 			(project "PCH"
