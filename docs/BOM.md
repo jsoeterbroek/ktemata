@@ -137,16 +137,16 @@ OLED, PBS-33B button, sealed **USB-C** panel port + MPPT module (5 V out), M2.5 
 ## D. PCH board
 
 Carrier board for the R6 power/communication hub — project [`kicad/r6/PCH/PCH.kicad_pro`](kicad/r6/PCH/PCH.kicad_pro).
-Footprints as exported from `PCH.csv`; connectors and passives are not yet priced.
+Parts as exported from `PCH.csv`; connectors and passives are not yet priced.
 
-| Ref | Value | Qty | Footprint |
+| Ref | Value | Qty | Part |
 |---|---|---|---|
-| J1 | DC-099_12V6_IN | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
-| J2 | UPS_12V6_CHG_OUT | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
-| J3 | SW16_LATCH_LED | 1 | `Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical` |
-| J4 | UPS_SW_EN | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
-| J5 | UPS3S_HDR_2X4 | 1 | `Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical` |
-| J6 | HOST_AUX_PWR_I2C | 1 | `Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical` |
-| J7 | UPS_12V6_IN | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
-| J8 | AUX_12V6_OUT | 1 | `Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` |
-| R1 | 330R | 1 | `Resistor_SMD:R_0603_1608Metric` |
+| J1 | DC-099_12V6_IN | 1 | JST XH 2.54mm 2 pin 15cm |
+| J2 | UPS_12V6_CHG_OUT | 1 | JST XH 2.54mm 2 pin 15cm |
+| J3 | SW16_LATCH_LED | 1 | JST XH 2.54mm 4 pin 15cm |
+| J4 | UPS_SW_EN | 1 | JST XH 2.54mm 2 pin 15cm |
+| J5 | UPS3S_HDR_2X4 | 1 | 2.54mm 2x4 pin header |
+| J6 | HOST_AUX_PWR_I2C | 1 | 2.54mm 1x5 pin header |
+| J7 | UPS_12V6_IN | 1 | JST XH 2.54mm 2 pin 15cm |
+| J8 | AUX_12V6_OUT | 1 | JST XH 2.54mm 2 pin 15cm |
+| R1 | 330R | 1 | 0603 resistor 330R |
