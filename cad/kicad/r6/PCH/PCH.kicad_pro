@@ -578,7 +578,7 @@
     "last_paths": {
       "idf": "",
       "netlist": "ktemata_r6_pch.net",
-      "plot": "",
+      "plot": "gerbers/",
       "specctra_dsn": "",
       "step": "",
       "vrml": ""
