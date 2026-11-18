@@ -1,7 +1,8 @@
 # PCH layout — FireBeetle 2 ESP32-UE on the carrier
 
 Implemented in `PCH.kicad_pcb`: a 63 × 66 mm, two-layer carrier with the FireBeetle
-socket rows, the charge-sense divider, and filled GND zones on both layers. The schematic
+socket rows, the charge-sense divider, and filled GND zones on both layers. The silkscreen is
+`KTEMATA R6 PCH v1.1`; the PCH version `v1.1` is independent of the R6 device revision. The schematic
 and PCB are the sources of truth for nets, pins, tracks and vias.
 
 ## Mechanical envelope
@@ -36,15 +37,16 @@ Coordinates are KiCad footprint origins. For J5, J6, J9 and J10 the origin is pa
 | C1 | 104, 128 | 0° |
 | J9 — mechanical-only 18-pin socket | 115.82, 163.8 | 90° |
 | J10 — 14-pin socket | 126.02, 141.8 | 90° |
-| H1 / H2 | 103.5, 103.5 / 146.5, 103.5 | — |
-| H3 / H4 | 103.5, 135 / 159.5, 136.5 | — |
+| H1 / H2 | 102, 102 / 161, 102 | — |
+| H3 / H4 | 102, 135 / 161, 136.5 | — |
 
 Corrections to the earlier derived sheet:
 
 - J6 stays at y = 113.92 to clear J3's courtyard; its fifth pad is the OLED button.
 - J4 moves to (109,126), and J7/J8 use 9 mm centre spacing to clear the JST XH courtyards.
 - R2, R3 and C1 are horizontal. C1 uses the standard 0603 capacitor pad offset of ±0.775 mm.
-- H3/H4 are inside the enlarged outline and clear the socket courtyards.
+- H1/H2 use (102,102) and (161,102); H3/H4 use (102,135) and (161,136.5). The 2 mm
+  centre margins leave 0.65 mm of board around each 2.7 mm hole and clear the socket courtyards.
 - Back-side crossovers connect directly between through-hole pads where possible; unnecessary
   via pairs from the derived route were omitted. Zones were refilled and saved by KiCad.
 
