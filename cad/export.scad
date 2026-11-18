@@ -11,6 +11,7 @@ use <r5_lid_plate.scad>
 use <r5_lid_cover.scad>
 use <r5_lid_cover_waveshare_7in.scad>
 use <r6_lid_plate.scad>
+use <r6_tray.scad>
 PART = "r5_deck";
 if (PART=="r5_tray")          r5_tray();                                 // floor down
 // The deck is flipped so its TOP face is on the bed (rotate about x), as r5_deck.scad's header
@@ -23,3 +24,5 @@ if (PART=="r5_lid_cover_waveshare_7in") r5_lid_cover_waveshare_7in();    // the 
 if (PART=="r5_lid_cover_test_dimensions") r5_lid_cover_test_dimensions(); // 1 mm fit template
 // R6's lid plate also prints visible-front down: keyboard ledges and rear pockets then need no support.
 if (PART=="r6_lid_plate")         rotate([180,0,0]) r6_lid_plate();
+// The R6 tray prints exactly as modelled: floor on the bed, walls, bosses and saddles upward.
+if (PART=="r6_tray")              r6_tray();

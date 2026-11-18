@@ -1,0 +1,203 @@
+// Ktemata R6 - cassette tray (the base's floor, display well and power band)
+//
+// The tray is the R6 cassette floor. It carries everything that is not bolted to the display:
+// the Waveshare UPS Module 3S with its three 18650 cells, and the PCH carrier. The Pi 5 and the
+// NVMe Base Duo are bolted to the back of the display (docs/R6.md "Display/Pi/Duo structural
+// assembly"), so they hang inside the display well and the tray never touches them. The
+// FireBeetle is socketed on the PCH, so there is no controller tray any more.
+//
+// Coordinates: x left->right, drawing y = 0 at the hinge end, z = 0 at the underside, rising.
+// PRINT FLOOR DOWN as modelled: walls, bosses and cell saddles all grow upward and the vent grid
+// drops straight through the floor, so nothing needs support.
+//
+// This is a fit part, not a released design: the display frame, the DSI/PCIe lead routing and the
+// UPS harness bends are unmodelled. The asserts below guard the published envelope only.
+include <common.scad>
+
+// ---------------------------------------------------------------- host and tray
+R6T_W        = HOST_L - 2*HOST_CLR;        // 233.5, Peli 1200 interior less 1.5 mm a side
+R6T_L        = HOST_W - 2*HOST_CLR;        // 178.1
+R6T_PAD      = 8;                          // tray underside -> host floor (r5's pad height)
+R6T_H        = 65;                         // underside -> rim
+R6T_FLOOR    = 3;
+R6T_WALL     = 2.5;
+R6T_R        = 8;                          // outer corner radius
+
+// ---------------------------------------------------------------- display well
+R6T_DISP_W   = 192.96;                     // Waveshare 7inch DSI LCD (C) panel width
+R6T_DISP_L   = 110.76;                     // panel height
+R6T_DISP_T   = 10.50;                      // glass to rear envelope
+R6T_DISP_CLR = 0.7;                        // well -> display frame, per side
+R6T_WELL_W   = R6T_DISP_W + 2*R6T_DISP_CLR;
+R6T_WELL_L   = R6T_DISP_L + 2*R6T_DISP_CLR;
+R6T_WELL_X0  = (R6T_W - R6T_WELL_W)/2;
+R6T_WELL_Y0  = R6T_L - R6T_WALL - R6T_WELL_L;   // display at the FAR end: in the flat-open posture
+                                                // the keyboard (lid) is behind the hinge, so the glass
+                                                // wants to be the furthest thing from it
+
+// Display frame interface: the panel's four outer M3 inserts. The frame (still unmodelled) bolts
+// down onto these bosses; its underside sits at R6T_BOSS_Z.
+R6T_FRAME_DX = 126.25;
+R6T_FRAME_DY = 65.49;
+R6T_BOSS_Z   = R6T_H - 12;                 // frame underside; 12 mm of frame + panel above it
+R6T_BOSS_D   = 8;
+R6T_M3_PILOT = 2.6;                        // M3 thread-forming screw into PLA
+R6T_M3_DEPTH = 10;
+
+// Display stack below the glass, for the assert: panel + 15 mm M2.5 extensions (Pi plane at 29) +
+// the Duo's 12 mm standoffs + Duo pcb + drive.
+R6T_PI_PLANE = 29;
+R6T_DUO_STAND = 12;
+R6T_DUO_PCB   = 1.6;
+R6T_DRIVE     = 4;
+R6T_STACK     = R6T_DISP_T + R6T_PI_PLANE + R6T_DUO_STAND + R6T_DUO_PCB + R6T_DRIVE;
+
+// ---------------------------------------------------------------- power band
+R6T_BAND_Y0  = R6T_WALL;                  // power band on the hinge side
+R6T_BAND_Y1  = R6T_WELL_Y0;
+R6T_BAND_H   = R6T_BAND_Y1 - R6T_BAND_Y0;
+
+// UPS Module 3S: 93 x 60 board on an 86 x 46 pattern, 0 3 mm holes. Its underside must stay off the
+// tray (docs/R6.md), so the posts hold it R6T_UPS_LIFT above the floor.
+R6T_UPS_W    = 93;
+R6T_UPS_L    = 60;
+R6T_UPS_HOLE = [86, 46];
+R6T_UPS_X0   = 80;
+R6T_UPS_Y0   = R6T_BAND_Y0 + (R6T_BAND_H - R6T_UPS_L)/2;
+R6T_UPS_LIFT = 8;
+R6T_UPS_POST = 8;
+R6T_UPS_PILOT = 2.6;
+
+// Three 18650 cells in a row, lying along x in saddles.
+R6T_CELL_D   = 18.7;                       // 18.4 nominal + printing/handling play
+R6T_CELL_L   = 67.2;                       // <= 67 mm cells plus end play
+R6T_CELL_N   = 3;
+R6T_CELL_X0  = R6T_WALL + 1.5;
+R6T_CELL_Y0  = R6T_BAND_Y0 + (R6T_BAND_H - R6T_CELL_N*R6T_CELL_D)/2;
+R6T_SADDLE_T = 12;                         // cradle block height
+R6T_SADDLE_R = R6T_CELL_D/2;
+R6T_FLAT_W   = 8;                          // flat floor of each cell slot, so the cut ends in a face
+
+// PCH carrier: 50 x 50, M2.5 holes on a 43 x 43 pattern, 8 mm posts.
+R6T_PCH_W    = 50;
+R6T_PCH_L    = 50;
+R6T_PCH_HOLE = 43;
+R6T_PCH_X0   = R6T_W - R6T_WALL - 3 - R6T_PCH_W;
+R6T_PCH_Y0   = R6T_BAND_Y0 + (R6T_BAND_H - R6T_PCH_L)/2;
+R6T_PCH_POST = 6;
+R6T_PCH_LIFT = 8;
+R6T_PCH_PILOT = 2.2;
+
+// Vent grid under the Pi/Duo so the Active Cooler is not breathing against a sealed floor.
+R6T_VENT_D   = 4;
+R6T_VENT_P   = 11;
+R6T_VENT_W   = 85;                        // Pi footprint
+R6T_VENT_L   = 56;
+
+// ---------------------------------------------------------------- envelope guards
+assert(R6T_PAD + R6T_H <= HOST_BOT - 1,
+       str("host ", HOST, ": pad + tray = ", R6T_PAD + R6T_H, " mm, the base is ", HOST_BOT));
+assert(R6T_STACK + R6T_FLOOR + 4 <= R6T_H,
+       str("display + Pi + Duo stack is ", R6T_STACK, " mm; the tray is ", R6T_H,
+           " mm with a ", R6T_FLOOR, " mm floor - raise R6T_H or shorten the extensions"));
+assert(R6T_UPS_L <= R6T_BAND_H,
+       str("UPS board ", R6T_UPS_L, " mm deep, power band only ", R6T_BAND_H));
+assert(R6T_CELL_N*R6T_CELL_D <= R6T_BAND_H,
+       str("three cells need ", R6T_CELL_N*R6T_CELL_D, " mm, band is ", R6T_BAND_H));
+assert(R6T_UPS_X0 + R6T_UPS_W <= R6T_PCH_X0 - 2,
+       "UPS and PCH overlap in x");
+assert(R6T_CELL_X0 + R6T_CELL_L <= R6T_UPS_X0 - 2,
+       "cell cradle runs into the UPS posts");
+
+// ---------------------------------------------------------------- helpers
+module r6t_at(x, y, z=0) translate([x, R6T_L - y, z]) children();
+module r6t_box(x0, y0, x1, y1, z, h)
+    translate([x0, R6T_L - y1, z]) cube([x1 - x0, y1 - y0, h]);
+
+// Post with a thread-forming pilot, sunk 1 mm into the floor so the union is never tangent.
+module r6t_post(x, y, d, h, pilot, depth) {
+    translate([x, R6T_L - y, 0]) difference() {
+        cylinder(d=d, h=h + 1);                        // 1 mm into the floor, never tangent
+        translate([0, 0, h + 1 - depth]) cylinder(d=pilot, h=depth + 1);
+    }
+}
+
+// One display-frame boss.
+module r6t_frame_bosses()
+    for (x = [R6T_W/2 - R6T_FRAME_DX/2, R6T_W/2 + R6T_FRAME_DX/2])
+        for (y = [R6T_WELL_Y0 + R6T_WELL_L/2 - R6T_FRAME_DY/2,
+                  R6T_WELL_Y0 + R6T_WELL_L/2 + R6T_FRAME_DY/2])
+            r6t_post(x, y, R6T_BOSS_D, R6T_BOSS_Z, R6T_M3_PILOT, R6T_M3_DEPTH);
+
+module r6t_ups_posts() {
+    cx = R6T_UPS_X0 + R6T_UPS_W/2;
+    cy = R6T_UPS_Y0 + R6T_UPS_L/2;
+    for (x = [cx - R6T_UPS_HOLE[0]/2, cx + R6T_UPS_HOLE[0]/2])
+        for (y = [cy - R6T_UPS_HOLE[1]/2, cy + R6T_UPS_HOLE[1]/2])
+            r6t_post(x, y, R6T_UPS_POST, R6T_UPS_LIFT, R6T_UPS_PILOT, 6);
+}
+
+module r6t_pch_posts() {
+    cx = R6T_PCH_X0 + R6T_PCH_W/2;
+    cy = R6T_PCH_Y0 + R6T_PCH_L/2;
+    for (x = [cx - R6T_PCH_HOLE/2, cx + R6T_PCH_HOLE/2])
+        for (y = [cy - R6T_PCH_HOLE/2, cy + R6T_PCH_HOLE/2])
+            r6t_post(x, y, R6T_PCH_POST, R6T_PCH_LIFT, R6T_PCH_PILOT, 6);
+}
+
+// Cell cradle: a block with three open saddles; the block's end walls are the retaining ribs.
+module r6t_cell_cradle() {
+    x0 = R6T_CELL_X0 - 0.5 - 1;      // 0.5 mm into the wall, never coplanar with it
+    x1 = R6T_CELL_X0 + R6T_CELL_L + 1.5;
+    y0 = R6T_CELL_Y0 - 1.5;
+    y1 = R6T_CELL_Y0 + R6T_CELL_N*R6T_CELL_D + 1.5;
+    difference() {
+        r6t_box(x0, y0, x1, y1, 0, R6T_SADDLE_T);
+        // U-slot per cell: hull of a flat bottom and the cell cylinder, so the cavity ends in a
+        // face rather than in the tangent line a plain cylinder cut leaves (that line is a
+        // non-manifold edge and fails the exporter's check).
+        for (i = [0:R6T_CELL_N-1])
+            hull() {
+                translate([R6T_CELL_X0 - 1,
+                           R6T_L - (R6T_CELL_Y0 + (i + 0.5)*R6T_CELL_D) - R6T_FLAT_W/2,
+                           R6T_FLOOR])
+                    cube([R6T_CELL_L + 2, R6T_FLAT_W, 0.2]);
+                translate([R6T_CELL_X0 - 1,
+                           R6T_L - (R6T_CELL_Y0 + (i + 0.5)*R6T_CELL_D),
+                           R6T_FLOOR + R6T_SADDLE_R])
+                    rotate([0, 90, 0]) cylinder(d=R6T_CELL_D, h=R6T_CELL_L + 2);
+            }
+    }
+}
+
+module r6t_vent_grid() {
+    x0 = R6T_W/2 - R6T_VENT_W/2;
+    y0 = R6T_WELL_Y0 + R6T_WELL_L/2 - R6T_VENT_L/2;
+    nx = floor(R6T_VENT_W/R6T_VENT_P);
+    ny = floor(R6T_VENT_L/R6T_VENT_P);
+    for (i = [0:nx])
+        for (j = [0:ny])
+            translate([x0 + i*R6T_VENT_P + (R6T_VENT_W - nx*R6T_VENT_P)/2,
+                       R6T_L - (y0 + j*R6T_VENT_P + (R6T_VENT_L - ny*R6T_VENT_P)/2), -1])
+                cylinder(d=R6T_VENT_D, h=R6T_FLOOR + 2);
+}
+
+// ---------------------------------------------------------------- the part
+module r6_tray() {
+    difference() {
+        union() {
+            // shell: floor + walls, square edges so the whole part prints floor-down without support
+            difference() {
+                linear_extrude(R6T_H) rrect(R6T_W, R6T_L, R6T_R);
+                translate([R6T_WALL, R6T_L - R6T_L + R6T_WALL, R6T_FLOOR])
+                    linear_extrude(R6T_H)
+                        rrect(R6T_W - 2*R6T_WALL, R6T_L - 2*R6T_WALL, R6T_R - R6T_WALL);
+            }
+            r6t_frame_bosses();
+            r6t_ups_posts();
+            r6t_pch_posts();
+            r6t_cell_cradle();
+        }
+        r6t_vent_grid();
+    }
+}
