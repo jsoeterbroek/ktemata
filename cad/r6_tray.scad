@@ -53,7 +53,9 @@ R6T_DRIVE     = 4;
 R6T_STACK     = R6T_DISP_T + R6T_PI_PLANE + R6T_DUO_STAND + R6T_DUO_PCB + R6T_DRIVE;
 
 // ---------------------------------------------------------------- power band
-R6T_BAND_Y0  = R6T_WALL;                  // power band on the hinge side
+// The display is carried on bosses at R6T_BOSS_Z, so it overhangs the floor in front of the well:
+// the power band is not a separate pocket, just the free floor from the hinge wall to the well.
+R6T_BAND_Y0  = R6T_WALL;
 R6T_BAND_Y1  = R6T_WELL_Y0;
 R6T_BAND_H   = R6T_BAND_Y1 - R6T_BAND_Y0;
 
@@ -62,8 +64,8 @@ R6T_BAND_H   = R6T_BAND_Y1 - R6T_BAND_Y0;
 R6T_UPS_W    = 93;
 R6T_UPS_L    = 60;
 R6T_UPS_HOLE = [86, 46];
-R6T_UPS_X0   = 80;
-R6T_UPS_Y0   = R6T_BAND_Y0 + (R6T_BAND_H - R6T_UPS_L)/2;
+R6T_UPS_X0   = 72;
+R6T_UPS_Y0   = R6T_WALL + 0.5;
 R6T_UPS_LIFT = 8;
 R6T_UPS_POST = 8;
 R6T_UPS_PILOT = 2.6;
@@ -72,20 +74,21 @@ R6T_UPS_PILOT = 2.6;
 R6T_CELL_D   = 18.7;                       // 18.4 nominal + printing/handling play
 R6T_CELL_L   = 67.2;                       // <= 67 mm cells plus end play
 R6T_CELL_N   = 3;
-R6T_CELL_X0  = R6T_WALL + 1.5;
-R6T_CELL_Y0  = R6T_BAND_Y0 + (R6T_BAND_H - R6T_CELL_N*R6T_CELL_D)/2;
+R6T_CELL_X0  = R6T_WALL + 1.5;                     // x 4..71.2
+R6T_CELL_Y0  = R6T_WALL + 1.5;                     // y 4..60.1, hinge side
 R6T_SADDLE_T = 12;                         // cradle block height
 R6T_SADDLE_R = R6T_CELL_D/2;
 R6T_FLAT_W   = 8;                          // flat floor of each cell slot, so the cut ends in a face
 
-// PCH carrier: 50 x 50, M2.5 holes on a 43 x 43 pattern, 8 mm posts.
-R6T_PCH_W    = 50;
-R6T_PCH_L    = 50;
-R6T_PCH_HOLE = 43;
-R6T_PCH_X0   = R6T_W - R6T_WALL - 3 - R6T_PCH_W;
-R6T_PCH_Y0   = R6T_BAND_Y0 + (R6T_BAND_H - R6T_PCH_L)/2;
-R6T_PCH_POST = 6;
-R6T_PCH_LIFT = 8;
+// PCH carrier, taken from cad/kicad/r6/PCH/PCH.kicad_pcb as the source of truth: 63.05 x 66.05 mm
+// outline (100..163 x 100..166), four O2.7 M2.5 holes as offsets from that outline's origin.
+R6T_PCH_W     = 63.05;
+R6T_PCH_L     = 66.05;
+R6T_PCH_HOLES = [[2, 2], [61, 2], [2, 35], [61, 36.5]];   // H1..H4, H3/H4 are 1.5 mm out of step
+R6T_PCH_X0    = R6T_W - R6T_WALL - R6T_PCH_W;             // 167.95
+R6T_PCH_Y0    = R6T_WALL;                                 // its 5 mm tail runs under the display
+R6T_PCH_POST  = 6;
+R6T_PCH_LIFT  = 8;
 R6T_PCH_PILOT = 2.2;
 
 // Vent grid under the Pi/Duo so the Active Cooler is not breathing against a sealed floor.
@@ -105,9 +108,13 @@ assert(R6T_UPS_L <= R6T_BAND_H,
 assert(R6T_CELL_N*R6T_CELL_D <= R6T_BAND_H,
        str("three cells need ", R6T_CELL_N*R6T_CELL_D, " mm, band is ", R6T_BAND_H));
 assert(R6T_UPS_X0 + R6T_UPS_W <= R6T_PCH_X0 - 2,
-       "UPS and PCH overlap in x");
+       str("UPS ends at ", R6T_UPS_X0 + R6T_UPS_W, ", PCH starts at ", R6T_PCH_X0));
 assert(R6T_CELL_X0 + R6T_CELL_L <= R6T_UPS_X0 - 2,
        "cell cradle runs into the UPS posts");
+assert(R6T_PCH_X0 + R6T_PCH_W <= R6T_W - R6T_WALL + 0.05,
+       str("PCH is ", R6T_PCH_W, " mm wide; the inner floor is ", R6T_W - 2*R6T_WALL));
+assert(R6T_PCH_LIFT + 20 <= R6T_BOSS_Z,
+       "the PCH and its tallest part must stay under the overhanging display");
 
 // ---------------------------------------------------------------- helpers
 module r6t_at(x, y, z=0) translate([x, R6T_L - y, z]) children();
@@ -137,13 +144,10 @@ module r6t_ups_posts() {
             r6t_post(x, y, R6T_UPS_POST, R6T_UPS_LIFT, R6T_UPS_PILOT, 6);
 }
 
-module r6t_pch_posts() {
-    cx = R6T_PCH_X0 + R6T_PCH_W/2;
-    cy = R6T_PCH_Y0 + R6T_PCH_L/2;
-    for (x = [cx - R6T_PCH_HOLE/2, cx + R6T_PCH_HOLE/2])
-        for (y = [cy - R6T_PCH_HOLE/2, cy + R6T_PCH_HOLE/2])
-            r6t_post(x, y, R6T_PCH_POST, R6T_PCH_LIFT, R6T_PCH_PILOT, 6);
-}
+module r6t_pch_posts()
+    for (h = R6T_PCH_HOLES)
+        r6t_post(R6T_PCH_X0 + h[0], R6T_PCH_Y0 + h[1],
+                 R6T_PCH_POST, R6T_PCH_LIFT, R6T_PCH_PILOT, 6);
 
 // Cell cradle: a block with three open saddles; the block's end walls are the retaining ribs.
 module r6t_cell_cradle() {

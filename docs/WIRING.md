@@ -9,7 +9,7 @@ right.**
 |---|---|---|
 | R5 | `cad/kicad/r5/ktemata.kicad_pro` | Preserved implemented build |
 | R6 | `cad/kicad/r6/ktemata.kicad_pro` | Proposed layout and UPS/display revision; bench verification still required |
-| R6 PCH | `cad/kicad/r6/PCH/PCH.kicad_pro` | Proposed connector hub; single-sheet schematic + 50 × 50 mm PCB |
+| R6 PCH | `cad/kicad/r6/PCH/PCH.kicad_pro` | Proposed connector hub; single-sheet schematic + 63 × 66 mm PCB |
 
 ```bash
 open cad/kicad/r5/ktemata.kicad_pro
@@ -28,7 +28,7 @@ Both revisions use an A3 index and three A4 sheets:
 | `/Pi 5 and its peripherals` | `pi.kicad_sch` | Touch Display 2, NVMe, keyboard, RTC | **Waveshare 7inch DSI LCD (C)** including its touch interface; other functions retained |
 | `/FireBeetle …` | `mcu.kicad_sch` | Controller and status components on the deck | FireBeetle/RTC in the base; OLED/button in the lid through a serviceable harness |
 
-The **R6 PCH** is a separate single-sheet project and a 50 × 50 mm two-layer board. It carries the charge
+The **R6 PCH** is a separate single-sheet project and a 63 × 66 mm two-layer board. It carries the charge
 pass-through, the UPS header, the panel switch/LED and the 12.6 V auxiliary output. Its schematic, exported
 netlist and board are `PCH.kicad_sch`, `PCH.net` and `PCH.kicad_pcb`; parts are in
 [`BOM.md`](BOM.md) section D. The R6 `/Power` sheet includes it as block **J16**; the Pi and MCU sheets use

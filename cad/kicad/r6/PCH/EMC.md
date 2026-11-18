@@ -11,29 +11,33 @@ Analysed `cad/kicad/r6/PCH/PCH.kicad_pcb` + `PCH.kicad_sch` as saved 2026-11-17 
 
 | Property | Value |
 |---|---|
-| Size / stackup | 50 × 50 mm, 2 copper layers, 1.6 mm FR4 (1.51 mm core, εr 4.5), no stackup-controlled impedance |
-| Parts | 9 (8 connectors + R1 330R), 10 nets, 28 track segments, **0 vias** |
-| Routing | all 28 segments on F.Cu; GND pour on **both** layers — B.Cu 2211.0 mm² (**88 %**), F.Cu 1930.3 mm² (**77 %**, lower only because the tracks and pads void it) |
-| Ground | one domain, both layers poured, no splits; every GND pad is a THT barrel, so the pours are tied together at all nine ground pins on the seven connectors that have one |
-| Sources | **none** — no switcher, no clock, no crystal, no IC. Only I2C (100–400 kHz), 12.6 V DC and a 9 mA LED |
-| Nets | +3V3, +5V, GND, I2C_SCL, I2C_SDA, CHG_12V6_IN (J1↔J2), BAT_12V6_OUT (J7↔J8), UPS_SW_1/2 (J3.1–2 ↔ J4.1–2), SW_LED_ANODE |
+| Size / stackup | 63 × 66 mm, 2 copper layers, 1.6 mm FR4 (1.51 mm core, εr 4.5), no stackup-controlled impedance |
+| Parts | 18 (8 connectors, the FireBeetle 14- and 18-pin socket rows, R1 330R, the 47k/10k + 100 nF divider, 4 mounting holes), 19 nets, 50 track segments, **6 vias** |
+| Routing | 32 segments on F.Cu, 18 on B.Cu; GND pour on both layers |
+| Ground | one domain, both layers poured, tied at every THT ground pad. The B.Cu pour is now **voided where the 18 B.Cu segments run**, so it is no longer solid under all of the F.Cu routing |
+| Sources | **none** — no switcher, no clock, no crystal, no IC on the board itself. Only I2C (100–400 kHz), 12.6 V DC and a 9 mA LED. The FireBeetle sits on J9/J10, so its 40 MHz crystal and 2.4 GHz radio are inside this board's footprint but under firmware control and off |
+| Nets | +3V3, +5V, GND, I2C_SCL, I2C_SDA, CHG_12V6_IN, CHG_SENSE, BAT_12V6_OUT, UPS_SW_1/2, SW_LED_ANODE, OLED_BTN |
 
 ## Analyzer result and triage
 
-`analyze_emc.py --standard cispr-class-b`: 19 findings (3 error, 5 warning, 11 info),
-risk score **80.5**; 18 of 19 are `confidence: heuristic`, 0 datasheet-backed
-(`DS-001`: no MPNs, no `datasheets/`).
+`analyze_emc.py --standard cispr-class-b`, re-run 2026-11-18 on the 63 × 66 board with the FireBeetle
+sockets: **27 findings (2 error, 10 warning, 15 info), risk score 74.5**. All findings are
+`confidence: heuristic`; still 0 datasheet-backed (`DS-001`: no MPNs, no `datasheets/`). The earlier
+run (19 findings, 80.5) described the 50 × 50 board and is superseded.
 
 | Rule | n | Analyzer | Reality | Why |
 |---|---|---|---|---|
-| GP-001 | 3 error, 4 warn | plane gaps, 50–94 % coverage | **false positive** | Every miss is a trace *endpoint* sitting inside a pad's clearance + 0.5 mm thermal void (0.85–1.0 mm from the pad centre). Re-sampling all 80 points against the actual `filled_polygon` gives 100 % coverage away from pads. The pour spans x 96.3–153.3, y 97–152 and is clipped to the 100–150 outline: there is no split, slot or island chain anywhere on the board. |
-| VS-001 | 1 warn | "0 vias, 150 MHz, stitch ≤48 mm" | **N/A** | 150 MHz is the tool's 50 MHz default ×3; nothing on the board emits above ~1 MHz. With one plane layer and nothing to stitch to, vias would add no return path. |
-| SU-001 | 1 info | F.Cu/B.Cu adjacent, no plane between | **accepted** | True but moot: all routing is on F.Cu, with the same-layer F.Cu pour beside it and the 88 % B.Cu pour underneath, and nothing is fast. Correct 2-layer decision — keep it. |
-| EE-001 | 1 info | cavity modes at 1413/1999/2827 MHz | **N/A** | Board cavities only matter with a source in band; there is none. |
-| IO-001 | 8 info | no ferrite/TVS within 25 mm of any connector | **1 of 8 real** | J5/J6 carry 100–400 kHz I2C over a ~140 mm internal harness, J2/J3/J4/J7/J8 are internal JST harness inside a plastic case: no filtering needed. J1 is the charge lead to the DC jack — see below. |
-| IO-002 | 1 info | J3 has 1 GND pin for 3 signals | **N/A** | J3's "signals" are the 9 mA LED return and one switch contact pair. |
+| GP-001 | 2 error, 5 warn | plane gaps under signal traces | **partly real now** | Re-sampling the tracks against the actual `filled_polygon`: 20 of 56 misses are *mid-trace*, not pad endpoints — e.g. /I2C_SCL over x 132, y 134–137 is 3–6 mm from any pad. The cause is the new B.Cu routing: its 18 segments void the B.Cu reference under F.Cu runs. The same-layer F.Cu pour still carries the return, so this is a softened plane rather than a split; fix opportunistically by keeping long F.Cu runs out of B.Cu track corridors or stitching GND beside them. |
+| BE-001 | 1 warn | /CHG_12V6_IN near the board edge | **real, minor** | the 0.8 mm charge run grazes the edge; pull it ≥1 mm inboard at the next revision. |
+| RP-001 | 3 warn | no stitching via at a layer transition | **real, minor** | /CHG_SENSE, /SW_LED_ANODE and /UPS_SW_2 each change layer through a via; a GND via within ~2 mm of each transition keeps the return short. |
+| VS-001 | — | not raised | n/a | the board now has 6 vias, and nothing on it emits above ~1 MHz. |
+| SU-001 | 1 info | F.Cu/B.Cu adjacent, no plane between | accepted | two-layer decision; both layers are poured and nothing is fast. |
+| EE-001 | 1 info | cavity modes at 1413/1999/2827 MHz | n/a | no source in band. |
+| IO-001 | 10 info | no ferrite/TVS within 25 mm of any connector | **1 real** | J1's charge lead to the DC jack, as before. J9/J10 are the module sockets inside the case; J2/J3/J4/J7/J8 are internal JST harness. |
+| IO-002 | 3 info | J3, J6 and J10 ground-pin count | n/a | J10's ground pins are the module's own pinout; J3's are the LED return and switch pair. |
 
-Adjusted score with GP-001 and VS-001 removed: **98.5** (worst remaining penalty is VS-001).
+The 74.5 score is dragged down by the GP-001 class; the electrically meaningful residue is BE-001, the
+three RP-001 stitches and the charge-input protection below.
 
 ## Real findings
 
@@ -54,9 +58,9 @@ Adjusted score with GP-001 and VS-001 removed: **98.5** (worst remaining penalty
    7-inch display stay on the UPS Module 3S's USB-C lead; do not route the Pi's 5 A through this
    board." One trap remains: the r6 netlist puts `UPS_5V` on J16 pin 5, which reads as the Pi's
    5 A passing through the PCH. Keep the Pi off J6.5 — the board is ~2.5× undersized for it.
-4. **No decoupling on the board at all.** Zero capacitors. Not an emissions problem on a passive
-   board, but a 10 µF + 100 nF at J5 and J6 costs nothing and drops the rail impedance the harness
-   sees. Optional.
+4. **Only the divider's 100 nF on the board.** No bulk capacitance at J5/J6. Not an emissions problem
+   on a passive board, but a 10 µF at J5 and a 100 nF at J6 cost nothing and drop the rail impedance
+   the harness sees. Optional.
 5. **J4 duplicates J3's switch nets.** `UPS_SW_1` / `UPS_SW_2` come out on both J3.1/2 and
    J4.1/2. Fit the switch to one of them: a straight harness on the other shorts the contact pair,
    and the switch stops switching. One line for the harness list, no hardware change.

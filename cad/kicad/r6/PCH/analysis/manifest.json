@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "PCH.kicad_pro",
-  "current": "2026-11-17_2002",
+  "current": "2026-11-18_0955",
   "runs": {
     "2026-11-17_2002": {
       "source_hashes": {
@@ -19,6 +19,24 @@
         "schematic": "analyze_schematic.py PCH.kicad_sch"
       },
       "generated": "2026-11-17T20:02:11+01:00",
+      "pinned": false
+    },
+    "2026-11-18_0955": {
+      "source_hashes": {
+        "PCH.kicad_sch": "sha256:53b74e868f0f8aa4b608b2ad50da448ee0466b87d7c7a5b0441d05937089e5b6",
+        "PCH.kicad_pcb": "sha256:f1c0ca5a0cb28a91cdfc6b9a777d762e9d6916449cfa7cb23d866b1444a6dc7a",
+        "schematic.json": "sha256:14d409357062ce2fbb52a0132722f51bd7d4d9cd9a811e43c7dabd88ada4bf25",
+        "pcb.json": "sha256:ca713b15a621a81b3961f10214735bbb9ae845cb20d02f32b31718384896d898"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "emc": "emc.json"
+      },
+      "scripts": {
+        "pcb": "analyze_pcb.py PCH.kicad_pcb"
+      },
+      "generated": "2026-11-18T09:55:11+01:00",
       "pinned": false
     }
   }
