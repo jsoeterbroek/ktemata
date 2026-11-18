@@ -152,7 +152,7 @@ The PCH is a passive connector hub — no conversion, no fuse, no protection of 
 4. **No fuse on the PCH.** The Module 3S's protection covers the in-module 3S pack; the PCH only carries
    post-protection 2 A branches. Do not fit the 5 A cartridge here. If a pack is built outside the module,
    its fuse belongs in the pack's positive lead, upstream of the module.
-5. **Ground and mounting.** GND is a filled F.Cu zone; re-check the fill after any layout change. Mount on
+5. **Ground and mounting.** GND is a filled zone on both copper layers (F.Cu coplanar with the routing, B.Cu solid underneath); re-check both fills after any layout change. Mount on
    the four M2.5 holes with nylon standoffs so the JST shells cannot touch the tray or shielding.
 6. **First power-up.** With the UPS output off, check the 12.6 V branches for shorts. Then connect the charge
    source and the UPS and confirm the aux rails and the UPS gauge at `0x41`; connect the Pi last.

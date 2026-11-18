@@ -13,8 +13,8 @@ Analysed `cad/kicad/r6/PCH/PCH.kicad_pcb` + `PCH.kicad_sch` as saved 2026-11-17 
 |---|---|
 | Size / stackup | 50 × 50 mm, 2 copper layers, 1.6 mm FR4 (1.51 mm core, εr 4.5), no stackup-controlled impedance |
 | Parts | 9 (8 connectors + R1 330R), 10 nets, 28 track segments, **0 vias** |
-| Routing | all 28 segments on F.Cu; single GND zone on B.Cu, fill 2205.8 mm² = **88 % of the board** |
-| Ground | one domain, one zone, no splits; all GND pads are THT barrels into the B.Cu pour |
+| Routing | all 28 segments on F.Cu; GND pour on **both** layers — B.Cu 2211.0 mm² (**88 %**), F.Cu 1930.3 mm² (**77 %**, lower only because the tracks and pads void it) |
+| Ground | one domain, both layers poured, no splits; every GND pad is a THT barrel, so the pours are tied together at all nine ground pins on the seven connectors that have one |
 | Sources | **none** — no switcher, no clock, no crystal, no IC. Only I2C (100–400 kHz), 12.6 V DC and a 9 mA LED |
 | Nets | +3V3, +5V, GND, I2C_SCL, I2C_SDA, CHG_12V6_IN (J1↔J2), BAT_12V6_OUT (J7↔J8), UPS_SW_1/2 (J3.1–2 ↔ J4.1–2), SW_LED_ANODE |
 
@@ -28,7 +28,7 @@ risk score **80.5**; 18 of 19 are `confidence: heuristic`, 0 datasheet-backed
 |---|---|---|---|---|
 | GP-001 | 3 error, 4 warn | plane gaps, 50–94 % coverage | **false positive** | Every miss is a trace *endpoint* sitting inside a pad's clearance + 0.5 mm thermal void (0.85–1.0 mm from the pad centre). Re-sampling all 80 points against the actual `filled_polygon` gives 100 % coverage away from pads. The pour spans x 96.3–153.3, y 97–152 and is clipped to the 100–150 outline: there is no split, slot or island chain anywhere on the board. |
 | VS-001 | 1 warn | "0 vias, 150 MHz, stitch ≤48 mm" | **N/A** | 150 MHz is the tool's 50 MHz default ×3; nothing on the board emits above ~1 MHz. With one plane layer and nothing to stitch to, vias would add no return path. |
-| SU-001 | 1 info | F.Cu/B.Cu adjacent, no plane between | **accepted** | True but moot: all routing is on F.Cu *over* the 88 % B.Cu pour, and nothing is fast. Correct 2-layer decision — keep it. |
+| SU-001 | 1 info | F.Cu/B.Cu adjacent, no plane between | **accepted** | True but moot: all routing is on F.Cu, with the same-layer F.Cu pour beside it and the 88 % B.Cu pour underneath, and nothing is fast. Correct 2-layer decision — keep it. |
 | EE-001 | 1 info | cavity modes at 1413/1999/2827 MHz | **N/A** | Board cavities only matter with a source in band; there is none. |
 | IO-001 | 8 info | no ferrite/TVS within 25 mm of any connector | **1 of 8 real** | J5/J6 carry 100–400 kHz I2C over a ~140 mm internal harness, J2/J3/J4/J7/J8 are internal JST harness inside a plastic case: no filtering needed. J1 is the charge lead to the DC jack — see below. |
 | IO-002 | 1 info | J3 has 1 GND pin for 3 signals | **N/A** | J3's "signals" are the 9 mA LED return and one switch contact pair. |
@@ -42,7 +42,7 @@ Adjusted score with GP-001 and VS-001 removed: **98.5** (worst remaining penalty
    An IEC 61000-4-2 (jack contact discharge) or 61000-4-5 event on the charge lead is clamped
    only by the upstream UPS/battery. Add one bidirectional TVS across J1 (SMBJ15A for a
    12.6 V charger, SMBJ18A if the source floats to 14.4 V) plus a 10 µF/50 V bulk cap, and keep
-   the TVS-to-GND return shorter than 3 mm into the B.Cu pour. This is the only item on this board
+   the TVS-to-GND return shorter than 3 mm into the F.Cu pour, which now reaches the connector pads coplanar. This is the only item on this board
    that can fail a compliance test.
 2. **12.6 V charge current is at the trace rating, not under it.** `CHG_12V6_IN` and
    `BAT_12V6_OUT` are 0.8 mm on 35 µm = 2.03 A at 10 °C rise (IPC-2221 external);
@@ -76,7 +76,7 @@ Adjusted score with GP-001 and VS-001 removed: **98.5** (worst remaining penalty
 |---|---|---|
 | Conducted emissions, 150 kHz–30 MHz | LISN on the 12.6 V charge lead, source connected, Pi idle and loaded | high — the only external conductor this board owns |
 | Radiated, 30–1000 MHz | Assembled device in the plastic case, near-field first | high — source is the Pi/NVMe, PCH is a passive victim/path |
-| Near-field probe points | J1/J2 (charge in), J3 (switch + LED loop: 24.7 mm of 0.2–0.25 mm trace with no F.Cu ground nearby — the largest loop on the board), J5↔J6 (I2C pair, 17.8 mm) | medium |
+| Near-field probe points | J1/J2 (charge in), J3 (switch + LED loop: 24.7 mm of 0.2–0.25 mm trace, the largest loop on the board), J5↔J6 (I2C pair, 17.8 mm) | medium |
 | ESD ±8 kV contact | DC jack centre pin and shell; expect the gap in finding 1 | high |
 | EFT / burst | Charge lead, 1 kV | medium |
 | Surge 1 kV / 2 Ω | Charge lead | medium |
