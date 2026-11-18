@@ -31,14 +31,19 @@ R6T_DISP_CLR = 0.7;                        // well -> display frame, per side
 R6T_WELL_W   = R6T_DISP_W + 2*R6T_DISP_CLR;
 R6T_WELL_L   = R6T_DISP_L + 2*R6T_DISP_CLR;
 R6T_WELL_X0  = (R6T_W - R6T_WELL_W)/2;
-R6T_WELL_Y0  = R6T_L - R6T_WALL - R6T_WELL_L;   // display at the FAR end: in the flat-open posture
+R6T_WELL_Y0  = R6T_L - R6T_WALL - R6T_WELL_L - 4;   // 4 mm in from the far wall so the frame's
+                                                // 201 x 118.8 bezel clears both walls; display at the
+                                                // FAR end: in the flat-open posture the keyboard (lid)
+                                                // is behind the hinge, so the glass wants to be furthest
                                                 // the keyboard (lid) is behind the hinge, so the glass
                                                 // wants to be the furthest thing from it
 
 // Display frame interface: the panel's four outer M3 inserts. The frame (still unmodelled) bolts
 // down onto these bosses; its underside sits at R6T_BOSS_Z.
-R6T_FRAME_DX = 126.25;
-R6T_FRAME_DY = 65.49;
+// These are the FRAME's tray screws, not the panel's inserts: the panel's own 126.25 x 65.49 M3
+// inserts are used by the frame (cad/r6_lid_cover.scad), so the two screw sets must not coincide.
+R6T_FRAME_DX = 180;
+R6T_FRAME_DY = 96;
 R6T_BOSS_Z   = R6T_H - 12;                 // frame underside; 12 mm of frame + panel above it
 R6T_BOSS_D   = 8;
 R6T_M3_PILOT = 2.6;                        // M3 thread-forming screw into PLA

@@ -6,6 +6,8 @@
   python3 cad/tools/export.py r5_lid_cover_test_dimensions     # an R5 alternative, by name
   python3 cad/tools/export.py r6_lid_plate                     # the R6 keyboard/OLED lid prototype
   python3 cad/tools/export.py r6_tray                          # the R6 cassette tray
+  python3 cad/tools/export.py r6_lid_cover                     # the R6 display frame / lid cover
+  python3 cad/tools/export.py r6_deck                          # the R6 cassette deck
 
 The R5 fit template and 7" lid cover, and all R6 parts, are skipped unless named. Every export is
 binary, centred on x/y, dropped to z=0 and checked for directed-edge manifoldness.
@@ -19,10 +21,12 @@ PARTS = {'r5_tray':'ktemata_r5_tray', 'r5_deck':'ktemata_r5_deck',
          'r5_lid_cover_test_dimensions':'ktemata_r5_lid_cover_test_dimensions',
          'r5_lid_cover_waveshare_7in':'ktemata_r5_lid_cover_waveshare_7in',
          'r6_lid_plate':'ktemata_r6_lid_plate',
-         'r6_tray':'ktemata_r6_tray'}
+         'r6_tray':'ktemata_r6_tray',
+         'r6_lid_cover':'ktemata_r6_lid_cover',
+         'r6_deck':'ktemata_r6_deck'}
 # Alternatives are skipped unless named; R6 prototypes are never in the default R5 export.
 ALTERNATIVES = {'r5_lid_cover_test_dimensions', 'r5_lid_cover_waveshare_7in', 'r6_lid_plate',
-                'r6_tray'}
+                'r6_tray', 'r6_lid_cover', 'r6_deck'}
 
 def read_ascii(path):
     tris, cur = [], []
