@@ -1,9 +1,9 @@
-// Ktemata R6 - deck (full-face cassette top: display, charge jack, power switch, vents)
+// Ktemata R6 - deck (full-face cassette top: display, charge jack, power switch, guarded vent)
 //
 // r5's deck was the cassette's whole top face. R6 keeps that: the keyboard and status OLED moved to
 // the host lid (r6_lid_plate), so this deck carries the Waveshare 7inch DSI LCD (C) in a 10.5 mm
-// pocket, the 12.6 V charge jack, the 16 mm latching switch and the air-flow vents, and it closes
-// the whole tray opening. There is no separate display frame any more.
+// pocket, the 12.6 V charge jack, the 16 mm latching switch and a guarded air-flow opening, and it
+// closes the whole tray opening. There is no separate display frame any more.
 //
 // One joint: four M3 countersunk screws down through the top face into the tray's four Ø8 bosses
 // (pattern shared with r6_tray.scad). Those four points sit outside the panel's 192.96 x 110.76
@@ -17,12 +17,13 @@
 // 74.4 mm interior.
 //
 // PRINT AS MODELLED: underside on the bed. The panel pocket, the two connector recesses, the
-// countersinks and every vent open upward, and the panel lead slot and screw holes are through.
-// Nothing needs support. The deck is a solid 13.5 mm slab (0.30 L, about 370 g of PLA): a 3 mm skin
-// would need a 190 mm ceiling over the pocket or a 57 mm unsupported rim over the power band.
+// countersinks and the fan opening face upward; the lead slot and screw holes are through. The
+// full-height guard bars grow from the bed, so nothing needs support. The deck is a solid 13.5 mm
+// slab: a 3 mm skin would need a 190 mm ceiling over the pocket or a 57 mm unsupported rim over the
+// power band.
 //
-// Fit prototype: the panel's insert depth and the positions of its two lead exits are not measured.
-// The vents are sized for convection through the sealed case, not against a fan curve.
+// Fit prototype: the panel's insert depth, standoff-extension diameter and two lead exits are not
+// measured. The opening aids convection in the open operating posture; it is not matched to a fan curve.
 include <common.scad>
 
 // ---------------------------------------------------------------- tray interface (assembly)
@@ -47,7 +48,15 @@ R6D_PANEL_T   = 10.50;                    // glass to rear envelope
 R6D_PANEL_CLR = 0.35;                     // pocket wall clearance per side
 R6D_PANEL_C   = [116.75 - R6D_TRAY_X0 - R6D_CLR,
                  115.52 - R6D_TRAY_Y0 - R6D_CLR];   // 113.95 x 112.72, centred over the tray's well
-R6D_INSET     = [126.25, 65.49];          // the panel's own M3 inserts
+R6D_PANEL_X0  = R6D_PANEL_C[0] - R6D_PANEL[0]/2;
+R6D_PANEL_Y0  = R6D_PANEL_C[1] - R6D_PANEL[1]/2;
+// Measured panel-relative rear features from r5_lid_cover_waveshare_7in.scad. Neither pattern is
+// centred on the glass: the outer inserts and inner Pi standoffs are independent mounting interfaces.
+R6D_PANEL_INSETS = [[34.42, 31.58], [160.67, 31.58],
+                    [34.42, 97.07], [160.67, 97.07]];  // M3, 126.25 x 65.49 span
+R6D_PI_POSTS     = [[73.97, 32.43], [131.97, 32.43],
+                    [73.97, 81.43], [131.97, 81.43]];  // M2.5, 58 x 49 span
+R6D_PI_POST_D    = 6.5;                     // standoff-extension passage; measure the fitted hardware
 R6D_POCKET    = [R6D_PANEL[0] + 2*R6D_PANEL_CLR,
                  R6D_PANEL[1] + 2*R6D_PANEL_CLR];   // 193.66 x 111.46
 
@@ -68,13 +77,16 @@ R6D_SW_D      = 16.2;                     // M16 latching switch
 R6D_RECESS    = 25;                       // nut recess, clears a 22 mm nut
 R6D_RECESS_D  = 8;
 
-// ---------------------------------------------------------------- vents
-R6D_VENT_D    = 4;
-R6D_VENT_P    = 12;
-R6D_VENT_X    = [10 : R6D_VENT_P : 218];  // hinge-strip rows
-R6D_VENT_Y    = [7, 48];
-R6D_SIDE_X    = [13.5, 214.4];            // side columns, beside the panel pocket
-R6D_SIDE_Y    = [62 : R6D_VENT_P : 165];
+// ---------------------------------------------------------------- guarded fan opening
+// One 40 mm fan opening between the existing jack and switch. The guard bars occupy the full
+// plate thickness, so they grow from the bed instead of bridging the opening at the top face.
+R6D_FAN_C        = [80, 28.5];
+R6D_FAN_D        = 38;                     // 38 mm clear opening for a 40 mm fan
+R6D_FAN_HOLE_SP  = 32;                     // 40 mm fan mounting pattern
+R6D_FAN_SCREW_D  = 3.4;
+R6D_GRILLE_BARS  = 7;
+R6D_GRILLE_BAR   = 1.4;
+R6D_GRILLE_EMBED = 1.5;
 
 R6D_SCREW     = 3.4;                      // M3 clearance
 R6D_CSK       = 6.4;                      // 90 deg countersink for an M3 countersunk head
@@ -97,9 +109,14 @@ assert(R6D_L - R6D_POCKET_Y1 > 3,
        "the panel pocket reaches the deck's far edge");
 assert(R6D_POCKET_Y0 > R6D_RECESS + 15,
        "the hinge strip is too short for the connector recesses and the pocket");
-assert(R6D_INSET[0]/2 + R6D_SCREW/2 + 1 < R6D_POCKET[0]/2
-       && R6D_INSET[1]/2 + R6D_SCREW/2 + 1 < R6D_POCKET[1]/2,
-       "the panel's fixing screws would break out of the pocket floor");
+for (p = R6D_PANEL_INSETS)
+    assert(p[0] > R6D_SCREW/2 + 1 && p[0] < R6D_PANEL[0] - R6D_SCREW/2 - 1
+           && p[1] > R6D_SCREW/2 + 1 && p[1] < R6D_PANEL[1] - R6D_SCREW/2 - 1,
+           "a panel fixing screw would break out of the pocket floor");
+for (p = R6D_PI_POSTS)
+    assert(p[0] > R6D_PI_POST_D/2 + 1 && p[0] < R6D_PANEL[0] - R6D_PI_POST_D/2 - 1
+           && p[1] > R6D_PI_POST_D/2 + 1 && p[1] < R6D_PANEL[1] - R6D_PI_POST_D/2 - 1,
+           "a Pi standoff passage would break out of the pocket floor");
 assert(R6D_SLOT_Y > R6D_POCKET_Y0 && R6D_SLOT_Y + R6D_SLOT[1] < R6D_POCKET_Y1,
        "the panel lead slot must stay under the panel");
 assert(R6D_JACK[1] - R6D_RECESS/2 > 2 && R6D_SW[1] - R6D_RECESS/2 > 2,
@@ -111,16 +128,13 @@ for (b = R6D_BOSS)
                          R6D_POCKET_X0, R6D_POCKET_Y0, R6D_POCKET_X1, R6D_POCKET_Y1)
              > R6D_CSK/2 + 1,
            "a deck screw or its head would land in the panel pocket");
-assert(R6D_VENT_Y[0] - R6D_VENT_D/2 > 2
-       && R6D_VENT_Y[1] + R6D_VENT_D/2 < R6D_POCKET_Y0,
-       "a hinge-strip vent row runs into the panel pocket");
-assert(R6D_SIDE_X[0] - R6D_VENT_D/2 - (R6D_BOSS[0][0] - R6D_TRAY_X0 - R6D_CLR + R6D_CSK/2) > 0.5
-       && R6D_POCKET_X0 - (R6D_SIDE_X[0] + R6D_VENT_D/2) > 1,
-       "the left vent column has no material around it");
-assert((R6D_W - (R6D_BOSS[0][0] - R6D_TRAY_X0 - R6D_CLR) - R6D_CSK/2)
-           - (R6D_SIDE_X[1] + R6D_VENT_D/2) > 0.5
-       && (R6D_SIDE_X[1] - R6D_VENT_D/2) - R6D_POCKET_X1 > 1,
-       "the right vent column has no material around it");
+assert(R6D_FAN_C[1] - R6D_FAN_D/2 > 2
+       && R6D_FAN_C[1] + R6D_FAN_D/2 < R6D_POCKET_Y0 - 2,
+       "the fan opening must leave material at the hinge edge and panel pocket");
+for (c = [R6D_JACK, R6D_SW])
+    assert(sqrt(pow(R6D_FAN_C[0] - c[0], 2) + pow(R6D_FAN_C[1] - c[1], 2))
+               > R6D_FAN_D/2 + R6D_RECESS/2 + 2,
+           "the fan opening runs into a connector recess");
 
 // ---------------------------------------------------------------- geometry
 module r6d_box(x0, y0, x1, y1, z, h) translate([x0, y0, z]) cube([x1 - x0, y1 - y0, h]);
@@ -130,16 +144,27 @@ module r6d_csk(x, y)
     translate([x, y, R6D_T - (R6D_CSK - R6D_SCREW)/2 - 0.02])
         cylinder(d1=R6D_SCREW, d2=R6D_CSK + 1.4, h=(R6D_CSK - R6D_SCREW)/2 + 0.03);
 
-module r6d_vents() {
-    for (y = R6D_VENT_Y)
-        for (x = R6D_VENT_X)
-            translate([x, y, -1]) cylinder(d=R6D_VENT_D, h=R6D_T + 2);
-    for (x = R6D_SIDE_X)
-        for (y = R6D_SIDE_Y)
-            translate([x, y, -1]) cylinder(d=R6D_VENT_D, h=R6D_T + 2);
+module r6d_fan_cut() {
+    translate([R6D_FAN_C[0], R6D_FAN_C[1], -1])
+        cylinder(d=R6D_FAN_D, h=R6D_T + 2);
+    for (dx = [-R6D_FAN_HOLE_SP/2, R6D_FAN_HOLE_SP/2])
+        for (dy = [-R6D_FAN_HOLE_SP/2, R6D_FAN_HOLE_SP/2])
+            translate([R6D_FAN_C[0] + dx, R6D_FAN_C[1] + dy, -1])
+                cylinder(d=R6D_FAN_SCREW_D, h=R6D_T + 2);
 }
 
-module r6_deck() {
+module r6d_fan_grille() {
+    for (b = [-(R6D_GRILLE_BARS-1)/2 : (R6D_GRILLE_BARS-1)/2]) {
+        y = R6D_FAN_C[1] + b * (R6D_FAN_D / (R6D_GRILLE_BARS + 0.5));
+        half = sqrt(max(0, pow(R6D_FAN_D/2, 2)
+                          - pow(b * (R6D_FAN_D/(R6D_GRILLE_BARS + 0.5)), 2)));
+        r6d_box(R6D_FAN_C[0] - half - R6D_GRILLE_EMBED, y - R6D_GRILLE_BAR/2,
+                R6D_FAN_C[0] + half + R6D_GRILLE_EMBED, y + R6D_GRILLE_BAR/2,
+                0, R6D_T);
+    }
+}
+
+module r6_deck() union() {
     difference() {
         linear_extrude(R6D_T) rrect(R6D_W, R6D_L, R6D_R);
         // panel pocket, opening in the top face
@@ -157,12 +182,14 @@ module r6_deck() {
             translate([bx, by, -1]) cylinder(d=R6D_SCREW, h=R6D_T + 2);
             r6d_csk(bx, by);
         }
-        // 4 x M3 up into the panel's inserts, heads below the deck
-        for (sx = [-1, 1])
-            for (sy = [-1, 1])
-                translate([R6D_PANEL_C[0] + sx*R6D_INSET[0]/2,
-                           R6D_PANEL_C[1] + sy*R6D_INSET[1]/2, -1])
-                    cylinder(d=R6D_SCREW, h=R6D_BASE + 2);
+        // 4 x M3 up into the panel's measured outer inserts, heads below the deck
+        for (p = R6D_PANEL_INSETS)
+            translate([R6D_PANEL_X0 + p[0], R6D_PANEL_Y0 + p[1], -1])
+                cylinder(d=R6D_SCREW, h=R6D_BASE + 2);
+        // 4 passages for the display's inner standoff extensions; the Pi bolts to them below the floor
+        for (p = R6D_PI_POSTS)
+            translate([R6D_PANEL_X0 + p[0], R6D_PANEL_Y0 + p[1], -1])
+                cylinder(d=R6D_PI_POST_D, h=R6D_BASE + 2);
         // charge jack and power switch: nut recess in the top face, bore through
         translate([R6D_JACK[0], R6D_JACK[1], R6D_T - R6D_RECESS_D])
             cylinder(d=R6D_RECESS, h=R6D_RECESS_D + 1);
@@ -172,7 +199,9 @@ module r6_deck() {
             cylinder(d=R6D_RECESS, h=R6D_RECESS_D + 1);
         translate([R6D_SW[0], R6D_SW[1], -1])
             cylinder(d=R6D_SW_D, h=R6D_T + 2);
-        // air-flow vents
-        r6d_vents();
+        // guarded 40 mm fan opening
+        r6d_fan_cut();
     }
+    // Union the guard after the cut so the opening does not delete its bars.
+    r6d_fan_grille();
 }
