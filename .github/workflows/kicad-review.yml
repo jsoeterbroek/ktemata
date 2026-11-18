@@ -19,6 +19,8 @@ jobs:
       - run: sudo apt-get install -y ngspice poppler-utils
       - uses: aklofas/kicad-happy@v3
         id: analysis
+        with:
+          schematic: cad/kicad/r6/PCH/PCH.kicad_pcb
       - uses: thollander/actions-comment-pull-request@v3
         if: github.event_name == 'pull_request'
         with:
