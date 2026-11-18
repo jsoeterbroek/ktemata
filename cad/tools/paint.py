@@ -12,7 +12,7 @@ comes from the selected OpenSCAD probe; SVG, printable STL and sticker geometry 
     python3 cad/tools/paint.py --no-png                # SVGs only
 
 Both revisions are drawn OPEN FLAT with a shared x axis and y = 0 at the hinge. R5 places the display
-cover above the deck; R6 places the keyboard lid above the display frame. Apertures, reserved lettering
+cover above the deck; R6 places the keyboard lid above the full-face deck. Apertures, reserved lettering
 and scheme marks are generated from the same data, so no painted line is allowed to cross an opening.
 """
 from __future__ import annotations
@@ -245,20 +245,20 @@ class Model:
 
     def spec_for(self, side: str) -> dict:
         if self.rev == "r6":
-            # R6: wordmark on the keyboard lid, motto on the cassette's display frame.
+            # R6: wordmark on the keyboard lid, motto on the cassette deck.
             return sticker_specs()[0] if side == "cover" else self.cover_spec()
         return self.cover_spec() if side == "cover" else sticker_specs()[0]
 
 
 def display_on_part(m: Model, cover: bool) -> bool:
-    """Which physical surface carries the main LCD: R5 cover, R6 deck/display frame."""
+    """Which physical surface carries the main LCD: R5 cover, R6 deck."""
     return not cover if m.rev == "r6" else cover
 
 
 def part_name(m: Model, cover: bool, *, short: bool = False) -> str:
     """Human-readable part name for sheets and masks; R5 names remain unchanged."""
     if m.rev == "r6":
-        name = "KEYBOARD LID" if cover else "DISPLAY FRAME"
+        name = "KEYBOARD LID" if cover else "CASSETTE DECK"
     else:
         name = "LID COVER" if cover else "DECK"
     return name if short else name + ("  ·  front face" if cover else "  ·  top face")
@@ -1063,15 +1063,15 @@ SCHEMES = [
 
 R6_NOTES = {
     "MERIDIAN": "R6 PROTOTYPE, not paint-ready: the hinge-ruled chart now crosses from the "
-                "keyboard lid to the cassette display frame. Real component outlines and the "
+                "keyboard lid to the cassette deck. Real component outlines and the "
                 "proposed apertures stop every rule. The flat display border moves with the "
-                "Waveshare panel to the display frame. Measure final R6 CAD before cutting.",
+                "Waveshare panel to the deck. Measure final R6 CAD before cutting.",
     "STRATA": "R6 PROTOTYPE, not paint-ready: the selected x-keyed rails run straight from the "
-              "keyboard lid into the cassette display frame. The proposed display, controls, "
+              "keyboard lid into the cassette deck. The proposed display, controls, "
               "keyboard, OLED and fasteners clip the marks. Rigid masks are fit/layout tools "
-              "until the final R6 plate and frame CAD exists.",
+              "until the final R6 deck CAD exists.",
     "BEARING": "R6 PROTOTYPE, not paint-ready: the proposed 3 mm trace at x = 215.5 crosses "
-               "from the keyboard lid to the display frame. It is clipped by the current "
+               "from the keyboard lid to the deck. It is clipped by the current "
                "component envelopes, but this is not a final clearance proof. Verify the lane, "
                "gateway and port rings against measured R6 geometry before cutting.",
 }
@@ -1247,7 +1247,7 @@ def sheet(model: Model, sc: dict, path: Path, preview: bool) -> tuple[Path, Path
     elems.append(tspan(sc["name"], 11.5, M, M + 17.0, PAPER_INK, track=3.0))
     elems.append(tspan(sc["sub"], 3.6, M, M + 24.6, PAPER_MUTED, italic=True))
     if model.rev == "r6":
-        open_flat_text = ("open flat: keyboard lid above, display frame below   ·   "
+        open_flat_text = ("open flat: keyboard lid above, full-face deck below   ·   "
                           "shared x axis, both measured from the hinge")
     else:
         open_flat_text = ("open flat: the lid cover above the hinge, the deck below   ·   both share "

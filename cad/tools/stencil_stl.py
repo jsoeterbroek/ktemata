@@ -2,7 +2,7 @@
 """Ktemata R5 and R6-prototype paint stencils as printable STL masks (Strata by default).
 
 R5 retains the dimensions, paths and cover-plane notes below. `--rev r6` uses the R6 probe, moves the
-keyboard lid/display frame apertures accordingly and writes explicitly provisional masks; those are
+keyboard lid/deck apertures accordingly and writes explicitly provisional masks; those are
 fit/layout tools, not paint-ready production parts.
 
 The SVG cut files in docs/paint/ are 261.5 x 234.1 mm (cover) and 271.3 x 242.8 mm (deck) sheets:

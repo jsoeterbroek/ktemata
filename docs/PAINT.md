@@ -33,9 +33,14 @@ R6 uses the same three schemes and shared hinge datum, but swaps the component d
 | Surface | R6 prototype contents |
 |---|---|
 | Upper `cover` / **keyboard lid** | K06 opening, OLED window, status button, KTEMATA wordmark |
-| Lower `deck` / **display frame** | Waveshare 7-inch opening, seven proposed frame fasteners, power and charge controls, motto |
+| Lower `deck` | Waveshare 7-inch opening, proposed fastener apertures, power and charge controls, motto — the probe still uses its pre-deck proposal (see below) |
 
 The geometry comes from `cad/tools/paint_probe_r6.scad`, not from copies of R5's apertures:
+
+- The probe predates the modelled full-face deck and still uses R5's seven fastener apertures, the
+  panel at `y 30.0`, and the controls at `x 225`. The deck's current values — four deck screws at
+  (9,74) (9,150) (224.5,74) (224.5,150), the panel pocket at `y 56.99–168.45`, the jack at (40,25), the
+  switch at (120,25) and the vent rows — must replace them before any paint is cut.
 
 - The lid and frame retain the R5 host-derived outlines: **233.5 × 178.1 mm** for the lid and
   **243.282 × 186.841 mm** for the cavity-height frame plate.

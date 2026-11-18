@@ -689,8 +689,9 @@ R6_LID_OBTN_CB_T = R6_LID_T - R6_LID_OBTN_SKIN;                 // 12.5 deep fro
 R6_LID_HARNESS_W = 8.0;
 R6_LID_HARNESS_D = 2.0;
 R6_LID_HARNESS_X = R5_OLED_X0 + 12.0;
-// R6's current display-stack study puts the cassette glass 65 mm above the host floor.
-R6_BASE_GLASS_Z = 65.0;
+// R6's full-face deck sits on the tray bosses at z 53 and is 13.5 mm thick, so the glass and the deck's
+// top face are 1.5 mm proud of the tray's 65 mm rim: 66.5 mm above the host floor.
+R6_BASE_GLASS_Z = 66.5;
 R6_CLOSED_CLEAR = HOST_BOT + HOST_LID - R6_LID_T - R6_BASE_GLASS_Z;
 assert(R6_LID_KB_SEAT_Z + KB_BODY[2] == R6_LID_T,
        "R6 keyboard seat + 11 mm body must equal the plate's visible front");

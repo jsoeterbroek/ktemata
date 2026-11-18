@@ -1,7 +1,7 @@
 // Ktemata R6 - keyboard / status-OLED lid plate
 //
 // This is the HOST LID plate, not the 7-inch display mount: R6's Waveshare panel belongs to the
-// separate cassette display frame. The K06 and its keys finish flush with the broad front face;
+// separate cassette deck. The K06 and its keys finish flush with the broad front face;
 // the OLED and PBS-33B sit in that same face. The rear face tapes into the Peli lid. No host hole.
 //
 // Prototype fit part: positions are shared with paint_probe_r6.scad through common.scad. Measure
