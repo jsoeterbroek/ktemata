@@ -1481,7 +1481,7 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "1. 12.6V CHARGER PASS-THROUGH"
+	(text "1. DC5521 CHARGE-INPUT SENSE TAP (DIRECT TO UPS)"
 		(exclude_from_sim no)
 		(at 30.48 25.4 0)
 		(effects
@@ -1492,18 +1492,6 @@
 			(justify left bottom)
 		)
 		(uuid "07d61204-664b-4191-b996-abb4e7b043cb")
-	)
-	(text "3. 16MM LATCHING SWITCH & LED"
-		(exclude_from_sim no)
-		(at 30.48 55.88 0)
-		(effects
-			(font
-				(size 1.524 1.524)
-				(bold yes)
-			)
-			(justify left bottom)
-		)
-		(uuid "56f2bec6-2edf-4967-a315-bee01a685be8")
 	)
 	(text "4. WAVESHARE UPS 3S POWER & I2C BUS"
 		(exclude_from_sim no)
@@ -1550,16 +1538,6 @@
 			(type default)
 		)
 		(uuid "03769c87-08ad-4cb1-8f1c-2ecf8c7ab419")
-	)
-	(wire
-		(pts
-			(xy 72.39 35.56) (xy 66.04 35.56)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "061bb3bf-101b-4b01-895e-b23ffb4043b8")
 	)
 	(wire
 		(pts
@@ -1633,16 +1611,6 @@
 	)
 	(wire
 		(pts
-			(xy 36.83 73.66) (xy 30.48 73.66)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "54226e3e-5f19-4552-8129-db90d18515e8")
-	)
-	(wire
-		(pts
 			(xy 163.83 38.1) (xy 157.48 38.1)
 		)
 		(stroke
@@ -1673,16 +1641,6 @@
 	)
 	(wire
 		(pts
-			(xy 96.52 64.77) (xy 96.52 62.23)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7707c0d0-0f64-44d3-90f7-82783f54cba0")
-	)
-	(wire
-		(pts
 			(xy 152.4 66.04) (xy 152.4 68.58)
 		)
 		(stroke
@@ -1700,16 +1658,6 @@
 			(type default)
 		)
 		(uuid "7f9736e9-97db-4cb4-8a11-c948d18627de")
-	)
-	(wire
-		(pts
-			(xy 72.39 38.1) (xy 66.04 38.1)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "8a9ff62b-6931-42f9-8956-30dc7f3218bb")
 	)
 	(wire
 		(pts
@@ -1733,16 +1681,6 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 66.04) (xy 66.04 66.04)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "991e7ac7-a5ec-4765-93fb-ad744559a8d3")
-	)
-	(wire
-		(pts
 			(xy 35.56 104.14) (xy 30.48 104.14)
 		)
 		(stroke
@@ -1750,16 +1688,6 @@
 			(type default)
 		)
 		(uuid "9a978579-8866-4d3a-8294-d4e520803e34")
-	)
-	(wire
-		(pts
-			(xy 36.83 68.58) (xy 30.48 68.58)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a09bfa49-55a5-4755-aada-0845b7a036bb")
 	)
 	(wire
 		(pts
@@ -1813,26 +1741,6 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 68.58) (xy 66.04 68.58)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ce144ea2-8e55-4483-bbab-0bada8db13f4")
-	)
-	(wire
-		(pts
-			(xy 36.83 71.12) (xy 30.48 71.12)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d5b6e753-880e-4fde-964a-21df5b7955ba")
-	)
-	(wire
-		(pts
 			(xy 36.83 35.56) (xy 30.48 35.56)
 		)
 		(stroke
@@ -1840,26 +1748,6 @@
 			(type default)
 		)
 		(uuid "d5edfe30-1ad4-464c-9629-b58e1161bca9")
-	)
-	(wire
-		(pts
-			(xy 96.52 72.39) (xy 96.52 74.93)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e7c44314-046f-4c50-a541-5c36a2794965")
-	)
-	(wire
-		(pts
-			(xy 36.83 66.04) (xy 30.48 66.04)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e9ae8db3-0350-442a-9eb7-72bee753d854")
 	)
 	(wire
 		(pts
@@ -1912,16 +1800,6 @@
 		(uuid "1df6000d-28f2-4853-8dd9-2d0b11685752")
 	)
 	(label "CHG_12V6_IN"
-		(at 66.04 35.56 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "02b9bb2b-3de5-4f0a-a65a-e32918b704a0")
-	)
-	(label "CHG_12V6_IN"
 		(at 121.92 83.82 0)
 		(effects
 			(font
@@ -1951,16 +1829,6 @@
 		)
 		(uuid "42ff9984-8b15-46f0-93bc-51faa60c85a5")
 	)
-	(label "GND"
-		(at 30.48 73.66 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "43d5d658-26f6-4d41-806d-1aed959154c0")
-	)
 	(label "+5V"
 		(at 30.48 106.68 0)
 		(effects
@@ -1970,16 +1838,6 @@
 			(justify left bottom)
 		)
 		(uuid "4cc7a498-d03a-4a87-a14f-73c4b35050d4")
-	)
-	(label "UPS_SW_2"
-		(at 66.04 68.58 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "4e986397-4910-4f5b-b812-130c7434f6a6")
 	)
 	(label "BAT_12V6_OUT"
 		(at 142.24 83.82 0)
@@ -2000,16 +1858,6 @@
 			(justify left bottom)
 		)
 		(uuid "5457eb44-5998-41d7-bbeb-1e46175ab5b7")
-	)
-	(label "UPS_SW_1"
-		(at 30.48 66.04 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "6086bed5-ae2a-4c12-bfd0-97b04c196b6f")
 	)
 	(label "I2C_SCL"
 		(at 66.04 101.6 0)
@@ -2061,16 +1909,6 @@
 		)
 		(uuid "9f6d9f89-035d-4727-8ad9-6aa979b46cc4")
 	)
-	(label "GND"
-		(at 66.04 38.1 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "a04c8f59-13bc-4aa3-bdec-39798560b253")
-	)
 	(label "+3V3"
 		(at 152.4 68.58 0)
 		(effects
@@ -2101,16 +1939,6 @@
 		)
 		(uuid "a7ebe3b3-eae1-4328-9400-5d5b7e8958f1")
 	)
-	(label "UPS_SW_1"
-		(at 66.04 66.04 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "bc181ef5-da1e-4cfc-88f3-e1cec0ac87f7")
-	)
 	(label "BAT_12V6_OUT"
 		(at 157.48 35.56 0)
 		(effects
@@ -2130,16 +1958,6 @@
 			(justify left bottom)
 		)
 		(uuid "c22c7e4a-2297-4c41-8b97-c8a492f893cf")
-	)
-	(label "+5V"
-		(at 96.52 62.23 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "c46e62d2-a9b7-4e33-b00d-c3155165a75d")
 	)
 	(label "GND"
 		(at 116.84 38.1 0)
@@ -2180,36 +1998,6 @@
 			(justify left bottom)
 		)
 		(uuid "dd1a876c-5905-447f-a3eb-ecf260b96335")
-	)
-	(label "UPS_SW_2"
-		(at 30.48 68.58 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "e17afe7e-1f84-4e13-b107-e8e9d92d5711")
-	)
-	(label "SW_LED_ANODE"
-		(at 96.52 74.93 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "f56884e7-d2f1-48b1-bc36-eae09947af53")
-	)
-	(label "SW_LED_ANODE"
-		(at 30.48 71.12 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "f5c7586d-32a5-4305-a593-3298d7ceec73")
 	)
 	(label "OLED_BTN"
 		(at 66.04 111.76 0)
@@ -2297,168 +2085,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:R")
-		(at 96.52 68.58 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "386327b0-d808-4a5e-b742-3f83a0f0bc58")
-		(property "Reference" "R1"
-			(at 96.52 64.77 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "330R"
-			(at 96.52 72.39 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
-			(at 96.52 68.58 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 96.52 68.58 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Current Limiting Resistor for J3 Switch LED"
-			(at 96.52 68.58 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "7d35e9f8-eae3-4519-9a6f-df49cab0a21a")
-		)
-		(pin "2"
-			(uuid "aa050ae3-e68a-45ee-8d73-0d7e50b21da6")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "R1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector_Generic:Conn_01x04")
-		(at 40.64 66.04 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "43041ea5-e7ea-4c12-bf57-e8e834548c69")
-		(property "Reference" "J3"
-			(at 40.64 62.23 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "SW16_LATCH_LED"
-			(at 40.64 69.85 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical"
-			(at 40.64 66.04 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 40.64 66.04 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "16mm Latching Switch (Pins 1-2) + LED (Pins 3-4)"
-			(at 40.64 66.04 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "0bce0c70-f840-402b-847b-6d1af8c99f25")
-		)
-		(pin "2"
-			(uuid "08668fb7-3553-42ba-be05-c2b95ac8ff9a")
-		)
-		(pin "3"
-			(uuid "e8f31e71-d12b-401a-921b-19da30931611")
-		)
-		(pin "4"
-			(uuid "ae0e30dc-3910-4b54-b71a-c9b040068957")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "J3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:PWR_FLAG")
 		(at 121.92 66.04 0)
 		(unit 1)
@@ -2528,84 +2154,6 @@
 			(project "PCH"
 				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
 					(reference "#FLG01")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector_Generic:Conn_01x02")
-		(at 76.2 66.04 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "76832565-f1e6-4454-aac8-6bb81419e42c")
-		(property "Reference" "J4"
-			(at 76.2 62.23 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "UPS_SW_EN"
-			(at 76.2 69.85 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
-			(at 76.2 66.04 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 76.2 66.04 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "2-Pin Cable to Waveshare Onboard Switch Header"
-			(at 76.2 66.04 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "707154d2-d4f3-4b35-a521-cfc3604bf8ee")
-		)
-		(pin "2"
-			(uuid "4598ea8c-5bc5-43bb-8166-5e84fff871ae")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "J4")
 					(unit 1)
 				)
 			)
@@ -2768,84 +2316,6 @@
 			(project "PCH"
 				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
 					(reference "J6")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector_Generic:Conn_01x02")
-		(at 76.2 35.56 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "bc1b6c88-50aa-4e1d-af32-ab63ce31e805")
-		(property "Reference" "J2"
-			(at 76.2 31.75 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "UPS_12V6_CHG_OUT"
-			(at 76.2 39.37 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
-			(at 76.2 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 76.2 35.56 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "12.6V Charge Cable to Waveshare DC5521 Input"
-			(at 76.2 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "a4c47fa7-dcf9-4a92-aa7e-42031bb24973")
-		)
-		(pin "2"
-			(uuid "857f9a5e-cd6a-40cd-aa6d-d80dc1d498fa")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "J2")
 					(unit 1)
 				)
 			)
@@ -3253,150 +2723,6 @@
 			)
 		)
 	)
-	(symbol
-		(lib_id "Connector_Generic:Conn_01x02")
-		(at 40.64 35.56 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "f36bd257-5388-4298-87d5-06db1b9cf434")
-		(property "Reference" "J1"
-			(at 40.64 31.75 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "DC-099_12V6_IN"
-			(at 40.64 39.37 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
-			(at 40.64 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 40.64 35.56 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Panel DC-099 Jack to Board Header"
-			(at 40.64 35.56 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "05634bf1-86ab-49bc-b74a-5b66265ba3c0")
-		)
-		(pin "2"
-			(uuid "18da9fd6-4dfd-4308-ac27-346f595e4a3d")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "J1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(wire
-		(pts
-			(xy 170.18 73.66) (xy 170.18 74.93)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b1000000-0000-4000-8000-000000000005")
-	)
-	(wire
-		(pts
-			(xy 170.18 74.93) (xy 185.42 74.93)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b1000000-0000-4000-8000-000000000006")
-	)
-	(junction
-		(at 170.18 74.93)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "b1000000-0000-4000-8000-000000000007")
-	)
-	(label "CHG_12V6_IN"
-		(at 170.18 66.04 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "b1000000-0000-4000-8000-000000000008")
-	)
-	(label "CHG_SENSE"
-		(at 170.18 74.93 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "b1000000-0000-4000-8000-000000000009")
-	)
-	(label "GND"
-		(at 170.18 82.55 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "b1000000-0000-4000-8000-00000000000a")
-	)
-	(label "GND"
-		(at 185.42 82.55 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left top)
-		)
-		(uuid "b1000000-0000-4000-8000-00000000000b")
-	)
 	(label "+5V"
 		(at 205.74 60.96 0)
 		(effects
@@ -3609,246 +2935,6 @@
 			)
 		)
 	)
-	(symbol
-		(lib_id "Device:R")
-		(at 170.18 69.85 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "b1000000-0000-4000-8000-000000000002")
-		(property "Reference" "R2"
-			(at 172.72 68.58 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "47k"
-			(at 172.72 71.12 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
-			(at 170.18 69.85 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 170.18 69.85 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Charge-sense divider upper leg, 1 % 0.25 W"
-			(at 170.18 69.85 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "b1000000-0000-4000-8000-000000000201")
-		)
-		(pin "2"
-			(uuid "b1000000-0000-4000-8000-000000000202")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "R2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:R")
-		(at 170.18 78.74 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "b1000000-0000-4000-8000-000000000003")
-		(property "Reference" "R3"
-			(at 172.72 78.58 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "10k"
-			(at 172.72 81.12 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
-			(at 170.18 78.74 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 170.18 78.74 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Charge-sense divider lower leg, 1 % 0.25 W"
-			(at 170.18 78.74 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "b1000000-0000-4000-8000-000000000301")
-		)
-		(pin "2"
-			(uuid "b1000000-0000-4000-8000-000000000302")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "R3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:C")
-		(at 185.42 78.74 0)
-		(unit 1)
-		(body_style 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(dnp no)
-		(uuid "b1000000-0000-4000-8000-000000000004")
-		(property "Reference" "C1"
-			(at 187.96 78.58 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "100nF"
-			(at 187.96 81.12 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
-			(at 185.42 78.74 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 185.42 78.74 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Charge-sense filter, 50 V X7R"
-			(at 185.42 78.74 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "b1000000-0000-4000-8000-000000000401")
-		)
-		(pin "2"
-			(uuid "b1000000-0000-4000-8000-000000000402")
-		)
-		(instances
-			(project "PCH"
-				(path "/b8ed37fe-4100-4417-9584-137497e32b48"
-					(reference "C1")
-					(unit 1)
-				)
-			)
-		)
-	)
 	(text "6. OLED JST-XH CONNECTOR (J9 TESTED PINOUT)"
 		(exclude_from_sim no)
 		(at 30.48 121.92 0)
@@ -3952,6 +3038,69 @@
 				(path "/b8ed37fe-4100-4417-9584-137497e32b48" (reference "J11") (unit 1))
 			)
 		)
+	)
+	(wire (pts (xy 36.83 35.56) (xy 30.48 35.56)) (stroke (width 0) (type default)) (uuid "d5edfe30-1ad4-464c-9629-b58e1161bca9"))
+	(wire (pts (xy 36.83 38.1) (xy 30.48 38.1)) (stroke (width 0) (type default)) (uuid "c61140b4-a404-4268-8da6-78bddebd9415"))
+	(label "CHG_12V6_IN" (at 30.48 35.56 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "941d284f-fa94-449f-bf32-4f2725812bce"))
+	(label "GND" (at 30.48 38.1 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "29b6633a-4d7b-47cd-a769-9ec61e57865f"))
+	(wire (pts (xy 170.18 73.66) (xy 170.18 74.93)) (stroke (width 0) (type default)) (uuid "b1000000-0000-4000-8000-000000000005"))
+	(wire (pts (xy 170.18 74.93) (xy 185.42 74.93)) (stroke (width 0) (type default)) (uuid "b1000000-0000-4000-8000-000000000006"))
+	(junction (at 170.18 74.93) (diameter 0) (color 0 0 0 0) (uuid "b1000000-0000-4000-8000-000000000007"))
+	(label "CHG_12V6_IN" (at 170.18 66.04 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "b1000000-0000-4000-8000-000000000008"))
+	(label "CHG_SENSE" (at 170.18 74.93 0) (effects (font (size 1.27 1.27)) (justify left bottom)) (uuid "b1000000-0000-4000-8000-000000000009"))
+	(label "GND" (at 170.18 82.55 0) (effects (font (size 1.27 1.27)) (justify left top)) (uuid "b1000000-0000-4000-8000-00000000000a"))
+	(label "GND" (at 185.42 82.55 0) (effects (font (size 1.27 1.27)) (justify left top)) (uuid "b1000000-0000-4000-8000-00000000000b"))
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02") (at 40.64 35.56 0) (unit 1) (body_style 1)
+		(exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
+		(uuid "f36bd257-5388-4298-87d5-06db1b9cf434")
+		(property "Reference" "J1" (at 40.64 31.75 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Value" "CHG_SENSE_IN" (at 40.64 39.37 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical" (at 40.64 35.56 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Datasheet" "" (at 40.64 35.56 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Description" "High-impedance sense tap on supplied DC5521 lead; direct charge path goes to UPS, not through PCH" (at 40.64 35.56 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "05634bf1-86ab-49bc-b74a-5b66265ba3c0"))
+		(pin "2" (uuid "18da9fd6-4dfd-4308-ac27-346f595e4a3d"))
+		(instances (project "PCH" (path "/b8ed37fe-4100-4417-9584-137497e32b48" (reference "J1") (unit 1))))
+	)
+	(symbol
+		(lib_id "Device:R") (at 170.18 69.85 0) (unit 1) (body_style 1)
+		(exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
+		(uuid "b1000000-0000-4000-8000-000000000002")
+		(property "Reference" "R2" (at 172.72 68.58 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Value" "47k" (at 172.72 71.12 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric" (at 170.18 69.85 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Datasheet" "~" (at 170.18 69.85 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Description" "Charge-sense divider upper leg, 1 % 0.25 W" (at 170.18 69.85 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "b1000000-0000-4000-8000-000000000201"))
+		(pin "2" (uuid "b1000000-0000-4000-8000-000000000202"))
+		(instances (project "PCH" (path "/b8ed37fe-4100-4417-9584-137497e32b48" (reference "R2") (unit 1))))
+	)
+	(symbol
+		(lib_id "Device:R") (at 170.18 78.74 0) (unit 1) (body_style 1)
+		(exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
+		(uuid "b1000000-0000-4000-8000-000000000003")
+		(property "Reference" "R3" (at 172.72 78.58 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Value" "10k" (at 172.72 81.12 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric" (at 170.18 78.74 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Datasheet" "~" (at 170.18 78.74 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Description" "Charge-sense divider lower leg, 1 % 0.25 W" (at 170.18 78.74 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "b1000000-0000-4000-8000-000000000301"))
+		(pin "2" (uuid "b1000000-0000-4000-8000-000000000302"))
+		(instances (project "PCH" (path "/b8ed37fe-4100-4417-9584-137497e32b48" (reference "R3") (unit 1))))
+	)
+	(symbol
+		(lib_id "Device:C") (at 185.42 78.74 0) (unit 1) (body_style 1)
+		(exclude_from_sim no) (in_bom yes) (on_board yes) (in_pos_files yes) (dnp no)
+		(uuid "b1000000-0000-4000-8000-000000000004")
+		(property "Reference" "C1" (at 187.96 78.58 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Value" "100nF" (at 187.96 81.12 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (justify left)))
+		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 185.42 78.74 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Datasheet" "~" (at 185.42 78.74 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Description" "Charge-sense filter, 50 V X7R" (at 185.42 78.74 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "b1000000-0000-4000-8000-000000000401"))
+		(pin "2" (uuid "b1000000-0000-4000-8000-000000000402"))
+		(instances (project "PCH" (path "/b8ed37fe-4100-4417-9584-137497e32b48" (reference "C1") (unit 1))))
 	)
 	(sheet_instances
 		(path "/"

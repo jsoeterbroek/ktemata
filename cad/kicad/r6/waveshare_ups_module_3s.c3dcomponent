@@ -1,0 +1,41 @@
+{
+  "format": "c3d-component",
+  "version": 1,
+  "part": {
+    "id": "waveshare-ups-module-3s",
+    "name": "Waveshare UPS Module 3S",
+    "category": "Power / UPS",
+    "dimensions": [60, 93, 12],
+    "format": "procedural-pcb",
+    "geometry": {
+      "kind": "procedural-pcb",
+      "quality": "enhanced-procedural",
+      "pcbColor": "#304f3d",
+      "pcbThickness": 1.6,
+      "category": "Power / UPS",
+      "verified": false,
+      "geometryVerified": false,
+      "pinPositionsVerified": false,
+      "electricalMappingVerified": true,
+      "modelSource": "Waveshare UPS Module 3S published specifications; procedural geometry and approximate pin positions"
+    },
+    "pins": [
+      {"id": "CHG_POS", "label": "DC5521 charge + · 12.6 V / 2 A", "notes": "Supplied DC5521 lead connects directly to this UPS input", "side": "right", "index": 0, "physicalPosition": 1, "electrical": "power-in", "voltage": 12.6, "localPosition": [30, 34, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "CHG_NEG", "label": "DC5521 charge GND", "side": "right", "index": 1, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [30, 28, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "SW_1", "label": "UPS switch 1 · red", "notes": "Supplied XH2.54 self-lock button connects directly here, not through the PCH", "side": "left", "index": 2, "physicalPosition": 1, "electrical": "passive", "localPosition": [-30, 32, 9], "orientation": [0, 0, 0], "exitDirection": [-1, 0, 0]},
+      {"id": "SW_2", "label": "UPS switch 2 · black", "side": "left", "index": 3, "physicalPosition": 2, "electrical": "passive", "localPosition": [-30, 26, 9], "orientation": [0, 0, 0], "exitDirection": [-1, 0, 0]},
+      {"id": "HDR1", "label": "2×4 pin 1 · I2C_SCL", "notes": "INA219 at 0x41; 3.3 V I²C level by default", "side": "right", "index": 4, "physicalPosition": 1, "electrical": "bidirectional", "localPosition": [30, 17, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "HDR2", "label": "2×4 pin 2 · I2C_SDA", "notes": "INA219 at 0x41; 3.3 V I²C level by default", "side": "right", "index": 5, "physicalPosition": 2, "electrical": "bidirectional", "localPosition": [30, 13, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "HDR3", "label": "2×4 pin 3 · +3V3", "side": "right", "index": 6, "physicalPosition": 3, "electrical": "power-out", "voltage": 3.3, "localPosition": [30, 9, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "HDR4", "label": "2×4 pin 4 · +3V3", "side": "right", "index": 7, "physicalPosition": 4, "electrical": "power-out", "voltage": 3.3, "localPosition": [30, 5, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "HDR5", "label": "2×4 pin 5 · GND", "side": "right", "index": 8, "physicalPosition": 5, "electrical": "ground", "voltage": 0, "localPosition": [30, 1, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "HDR6", "label": "2×4 pin 6 · GND", "side": "right", "index": 9, "physicalPosition": 6, "electrical": "ground", "voltage": 0, "localPosition": [30, -3, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "HDR7", "label": "2×4 pin 7 · +5V", "side": "right", "index": 10, "physicalPosition": 7, "electrical": "power-out", "voltage": 5, "localPosition": [30, -7, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "HDR8", "label": "2×4 pin 8 · +5V", "side": "right", "index": 11, "physicalPosition": 8, "electrical": "power-out", "voltage": 5, "localPosition": [30, -11, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "BAT_POS", "label": "XH2.54 battery-voltage out +", "notes": "9–12.6 V battery bus; up to 2 A branch", "side": "right", "index": 12, "physicalPosition": 11, "electrical": "power-out", "voltage": 12.6, "localPosition": [30, -29, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "BAT_NEG", "label": "XH2.54 battery-voltage out GND", "side": "right", "index": 13, "physicalPosition": 12, "electrical": "ground", "voltage": 0, "localPosition": [30, -35, 9], "orientation": [0, 0, 0], "exitDirection": [1, 0, 0]},
+      {"id": "USB_5V", "label": "USB-C 5 V out to Pi", "notes": "UPS 5 V / 5 A output; use the supplied UPS-to-Pi lead", "side": "bottom", "index": 14, "physicalPosition": 1, "electrical": "power-out", "voltage": 5, "localPosition": [6, -46.5, 9], "orientation": [0, 0, 0], "exitDirection": [0, -1, 0]},
+      {"id": "USB_GND", "label": "USB-C GND to Pi", "side": "bottom", "index": 15, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-6, -46.5, 9], "orientation": [0, 0, 0], "exitDirection": [0, -1, 0]}
+    ]
+  }
+}

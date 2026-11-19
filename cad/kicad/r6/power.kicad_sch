@@ -43,11 +43,11 @@
         )
       )
     )
-    (symbol "Ktemata:DC099" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:DC5521" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
-      (property "Value" "DC-099 panel jack in the cassette, centre +" (at 0 -5.08 0) (show_name)
+      (property "Value" "DC5521 female lead, supplied with UPS Module 3S" (at 0 -5.08 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
       (property "Footprint" "" (at 0 0 0) (show_name)
@@ -59,7 +59,7 @@
       (property "Description" "Ktemata r6 wiring block" (at 0 0 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
-      (symbol "DC099_1_1"
+      (symbol "DC5521_1_1"
         (rectangle (start -1.27 1.27) (end 26.67 -3.81)
           (stroke (width 0.254) (type default))
           (fill (type background))
@@ -74,11 +74,11 @@
         )
       )
     )
-    (symbol "Ktemata:SW16" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "Ktemata:UPS_BUTTON" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
-      (property "Value" "16 mm latching switch (C/NO) + LED" (at 0 -5.08 0) (show_name)
+      (property "Value" "Waveshare XH2.54 self-lock button, red/black (supplied)" (at 0 -5.08 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
       (property "Footprint" "" (at 0 0 0) (show_name)
@@ -87,29 +87,21 @@
       (property "Datasheet" "" (at 0 0 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
-      (property "Description" "Ktemata r6 wiring block" (at 0 0 0) (show_name)
+      (property "Description" "Direct UPS output switch; supplied with UPS Module 3S" (at 0 0 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
-      (symbol "SW16_1_1"
-        (rectangle (start -1.27 1.27) (end 26.67 -8.89)
+      (symbol "UPS_BUTTON_1_1"
+        (rectangle (start -1.27 1.27) (end 26.67 -3.81)
           (stroke (width 0.254) (type default))
           (fill (type background))
         )
         (pin passive line (at -5.08 0.00 0) (length 3.81)
-          (name "C" (effects (font (size 1.27 1.27))))
+          (name "SW_1" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27))))
         )
         (pin passive line (at -5.08 -2.54 0) (length 3.81)
-          (name "NO" (effects (font (size 1.27 1.27))))
+          (name "SW_2" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27))))
-        )
-        (pin passive line (at -5.08 -5.08 0) (length 3.81)
-          (name "LED+" (effects (font (size 1.27 1.27))))
-          (number "3" (effects (font (size 1.27 1.27))))
-        )
-        (pin passive line (at -5.08 -7.62 0) (length 3.81)
-          (name "LED-" (effects (font (size 1.27 1.27))))
-          (number "4" (effects (font (size 1.27 1.27))))
         )
       )
     )
@@ -254,7 +246,7 @@
       (property "Reference" "J" (at 0 2.54 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
-      (property "Value" "PCH power/comm hub (J1-J8, R1)" (at 0 -5.08 0) (show_name)
+      (property "Value" "PCH power/comm hub" (at 0 -5.08 0) (show_name)
         (effects (font (size 1.27 1.27)))
       )
       (property "Footprint" "" (at 0 0 0) (show_name)
@@ -270,22 +262,6 @@
         (rectangle (start -1.27 1.27) (end 26.67 -26.67)
           (stroke (width 0.254) (type default))
           (fill (type background))
-        )
-        (pin passive line (at -5.08 0.00 0) (length 3.81)
-          (name "CHG_12V6_IN" (effects (font (size 1.27 1.27))))
-          (number "1" (effects (font (size 1.27 1.27))))
-        )
-        (pin passive line (at -5.08 -2.54 0) (length 3.81)
-          (name "SW_1" (effects (font (size 1.27 1.27))))
-          (number "2" (effects (font (size 1.27 1.27))))
-        )
-        (pin passive line (at -5.08 -5.08 0) (length 3.81)
-          (name "SW_2" (effects (font (size 1.27 1.27))))
-          (number "3" (effects (font (size 1.27 1.27))))
-        )
-        (pin passive line (at -5.08 -7.62 0) (length 3.81)
-          (name "SW_LED" (effects (font (size 1.27 1.27))))
-          (number "4" (effects (font (size 1.27 1.27))))
         )
         (pin passive line (at -5.08 -10.16 0) (length 3.81)
           (name "UPS_5V" (effects (font (size 1.27 1.27))))
@@ -358,7 +334,7 @@
     )
   )
   (symbol
-    (lib_id "Ktemata:DC099")
+    (lib_id "Ktemata:DC5521")
     (at 173.99 39.37 0)
     (unit 1)
     (body_style 1)
@@ -374,7 +350,7 @@
       (do_not_autoplace no)
       (effects (font (size 1.8 1.8)) (justify left))
     )
-    (property "Value" "DC-099 panel jack in the cassette, centre +"
+    (property "Value" "DC5521 female lead, supplied with UPS Module 3S"
       (at 201.93 41.37 0)
       (show_name no)
       (do_not_autoplace no)
@@ -396,7 +372,7 @@
     )
   )
   (symbol
-    (lib_id "Ktemata:SW16")
+    (lib_id "Ktemata:UPS_BUTTON")
     (at 173.99 53.34 0)
     (unit 1)
     (body_style 1)
@@ -412,7 +388,7 @@
       (do_not_autoplace no)
       (effects (font (size 1.8 1.8)) (justify left))
     )
-    (property "Value" "16 mm latching switch (C/NO) + LED"
+    (property "Value" "Waveshare XH2.54 self-lock button, red/black (supplied)"
       (at 201.93 55.34 0)
       (show_name no)
       (do_not_autoplace no)
@@ -424,8 +400,6 @@
     (property "Part" "23b" (at 173.99 59.34 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (hide yes)))
     (pin "1" (uuid "b5fa0a52-586f-51b3-9d5c-4037653d7d1f"))
     (pin "2" (uuid "9314fe3e-446f-5ba6-9be5-eb94c5a0a42f"))
-    (pin "3" (uuid "b4772d18-092d-5d6d-99aa-df6602fa6be4"))
-    (pin "4" (uuid "741c336b-50c8-53f6-9dba-08471aecc594"))
     (instances
       (project "ktemata"
         (path "/0eabccf7-1a01-5ba0-a33e-5faba2798686"
@@ -577,7 +551,7 @@
       (do_not_autoplace no)
       (effects (font (size 1.8 1.8)) (justify left))
     )
-    (property "Value" "PCH power/comm hub (J1-J8, R1)"
+    (property "Value" "PCH power/comm hub"
       (at 173.99 163 0)
       (show_name no)
       (do_not_autoplace no)
@@ -587,10 +561,6 @@
     (property "Datasheet" "" (at 173.99 134.62 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Description" "" (at 173.99 134.62 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (hide yes)))
     (property "Part" "--" (at 173.99 141 0) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27)) (hide yes)))
-    (pin "1" (uuid "d8d49181-38a7-4744-9692-b0946d71c4e0"))
-    (pin "2" (uuid "6a7d778e-b7bb-4564-afaa-ea4bd3d2fd6b"))
-    (pin "3" (uuid "08404b35-6d36-4255-b354-bc26229795d0"))
-    (pin "4" (uuid "0370e7c5-09ff-4dd8-8b98-bee48105f714"))
     (pin "5" (uuid "9173684e-58e9-4bca-8f2b-996cffe2dc95"))
     (pin "6" (uuid "43cf9c79-7bfe-417f-9b7f-9c8194a4338e"))
     (pin "7" (uuid "d36f8471-88e5-4a8c-aff9-d52f45056857"))
@@ -610,14 +580,12 @@
   (wire (pts (xy 120.65 21.59) (xy 120.65 105.41)) (stroke (width 0) (type solid)) (uuid "7aecd49c-a8dc-5ceb-b57e-ad116a4ef9f2"))
   (wire (pts (xy 120.65 27.94) (xy 168.91 27.94)) (stroke (width 0) (type solid)) (uuid "9067f1db-a1b5-54f1-8b53-a83fd782f06d"))
   (wire (pts (xy 120.65 41.91) (xy 168.91 41.91)) (stroke (width 0) (type solid)) (uuid "05526735-60e1-557f-91a8-77846495bedd"))
-  (wire (pts (xy 120.65 60.96) (xy 168.91 60.96)) (stroke (width 0) (type solid) (color 0 0 0 1)) (uuid "99f0f926-de3f-5c58-9dbd-f8c44920ccd9"))
   (wire (pts (xy 120.65 88.90) (xy 168.91 88.90)) (stroke (width 0) (type solid)) (uuid "0b27e78c-9c38-5d91-82b2-f324610f78df"))
   (wire (pts (xy 120.65 105.41) (xy 168.91 105.41)) (stroke (width 0) (type solid)) (uuid "574ccb53-566b-53c3-9b7e-28fad1c3015a"))
   (wire (pts (xy 107.95 52.07) (xy 107.95 113.03)) (stroke (width 0) (type solid)) (uuid "aef35676-3db2-511d-ae67-1dd3de23e054"))
-  (wire (pts (xy 158.75 58.42) (xy 168.91 58.42)) (stroke (width 0) (type solid) (color 255 0 0 1)) (uuid "6daa431e-5d27-5e02-b427-fd0003cd1666"))
   (wire (pts (xy 107.95 113.03) (xy 168.91 113.03)) (stroke (width 0) (type solid)) (uuid "dcff2bd0-49c3-5e21-b3fc-e22d1a981948"))
   (wire (pts (xy 95.25 49.53) (xy 95.25 102.87)) (stroke (width 0) (type solid)) (uuid "a9f8092f-b0a2-53ef-b173-09a6b5f3f146"))
-  (wire (pts (xy 158.75 55.88) (xy 168.91 55.88)) (stroke (width 0) (type solid) (color 255 255 255 1)) (uuid "9e657bcb-2a53-51fc-8eb4-7d13628a671d"))
+  (wire (pts (xy 158.75 55.88) (xy 168.91 55.88)) (stroke (width 0) (type solid) (color 0 0 0 1)) (uuid "9e657bcb-2a53-51fc-8eb4-7d13628a671d"))
   (wire (pts (xy 95.25 86.36) (xy 168.91 86.36)) (stroke (width 0) (type solid)) (uuid "fd4db21a-3107-5976-afe1-d93c70908fc8"))
   (wire (pts (xy 95.25 102.87) (xy 168.91 102.87)) (stroke (width 0) (type solid)) (uuid "bee9858e-2281-58cc-baf9-96ab82dca426"))
   (wire (pts (xy 82.55 66.04) (xy 82.55 107.95)) (stroke (width 0) (type solid)) (uuid "834e052d-ae04-555d-81bc-55bdc4bc4063"))
@@ -629,7 +597,7 @@
   (wire (pts (xy 57.15 19.05) (xy 57.15 39.37)) (stroke (width 0) (type solid)) (uuid "352a21dd-9c62-58c0-bdd4-e9ea35ce5cd0"))
   (wire (pts (xy 57.15 25.40) (xy 168.91 25.40)) (stroke (width 0) (type solid)) (uuid "cc799fbe-de3b-537b-a467-ae991c4b794a"))
   (wire (pts (xy 57.15 39.37) (xy 168.91 39.37)) (stroke (width 0) (type solid)) (uuid "39d3b399-8c6f-5771-943a-a0e5bb05ea51"))
-  (wire (pts (xy 158.75 53.34) (xy 168.91 53.34)) (stroke (width 0) (type solid) (color 0 128 0 1)) (uuid "a811dedf-1ac4-56fa-9d00-d21d589b260c"))
+  (wire (pts (xy 158.75 53.34) (xy 168.91 53.34)) (stroke (width 0) (type solid) (color 255 0 0 1)) (uuid "a811dedf-1ac4-56fa-9d00-d21d589b260c"))
   (wire (pts (xy 168.91 91.44) (xy 158.75 91.44)) (stroke (width 0) (type solid)) (uuid "3ad24270-4146-5f9c-b237-414433512b06"))
   (wire (pts (xy 168.91 120.65) (xy 158.75 120.65)) (stroke (width 0) (type solid)) (uuid "2b62d655-515d-5a85-897a-b9c51b57bce3"))
   (wire (pts (xy 168.91 118.11) (xy 158.75 118.11)) (stroke (width 0) (type solid)) (uuid "ce817c5b-4036-53b0-ae6e-949da71e9c75"))
@@ -639,10 +607,6 @@
   (wire (pts (xy 168.91 128.27) (xy 158.75 128.27)) (stroke (width 0) (type solid)) (uuid "dbe1486c-9681-4fe6-aeb3-bd97e1bb567e"))
   (wire (pts (xy 168.91 130.81) (xy 158.75 130.81)) (stroke (width 0) (type solid)) (uuid "6809ec5b-4150-46c4-98dc-c1f01daff3a5"))
   (wire (pts (xy 168.91 160.02) (xy 158.75 160.02)) (stroke (width 0) (type solid)) (uuid "0773fdf5-9b10-4b55-80fc-b9a9f7973088"))
-  (wire (pts (xy 168.91 134.62) (xy 158.75 134.62)) (stroke (width 0) (type solid)) (uuid "e986c9e4-3f8d-4812-b2e7-7106e25dd8aa"))
-  (wire (pts (xy 168.91 137.16) (xy 158.75 137.16)) (stroke (width 0) (type solid)) (uuid "1db88f73-ef27-4b42-b096-7ac88ab560dd"))
-  (wire (pts (xy 168.91 139.70) (xy 158.75 139.70)) (stroke (width 0) (type solid)) (uuid "671304cc-97b6-43f5-af67-9c316b2d1840"))
-  (wire (pts (xy 168.91 142.24) (xy 158.75 142.24)) (stroke (width 0) (type solid)) (uuid "d4842db0-d9d4-4f97-9b04-0eccd67ebb23"))
   (wire (pts (xy 168.91 144.78) (xy 158.75 144.78)) (stroke (width 0) (type solid)) (uuid "51201e6e-6511-4abf-b5ab-cc349590e75f"))
   (wire (pts (xy 168.91 147.32) (xy 158.75 147.32)) (stroke (width 0) (type solid)) (uuid "8b7f917c-87dc-455f-a65b-a427b7766744"))
   (wire (pts (xy 168.91 149.86) (xy 158.75 149.86)) (stroke (width 0) (type solid)) (uuid "3accbf82-27c1-45e2-b68f-f3492f9b2f7a"))
@@ -669,14 +633,9 @@
   (global_label "UPS_AUX_5V" (shape bidirectional) (at 158.75 115.57 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "65c9cdae-f3ce-57db-874e-380a960dd988"))
   (global_label "SW_1" (shape bidirectional) (at 158.75 53.34 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "f11addd9-2bad-4a47-8ce4-7d7ed717f7d8"))
   (global_label "SW_2" (shape bidirectional) (at 158.75 55.88 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "bd983a93-317e-420d-b20c-bac761ef76c9"))
-  (global_label "SW_LED" (shape bidirectional) (at 158.75 58.42 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "117e6bc1-f995-42a8-979a-81c291ebe30e"))
   (global_label "SW_1" (shape bidirectional) (at 158.75 123.19 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "718b7646-fc76-4815-9862-f6a06d4731ea"))
   (global_label "SW_2" (shape bidirectional) (at 158.75 125.73 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "95f8929d-c8b8-4e09-a489-7fa016e73e2b"))
   (global_label "UPS_12V6" (shape bidirectional) (at 158.75 128.27 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "bdcceba2-9924-4e20-8b7f-e869ac702b12"))
-  (global_label "CHG_12V6_IN" (shape bidirectional) (at 158.75 134.62 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "38fa1fd4-b061-4e60-8096-cfbb6b4c12ca"))
-  (global_label "SW_1" (shape bidirectional) (at 158.75 137.16 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "544e1f32-6645-42c8-b19b-3e001f396bae"))
-  (global_label "SW_2" (shape bidirectional) (at 158.75 139.70 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "1f29dd4a-1574-4a46-87d7-4963254769f1"))
-  (global_label "SW_LED" (shape bidirectional) (at 158.75 142.24 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "bf241624-b718-42d1-a551-d853722c6779"))
   (global_label "UPS_5V" (shape bidirectional) (at 158.75 144.78 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "206eb763-6ae4-4c79-ae13-e91e4bc1e112"))
   (global_label "I2C_SDA" (shape bidirectional) (at 158.75 147.32 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "e3bdea3d-fe32-41f2-a2c7-64b4e5d175e9"))
   (global_label "I2C_SCL" (shape bidirectional) (at 158.75 149.86 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "9144e3a7-d448-4a7b-bb2c-60810111f406"))
@@ -687,23 +646,23 @@
   (no_connect (at 168.91 157.48) (uuid "02a2469b-c15f-4d13-8999-00111320badd"))
   (text "12.6 V input, centre-positive, 2 A: mains PSU, MPPT solar or crank converter."
     (at 20.32 166.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "16f8cb47-1c6b-5d9a-819e-145305eb2455"))
-  (text "PCH <-> UPS cables"
+  (text "UPS direct connections + PCH cables"
     (at 20.32 134.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "03e92052-3f1a-4168-934d-b123b27f94ae"))
-  (text "C1 charge: PCH J2 -> UPS DC5521; CHG_12V6_IN + GND"
+  (text "C1 charge: source -> supplied DC5521 lead -> UPS; CHG_12V6_IN + GND; PCH J1 is sense tap only"
     (at 20.32 138.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "9aa20ec9-3a26-4885-b0f4-84f9f9d68ba3"))
-  (text "C2 switch: PCH J4 -> UPS switch port; SW_1 + SW_2"
+  (text "C2 switch: supplied red/black self-lock button -> UPS switch port; SW_1 + SW_2; no PCH connection"
     (at 20.32 142.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "79acc7a5-3ba9-4d06-ae91-c4ef9721212a"))
   (text "C3 header: PCH J5 -> UPS 2x4; UPS_5V + UPS_3V3 + I2C_SDA/SCL + GND"
     (at 20.32 146.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "752a3b39-b164-41aa-8fc4-653a2d5cb417"))
   (text "C4 12.6 V: UPS XH2.54 -> PCH J7; UPS_12V6 + GND"
     (at 20.32 150.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "2f71ec05-6562-4420-9cff-6866b4ff52d2"))
-  (text "The 16 mm switch drives the UPS switch input through the PCH; its LED is fed from UPS_5V via R1."
+  (text "The supplied self-lock button plugs directly into the UPS switch input; there is no switch LED or PCH switch path."
     (at 20.32 172.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "75607315-e804-533b-b665-2c43db92601f"))
   (text "No fuse on the PCH; the Module 3S protects the pack. CHG_SENSE taps the unswitched input."
     (at 20.32 178.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "19192ffe-0232-5fba-b564-a2d3e26db6fe"))
   (text "UPS_5V reaches the Pi through the supplied USB-C cable; it is the only supply."
     (at 20.32 184.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "4ac0a306-058b-5928-98cb-1f690c4882b7"))
-  (text "J3 colours: C green, NO white, LED+ red, LED- black."
+  (text "J3 is the supplied red/black UPS button; connect only to the UPS switch port."
     (at 20.32 190.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "6a8ab1fa-a774-51ad-acd0-07058887537b"))
   (text "J16 is the PCH. UPS_3V3 is now wired to the UPS header; its host side and the J8 12.6 V aux are unused; 3.3 V stays the FireBeetle's."
     (at 20.32 196.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "b4291d4c-7a0b-41e1-9575-b0a8f93a47ae"))

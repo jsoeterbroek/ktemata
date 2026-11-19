@@ -44,8 +44,8 @@ Design notes: [`R5.md`](R5.md) and the proposed [`R6.md`](R6.md).
 | 22 | 2-pin auxiliary 5 V lead (JST-XH / Dupont, as fitted) | 1 | R6 UPS Module 3S auxiliary 5 V output → FireBeetle; keeps the status system alive with the Pi off. The Module 3S has no R5-style USB-A output; use its header and supplied harness where compatible. | € 5 |
 | 23 | [M3 × 10 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/bzk-inbus-verzonkenkopschroef-staal-din-7991-m3x10.html) | **7** | DIN 7991 / ISO 10642; **dk 6.0 mm, k 1.7 mm, 2.0 mm hex**. Seven R5 deck screws into the heat-set inserts. **R6's full-face deck instead needs 4 × M3 × 20** countersunk into the tray's Ø2.6 pilots (13.5 mm deck + 6.5 mm engagement), and the panel screws through the deck's 3 mm floor are **4 × M3 × 6–8**. Sold in packs of 25. | € 2.60 / 25 |
 | 23a | [M3 × 6 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/inbus-torx-schroeven/inbusbout-met-verzonken-kop-staal/inbusbout-verzonkenkop-m3/) | **4** | Same DIN 7991 head and 2.0 mm hex. For the 4 mm lid cover **or** alternate plate into the display's rear inserts; gives ≈1.04 mm engagement. **Do not substitute M3 × 8**, which can bottom out. Sold in packs of 25. | € 2.45 / 25 |
-| 23b | **Metal push button 16 mm, latching (on-off), blue 3–6 V LED** — ABS16CG11ZCB3V (TinyTronics 003808) | 1 | Fits `R5_BTN_D` = 16.2 mm: M16×1 thread, 12 mm long, panel up to 10 mm, IP66, cap Ø18. **Rating 3 A / ≤24 V DC** — so it may **not** switch the Pi's 5 V rail (the Pi is rated 5 A, and this build peaks near 2.8 A); put it on the 12.6 V charge input (2 A) or order a ≥5 A switch or MOSFET/relay for the main rail (section B, future add). The LED has a built-in resistor, works 3–6 V either polarity, ~15 mA. Note: **latching** means a hard power cut — shut the Pi down in software first. | € 3.50 |
-| 23c | **DC jack 5.5 × 2.1 mm, panel mount** — DC-099 (TinyTronics 001201) | 1 | R6's **12.6 V / 2 A** charge input uses the same 30 V / 5 A-rated mechanical socket. **11 mm mounting hole**, nut behind, solder lugs; centre-positive must match the UPS input. Its final cassette position follows the R6 deck (40, 25 in deck coordinates, Ø25 × 8 mm nut recess). The bought host remains undrilled. A 2 A charge-path fuse is separate from pack protection. | € 1.50 |
+| 23b | **Waveshare XH2.54 self-lock output button**, red/black, 15 cm | 1 | Supplied with the UPS Module 3S (item 4). Plugs directly into the UPS switch port; no PCH connection or LED. Shut the Pi down in software before switching off. | Included |
+| 23c | **XH2.54 → DC5521 female charge lead**, 15 cm | 1 | Supplied with the UPS Module 3S (item 4). The 12.6 V / 2 A source plugs directly into the UPS through this lead. PCH J1 is only a high-impedance charge-sense tap, not a charge-current path. | Included |
 | 24 | **Fuse holder 5×20 mm, PCB, 5 A** — BLX-A-5X20MM (TinyTronics 001195) | 1 | Holds a standard 5 × 20 mm cartridge, **holder rated 5 A / 250 V**, hinged cover so the fuse is replaceable in the field, ~26 × 9 × 18 mm, two 1.2 mm PCB legs. In a wired harness: solder the pack lead to the legs, heat-shrink the joints, and strap the body down. | € 0.50 |
 | 24a | **Fuse 5 × 20 mm, 250 V, 5 A, fast-acting (F)** — FUSE5X20MM5A (TinyTronics 007152) | 1 (spare advised) | ESKA 5 × 20 F, 250 V AC, 5 A, ≈0.03 Ω, IEC 60127-2. R6 retains a 5 A pack-fuse requirement pending physical placement review: full 25 W output is ≈3.2 A at 9 V with 88% conversion efficiency, below 5 A but with less margin than R5. **Not** for the 2 A charge input. Verify the fuse location with the UPS Module 3S factory holders before assembly. | € 0.40 |
 | 25 | Silicone O-ring / gasket assortment | 1 | Case seam, DC socket, button. | € 10 |
@@ -141,12 +141,8 @@ Parts as exported from `PCH.csv`; connectors and passives are not yet priced.
 
 | Ref | Value | Qty | Part |
 |---|---|---|---|
-| J1 | DC-099_12V6_IN | 1 | JST XH 2.54mm 2 pin 15cm |
-| J2 | UPS_12V6_CHG_OUT | 1 | JST XH 2.54mm 2 pin 15cm |
-| J3 | SW16_LATCH_LED | 1 | JST XH 2.54mm 4 pin 15cm |
-| J4 | UPS_SW_EN | 1 | JST XH 2.54mm 2 pin 15cm |
+| J1 | CHG_SENSE_IN | 1 | JST XH 2.54mm 2 pin 15cm |
 | J5 | UPS3S_HDR_2X4 | 1 | 2.54mm 2x4 pin header |
 | J6 | HOST_AUX_PWR_I2C | 1 | 2.54mm 1x5 pin header |
 | J7 | UPS_12V6_IN | 1 | JST XH 2.54mm 2 pin 15cm |
 | J8 | AUX_12V6_OUT | 1 | JST XH 2.54mm 2 pin 15cm |
-| R1 | 330R | 1 | 0603 resistor 330R |

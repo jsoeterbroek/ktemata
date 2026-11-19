@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "/Users/jsoeterbroek/Development/ktemata/cad/kicad/r6/PCH/PCH.kicad_sch")
-		(date "2026-11-18T14:59:32")
+		(date "2026-11-19T16:14:28")
 		(tool "Eeschema 10.0.8")
 		(sheet
 			(number "1")
@@ -102,9 +102,9 @@
 		)
 		(comp
 			(ref "J1")
-			(value "DC-099_12V6_IN")
+			(value "CHG_SENSE_IN")
 			(footprint "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
-			(description "Panel DC-099 Jack to Board Header")
+			(description "High-impedance sense tap on supplied DC5521 lead; direct charge path goes to UPS, not through PCH")
 			(fields
 				(field
 					(name "Footprint") "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
@@ -112,7 +112,7 @@
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Panel DC-099 Jack to Board Header")
+					(name "Description") "High-impedance sense tap on supplied DC5521 lead; direct charge path goes to UPS, not through PCH")
 			)
 			(libsource
 				(lib "Connector_Generic")
@@ -132,150 +132,6 @@
 				(tstamps "/")
 			)
 			(tstamps "f36bd257-5388-4298-87d5-06db1b9cf434")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J2")
-			(value "UPS_12V6_CHG_OUT")
-			(footprint "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
-			(description "12.6V Charge Cable to Waveshare DC5521 Input")
-			(fields
-				(field
-					(name "Footprint") "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "12.6V Charge Cable to Waveshare DC5521 Input")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x02")
-				(description "")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "bc1b6c88-50aa-4e1d-af32-ab63ce31e805")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J3")
-			(value "SW16_LATCH_LED")
-			(footprint "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical")
-			(description "16mm Latching Switch (Pins 1-2) + LED (Pins 3-4)")
-			(fields
-				(field
-					(name "Footprint") "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "16mm Latching Switch (Pins 1-2) + LED (Pins 3-4)")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "43041ea5-e7ea-4c12-bf57-e8e834548c69")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J4")
-			(value "UPS_SW_EN")
-			(footprint "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
-			(description "2-Pin Cable to Waveshare Onboard Switch Header")
-			(fields
-				(field
-					(name "Footprint") "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "2-Pin Cable to Waveshare Onboard Switch Header")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x02")
-				(description "")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "76832565-f1e6-4454-aac8-6bb81419e42c")
 			(units
 				(unit
 					(name "A")
@@ -724,52 +580,6 @@
 						)
 						(pin
 							(num "4")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "R1")
-			(value "330R")
-			(footprint "Resistor_SMD:R_0603_1608Metric")
-			(description "Current Limiting Resistor for J3 Switch LED")
-			(fields
-				(field
-					(name "Footprint") "Resistor_SMD:R_0603_1608Metric")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Current Limiting Resistor for J3 Switch LED")
-			)
-			(libsource
-				(lib "Device")
-				(part "R")
-				(description "")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "386327b0-d808-4a5e-b742-3f83a0f0bc58")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
 						)
 					)
 				)
@@ -1383,12 +1193,6 @@
 				(pinfunction "Pin_8_8")
 				(pintype "passive")
 			)
-			(node
-				(ref "R1")
-				(pin "1")
-				(pinfunction "~_1")
-				(pintype "passive")
-			)
 		)
 		(net
 			(code "3")
@@ -1413,12 +1217,6 @@
 			(class "Default")
 			(node
 				(ref "J1")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-			(node
-				(ref "J2")
 				(pin "1")
 				(pinfunction "Pin_1_1")
 				(pintype "passive")
@@ -1489,18 +1287,6 @@
 				(ref "J11")
 				(pin "2")
 				(pinfunction "Pin_2_2")
-				(pintype "passive")
-			)
-			(node
-				(ref "J2")
-				(pin "2")
-				(pinfunction "Pin_2_2")
-				(pintype "passive")
-			)
-			(node
-				(ref "J3")
-				(pin "4")
-				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
@@ -1635,57 +1421,6 @@
 		)
 		(net
 			(code "10")
-			(name "/SW_LED_ANODE")
-			(class "Default")
-			(node
-				(ref "J3")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive")
-			)
-			(node
-				(ref "R1")
-				(pin "2")
-				(pinfunction "~_2")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "11")
-			(name "/UPS_SW_1")
-			(class "Default")
-			(node
-				(ref "J3")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-			(node
-				(ref "J4")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "12")
-			(name "/UPS_SW_2")
-			(class "Default")
-			(node
-				(ref "J3")
-				(pin "2")
-				(pinfunction "Pin_2_2")
-				(pintype "passive")
-			)
-			(node
-				(ref "J4")
-				(pin "2")
-				(pinfunction "Pin_2_2")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "13")
 			(name "unconnected-(J9-Pin_1-Pad1)")
 			(class "Default")
 			(node
@@ -1696,7 +1431,7 @@
 			)
 		)
 		(net
-			(code "14")
+			(code "11")
 			(name "unconnected-(J9-Pin_2-Pad2)")
 			(class "Default")
 			(node
@@ -1707,7 +1442,7 @@
 			)
 		)
 		(net
-			(code "15")
+			(code "12")
 			(name "unconnected-(J9-Pin_3-Pad3)")
 			(class "Default")
 			(node
@@ -1718,7 +1453,7 @@
 			)
 		)
 		(net
-			(code "16")
+			(code "13")
 			(name "unconnected-(J9-Pin_4-Pad4)")
 			(class "Default")
 			(node
@@ -1729,7 +1464,7 @@
 			)
 		)
 		(net
-			(code "17")
+			(code "14")
 			(name "unconnected-(J9-Pin_5-Pad5)")
 			(class "Default")
 			(node
@@ -1740,7 +1475,7 @@
 			)
 		)
 		(net
-			(code "18")
+			(code "15")
 			(name "unconnected-(J9-Pin_6-Pad6)")
 			(class "Default")
 			(node
@@ -1751,7 +1486,7 @@
 			)
 		)
 		(net
-			(code "19")
+			(code "16")
 			(name "unconnected-(J9-Pin_7-Pad7)")
 			(class "Default")
 			(node
@@ -1762,7 +1497,7 @@
 			)
 		)
 		(net
-			(code "20")
+			(code "17")
 			(name "unconnected-(J9-Pin_8-Pad8)")
 			(class "Default")
 			(node
@@ -1773,7 +1508,7 @@
 			)
 		)
 		(net
-			(code "21")
+			(code "18")
 			(name "unconnected-(J9-Pin_11-Pad11)")
 			(class "Default")
 			(node
@@ -1784,7 +1519,7 @@
 			)
 		)
 		(net
-			(code "22")
+			(code "19")
 			(name "unconnected-(J9-Pin_12-Pad12)")
 			(class "Default")
 			(node
@@ -1795,7 +1530,7 @@
 			)
 		)
 		(net
-			(code "23")
+			(code "20")
 			(name "unconnected-(J9-Pin_13-Pad13)")
 			(class "Default")
 			(node
@@ -1806,7 +1541,7 @@
 			)
 		)
 		(net
-			(code "24")
+			(code "21")
 			(name "unconnected-(J9-Pin_14-Pad14)")
 			(class "Default")
 			(node
@@ -1817,7 +1552,7 @@
 			)
 		)
 		(net
-			(code "25")
+			(code "22")
 			(name "unconnected-(J9-Pin_16-Pad16)")
 			(class "Default")
 			(node
@@ -1828,7 +1563,7 @@
 			)
 		)
 		(net
-			(code "26")
+			(code "23")
 			(name "unconnected-(J9-Pin_18-Pad18)")
 			(class "Default")
 			(node
@@ -1839,7 +1574,7 @@
 			)
 		)
 		(net
-			(code "27")
+			(code "24")
 			(name "unconnected-(J10-Pin_2-Pad2)")
 			(class "Default")
 			(node
@@ -1850,7 +1585,7 @@
 			)
 		)
 		(net
-			(code "28")
+			(code "25")
 			(name "unconnected-(J10-Pin_6-Pad6)")
 			(class "Default")
 			(node
@@ -1861,7 +1596,7 @@
 			)
 		)
 		(net
-			(code "29")
+			(code "26")
 			(name "unconnected-(J10-Pin_7-Pad7)")
 			(class "Default")
 			(node
@@ -1872,7 +1607,7 @@
 			)
 		)
 		(net
-			(code "30")
+			(code "27")
 			(name "unconnected-(J10-Pin_8-Pad8)")
 			(class "Default")
 			(node
@@ -1883,7 +1618,7 @@
 			)
 		)
 		(net
-			(code "31")
+			(code "28")
 			(name "unconnected-(J10-Pin_9-Pad9)")
 			(class "Default")
 			(node
@@ -1894,7 +1629,7 @@
 			)
 		)
 		(net
-			(code "32")
+			(code "29")
 			(name "unconnected-(J10-Pin_11-Pad11)")
 			(class "Default")
 			(node
@@ -1905,7 +1640,7 @@
 			)
 		)
 		(net
-			(code "33")
+			(code "30")
 			(name "unconnected-(J10-Pin_14-Pad14)")
 			(class "Default")
 			(node

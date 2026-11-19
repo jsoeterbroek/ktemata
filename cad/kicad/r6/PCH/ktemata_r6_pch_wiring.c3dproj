@@ -1,0 +1,137 @@
+{
+  "schemaVersion": 1,
+  "name": "Ktemata R6 · PCH wiring",
+  "components": [
+    {
+      "id": "pch",
+      "modelId": "ktemata-r6-pch",
+      "name": "PCH + FireBeetle 2",
+      "position": [0, 0, 0],
+      "rotation": [0, 0, 0],
+      "dimensions": [63, 66, 1.6],
+      "geometry": {"kind": "procedural-pcb", "quality": "enhanced-procedural", "pcbColor": "#245f4b", "pcbThickness": 1.6, "headerRows": 2, "headerSpacing": 2.54, "category": "PCH carrier", "verified": false},
+      "pins": [
+        {"id": "J1-1", "label": "J1.1 CHG_12V6_IN · sense tap only", "side": "top", "index": 0, "physicalPosition": 1, "electrical": "power-in", "voltage": 12.6, "localPosition": [-18.5, 25, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J1-2", "label": "J1.2 GND", "side": "top", "index": 1, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-16, 25, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J5-1", "label": "J5.1 I2C_SCL", "side": "top", "index": 8, "physicalPosition": 1, "electrical": "bidirectional", "localPosition": [2.5, 19.08, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J5-2", "label": "J5.2 I2C_SDA", "side": "top", "index": 9, "physicalPosition": 2, "electrical": "bidirectional", "localPosition": [5.04, 19.08, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J5-3", "label": "J5.3 +3V3", "side": "top", "index": 10, "physicalPosition": 3, "electrical": "power-in", "voltage": 3.3, "localPosition": [2.5, 16.54, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J5-4", "label": "J5.4 +3V3", "side": "top", "index": 11, "physicalPosition": 4, "electrical": "power-in", "voltage": 3.3, "localPosition": [5.04, 16.54, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J5-5", "label": "J5.5 GND", "side": "top", "index": 12, "physicalPosition": 5, "electrical": "ground", "voltage": 0, "localPosition": [2.5, 14, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J5-6", "label": "J5.6 GND", "side": "top", "index": 13, "physicalPosition": 6, "electrical": "ground", "voltage": 0, "localPosition": [5.04, 14, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J5-7", "label": "J5.7 +5V", "side": "top", "index": 14, "physicalPosition": 7, "electrical": "power-in", "voltage": 5, "localPosition": [2.5, 11.46, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J5-8", "label": "J5.8 +5V", "side": "top", "index": 15, "physicalPosition": 8, "electrical": "power-in", "voltage": 5, "localPosition": [5.04, 11.46, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J6-1", "label": "J6.1 I2C_SCL", "side": "top", "index": 16, "physicalPosition": 1, "electrical": "bidirectional", "localPosition": [11.5, 19.08, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J6-2", "label": "J6.2 I2C_SDA", "side": "top", "index": 17, "physicalPosition": 2, "electrical": "bidirectional", "localPosition": [11.5, 16.54, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J6-3", "label": "J6.3 +3V3", "side": "top", "index": 18, "physicalPosition": 3, "electrical": "power-out", "voltage": 3.3, "localPosition": [11.5, 14, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J6-4", "label": "J6.4 GND", "side": "top", "index": 19, "physicalPosition": 4, "electrical": "ground", "voltage": 0, "localPosition": [11.5, 11.46, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J6-5", "label": "J6.5 OLED_BTN", "side": "top", "index": 20, "physicalPosition": 5, "electrical": "passive", "localPosition": [11.5, 8.92, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J7-1", "label": "J7.1 BAT_12V6_OUT", "side": "top", "index": 21, "physicalPosition": 1, "electrical": "power-in", "voltage": 12.6, "localPosition": [-12.5, 2, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J7-2", "label": "J7.2 GND", "side": "top", "index": 22, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-10, 2, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J11-1", "label": "J11.1 +3V3 · OLED red · FB J9.17", "side": "top", "index": 23, "physicalPosition": 1, "electrical": "power-out", "voltage": 3.3, "localPosition": [-21, -18, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J11-2", "label": "J11.2 GND · OLED black · FB J9.15", "side": "top", "index": 24, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-23.5, -18, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J11-3", "label": "J11.3 I2C_SCL · OLED white · FB J9.10", "side": "top", "index": 25, "physicalPosition": 3, "electrical": "bidirectional", "localPosition": [-26, -18, 6], "exitDirection": [0, 0, 1]},
+        {"id": "J11-4", "label": "J11.4 I2C_SDA · OLED green · FB J9.9", "side": "top", "index": 26, "physicalPosition": 4, "electrical": "bidirectional", "localPosition": [-28.5, -18, 6], "exitDirection": [0, 0, 1]}
+      ]
+    },
+    {
+      "id": "dc-input",
+      "modelId": "dc5521-12v6-source",
+      "name": "12.6 V source → supplied DC5521 lead",
+      "position": [-105, 75, 0],
+      "rotation": [0, 0, 0],
+      "dimensions": [36, 24, 10],
+      "geometry": {"kind": "procedural-pcb", "quality": "enhanced-procedural", "pcbColor": "#454b52", "pcbThickness": 3, "category": "Charge input", "verified": false},
+      "pins": [
+        {"id": "DC_POS", "label": "DC5521 centre + · 12.6 V", "side": "right", "index": 0, "physicalPosition": 1, "electrical": "power-out", "voltage": 12.6, "localPosition": [18, 4, 7], "exitDirection": [1, 0, 0]},
+        {"id": "DC_NEG", "label": "DC5521 GND", "side": "right", "index": 1, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [18, -4, 7], "exitDirection": [1, 0, 0]}
+      ]
+    },
+    {
+      "id": "ups",
+      "modelId": "waveshare-ups-module-3s",
+      "name": "Waveshare UPS Module 3S",
+      "position": [-105, -5, 0],
+      "rotation": [0, 0, 0],
+      "dimensions": [56, 85, 12],
+      "geometry": {"kind": "procedural-pcb", "quality": "enhanced-procedural", "pcbColor": "#304f3d", "pcbThickness": 1.6, "category": "UPS", "verified": false},
+      "pins": [
+        {"id": "CHG_POS", "label": "Charge input + · 12.6 V", "side": "right", "index": 0, "physicalPosition": 1, "electrical": "power-in", "voltage": 12.6, "localPosition": [28, 34, 9], "exitDirection": [1, 0, 0]},
+        {"id": "CHG_NEG", "label": "Charge input GND", "side": "right", "index": 1, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [28, 28, 9], "exitDirection": [1, 0, 0]},
+        {"id": "HDR1", "label": "2×4 pin 1 · I2C_SCL", "side": "right", "index": 2, "physicalPosition": 1, "electrical": "bidirectional", "localPosition": [28, 17, 9], "exitDirection": [1, 0, 0]},
+        {"id": "HDR2", "label": "2×4 pin 2 · I2C_SDA", "side": "right", "index": 3, "physicalPosition": 2, "electrical": "bidirectional", "localPosition": [28, 13, 9], "exitDirection": [1, 0, 0]},
+        {"id": "HDR3", "label": "2×4 pin 3 · +3V3", "side": "right", "index": 4, "physicalPosition": 3, "electrical": "power-out", "voltage": 3.3, "localPosition": [28, 9, 9], "exitDirection": [1, 0, 0]},
+        {"id": "HDR4", "label": "2×4 pin 4 · +3V3 · unused at host", "side": "right", "index": 5, "physicalPosition": 4, "electrical": "power-out", "voltage": 3.3, "localPosition": [28, 5, 9], "exitDirection": [1, 0, 0]},
+        {"id": "HDR5", "label": "2×4 pin 5 · GND", "side": "right", "index": 6, "physicalPosition": 5, "electrical": "ground", "voltage": 0, "localPosition": [28, 1, 9], "exitDirection": [1, 0, 0]},
+        {"id": "HDR6", "label": "2×4 pin 6 · GND", "side": "right", "index": 7, "physicalPosition": 6, "electrical": "ground", "voltage": 0, "localPosition": [28, -3, 9], "exitDirection": [1, 0, 0]},
+        {"id": "HDR7", "label": "2×4 pin 7 · +5V", "side": "right", "index": 8, "physicalPosition": 7, "electrical": "power-out", "voltage": 5, "localPosition": [28, -7, 9], "exitDirection": [1, 0, 0]},
+        {"id": "HDR8", "label": "2×4 pin 8 · +5V", "side": "right", "index": 9, "physicalPosition": 8, "electrical": "power-out", "voltage": 5, "localPosition": [28, -11, 9], "exitDirection": [1, 0, 0]},
+        {"id": "BAT_POS", "label": "12.6 V branch out +", "side": "right", "index": 10, "physicalPosition": 11, "electrical": "power-out", "voltage": 12.6, "localPosition": [28, -29, 9], "exitDirection": [1, 0, 0]},
+        {"id": "BAT_NEG", "label": "12.6 V branch out GND", "side": "right", "index": 11, "physicalPosition": 12, "electrical": "ground", "voltage": 0, "localPosition": [28, -35, 9], "exitDirection": [1, 0, 0]}
+      ]
+    },
+    {
+      "id": "lid-harness",
+      "modelId": "ktemata-r6-lid-i2c-button",
+      "name": "Lid I²C + OLED-button harness",
+      "position": [100, -5, 0],
+      "rotation": [0, 0, 0],
+      "dimensions": [44, 32, 10],
+      "geometry": {"kind": "procedural-pcb", "quality": "enhanced-procedural", "pcbColor": "#464061", "pcbThickness": 2, "category": "Lid harness", "verified": false},
+      "pins": [
+        {"id": "SCL", "label": "Lid I2C_SCL · white", "side": "left", "index": 0, "physicalPosition": 1, "electrical": "bidirectional", "localPosition": [-22, 10, 8], "exitDirection": [-1, 0, 0]},
+        {"id": "SDA", "label": "Lid I2C_SDA · green", "side": "left", "index": 1, "physicalPosition": 2, "electrical": "bidirectional", "localPosition": [-22, 5, 8], "exitDirection": [-1, 0, 0]},
+        {"id": "VCC", "label": "Lid +3V3 · red", "side": "left", "index": 2, "physicalPosition": 3, "electrical": "power-in", "voltage": 3.3, "localPosition": [-22, 0, 8], "exitDirection": [-1, 0, 0]},
+        {"id": "GND", "label": "Lid GND · black", "side": "left", "index": 3, "physicalPosition": 4, "electrical": "ground", "voltage": 0, "localPosition": [-22, -5, 8], "exitDirection": [-1, 0, 0]},
+        {"id": "BTN", "label": "OLED button · GND-return contact", "side": "left", "index": 4, "physicalPosition": 5, "electrical": "passive", "localPosition": [-22, -10, 8], "exitDirection": [-1, 0, 0]}
+      ]
+    },
+    {
+      "id": "oled",
+      "modelId": "oled-1_3-sh1106",
+      "name": "1.3 in OLED · SH1106 · 0x3C",
+      "position": [100, 65, 0],
+      "rotation": [0, 0, 0],
+      "dimensions": [42, 40, 8],
+      "geometry": {"kind": "procedural-pcb", "quality": "enhanced-procedural", "pcbColor": "#243d5b", "pcbThickness": 1.6, "category": "Status OLED", "verified": false},
+      "pins": [
+        {"id": "VCC", "label": "OLED VCC 3V3 · red", "side": "left", "index": 0, "physicalPosition": 1, "electrical": "power-in", "voltage": 3.3, "localPosition": [-21, 7.5, 7], "exitDirection": [-1, 0, 0]},
+        {"id": "GND", "label": "OLED GND · black", "side": "left", "index": 1, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-21, 2.5, 7], "exitDirection": [-1, 0, 0]},
+        {"id": "SCL", "label": "OLED SCL · white", "side": "left", "index": 2, "physicalPosition": 3, "electrical": "bidirectional", "localPosition": [-21, -2.5, 7], "exitDirection": [-1, 0, 0]},
+        {"id": "SDA", "label": "OLED SDA · green", "side": "left", "index": 3, "physicalPosition": 4, "electrical": "bidirectional", "localPosition": [-21, -7.5, 7], "exitDirection": [-1, 0, 0]}
+      ]
+    }
+  ],
+  "wires": [
+    {"id": "c1-dc-pos", "from": {"componentId": "dc-input", "pinId": "DC_POS"}, "to": {"componentId": "pch", "pinId": "J1-1"}, "color": "#d94a42", "diameter": 1.4, "label": "DC5521 + → PCH J1.1 · high-impedance sense tap", "curvature": 14, "routeMode": "straight", "liftHeight": 8},
+    {"id": "c1-dc-gnd", "from": {"componentId": "dc-input", "pinId": "DC_NEG"}, "to": {"componentId": "pch", "pinId": "J1-2"}, "color": "#20242a", "diameter": 1.4, "label": "DC5521 GND → PCH J1.2 · sense-tap ground", "curvature": 14, "routeMode": "straight", "liftHeight": 9},
+    {"id": "c1-ups-pos", "from": {"componentId": "dc-input", "pinId": "DC_POS"}, "to": {"componentId": "ups", "pinId": "CHG_POS"}, "color": "#d94a42", "diameter": 1.4, "label": "Supplied DC5521 + → UPS charge + · direct 12.6 V", "curvature": 14, "routeMode": "straight", "liftHeight": 10},
+    {"id": "c1-ups-gnd", "from": {"componentId": "dc-input", "pinId": "DC_NEG"}, "to": {"componentId": "ups", "pinId": "CHG_NEG"}, "color": "#20242a", "diameter": 1.4, "label": "Supplied DC5521 GND → UPS charge GND · direct", "curvature": 14, "routeMode": "straight", "liftHeight": 11},
+    {"id": "c4-ups-pos", "from": {"componentId": "ups", "pinId": "BAT_POS"}, "to": {"componentId": "pch", "pinId": "J7-1"}, "color": "#d94a42", "diameter": 1.4, "label": "UPS 12.6 V out + → PCH J7.1 · BAT_12V6_OUT", "curvature": 14, "routeMode": "straight", "liftHeight": 8},
+    {"id": "c4-ups-gnd", "from": {"componentId": "ups", "pinId": "BAT_NEG"}, "to": {"componentId": "pch", "pinId": "J7-2"}, "color": "#20242a", "diameter": 1.4, "label": "UPS 12.6 V out GND → PCH J7.2 · GND", "curvature": 14, "routeMode": "straight", "liftHeight": 9},
+    {"id": "c3-hdr-1", "from": {"componentId": "ups", "pinId": "HDR1"}, "to": {"componentId": "pch", "pinId": "J5-1"}, "color": "#f4f4f2", "diameter": 1.1, "label": "UPS 2×4 pin 1 → PCH J5.1 · I2C_SCL", "curvature": 12, "routeMode": "straight", "liftHeight": 12},
+    {"id": "c3-hdr-2", "from": {"componentId": "ups", "pinId": "HDR2"}, "to": {"componentId": "pch", "pinId": "J5-2"}, "color": "#2c9a5b", "diameter": 1.1, "label": "UPS 2×4 pin 2 → PCH J5.2 · I2C_SDA", "curvature": 12, "routeMode": "straight", "liftHeight": 13},
+    {"id": "c3-hdr-3", "from": {"componentId": "ups", "pinId": "HDR3"}, "to": {"componentId": "pch", "pinId": "J5-3"}, "color": "#d94a42", "diameter": 1.1, "label": "UPS 2×4 pin 3 → PCH J5.3 · +3V3", "curvature": 12, "routeMode": "straight", "liftHeight": 14},
+    {"id": "c3-hdr-4", "from": {"componentId": "ups", "pinId": "HDR4"}, "to": {"componentId": "pch", "pinId": "J5-4"}, "color": "#d94a42", "diameter": 1.1, "label": "UPS 2×4 pin 4 → PCH J5.4 · +3V3", "curvature": 12, "routeMode": "straight", "liftHeight": 15},
+    {"id": "c3-hdr-5", "from": {"componentId": "ups", "pinId": "HDR5"}, "to": {"componentId": "pch", "pinId": "J5-5"}, "color": "#20242a", "diameter": 1.1, "label": "UPS 2×4 pin 5 → PCH J5.5 · GND", "curvature": 12, "routeMode": "straight", "liftHeight": 16},
+    {"id": "c3-hdr-6", "from": {"componentId": "ups", "pinId": "HDR6"}, "to": {"componentId": "pch", "pinId": "J5-6"}, "color": "#20242a", "diameter": 1.1, "label": "UPS 2×4 pin 6 → PCH J5.6 · GND", "curvature": 12, "routeMode": "straight", "liftHeight": 17},
+    {"id": "c3-hdr-7", "from": {"componentId": "ups", "pinId": "HDR7"}, "to": {"componentId": "pch", "pinId": "J5-7"}, "color": "#d94a42", "diameter": 1.1, "label": "UPS 2×4 pin 7 → PCH J5.7 · +5V", "curvature": 12, "routeMode": "straight", "liftHeight": 18},
+    {"id": "c3-hdr-8", "from": {"componentId": "ups", "pinId": "HDR8"}, "to": {"componentId": "pch", "pinId": "J5-8"}, "color": "#d94a42", "diameter": 1.1, "label": "UPS 2×4 pin 8 → PCH J5.8 · +5V", "curvature": 12, "routeMode": "straight", "liftHeight": 19},
+    {"id": "lid-scl", "from": {"componentId": "lid-harness", "pinId": "SCL"}, "to": {"componentId": "pch", "pinId": "J6-1"}, "color": "#f4f4f2", "diameter": 1.1, "label": "Lid SCL (white) → PCH J6.1 · I2C_SCL", "curvature": 12, "routeMode": "straight", "liftHeight": 12},
+    {"id": "lid-sda", "from": {"componentId": "lid-harness", "pinId": "SDA"}, "to": {"componentId": "pch", "pinId": "J6-2"}, "color": "#2c9a5b", "diameter": 1.1, "label": "Lid SDA (green) → PCH J6.2 · I2C_SDA", "curvature": 12, "routeMode": "straight", "liftHeight": 13},
+    {"id": "lid-3v3", "from": {"componentId": "lid-harness", "pinId": "VCC"}, "to": {"componentId": "pch", "pinId": "J6-3"}, "color": "#d94a42", "diameter": 1.1, "label": "Lid +3V3 (red) → PCH J6.3", "curvature": 12, "routeMode": "straight", "liftHeight": 14},
+    {"id": "lid-gnd", "from": {"componentId": "lid-harness", "pinId": "GND"}, "to": {"componentId": "pch", "pinId": "J6-4"}, "color": "#20242a", "diameter": 1.1, "label": "Lid GND (black) → PCH J6.4", "curvature": 12, "routeMode": "straight", "liftHeight": 15},
+    {"id": "lid-btn", "from": {"componentId": "lid-harness", "pinId": "BTN"}, "to": {"componentId": "pch", "pinId": "J6-5"}, "color": "#4c83c3", "diameter": 1.1, "label": "OLED button → PCH J6.5 · OLED_BTN", "curvature": 12, "routeMode": "straight", "liftHeight": 16},
+    {"id": "oled-vcc", "from": {"componentId": "oled", "pinId": "VCC"}, "to": {"componentId": "pch", "pinId": "J11-1"}, "color": "#d94a42", "diameter": 1.2, "label": "OLED VCC (red) → PCH J11.1 → FireBeetle J9.17 · +3V3", "curvature": 12, "routeMode": "straight", "liftHeight": 12},
+    {"id": "oled-gnd", "from": {"componentId": "oled", "pinId": "GND"}, "to": {"componentId": "pch", "pinId": "J11-2"}, "color": "#20242a", "diameter": 1.2, "label": "OLED GND (black) → PCH J11.2 → FireBeetle J9.15 · GND", "curvature": 12, "routeMode": "straight", "liftHeight": 13},
+    {"id": "oled-scl", "from": {"componentId": "oled", "pinId": "SCL"}, "to": {"componentId": "pch", "pinId": "J11-3"}, "color": "#f4f4f2", "diameter": 1.2, "label": "OLED SCL (white) → PCH J11.3 → FireBeetle J9.10 · I2C_SCL", "curvature": 12, "routeMode": "straight", "liftHeight": 14},
+    {"id": "oled-sda", "from": {"componentId": "oled", "pinId": "SDA"}, "to": {"componentId": "pch", "pinId": "J11-4"}, "color": "#2c9a5b", "diameter": 1.2, "label": "OLED SDA (green) → PCH J11.4 → FireBeetle J9.9 · I2C_SDA", "curvature": 12, "routeMode": "straight", "liftHeight": 15}
+  ],
+  "wireOrder": [
+    "c1-dc-pos", "c1-dc-gnd", "c1-ups-pos", "c1-ups-gnd", "c4-ups-pos", "c4-ups-gnd",
+    "c3-hdr-1", "c3-hdr-2", "c3-hdr-3", "c3-hdr-4", "c3-hdr-5", "c3-hdr-6", "c3-hdr-7", "c3-hdr-8",
+    "lid-scl", "lid-sda", "lid-3v3", "lid-gnd", "lid-btn",
+    "oled-vcc", "oled-gnd", "oled-scl", "oled-sda"
+  ],
+  "camera": {"position": [0, -230, 300], "target": [-5, 10, 0]}
+}
