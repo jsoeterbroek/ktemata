@@ -131,14 +131,22 @@ over automatically. The separate PCH board has its own rules in §4.
    loops; do not route a display ribbon across the hinge.
 4. **Two controller domains.** The FireBeetle remains the sole master of the status/UPS bus. The Waveshare
    display's touch interface belongs to the Pi and is a separate connection; do not join the two buses.
-5. **Display software.** The Waveshare panel is not the automatically configured Touch Display 2. Validate
+5. **FireBeetle serial link.** A USB-A → USB-C **data** cable carries the Pi ↔ FireBeetle serial link; the
+   FireBeetle stays on the UPS, so the Pi's 5 V must not reach it. Cut the cable's **VBUS** wire (normally
+   red; confirm by continuity) near the A plug and splice in the `1N5819` (BOM 21a), **band toward the
+   FireBeetle**; leave GND, D+ and D− intact, and heat-shrink the joint. Do **not** cut VBUS outright and do
+   **not** use a USB power blocker: the DFR1140 powers its CH340 from USB VBUS, so either leaves the Pi with
+   no serial device. With the diode the CH340 runs at ≈4.7 V while the FireBeetle's 5 V rail stays at the
+   UPS 5.0 V. Check 5.0 V on the Pi side of the diode and ≈4.7 V on its FireBeetle side, then confirm
+   `lsusb` shows `1a86:7523` and `/dev/ttyUSB0` appears.
+6. **Display software.** The Waveshare panel is not the automatically configured Touch Display 2. Validate
    the R6 overlay and touch operation on the intended Ubuntu release before final assembly.
-6. **Charge sensing.** The R6 divider values are in the R6 power sheet. Do not reuse R5's resistor values;
+7. **Charge sensing.** The R6 divider values are in the R6 power sheet. Do not reuse R5's resistor values;
    calibrate the reading against a measured 12.6 V input.
-7. **First power-up.** Follow the R6 schematic with the Pi disconnected, verify the pack and regulated
+8. **First power-up.** Follow the R6 schematic with the Pi disconnected, verify the pack and regulated
    outputs, then confirm the status devices including the UPS gauge at `0x41`. Connect the Pi only after
    those checks pass, then repeat the undervoltage check under load.
-8. **Proposal gate.** ERC and netlist validation are complete, but the UPS, display, spacer stack, harness
+9. **Proposal gate.** ERC and netlist validation are complete, but the UPS, display, spacer stack, harness
    and thermal design still require the bench and fit gates in [`R6.md`](R6.md).
 
 ## 4. R6 PCH assembly rules
