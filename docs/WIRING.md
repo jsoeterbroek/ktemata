@@ -92,8 +92,10 @@ These rules apply to the preserved **R5** project only. Values live in the R5 sc
 3. **Pull-ups.** OLED, DS3231 and the HAT's INA219 may each carry 4.7–10 kΩ pull-ups; in parallel they
    load the bus. Keep **one** set and check with a meter before powering.
 4. **3.3 V only** on the I²C modules and the HAT's I²C logic. Never power the OLED or DS3231 from 5 V.
-5. **FireBeetle power vs USB.** Its 5 V comes from the HAT's USB-A, so the OLED works with the Pi off;
-   the USB-C link to the Pi is data only. Use a data-only cable, or cut VBUS, so the Pi is not backfed.
+5. **FireBeetle power vs USB.** Its 5 V comes from the HAT's USB-A, so the OLED works with the Pi off.
+   Do **not** cut VBUS in the USB-C link: the CH340's supply comes from USB VBUS, so the Pi would see
+   no serial device. Block the Pi's 5 V with a Schottky in the cable's VBUS instead (BOM 21a);
+   the board's D2 then stays reverse-biased and the Pi cannot backfeed the HAT.
 6. **Never feed the Pi twice.** With the HAT's 5 V soldered onto the Pi, do not plug a supply into the
    Pi's USB-C.
 7. **Display.** The Touch Display 2 needs its 3-pin power cable as well as the DSI FFC; it is
