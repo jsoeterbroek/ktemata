@@ -605,8 +605,6 @@
   (wire (pts (xy 168.91 123.19) (xy 158.75 123.19)) (stroke (width 0) (type solid)) (uuid "4dcd50a1-5086-46f6-ba34-1f67c16fb806"))
   (wire (pts (xy 168.91 125.73) (xy 158.75 125.73)) (stroke (width 0) (type solid)) (uuid "d6baa7f6-8caf-4201-b386-cb40d325255a"))
   (wire (pts (xy 168.91 128.27) (xy 158.75 128.27)) (stroke (width 0) (type solid)) (uuid "dbe1486c-9681-4fe6-aeb3-bd97e1bb567e"))
-  (wire (pts (xy 168.91 130.81) (xy 158.75 130.81)) (stroke (width 0) (type solid)) (uuid "6809ec5b-4150-46c4-98dc-c1f01daff3a5"))
-  (wire (pts (xy 168.91 160.02) (xy 158.75 160.02)) (stroke (width 0) (type solid)) (uuid "0773fdf5-9b10-4b55-80fc-b9a9f7973088"))
   (wire (pts (xy 168.91 144.78) (xy 158.75 144.78)) (stroke (width 0) (type solid)) (uuid "51201e6e-6511-4abf-b5ab-cc349590e75f"))
   (wire (pts (xy 168.91 147.32) (xy 158.75 147.32)) (stroke (width 0) (type solid)) (uuid "8b7f917c-87dc-455f-a65b-a427b7766744"))
   (wire (pts (xy 168.91 149.86) (xy 158.75 149.86)) (stroke (width 0) (type solid)) (uuid "3accbf82-27c1-45e2-b68f-f3492f9b2f7a"))
@@ -641,9 +639,9 @@
   (global_label "I2C_SCL" (shape bidirectional) (at 158.75 149.86 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "9144e3a7-d448-4a7b-bb2c-60810111f406"))
   (global_label "GND" (shape bidirectional) (at 158.75 152.40 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "abc7c3cd-cd29-413a-813a-d2bf21bf9a4b"))
   (global_label "UPS_12V6" (shape bidirectional) (at 158.75 154.94 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4cbd62df-89f5-4b2c-a331-ae00fc608289"))
-  (global_label "UPS_3V3" (shape bidirectional) (at 158.75 130.81 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "4724eda1-f743-4509-9848-a49cff9141a0"))
-  (global_label "UPS_3V3" (shape bidirectional) (at 158.75 160.02 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "f61f45cd-4364-443b-88da-1b2adde289b7"))
   (no_connect (at 168.91 157.48) (uuid "02a2469b-c15f-4d13-8999-00111320badd"))
+  (no_connect (at 168.91 130.81) (uuid "747e809d-0bd7-42c8-b48a-bf53c76ddaea"))
+  (no_connect (at 168.91 160.02) (uuid "a28efdfa-fc94-49b8-b628-6ddf23237197"))
   (text "12.6 V input, centre-positive, 2 A: mains PSU, MPPT solar or crank converter."
     (at 20.32 166.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "16f8cb47-1c6b-5d9a-819e-145305eb2455"))
   (text "UPS direct connections + PCH cables"
@@ -652,7 +650,7 @@
     (at 20.32 138.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "9aa20ec9-3a26-4885-b0f4-84f9f9d68ba3"))
   (text "C2 switch: supplied red/black self-lock button -> UPS switch port; SW_1 + SW_2; no PCH connection"
     (at 20.32 142.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "79acc7a5-3ba9-4d06-ae91-c4ef9721212a"))
-  (text "C3 header: PCH J5 -> UPS 2x4; UPS_5V + UPS_3V3 + I2C_SDA/SCL + GND"
+  (text "C3 header: PCH J5 -> UPS 2x4; UPS_5V + I2C_SDA/SCL + GND; UPS 3V3 stays open"
     (at 20.32 146.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "752a3b39-b164-41aa-8fc4-653a2d5cb417"))
   (text "C4 12.6 V: UPS XH2.54 -> PCH J7; UPS_12V6 + GND"
     (at 20.32 150.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "2f71ec05-6562-4420-9cff-6866b4ff52d2"))
@@ -664,7 +662,7 @@
     (at 20.32 184.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "4ac0a306-058b-5928-98cb-1f690c4882b7"))
   (text "J3 is the supplied red/black UPS button; connect only to the UPS switch port."
     (at 20.32 190.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "6a8ab1fa-a774-51ad-acd0-07058887537b"))
-  (text "J16 is the PCH. UPS_3V3 is now wired to the UPS header; its host side and the J8 12.6 V aux are unused; 3.3 V stays the FireBeetle's."
+  (text "J16 is the PCH. UPS_3V3 is unused: the FireBeetle's regulator supplies the status 3.3 V rail. The J8 12.6 V aux is unused."
     (at 20.32 196.00 0) (effects (font (size 1.4 1.4)) (justify left)) (uuid "b4291d4c-7a0b-41e1-9575-b0a8f93a47ae"))
   (embedded_fonts no)
   (sheet_instances

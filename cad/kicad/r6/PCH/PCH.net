@@ -2,7 +2,7 @@
 	(version "E")
 	(design
 		(source "/Users/jsoeterbroek/Development/ktemata/cad/kicad/r6/PCH/PCH.kicad_sch")
-		(date "2026-11-19T16:14:28")
+		(date "2026-11-20T10:01:35")
 		(tool "Eeschema 10.0.8")
 		(sheet
 			(number "1")
@@ -150,7 +150,7 @@
 			(ref "J5")
 			(value "UPS3S_HDR_2X4")
 			(footprint "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical")
-			(description "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 3V3, 4 3V3, 5 GND, 6 GND, 7 5V, 8 5V")
+			(description "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 NC, 4 NC, 5 GND, 6 GND, 7 5V, 8 5V; UPS 3V3 left open so the FireBeetle regulates the 3.3 V rail")
 			(fields
 				(field
 					(name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical")
@@ -158,7 +158,7 @@
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 3V3, 4 3V3, 5 GND, 6 GND, 7 5V, 8 5V")
+					(name "Description") "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 NC, 4 NC, 5 GND, 6 GND, 7 5V, 8 5V; UPS 3V3 left open so the FireBeetle regulates the 3.3 V rail")
 			)
 			(libsource
 				(lib "Connector_Generic")
@@ -1147,18 +1147,6 @@
 				(pintype "passive")
 			)
 			(node
-				(ref "J5")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive")
-			)
-			(node
-				(ref "J5")
-				(pin "4")
-				(pinfunction "Pin_4_4")
-				(pintype "passive")
-			)
-			(node
 				(ref "J6")
 				(pin "3")
 				(pinfunction "Pin_3_3")
@@ -1421,6 +1409,28 @@
 		)
 		(net
 			(code "10")
+			(name "unconnected-(J5-Pin_3-Pad3)")
+			(class "Default")
+			(node
+				(ref "J5")
+				(pin "3")
+				(pinfunction "Pin_3_3")
+				(pintype "passive+no_connect")
+			)
+		)
+		(net
+			(code "11")
+			(name "unconnected-(J5-Pin_4-Pad4)")
+			(class "Default")
+			(node
+				(ref "J5")
+				(pin "4")
+				(pinfunction "Pin_4_4")
+				(pintype "passive+no_connect")
+			)
+		)
+		(net
+			(code "12")
 			(name "unconnected-(J9-Pin_1-Pad1)")
 			(class "Default")
 			(node
@@ -1431,7 +1441,7 @@
 			)
 		)
 		(net
-			(code "11")
+			(code "13")
 			(name "unconnected-(J9-Pin_2-Pad2)")
 			(class "Default")
 			(node
@@ -1442,7 +1452,7 @@
 			)
 		)
 		(net
-			(code "12")
+			(code "14")
 			(name "unconnected-(J9-Pin_3-Pad3)")
 			(class "Default")
 			(node
@@ -1453,7 +1463,7 @@
 			)
 		)
 		(net
-			(code "13")
+			(code "15")
 			(name "unconnected-(J9-Pin_4-Pad4)")
 			(class "Default")
 			(node
@@ -1464,7 +1474,7 @@
 			)
 		)
 		(net
-			(code "14")
+			(code "16")
 			(name "unconnected-(J9-Pin_5-Pad5)")
 			(class "Default")
 			(node
@@ -1475,7 +1485,7 @@
 			)
 		)
 		(net
-			(code "15")
+			(code "17")
 			(name "unconnected-(J9-Pin_6-Pad6)")
 			(class "Default")
 			(node
@@ -1486,7 +1496,7 @@
 			)
 		)
 		(net
-			(code "16")
+			(code "18")
 			(name "unconnected-(J9-Pin_7-Pad7)")
 			(class "Default")
 			(node
@@ -1497,7 +1507,7 @@
 			)
 		)
 		(net
-			(code "17")
+			(code "19")
 			(name "unconnected-(J9-Pin_8-Pad8)")
 			(class "Default")
 			(node
@@ -1508,7 +1518,7 @@
 			)
 		)
 		(net
-			(code "18")
+			(code "20")
 			(name "unconnected-(J9-Pin_11-Pad11)")
 			(class "Default")
 			(node
@@ -1519,7 +1529,7 @@
 			)
 		)
 		(net
-			(code "19")
+			(code "21")
 			(name "unconnected-(J9-Pin_12-Pad12)")
 			(class "Default")
 			(node
@@ -1530,7 +1540,7 @@
 			)
 		)
 		(net
-			(code "20")
+			(code "22")
 			(name "unconnected-(J9-Pin_13-Pad13)")
 			(class "Default")
 			(node
@@ -1541,7 +1551,7 @@
 			)
 		)
 		(net
-			(code "21")
+			(code "23")
 			(name "unconnected-(J9-Pin_14-Pad14)")
 			(class "Default")
 			(node
@@ -1552,7 +1562,7 @@
 			)
 		)
 		(net
-			(code "22")
+			(code "24")
 			(name "unconnected-(J9-Pin_16-Pad16)")
 			(class "Default")
 			(node
@@ -1563,7 +1573,7 @@
 			)
 		)
 		(net
-			(code "23")
+			(code "25")
 			(name "unconnected-(J9-Pin_18-Pad18)")
 			(class "Default")
 			(node
@@ -1574,7 +1584,7 @@
 			)
 		)
 		(net
-			(code "24")
+			(code "26")
 			(name "unconnected-(J10-Pin_2-Pad2)")
 			(class "Default")
 			(node
@@ -1585,7 +1595,7 @@
 			)
 		)
 		(net
-			(code "25")
+			(code "27")
 			(name "unconnected-(J10-Pin_6-Pad6)")
 			(class "Default")
 			(node
@@ -1596,7 +1606,7 @@
 			)
 		)
 		(net
-			(code "26")
+			(code "28")
 			(name "unconnected-(J10-Pin_7-Pad7)")
 			(class "Default")
 			(node
@@ -1607,7 +1617,7 @@
 			)
 		)
 		(net
-			(code "27")
+			(code "29")
 			(name "unconnected-(J10-Pin_8-Pad8)")
 			(class "Default")
 			(node
@@ -1618,7 +1628,7 @@
 			)
 		)
 		(net
-			(code "28")
+			(code "30")
 			(name "unconnected-(J10-Pin_9-Pad9)")
 			(class "Default")
 			(node
@@ -1629,7 +1639,7 @@
 			)
 		)
 		(net
-			(code "29")
+			(code "31")
 			(name "unconnected-(J10-Pin_11-Pad11)")
 			(class "Default")
 			(node
@@ -1640,7 +1650,7 @@
 			)
 		)
 		(net
-			(code "30")
+			(code "32")
 			(name "unconnected-(J10-Pin_14-Pad14)")
 			(class "Default")
 			(node

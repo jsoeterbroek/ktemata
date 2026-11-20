@@ -53,8 +53,6 @@ SW_2,J3,"Waveshare XH2.54 self-lock button, red/black (supplied)",2
 SW_2,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",10
 UPS_12V6,J16,PCH power/comm hub,9
 UPS_12V6,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",11
-UPS_3V3,J16,PCH power/comm hub,11
-UPS_3V3,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",12
 UPS_5V,J16,PCH power/comm hub,5
 UPS_5V,J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",5
 UPS_5V,J7,Raspberry Pi 5,1
@@ -67,3 +65,5 @@ USB_KEYBOARD,J7,Raspberry Pi 5,6
 VBAT_PI,J11,ML-2020 cell on Pi J5,1
 VBAT_PI,J7,Raspberry Pi 5,8
 unconnected-(J16-AUX_12V6-Pad10),J16,PCH power/comm hub,10
+unconnected-(J16-UPS_3V3-Pad11),J16,PCH power/comm hub,11
+unconnected-(J6-3V3-Pad12),J6,"Waveshare UPS Module 3S, INA219 0x41 / 0.1 ohm",12

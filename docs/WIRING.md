@@ -145,7 +145,8 @@ The PCH is a passive connector hub — no conversion, no fuse, no protection of 
 [`PCH.kicad_pro`](../cad/kicad/r6/PCH/PCH.kicad_pro); the practice is here.
 
 1. **Match pin 1.** Mate the PCH's 2×4 UPS header one-to-one with the module's header and mark pin 1 on the
-   cable. A reversed ribbon puts 5 V on the clock line; use a keyed connector or a shrouded header if you can.
+   cable. A reversed ribbon puts 5 V on an I²C line and 3.3 V on ground; use a keyed connector or a
+   shrouded header if you can.
 2. **Auxiliary 5 V only.** The PCH's 5 V output feeds the status side. The Pi 5 and 7-inch display stay on the
    UPS Module 3S's USB-C lead; do not route the Pi's 5 A through this board.
 3. **Direct supplied harnesses.** The red/black self-lock button plugs directly into the UPS switch input;
@@ -160,4 +161,5 @@ The PCH is a passive connector hub — no conversion, no fuse, no protection of 
    source and the UPS and confirm the aux rails and the UPS gauge at `0x41`; connect the Pi last.
 7. **PCH↔UPS cables.** C3 is the 2×4 header and C4 is the 12.6 V branch. C1 charging and C2 switch use
    the supplied harnesses directly at the UPS, not the PCH. The only additional input connection is the
-   high-impedance sense tap at PCH J1. The host-side 3.3 V and the J8 12.6 V aux remain unused.
+   high-impedance sense tap at PCH J1. The UPS header's 3.3 V pins are left open — the FireBeetle's
+   regulator supplies the status 3.3 V rail — and the J8 12.6 V aux remains unused.

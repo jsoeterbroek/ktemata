@@ -18,7 +18,7 @@ charge-sense divider; the module itself is removable. Nets and pins are in
 | Connector | Pads | Nets | Job |
 |---|---|---|---|
 | J1 `CHG_SENSE_IN` | 2 | `CHG_12V6_IN`, `GND` | high-impedance sense tap on the supplied DC5521 input; no charge current passes through the PCH |
-| J5 `UPS3S_HDR_2X4` | 8 | `I2C_SCL`, `I2C_SDA`, `+3V3` ×2, `GND` ×2, `+5V` ×2 | UPS Module 3S interface |
+| J5 `UPS3S_HDR_2X4` | 8 | `I2C_SCL`, `I2C_SDA`, `GND` ×2, `+5V` ×2; pads 3/4 NC | UPS Module 3S 2×4 header. Its 3V3 pair is deliberately left open — the FireBeetle's regulator owns `+3V3` (J9.17) |
 | J6 `LID_I2C_BTN` | 5 | See schematic | lid I²C, power and OLED-button harness |
 | J9 / J10 `FB18_ESP32-UE` / `FB14_ESP32-UE` | 18 + 14 | See schematic | FireBeetle 2 ESP32-UE sockets; J9 carries the tested OLED connections |
 | J11 `OLED_3V3_I2C` | 4 | `+3V3`, `GND`, `I2C_SCL`, `I2C_SDA` | OLED JST-XH B4B-XH-A; harness colours and tested J9 pins are shown in the schematic |
@@ -27,6 +27,10 @@ charge-sense divider; the module itself is removable. Nets and pins are in
 | R2 / R3 / C1 `47k` / `10k` / `100nF` | 2 each | See schematic | on-board charge-sense divider and filter |
 
 The supplied DC5521 charge lead and self-lock button plug directly into the UPS; neither is routed through the PCH.
+
+The UPS header's two 3V3 pins stay unconnected: the FireBeetle runs from `+5V` (J10.1) and its own
+regulator supplies `+3V3` to the OLED, the lid harness and the I²C pull-ups. Wiring the UPS's RT9193
+output to the same rail would put two 3.3 V sources in parallel.
 
 ## Deliberately not on this board
 

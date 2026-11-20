@@ -1505,6 +1505,17 @@
 		)
 		(uuid "dc13e92b-2038-47c5-ab92-0bb969c82c44")
 	)
+	(text "J5.3/J5.4 = UPS 3V3: left open. The FireBeetle's regulator feeds +3V3 (J9.17); two 3.3 V sources must not share the rail."
+		(exclude_from_sim no)
+		(at 20.32 114.3 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "5f291105-bfcd-4420-b38a-589f09f6b538")
+	)
 	(text "5. ERC POWER FLAGS"
 		(exclude_from_sim no)
 		(at 116.84 55.88 0)
@@ -1631,16 +1642,6 @@
 	)
 	(wire
 		(pts
-			(xy 35.56 101.6) (xy 30.48 101.6)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "65f92722-82d8-426f-ab65-fb2bb2fb74bd")
-	)
-	(wire
-		(pts
 			(xy 152.4 66.04) (xy 152.4 68.58)
 		)
 		(stroke
@@ -1648,16 +1649,6 @@
 			(type default)
 		)
 		(uuid "7e3a2101-39be-4445-94e9-26a089bd974b")
-	)
-	(wire
-		(pts
-			(xy 48.26 101.6) (xy 53.34 101.6)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "7f9736e9-97db-4cb4-8a11-c948d18627de")
 	)
 	(wire
 		(pts
@@ -1769,16 +1760,6 @@
 		)
 		(uuid "f6b55646-af5f-4e0c-9e93-b099f2e160de")
 	)
-	(label "+3V3"
-		(at 53.34 101.6 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "76e05962-f9b2-4f01-96d9-e024fafa9ac4")
-	)
 	(label "GND"
 		(at 53.34 104.14 0)
 		(effects
@@ -1888,16 +1869,6 @@
 			(justify left bottom)
 		)
 		(uuid "97ec6bbb-725a-4ed1-a37f-84515729761b")
-	)
-	(label "+3V3"
-		(at 30.48 101.6 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "9c6c08d7-6645-4961-a89b-904c817b537f")
 	)
 	(label "GND"
 		(at 66.04 109.22 0)
@@ -2679,7 +2650,7 @@
 				)
 			)
 		)
-		(property "Description" "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 3V3, 4 3V3, 5 GND, 6 GND, 7 5V, 8 5V"
+		(property "Description" "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 NC, 4 NC, 5 GND, 6 GND, 7 5V, 8 5V; UPS 3V3 left open so the FireBeetle regulates the 3.3 V rail"
 			(at 40.64 101.6 0)
 			(hide yes)
 			(show_name no)
@@ -2820,6 +2791,14 @@
 	(no_connect
 		(at 205.74 93.98)
 		(uuid "b1000000-0000-4000-8000-000000000019")
+	)
+	(no_connect
+		(at 35.56 101.6)
+		(uuid "bf426625-554a-4639-8e8c-d044038ecb55")
+	)
+	(no_connect
+		(at 48.26 101.6)
+		(uuid "5a2dd364-d7c5-4968-8530-7dc7bbc77f21")
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x14")
