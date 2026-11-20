@@ -35,10 +35,10 @@ output to the same rail would put two 3.3 V sources in parallel.
 ## Deliberately not on this board
 
 - **No fuse.** The UPS Module 3S protects the in-module pack; a pack built outside it carries its
-  own fuse in the pack's positive lead (WIRING §4.4).
+  own fuse in the pack's positive lead (WIRING §3.4).
 - **Charge-sense divider is on this board.** R2/R3/C1 implement the 47k / 10k + 100 nF divider
   (12.6 V → 2.21 V at 221 µA) for the FireBeetle's charge-sense input.
 - **No Pi or display power.** The PCH's 5 V and 3.3 V feed the status side only; the Pi 5 and the
-  7-inch panel stay on the UPS's own USB-C lead (WIRING §4.2).
+  7-inch panel stay on the UPS's own USB-C lead (WIRING §3.2).
 - **No separate PCIe or USB connector on the carrier.** The NVMe Base Duo and K06 dongle connect
   to the Pi directly; the socketed FireBeetle exposes its own USB-C at the left edge.

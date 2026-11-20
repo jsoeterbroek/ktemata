@@ -1,18 +1,18 @@
 # Ktemata — BOM
 
-Parts for the implemented R5 build and the proposed R6 revision inside a bought Peli case. **R6 power
+Parts for the implemented R5 build and the R6 build/test inside a bought Peli case. **R6 power
 substitutions are marked explicitly**; R5 remains the mechanical baseline until the R6 CAD is complete. The
 earlier printed exteriors (r1–r4) are no longer modelled, and their parts are gone from this list.
 
 Prices are indicative, in euro, for scale only.
 
-Wiring: the preserved [`R5 KiCad project`](../cad/kicad/r5/ktemata.kicad_pro) and proposed [`R6 KiCad project`](../cad/kicad/r6/ktemata.kicad_pro), with [`WIRING.md`](WIRING.md)
+Wiring: the preserved [`R5 KiCad project`](../cad/kicad/r5/ktemata.kicad_pro) and [`R6 KiCad project`](../cad/kicad/r6/ktemata.kicad_pro), with [`WIRING.md`](WIRING.md)
 for the assembly rules. **This list is not derived from the schematic** - it carries prices, suppliers,
 quantities and mechanical parts a schematic has none of - but the two are cross-checked: each schematic
 block names its item here in a `Part` field, and `python3 work/scripts/check_bom.py` fails if a block
 points at an item that does not exist. Re-export the netlist first (see `WIRING.md` §1).
 
-Design notes: [`R5.md`](R5.md) and the proposed [`R6.md`](R6.md).
+Design notes: [`R5.md`](R5.md) and [`R6.md`](R6.md).
 
 ---
 
@@ -52,6 +52,7 @@ Design notes: [`R5.md`](R5.md) and the proposed [`R6.md`](R6.md).
 | 25 | Silicone O-ring / gasket assortment | 1 | Case seam, DC socket, button. | € 10 |
 | 26 | Filament, PETG/PLA + TPU | ≈ 500 g | The r4 shells or the r5 cassette; the TPU is only for the charge plug. | € 15 + € 20 |
 | 27 | Peli 1200 hard case (r5 only; a 1400 is also accepted) | 1 | 236.5 × 181.1 × 30.2 mm base + 74.4 mm lid interior. See [`R5.md`](R5.md). | € 100–145 |
+| 28 | **Prototyping board**, 2.54 mm (breadboard or perfboard) | 1 | R6 system build and test, wired with the Dupont jumpers (20); the custom PCH is the cassette carrier. | € 5 |
 
 The historical R5 list totalled ≈ **€ 460** before the Peli. Do not reuse that total for R6: the UPS adapter,
 third cell, 3S regulator, mounting extensions and lid harness change the total; price R6 after those parts are
@@ -138,12 +139,17 @@ OLED, PBS-33B button, sealed **USB-C** panel port + MPPT module (5 V out), M2.5 
 ## D. PCH board
 
 Carrier board for the R6 power/communication hub — project [`cad/kicad/r6/PCH/PCH.kicad_pro`](../cad/kicad/r6/PCH/PCH.kicad_pro).
-Parts as exported from `PCH.csv`; connectors and passives are not yet priced.
+Parts from `PCH.csv`; the board is fabricated from `PCH/gerbers/`. Connectors and passives are not yet priced.
 
 | Ref | Value | Qty | Part |
 |---|---|---|---|
-| J1 | CHG_SENSE_IN | 1 | JST XH 2.54mm 2 pin 15cm |
-| J5 | UPS3S_HDR_2X4 | 1 | 2.54mm 2x4 pin header |
-| J6 | HOST_AUX_PWR_I2C | 1 | 2.54mm 1x5 pin header |
-| J7 | UPS_12V6_IN | 1 | JST XH 2.54mm 2 pin 15cm |
-| J8 | AUX_12V6_OUT | 1 | JST XH 2.54mm 2 pin 15cm |
+| J1 | CHG_SENSE_IN | 1 | JST XH **B2B-XH-A** 2-pin header |
+| J5 | UPS3S_HDR_2X4 | 1 | 2.54 mm 2×4 pin header |
+| J6 | LID_I2C_BTN | 1 | 2.54 mm 1×5 pin header |
+| J7 | UPS_12V6_IN | 1 | JST XH **B2B-XH-A** 2-pin header |
+| J8 | AUX_12V6_OUT | 1 | JST XH **B2B-XH-A** 2-pin header |
+| J9 | FB18_ESP32-UE | 1 | 2.54 mm 1×18 socket |
+| J10 | FB14_ESP32-UE | 1 | 2.54 mm 1×14 socket |
+| J11 | OLED_3V3_I2C | 1 | JST XH **B4B-XH-A** 4-pin header |
+| R2 / R3 / C1 | 47k / 10k / 100 nF | 1 each | 0603 resistors and capacitor |
+| — | **PCH PCB** | 5 | 63 × 66 mm, 2-layer, 1.6 mm; fabricate from `PCH/gerbers/` |
