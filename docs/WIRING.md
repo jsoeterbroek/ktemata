@@ -29,7 +29,7 @@ The **R6 PCH** is a separate single-sheet project and a 63 × 66 mm two-layer bo
 charge-input sense tap, UPS header and 12.6 V auxiliary output. The supplied DC5521 charge lead and
 self-lock button plug directly into the UPS, not into the PCH. Its schematic, exported
 netlist and board are `PCH.kicad_sch`, `PCH.net` and `PCH.kicad_pcb`; parts are in
-[`BOM.md`](BOM.md) section D. The R6 `/Power` sheet includes it as block **J16**; the Pi and MCU sheets use
+[`BOM.md`](BOM.md) section C. The R6 `/Power` sheet includes it as block **J16**; the Pi and MCU sheets use
 the same global nets, so they do not repeat the block. Connector pinouts stay in the project, not in this page.
 
 In the system project, one connector-shaped block per module (`Ktemata:` symbols — also a real library, `ktemata.kicad_sym`,
