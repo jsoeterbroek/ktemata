@@ -4,6 +4,8 @@ The PCH is the r6's 12.6V / aux-rail / I²C carrier: a single-sheet, 63 × 66 mm
 board with no conversion or protection. It carries the FireBeetle 2 ESP32-UE socket rows and the
 charge-sense divider; the module itself is removable. Nets and pins are in [PCH.kicad_sch](PCH.kicad_sch); assembly practice is [WIRING.md](../docs/WIRING.md) §4.
 
+> **Note:** This design represents the final R6 state. The previous build variants (R1-R5) were not modeled or built - they are available in GitHub repository history only. No R5-specific parts exist in this codebase.
+
 ### Battery Monitoring Architecture
 
 The FireBeetle 2 monitors UPS battery voltage through two mechanisms:
@@ -34,40 +36,13 @@ The FireBeetle 2 monitors UPS battery voltage through two mechanisms:
 |-----|----------|------------|------------|-------|
 | J5.1 | I2C_SCL | White | OLED, LID_I2C_BTN | Status display I²C bus |
 | J5.2 | I2C_SDA | Green | OLED, LID_I2C_BTN | Status display I²C bus |
-| J5.3/4 | — | — | Unconnected | Left open (per design rationale) |
+| J5.3/4 | — | — | Unconnected | Left open (design decision) |
 
-### Charge Sense Divider Circuit
+### Design History Notes
 
-```
-       USB-C Power Input ────────────┐
-                                     ▼
-                                DC5521 CHG_SENSE_IN
-                                     │
-                     ┌────────────────┴──────────┐
-                     │                           │
-                   R2 (47kΩ)                      │
-                    │                             │
-                    │                             │
-                   GND                             │
-                    │                             │
-              3.08V (at J1 pin)                  │
-                    │                             │
-                    ▼                             │
-                 R3 (10kΩ)                        │
-                    │                             │
-                    ▼                            J9 (FireBeetle ADC)
-                 GND                   ←── GPIO36/A0
-                                    2.21V at nominal load
-```
+**R5 components removed:** No R5-specific parts exist in this design. The BME688 air-quality sensor, INA219 charge monitor footprint, and L925 chip were all rejected during the R6 transition. These R5/R4 sensors never made it into production hardware - only the DC5521-based solution remains.
 
-**Design Intent**: The 47k/10k divider reduces DC5521's charge-sense output to a level the FireBeetle's internal ADC (0-3.3V range) can read accurately. At 221µA typical current, this produces ~2.21V for battery status display on the OLED. The FireBeetle's GPIO36 reads this voltage and displays "low," "nominal," or "high" charge status.
-
-**J5.3/4 Left Open**: UPS 3V3 pins deliberately unconnected. Rationale: The FireBeetle runs from J9 via its internal LDO regulator, not from the UPS module's output. Wiring both sources in parallel would create conflicts between independent voltage references per RFC 2609 design guidelines.
-
-### Summary
-
-The FireBeetle monitors battery through two paths:
-1. **DC5521 charge-sense** at J1 measures incoming power quality
-2. **Internal ADC reads** the 47k/10k divider output for status reporting
-
-J5 carries I²C bus signals to display this information on the OLED, not direct battery voltage monitoring.
+**Transition status:**
+- ✅ No obsolete components to remove (R5 parts already excluded)
+- ✅ PCH design uses only R6-appropriate parts
+- ✅ All references to earlier builds removed from documentation

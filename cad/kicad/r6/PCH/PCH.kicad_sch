@@ -1940,7 +1940,7 @@
 	)
 	(text "1. DC5521 CHARGE-INPUT SENSE TAP (DIRECT TO UPS)"
 		(exclude_from_sim no)
-		(at 30.48 25.4 0)
+		(at 37.592 50.038 0)
 		(effects
 			(font
 				(size 1.524 1.524)
@@ -2033,10 +2033,22 @@
 		(uuid "31e11c69-b2d0-4a16-9fe2-547004c997f3")
 	)
 	(junction
+		(at 185.42 74.93)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "3447bd04-8809-4494-8225-18a7119f3eeb")
+	)
+	(junction
 		(at 72.39 137.16)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "483ba83d-5a57-4e8e-b33b-a233bc0013e6")
+	)
+	(junction
+		(at 90.17 58.42)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "4d409884-decd-413b-8f06-9a03a69ed682")
 	)
 	(junction
 		(at 231.14 83.82)
@@ -2160,6 +2172,26 @@
 	)
 	(wire
 		(pts
+			(xy 185.42 74.93) (xy 200.66 74.93)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "04f6a55b-8cec-4bf3-8743-d161107e2b32")
+	)
+	(wire
+		(pts
+			(xy 170.18 50.8) (xy 170.18 66.04)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "13cd26a8-f614-4aa2-a9a2-6e99f3e18e51")
+	)
+	(wire
+		(pts
 			(xy 123.19 38.1) (xy 116.84 38.1)
 		)
 		(stroke
@@ -2215,7 +2247,6 @@
 		(stroke
 			(width 0)
 			(type solid)
-			(color 0 0 0 1)
 		)
 		(uuid "3ba1a3d1-2c1b-452a-b0c7-3f03c22230d4")
 	)
@@ -2226,9 +2257,18 @@
 		(stroke
 			(width 0)
 			(type default)
-			(color 0 194 0 1)
 		)
 		(uuid "3d0fd58f-38f5-4d70-9008-d74caaeabbb8")
+	)
+	(wire
+		(pts
+			(xy 200.66 83.82) (xy 205.74 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4209760c-f667-4ec4-80e0-bcf810c7c38c")
 	)
 	(wire
 		(pts
@@ -2252,6 +2292,16 @@
 	)
 	(wire
 		(pts
+			(xy 200.66 74.93) (xy 200.66 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "43c4cc3a-f71e-482c-b365-4b0667a7aadb")
+	)
+	(wire
+		(pts
 			(xy 72.39 101.6) (xy 66.04 101.6)
 		)
 		(stroke
@@ -2267,7 +2317,6 @@
 		(stroke
 			(width 0)
 			(type solid)
-			(color 255 0 0 1)
 		)
 		(uuid "4db907e1-2685-4dd5-a43c-eceee3305944")
 	)
@@ -2298,9 +2347,28 @@
 		(stroke
 			(width 0)
 			(type solid)
-			(color 0 0 0 1)
 		)
 		(uuid "6656af30-34aa-4d69-b32a-c9d925f151fe")
+	)
+	(wire
+		(pts
+			(xy 90.17 58.42) (xy 85.09 58.42)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6e44d7dd-c0d6-476e-ab62-e751c27a0de6")
+	)
+	(wire
+		(pts
+			(xy 90.17 58.42) (xy 90.17 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6e81212e-1396-475b-a2f2-fb6b5c4276a5")
 	)
 	(wire
 		(pts
@@ -2350,7 +2418,6 @@
 		(stroke
 			(width 0)
 			(type solid)
-			(color 0 0 0 1)
 		)
 		(uuid "953f1414-78c2-4609-b5fc-d42b4ff44902")
 	)
@@ -2434,7 +2501,6 @@
 		(stroke
 			(width 0)
 			(type solid)
-			(color 255 0 0 1)
 		)
 		(uuid "b4ba331d-1c83-4505-a022-83783dea01b2")
 	)
@@ -2480,7 +2546,7 @@
 	)
 	(wire
 		(pts
-			(xy 36.83 38.1) (xy 30.48 38.1)
+			(xy 91.44 60.96) (xy 85.09 60.96)
 		)
 		(stroke
 			(width 0)
@@ -2495,13 +2561,12 @@
 		(stroke
 			(width 0)
 			(type default)
-			(color 255 255 255 1)
 		)
 		(uuid "d2b67a6a-ecc1-47ab-bd6b-35294581eab0")
 	)
 	(wire
 		(pts
-			(xy 36.83 35.56) (xy 30.48 35.56)
+			(xy 91.44 58.42) (xy 90.17 58.42)
 		)
 		(stroke
 			(width 0)
@@ -2521,6 +2586,16 @@
 	)
 	(wire
 		(pts
+			(xy 90.17 50.8) (xy 170.18 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "df3e34a1-faaf-4908-bd3d-fb892c6421cf")
+	)
+	(wire
+		(pts
 			(xy 72.39 104.14) (xy 66.04 104.14)
 		)
 		(stroke
@@ -2536,7 +2611,6 @@
 		(stroke
 			(width 0)
 			(type default)
-			(color 255 255 255 1)
 		)
 		(uuid "ee30c3fb-a887-43f3-b3e2-b6893e73758c")
 	)
@@ -2547,7 +2621,6 @@
 		(stroke
 			(width 0)
 			(type solid)
-			(color 255 0 0 1)
 		)
 		(uuid "f36c9c37-0b8e-4a74-a747-c49533b8c3ab")
 	)
@@ -2568,7 +2641,6 @@
 		(stroke
 			(width 0)
 			(type default)
-			(color 255 255 255 1)
 		)
 		(uuid "f7c983ab-bfed-425e-9adf-b95dce80b56b")
 	)
@@ -2593,7 +2665,7 @@
 		(uuid "1efd4b85-203a-4a17-af5d-e2563c6d8e62")
 	)
 	(label "GND"
-		(at 30.48 38.1 0)
+		(at 85.09 60.96 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2603,7 +2675,7 @@
 		(uuid "29b6633a-4d7b-47cd-a769-9ec61e57865f")
 	)
 	(label "GND"
-		(at 30.48 38.1 0)
+		(at 85.09 60.96 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2673,7 +2745,7 @@
 		(uuid "6de6f57c-49ee-4e9e-8e5c-e615ac8528db")
 	)
 	(label "CHG_12V6_IN"
-		(at 30.48 35.56 0)
+		(at 85.09 58.42 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2683,7 +2755,7 @@
 		(uuid "941d284f-fa94-449f-bf32-4f2725812bce")
 	)
 	(label "CHG_12V6_IN"
-		(at 30.48 35.56 0)
+		(at 85.09 58.42 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -4285,7 +4357,7 @@
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
-		(at 40.64 35.56 0)
+		(at 95.25 58.42 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -4295,7 +4367,7 @@
 		(dnp no)
 		(uuid "f36bd257-5388-4298-87d5-06db1b9cf434")
 		(property "Reference" "J1"
-			(at 40.64 31.75 0)
+			(at 95.25 54.61 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4305,7 +4377,7 @@
 			)
 		)
 		(property "Value" "CHG_SENSE_IN"
-			(at 40.64 39.37 0)
+			(at 95.25 62.23 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4315,7 +4387,7 @@
 			)
 		)
 		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
-			(at 40.64 35.56 0)
+			(at 95.25 58.42 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4326,7 +4398,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 40.64 35.56 0)
+			(at 95.25 58.42 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4336,7 +4408,7 @@
 			)
 		)
 		(property "Description" "High-impedance sense tap on supplied DC5521 lead; direct charge path goes to UPS, not through PCH"
-			(at 40.64 35.56 0)
+			(at 95.25 58.42 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
