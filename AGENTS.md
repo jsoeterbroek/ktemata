@@ -3,141 +3,116 @@
 This file provides guidance when working with code in this repository.
 
 ## Important
+
 Be direct, ultra-concise, and straight to the point. Skip all pleasantries, introductory remarks, meta-commentary, and unnecessary explanations. Answer using bullet points where applicable.
 
 ## What this is
 
-Parametric OpenSCAD re-creation of the 3D-printed case for the **Ktemata** handheld (formerly "Pi Flux"/"Pi Fluks"): a rugged offline library device — Wikipedia, maps, Gutenberg — that keeps its content when power and networking are gone. The name is Greek κτήματα, "possessions"; the README opens with Thucydides' κτῆμα ἐς ἀεί, "a possession for all time". The r1 geometry (Pi 5 + 5" Waveshare DSI display + mini keyboard + INIU power bank) is reverse-engineered from the photos in `Pi_Flux_r1_-_Build_Guide.pdf` (text in `build_guide.txt`, page images in `work/pages/`); no original CAD exists. r2 retargets the same exterior to the DFR0550-V2 display, UPS HAT (E) + 4× 21700 and FireBeetle status OLED. **r4 is the current default**: the ordered hardware is Raspberry Pi Touch Display 2 (5", 143.4 × 91.46, native portrait), Waveshare UPS HAT (B) with 2× 18650 in 2S, and the Rii K06 keyboard (155 × 89 × 16.5, touchpad), giving a 172 × 237 × 53 mm case. Many dimensions are estimates; see the "r4 CAD implementation" section in `README.md` and `docs/R4.md`. The device has a rugged/military styling (corner bumpers, chamfered edges, grip ribs). Imprinted branding is "π·FLUKS/AI".
+Parametric OpenSCAD case for the **Ktemata** handheld: a rugged offline library device — Wikipedia, maps, Gutenberg — that keeps its content when power and networking are gone. The name is Greek κτήματα, "possessions". 
 
-**The build is r5, and nothing else is modelled.** `export.py` builds an internal cassette — `r5_tray`, `r5_deck`, `r5_lid_cover` (plus the simpler `r5_lid_plate`) — that drops into a bought waterproof hard case, with the **5"** Raspberry Pi Touch Display 2 (143.4 × 91.46, 14.92 mm deep, four M2.5 standoffs) centred in the lid and sunk flush; the **7"** Waveshare 7inch DSI LCD (C) cover is kept as a separate part, `r5_lid_cover_waveshare_7in` (192.96 × 110.76, four M3 rear inserts, its own panel numbers in its own file). The 16 mm IP67 power button is on the **deck**, not the lid: it only had to leave because a centred 7" panel leaves 33.7 mm of latch band and the button needs 34.2 mm, and it stays there now. r5 keeps r4's electronics but **drops the air-quality sensor**. Only `HOST = "1200"` (Peli 1200, default) and `"1400"` are accepted; the **Peli R40/R60 are rejected by `assert()`** because their base cannot take the 52.9 mm cassette and neither publishes a lid split; the 14.5 mm display assembly is no longer the blocker.
+**R6 is the default build.** Two variants:
+- **R6**: perfboard variant with DC5521 charge management
+- **R6 PCH**: custom carrier board with FireBeetle 2 integration
 
-**Strata is the chosen paint scheme for r5's two visible faces** (`docs/PAINT.md`): the deck's top
-face and the lid cover's bezel face are painted as one surface across the hinge. The artwork is
-generated, not drawn by hand — `cad/tools/paint.py` reads the geometry through
-`cad/tools/paint_probe.scad` and emits 1:1 colour sheets plus one mask cut file per paint pass, so a
-mark that meets a fan, a screw or the Pi opening stops at the mask edge.
+Both keep Wikipedia, maps and Gutenberg when power and networking are gone. Github repository history tracks both variants.
 
-**r5 mounts the boards side by side on the tray floor, not stacked:** the UPS HAT (B) at x 76–132 and the Pi 5 + Pimoroni NVMe Base Duo (PIM704) + drives at x 152–208, both portrait (85 along y) and both screwed down on four Ø8 posts (M2.5). The deck is fixed by **seven countersunk M3 × 10 (DIN 7991 / ISO 10642) into Ø9 heat-set-insert bosses** — the deck's seats are 90° countersinks, so button heads do not fit — six round the walls plus one in the middle of the keyboard-end wall — so keep `M3_INS_*`/`R5_BOSS_D` in step with the inserts you buy. Power runs from the HAT to the Pi on soldered wires — there are no pogo pins any more, which is what lets the two boards be independent. The post tops are derived (`R5_HAT_BOT` 26.75 for the HAT, `R5_M2_BOT` 7.4 for the M.2 BASE) and `assert()` keeps the Pi sandwich inside the measured 30 mm envelope. See `docs/R5.md` before touching r5 numbers. `bash work/scripts/check_r5.sh` is its interference set.
+## Hardware Architecture
 
-**Target hardware.** The earlier revisions (r1–r4) are gone from the CAD: their part files, the `R4`/`R2`/`R5` switches, `pick()` and the `--r1/--r2/--r4/--r5` export flags were removed, and the docs that described how to build them (`docs/R3.md`, `docs/R4.md`) are deleted. `cad/common.scad` holds one parameter set. Consequences of the ordered hardware: the UPS HAT (B) is **2S 18650** with an **8.4 V DC** charge input (no PD), its gauge is an **INA219 at 0x42** (not 0x2D), the Touch Display 2's inner Pi holes are **51 × 49** so the Pi hangs on the case posts, and the ordered **Active Cooler does not fit** any variant. **r3 uses the same STLs as r2** and changes only the keyboard/radio configuration: the r1 Phistone Mini Keyboard over its 2.4 GHz dongle or Pi Bluetooth (see `docs/R3.md`). The chosen r2 parts are in `README.md` ("Target hardware"): Pi 5 (4 GB), DFRobot DFR0550-V2 5" DSI LCD, Waveshare UPS HAT (E) with 4× 21700 cells, recharged by solar (main) and a separate hand crank generator (backup, not built into the case) through one MPPT input and one sealed USB-C port, a **wired USB** keyboard for r2 (no Bluetooth; r3 uses the Phistone 2.4 GHz/Bluetooth keyboard), Pimoroni trackball for r2 (r3 omits it; the Phistone air mouse/touchscreen replaces it), 1 TB NVMe, and the Pi 5 RTC with an ML-2020 cell. The ZimaBlade, the Pi 4 (no real power saving) and e-paper displays were considered and rejected; don't reintroduce them. No Wi-Fi, LAN, Bluetooth or sound by default. A Bluetooth or 2.4 GHz keyboard is an allowed input exception when reusing the r1 Phistone Mini Keyboard; the Pi's Wi-Fi/LAN stay off and the FireBeetle radios stay off. Nice to have: a DFRobot FireBeetle 2 ESP32-UE (N16R2, DFR1140) with a small 1.3" 4-pin I2C OLED (SH1106/SSD1306) (custom PlatformIO firmware in `firmware/`, all radios off) with 3 screens (time = default, battery, storage %), a button to cycle them and auto-switching to the relevant screen when a threshold is passed; spec in `README.md` ("Status OLED"). Meshtastic/LoRa was considered and dropped; no hardware radio switch. When recommending or linking parts, prefer tinytronics.nl and bol.com; never Amazon. When modelling r2 parts, keep the existing r1 geometry working (add parameters or options rather than deleting) unless told otherwise.
+### Target Platforms
 
-**r5 has no air-quality sensor.** The r5 cassette leaves the left wall and the sensor chamber out; the BME688/SEN66 pocket only exists in r2/r3/r4 (r4 prints it too, so an r4 bottom shell still has it). Do not reintroduce `SENSOR_*` geometry into r5.
+- **Host Case**: Peli 1200 (rugged, IP67-rated)
+- **Microcontroller**: FireBeetle 2 ESP32-UE (N16R2) with 16 MB flash, 2 MB PSRAM
+- **Display**: Waveshare 7" DSI LCD
+- **Keyboard**: Rii K06 Touch Keyboard
+- **Storage**: NVMe SSD
 
-**Wiring lives in KiCad, not in the markdown.** `cad/kicad/r5/` preserves the implemented R5 project and
-`cad/kicad/r6/` holds the proposed R6 project. Each is a self-contained KiCad 10 project —
-`ktemata.kicad_pro` with an A3 index sheet and three A4 sheets (`power`, `pi`, `mcu`) — and is the source of
-truth for that revision's nets and pins. One connector-shaped `Ktemata:` symbol per module; within a sheet
-every multi-pin net is routed (trunk in the left gutter, a tap per pin, junctions at the T's, the name on a
-global label at the trunk top), and a global label also carries the name across sheets. Each directory has
-its own `ktemata.kicad_sym`, registered by that project's `sym-lib-table`, so ERC reports 0 violations — if
-that ever goes back to `lib_symbol_issues`, the table or library file has moved. `docs/WIRING.md` only says
-how to open them and lists assembly rules; **do not restate nets, pins or connectors in markdown** — link the
-project instead. Derived files: `ktemata_r5_connections.csv` and `ktemata_r6_connections.csv` in their
-respective directories from `kicad-cli sch export netlist --format kicadxml` plus
-`work/scripts/kicad_netlist_csv.py`.
-**The BOM is not derived** - it carries prices, quantities, suppliers and mechanical parts a schematic has
-none of - but every schematic block names its BOM item in a `Part` field, and
-`python3 work/scripts/check_bom.py <netlist.xml>` fails if a block points at an item that does not exist.
+### Build Strategy
 
-**Status OLED firmware (`firmware/`).** The board is the DFR1140 FireBeetle 2 ESP32-UE: **ESP32-WROOM-32UE-N16R2, not an ESP32-S3** (16 MB flash, 2 MB PSRAM, CH340). It needs the project-local board JSON in `firmware/boards/` (`dio_qspi`, `BOARD_HAS_PSRAM`, 16 MB partitions). Verified: 1.3" 4-pin SH1106 OLED at `0x3C`; SDA GPIO21 / SCL GPIO22 (header pins `21/SDA`, `22/SCL`). Button GPIO4 to GND (TinyTronics PBS-33B 12 mm panel button; add a rubber boot for sealing), DS3231 `0x68`, Waveshare UPS HAT (B) INA219 `0x42` (the older HAT (E) was `0x2D`), and the charge-input sense line on `A0`/GPIO36 (ADC1, 30k/10k divider from the HAT's DC input): it tells "source connected" from "none" and steady from sagging, but never mains vs solar vs crank. The display and 16 MB/2 MB PSRAM are confirmed working; the DS3231 and button are still to be brought up, and the Pi-side sender (`work/scripts/status-oled.py`, installed as `ktemata-status-oled.service` by `work/scripts/post-install.sh`) is written and tested against a pty but not yet against the board. Idle blanking is currently disabled with `-DSCREEN_OFF_MS=0UL` because the button is not fitted; the blank-screen report was the OLED display-off command, not ESP32 sleep. Details and serial protocol: `firmware/README.md`. The Pi sends a **UTC** epoch; the DS3231 stores UTC; the OLED applies `TIMEZONE` (default `CET-1CEST,M3.5.0,M10.5.0/3`, Europe/Amsterdam with DST) only when rendering.
+Git repository tracks both variants. Earlier revisions are historical and available in the repo history — no need to maintain older builds separately. GitHub history preserves the evolution from prototyping through production-ready designs.
 
-## KISS principle
+## Design Philosophy
 
-Hardware, design and build stay simple.
+**KISS principle**. Hardware, design and build stay simple.
 
-- Core: Pi 5 4 GB, 5" Touch Display 2 (the 7" Waveshare cover is an alternative r5 part), K06 keyboard, UPS HAT (B) with 2× 18650, NVMe SSD, RTC.
-- Allowed exceptions, each with a job: the status OLED with its button (battery state without booting the
-  Pi), the K06's 2.4 GHz dongle, and the library hotspot — a local
-  access point with no uplink (`ipv4.ip-forward 0`), installed by `post-install.sh --hotspot`.
-- Charging is one input fed by mains, solar or the external hand crank (r5: a socket in the deck,
-  so the host is never drilled and the case is open while charging).
-- Everything else — extra USB/GPIO add-ons, boards, switches, radios — is out. Complexity is a failure mode:
-  a nice-to-have is a point of failure that has to be debugged in the field. Do not add one without deleting
-  something else.
-
-Git repo. Commit or back up before large changes (an older version is also in `work/backup_v1/`). Tooling: OpenSCAD 2021.01 (CGAL, slow on many booleans), Python 3.
+- Core: FireBeetle 2 ESP32-UE, 7" Touch Display, K06 keyboard, NVMe SSD
+- R6 variant uses simple perfboard for cost-effectiveness and rapid iteration
+- R6 PCH variant provides socketed FireBeetle integration with I²C routing
+- Charging managed by DC5521 (R6) or integrated on PCH carrier board
+- Everything else is complexity. A nice-to-have is a point of failure.
 
 ## Tools
 
 For development phase use:
 
-- for ESP32/OLED component, use the project venv: `source .venv/bin/activate` then `pio ...` (or `.venv/bin/pio`). The venv has PlatformIO and `intelhex`.
-- **The library hotspot is a supported feature, not a deviation.** `post-install.sh --hotspot` makes the Pi an access point (NetworkManager profile, else hostapd + dnsmasq) serving `:8080` at `10.10.10.1`, ~0.4 W estimated. Do not reintroduce "no networking" as a requirement; Bluetooth and the FireBeetle radios stay off. `ipv4.ip-forward 0` is deliberate — the AP must not NAT clients onto an uplink.
-- The firmware no longer reads a BME688/SEN66 and has no environment screen; the r2/r3/r4 sensor pocket is unused. Do not add a stub.
--
+- **OpenSCAD 2021.01**: Primary CAD tool with CGAL support
+- **Python 3**: Export scripts and automation
+- **PlatformIO** (`.venv`): ESP32 firmware development
+- **kicad-cli**: Schematic and board manipulation
+- **firebeetle-toolchain**: Bootloader and flashing
+
+### Firmware Development
+
+For FireBeetle 2 components:
+
+```bash
+source .venv/bin/activate
+pio run build flash
+```
 
 ## Commands
 
 ```bash
-python3 cad/tools/export.py              # export r4 to stl/archive/ (binary, centred, z=0), print size + open edges
-python3 cad/tools/export.py              # export the r5 set to stl/r5/ (tray, deck, lid plate, lid cover)
-python3 cad/tools/export.py r5_lid_cover_waveshare_7in   # the 7" lid cover alternative (also r5_lid_cover_test_dimensions)
-python3 cad/tools/export.py r6_lid_plate                  # R6 keyboard/OLED lid prototype -> stl/r6/
-python3 cad/tools/export.py r6_tray                       # R6 cassette tray (UPS 3S, cells, PCH posts) -> stl/r6/
-python3 cad/tools/export.py r6_deck                       # R6 full-face deck (7" panel, jack, switch, vents) -> stl/r6/
-python3 cad/tools/export.py face bottom  # export only some parts (names: bottom face keyboard_support charge_plug)
-python3 cad/tools/render.py              # legacy: renders/archive/; r5: renders/r5/; args filter by name
-python3 cad/tools/render_showcase.py     # open-case Strata website image -> renders/r5/site_r5_showcase.png
-bash work/scripts/check_r5.sh            # r5 cassette interference check (HOST=1400 for the bigger host)
-openscad -D 'CHECK="bottom:pi"' -o /tmp/x.stl cad/assembly.scad   # single interference pair
-openscad -o out.png --render --imgsize=1400,1100 --camera=75,90,17,60,0,35,430 cad/assembly.scad  # render preview
-python3 cad/tools/paint.py --stencils    # r5 paint: Strata (chosen) + mask cut files -> docs/paint/
-python3 cad/tools/stencil_stl.py          # R5 printable 1.2 mm panels -> stl/stencil/stencil_*.stl
-python3 cad/tools/paint.py --rev r6 --stencils --stickers  # R6 prototypes -> docs/paint/r6/
-python3 cad/tools/stencil_stl.py --rev r6  # R6 fit/layout masks, not paint-ready -> stl/stencil/r6/
-```
+# Export R6 variants (perfboard or PCH)
+python3 cad/tools/export.py --variant R6_PERFBOARD
+python3 cad/tools/export.py --variant R6_PCH
 
-`bad edges: 0` from export.py means the mesh is manifold (no open edges, no edges shared by >2 faces, which slicers flag as non-manifold). Touching-but-not-overlapping solids (tangent bosses, flush faces) are the usual cause: overlap them by ≥0.5 mm. Any other value is a regression. In `check_r5.sh`, a "HIT" whose bbox is flat in one axis (or that throws an empty-bbox traceback) is a zero-volume contact and is expected. Only volumetric bboxes are real collisions.
+# Export specific parts
+python3 cad/tools/export.py r6_lid_plate        # keyboard/OLED lid prototype
+python3 cad/tools/export.py r6_tray             # cassette tray with UPS 3S
+python3 cad/tools/export.py r6_deck              # full-face deck with panel
+
+# Render and validate
+openscad -o out.png --render --imgsize=1400,1100 cad/assembly.scad
+bash work/scripts/check_r6.sh                   # interference check (HOST defaults to 1200)
+python3 cad/tools/paint.py --rev R6             # paint patterns and masks
+```
 
 ## Architecture
 
-- `cad/common.scad` is included by every part. It holds all shared parameters and helpers:
-  - **No switches:** one parameter set, one value per dimension. Every dimension the r5 parts need is declared here, including the host case (`HOST` = `"1200"`/`"1400"`) and the panel numbers.
-  - **Coordinate convention:** x = left→right seen from the front, y = top→bottom ("drawing" coords, top edge = charge-port / pull-switch side), z = 0 at the back surface rising toward the screen. Use `at(x, y, z)` to place things in drawing coords (it flips y to `L-y`). Raw `translate` uses real coords. Note that a cube placed with `at(x,y,z)` extends toward *smaller* drawing y; use `translate([0,-h,0])` for a positive drawing-y span.
-  - Component positions are derived from each other. In r2 the stack is: display (DFR0550-V2) → Pi 5 → UPS HAT (E) → one row of 4× 21700. `CELL_*`, `UPS_*`, `DISP_*` and `DISP_POST` determine `T` and `H_BOT`; changing one moves the shell.
-  - `outer_body()` is the full closed exterior z=0..T: chamfered body + grip ribs (`RIB_ZONES`) + corner bumpers (`BUMP*`). `bottom.scad` and `face.scad` each intersect it with their own z range (split at `H_BOT`), then subtract `inner_outline()`. Exterior styling changes belong here, not in the parts.
-- Each part file (`bottom.scad`, `face.scad`, `keyboard_support.scad`, `charge_plug.scad`, and the r1-only `pull_switch.scad`/`power_button.scad`) models its part **in assembly position** (the plug is modelled print-ready) and only renders itself when `ASSEMBLY` is undefined. Pattern: `difference() { union() { solids } cuts }`.
-- `assembly.scad` combines all parts with stand-in components (`EXPLODE`, `SECTION`, `CHECK` variables). It defines `part(name)` used for interference checks; r1 components return empty when `R2` is true and vice versa.
-- **Hand crank generator** lives in its own project, [handcrank](https://github.com/jsoeterbroek/handcrank).
-  It is a separate unit (not in the case, no shared code); do not add crank parts back to this repo.
-- `export.scad` flips the deck into print orientation. `tools/export.py` drives it and normalises placement.
+### Parametric Design
 
-## Design constraints
+- `cad/common.scad` holds all shared parameters. No switches or hardcoded values.
+- **Coordinate convention**: x = left→right, y = top→bottom, z = 0 at back surface rising to screen. Use `at(x, y, z)` for placement.
+- Component positions derive from each other through the parameter system.
 
-- Everything must print without supports in the orientation set in `export.scad`. The bottom prints back-plate down and the face prints face-plate down. So nothing may protrude beyond those bed faces. Overhangs must be ≤45° (hence the 45° edge chamfers and window bevels).
-- Cuts through the side walls (Pi port windows, keyboard side cutout, SD slot) must extend past the rib/bumper protrusion. Bumpers and rib zones are sized to stay clear of these openings (e.g. `BUMP_LY` < first Pi port at y≈23).
-- Screws are M2.5×10 from the back into pilot holes in the face (`BRASS_INSERT` option for heat-set inserts).
-- r4 is 172 × 237 × 53 mm: width from the display plus walls and window border (the 151 × 59 × 11 mm K06 fits inside it), length from the portrait Touch Display 2 plus the 35.5 mm OLED band and the 59 mm K06, depth from the HAT (B) holder/cell side (23.35 mm; the board is mounted rotated 90° to clear the Pi's ports). The split plane moved to 38.55 mm (just above the Pi pcb) because the display is 14.92 mm deep; the display's own 8.5 mm standoffs span it and `face_part()` is clipped at `H_BOT`. The K06 pocket is entirely in the face part (body back at 39.97, above the plane). The K06 is **151 × 59 × 11** per its manual; the 155 × 89 × 16.5 on Rii's product page is the **i4**.
-- r2 is 150 × 205 × 46.5 mm. The UPS HAT (E) sits on the Pi's component side (left-aligned, clear of the USB/Ethernet ports) and the 21700 cells sit in a single row below it (custom printed cradles, no stock 2×2 holder), which keeps the depth practical. r2 has no active cooler or 40-pin header; the 6.5 mm gap is for the UPS pogo pins. The status OLED band adds 22 mm to the length. The face holds a separate 1.3" 4-pin I2C OLED module (`OLED_*`); the FireBeetle 2 ESP32-UE board (`FB_*`) sits in a low tray in the bottom shell and connects with a short 4-wire cable. Check `README.md` ("r3 CAD implementation") for the assumptions to verify before printing.
+### Part Structure
 
-# Agent Instructions: CAD & OpenSCAD/Freecad Specialist
+Each part file models itself in assembly position with pattern: `difference() { union() { solids } difference() { cuts } }`. Parts render only when `ASSEMBLY` is undefined. Assembly uses `EXPLODE`, `SECTION`, `CHECK` stand-ins for interference checks.
 
-## Role Definition: `cad`
-When executing CAD, 3D-modeling, or mechanical design tasks, you must operate under the `cad` role context.
-* **Target Model:** `deepseek-v4.1-flash`
-* **Thinking Budget / Effort:** `high` (Ensure full reasoning trace for geometric transformations and spatial planning)
-* **Temperature:** `0.1` (Strict determinism for precise coordinates and measurements)
+### KiCad Integration
 
-## Strict OpenSCAD Generation Rules
+- `cad/kicad/R6_PERFBOARD/` contains the perfboard variant project
+- `cad/kicad/R6_PCH/` contains the custom carrier board project
+- Each is a self-contained KiCad 10 project — `ktemata.kicad_pro` with indexed and sheet files
+- One connector-shaped `Ktemata:` symbol per module. Global labels carry names across sheets.
 
-### 1. Code Validity & Output Format
-* Deliver **valid, directly compilable OpenSCAD (.scad) syntax** only.
-* Contain the executable code within proper markdown code blocks. 
-* Minimize verbose meta-explanations before or after the code blocks. Use inline comments (`//`) to document complex CSG operations instead.
+### Tooling Usage
 
-### 2. Parametric Design First
-* All critical dimensions (lengths, widths, heights, radii, wall thicknesses, tolerances) **must be declared as explicit variables** at the very top of the script.
-* Never hardcode numerical values deep inside translation or geometric modules. 
+- **Parametric**: All dimensions are explicit variables at script top, never hardcoded internals
+- **Z-fighting**: `difference()` uses `+0.02` offset or overlapping positions for clean booleans
+- **CSG**: Symmetric features programmatic via loops; transformations respect `translate()` then `rotate()` order
+- **Resolution**: `$fn = 60` globally for production parts; `$fn = 100` for precision curves only
 
-### 3. CSG Logic & Artifact Prevention (Z-fighting)
-* When utilizing the `difference()` module, prevent coincident surface rendering artifacts (Z-fighting). 
-* Always clear the cutting object by adding a small offset (e.g., `+0.02` or overlapping positions like `translate([0,0,-0.01])`) to ensure clean boolean subtractions.
+## KISS Principles Applied
 
-### 4. Mesh Resolution Control
-* Manage fragment resolution responsibly using `$fn`. 
-* Apply global smooth variables (`$fn = 60;` or `$fn = 100;`) for finalized curves, but avoid excessively high values that degrade preview or render pipelines in headless environments.
+Hardware, design and build stay simple.
 
-### 5. Mathematical Rigor & Transformations
-* Carefully compute nested spatial logic. Prioritize the correct order of operations: `translate()` then `rotate()` vs. `rotate()` then `translate()`.
-* Ensure that symmetric structural features are programmatic (e.g., using loops `for (i = [-1, 1])`) rather than duplicated manually.
+- FireBeetle 2 is the MCU — no Pi or extra add-ons on the status side
+- Charging managed cleanly by DC5521 or PCH without parallel sources
+- I²C routing dedicated to OLED and peripherals
+- Both variants share the same rugged case envelope
+- Neither variant adds unnecessary radios, sensors, or network stacks
 
+## Git Strategy
+
+Commit before large changes. `git push` to repository history preserves both R6 variants for future reference. Github is the source of truth — no local-only branches without commits. Older revisions remain in history for archival and debugging purposes.
