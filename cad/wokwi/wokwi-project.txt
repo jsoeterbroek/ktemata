@@ -1,3 +1,7 @@
-Downloaded from https://wokwi.com/projects/481281938327726081
+Ktemata R6 Simulation (Wokwi)
 
-Simulate this project on https://wokwi.com
+Two variants to simulate:
+- R6 (perfboard): DC5521-based charge management, no carrier board
+- R6 PCH: Custom 63×66 mm carrier with FireBeetle 2 integration
+
+Both share the same case and hardware; only the charging/communication hub differs.
