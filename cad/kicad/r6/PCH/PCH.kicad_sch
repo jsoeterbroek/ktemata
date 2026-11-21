@@ -1952,7 +1952,7 @@
 	)
 	(text "J5.3/J5.4 = UPS 3V3: left open. The FireBeetle's regulator feeds +3V3 (J9.17); two 3.3 V sources must not share the rail."
 		(exclude_from_sim no)
-		(at 20.32 114.3 0)
+		(at 19.812 115.316 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -1986,7 +1986,7 @@
 	)
 	(text "4. WAVESHARE UPS 3S POWER & I2C BUS"
 		(exclude_from_sim no)
-		(at 30.48 91.44 0)
+		(at 138.938 98.806 0)
 		(effects
 			(font
 				(size 1.524 1.524)
@@ -2069,7 +2069,7 @@
 		(uuid "b1000000-0000-4000-8000-000000000007")
 	)
 	(no_connect
-		(at 48.26 101.6)
+		(at 130.81 104.14)
 		(uuid "5a2dd364-d7c5-4968-8530-7dc7bbc77f21")
 	)
 	(no_connect
@@ -2157,7 +2157,7 @@
 		(uuid "b4000000-0000-4000-8000-000000000318")
 	)
 	(no_connect
-		(at 35.56 101.6)
+		(at 118.11 104.14)
 		(uuid "bf426625-554a-4639-8e8c-d044038ecb55")
 	)
 	(wire
@@ -2182,6 +2182,16 @@
 	)
 	(wire
 		(pts
+			(xy 39.37 101.6) (xy 39.37 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0db31130-9ceb-4bbf-bfb2-6c69e5c2e0ca")
+	)
+	(wire
+		(pts
 			(xy 170.18 50.8) (xy 170.18 66.04)
 		)
 		(stroke
@@ -2202,7 +2212,7 @@
 	)
 	(wire
 		(pts
-			(xy 35.56 99.06) (xy 30.48 99.06)
+			(xy 118.11 101.6) (xy 39.37 101.6)
 		)
 		(stroke
 			(width 0)
@@ -2212,13 +2222,23 @@
 	)
 	(wire
 		(pts
-			(xy 48.26 99.06) (xy 53.34 99.06)
+			(xy 130.81 101.6) (xy 134.62 101.6)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "30eb0fcf-a0a6-44fb-af95-6d2942e98316")
+	)
+	(wire
+		(pts
+			(xy 38.1 104.14) (xy 30.48 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "35e21b3e-381e-4b6b-953f-129c14432c71")
 	)
 	(wire
 		(pts
@@ -2229,6 +2249,16 @@
 			(type default)
 		)
 		(uuid "3ac25c81-8895-4c0c-8f3b-86535af2c925")
+	)
+	(wire
+		(pts
+			(xy 36.83 109.22) (xy 36.83 106.68)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3ace9e85-0cee-4099-91b7-f537f5e8fb7a")
 	)
 	(wire
 		(pts
@@ -2302,7 +2332,7 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 101.6) (xy 66.04 101.6)
+			(xy 182.88 106.68) (xy 176.53 106.68)
 		)
 		(stroke
 			(width 0)
@@ -2332,13 +2362,33 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 106.68) (xy 66.04 106.68)
+			(xy 133.35 106.68) (xy 133.35 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5ca28051-2c53-4fb7-a247-fdb77f370cf5")
+	)
+	(wire
+		(pts
+			(xy 182.88 111.76) (xy 176.53 111.76)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "5f11c6d4-47a1-41d6-88a0-84fe5c307cc8")
+	)
+	(wire
+		(pts
+			(xy 36.83 106.68) (xy 30.48 106.68)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "621d9401-39ef-4dec-8897-47d6db3081eb")
 	)
 	(wire
 		(pts
@@ -2393,7 +2443,7 @@
 	)
 	(wire
 		(pts
-			(xy 35.56 106.68) (xy 30.48 106.68)
+			(xy 118.11 109.22) (xy 36.83 109.22)
 		)
 		(stroke
 			(width 0)
@@ -2413,6 +2463,16 @@
 	)
 	(wire
 		(pts
+			(xy 132.08 109.22) (xy 132.08 111.76)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "946a2408-ecb1-4e54-b8ce-95cc41230bab")
+	)
+	(wire
+		(pts
 			(xy 227.33 93.98) (xy 231.14 93.98)
 		)
 		(stroke
@@ -2423,7 +2483,17 @@
 	)
 	(wire
 		(pts
-			(xy 35.56 104.14) (xy 30.48 104.14)
+			(xy 133.35 109.22) (xy 163.83 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "97a2e9bd-a27f-4861-93d2-8a506a9145cd")
+	)
+	(wire
+		(pts
+			(xy 118.11 106.68) (xy 38.1 106.68)
 		)
 		(stroke
 			(width 0)
@@ -2433,13 +2503,43 @@
 	)
 	(wire
 		(pts
-			(xy 48.26 106.68) (xy 53.34 106.68)
+			(xy 39.37 99.06) (xy 30.48 99.06)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a3a04169-2271-4d4a-b7ef-e62b09223ba6")
+	)
+	(wire
+		(pts
+			(xy 38.1 106.68) (xy 38.1 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a5fe7007-1342-459f-ba91-34b9cc0bde8c")
+	)
+	(wire
+		(pts
+			(xy 130.81 109.22) (xy 132.08 109.22)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "a85abe31-08aa-4729-b025-f5ac77a8b472")
+	)
+	(wire
+		(pts
+			(xy 134.62 104.14) (xy 163.83 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ac1f3a2a-27bc-4d93-a0f4-5dbad2a3995f")
 	)
 	(wire
 		(pts
@@ -2516,7 +2616,7 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 109.22) (xy 66.04 109.22)
+			(xy 182.88 114.3) (xy 176.53 114.3)
 		)
 		(stroke
 			(width 0)
@@ -2536,7 +2636,7 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 111.76) (xy 66.04 111.76)
+			(xy 182.88 116.84) (xy 176.53 116.84)
 		)
 		(stroke
 			(width 0)
@@ -2553,6 +2653,16 @@
 			(type default)
 		)
 		(uuid "c61140b4-a404-4268-8da6-78bddebd9416")
+	)
+	(wire
+		(pts
+			(xy 134.62 101.6) (xy 134.62 104.14)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d09dd7ec-4f8a-4f81-ba91-e5a92b06d4c0")
 	)
 	(wire
 		(pts
@@ -2596,7 +2706,17 @@
 	)
 	(wire
 		(pts
-			(xy 72.39 104.14) (xy 66.04 104.14)
+			(xy 132.08 111.76) (xy 163.83 111.76)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e8bcf812-6a31-48b5-8c66-cde188f6d7e6")
+	)
+	(wire
+		(pts
+			(xy 182.88 109.22) (xy 176.53 109.22)
 		)
 		(stroke
 			(width 0)
@@ -2626,7 +2746,7 @@
 	)
 	(wire
 		(pts
-			(xy 48.26 104.14) (xy 53.34 104.14)
+			(xy 130.81 106.68) (xy 133.35 106.68)
 		)
 		(stroke
 			(width 0)
@@ -2645,7 +2765,7 @@
 		(uuid "f7c983ab-bfed-425e-9adf-b95dce80b56b")
 	)
 	(label "+5V"
-		(at 53.34 106.68 0)
+		(at 163.83 111.76 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2725,7 +2845,7 @@
 		(uuid "5457eb44-5998-41d7-bbeb-1e46175ab5b7")
 	)
 	(label "GND"
-		(at 53.34 104.14 0)
+		(at 163.83 109.22 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2735,7 +2855,7 @@
 		(uuid "576d5127-b4a3-4b23-9dff-03552b099b3c")
 	)
 	(label "I2C_SCL"
-		(at 66.04 101.6 0)
+		(at 176.53 106.68 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2775,7 +2895,7 @@
 		(uuid "97ec6bbb-725a-4ed1-a37f-84515729761b")
 	)
 	(label "GND"
-		(at 66.04 109.22 0)
+		(at 176.53 114.3 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2805,7 +2925,7 @@
 		(uuid "a7190865-92da-412c-842d-f92aae75be23")
 	)
 	(label "I2C_SDA"
-		(at 66.04 104.14 0)
+		(at 176.53 109.22 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3016,7 +3136,7 @@
 		(uuid "c0ccf31c-e139-4256-af73-624ca697fb6b")
 	)
 	(label "+3V3"
-		(at 66.04 106.68 0)
+		(at 176.53 111.76 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3036,7 +3156,7 @@
 		(uuid "cf24d1ef-dc99-46c4-9a59-ee29e186a165")
 	)
 	(label "I2C_SDA"
-		(at 53.34 99.06 0)
+		(at 163.83 104.14 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3066,7 +3186,7 @@
 		(uuid "dd1a876c-5905-447f-a3eb-ecf260b96335")
 	)
 	(label "OLED_BTN"
-		(at 66.04 111.76 0)
+		(at 176.53 116.84 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3656,7 +3776,7 @@
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x05")
-		(at 76.2 101.6 0)
+		(at 186.69 106.68 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -3666,7 +3786,7 @@
 		(dnp no)
 		(uuid "b342010d-fc56-40ff-982c-32c5159844ca")
 		(property "Reference" "J6"
-			(at 76.2 97.79 0)
+			(at 186.69 102.87 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3676,7 +3796,7 @@
 			)
 		)
 		(property "Value" "LID_I2C_BTN"
-			(at 76.2 114.3 0)
+			(at 186.69 119.38 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3686,7 +3806,7 @@
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
-			(at 76.2 101.6 0)
+			(at 186.69 106.68 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3697,7 +3817,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 76.2 101.6 0)
+			(at 186.69 106.68 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -3707,7 +3827,7 @@
 			)
 		)
 		(property "Description" "Lid harness: 1 SCL, 2 SDA, 3 3V3, 4 GND, 5 OLED button (GND-return contact)"
-			(at 76.2 101.6 0)
+			(at 186.69 106.68 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4261,7 +4381,7 @@
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_02x04_Odd_Even")
-		(at 40.64 101.6 0)
+		(at 123.19 104.14 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -4271,7 +4391,7 @@
 		(dnp no)
 		(uuid "f1ccc844-0058-4172-bc5b-cf058a473bd3")
 		(property "Reference" "J5"
-			(at 40.64 95.25 0)
+			(at 123.19 97.79 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4281,7 +4401,7 @@
 			)
 		)
 		(property "Value" "UPS3S_HDR_2X4"
-			(at 40.64 110.49 0)
+			(at 123.19 113.03 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4291,7 +4411,7 @@
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical"
-			(at 40.64 101.6 0)
+			(at 123.19 104.14 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4302,7 +4422,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 40.64 101.6 0)
+			(at 123.19 104.14 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -4312,7 +4432,7 @@
 			)
 		)
 		(property "Description" "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 NC, 4 NC, 5 GND, 6 GND, 7 5V, 8 5V; UPS 3V3 left open so the FireBeetle regulates the 3.3 V rail"
-			(at 40.64 101.6 0)
+			(at 123.19 104.14 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
