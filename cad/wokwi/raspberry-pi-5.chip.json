@@ -1,0 +1,26 @@
+{
+  "name": "raspberry-pi-5",
+  "author": "Custom",
+  "pins": [
+    "UPS_5V",
+    "GND",
+    "DISPLAY_DSI",
+    "DISP_5V",
+    "PCIE_FPC",
+    "USB_KEYBOARD",
+    "USB_FB_SERIAL",
+    "VBAT_PI",
+    "DISP_SDA",
+    "DISP_SCL"
+  ],
+  "controls": [
+    {
+      "id": "sendHeartbeat",
+      "label": "Send Serial Ping (0=Off, 1=On)",
+      "type": "range",
+      "min": 0,
+      "max": 1,
+      "step": 1
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "author": "ktemata",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": -259.2,
+      "left": -148.76,
+      "attrs": { "flashSize": "16", "psramSize": "2" }
+    },
+    { "type": "chip-waveshare-ups-s3", "id": "ups", "top": 20.22, "left": -273.6, "attrs": {} },
+    { "type": "chip-raspberry-pi-5", "id": "rpi5", "top": -114.18, "left": 139.2, "attrs": {} },
+    { "type": "wokwi-breadboard-half", "id": "pch", "top": 16.2, "left": -64.4, "attrs": {} },
+    {
+      "type": "board-ssd1306",
+      "id": "oled",
+      "top": -380.86,
+      "left": 9.83,
+      "attrs": { "i2cAddress": "0x3c" }
+    },
+    { "type": "wokwi-ds1307", "id": "rtc", "top": -331.8, "left": -316.7, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_oled",
+      "top": -368.2,
+      "left": -86.4,
+      "attrs": { "color": "blue", "label": "OLED_BTN" }
+    },
+    {
+      "type": "wokwi-slide-switch",
+      "id": "sw_ups",
+      "top": -350.8,
+      "left": -188.9,
+      "attrs": { "label": "UPS_SW" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:3V3", "oled:VCC", "red", [] ],
+    [ "esp:3V3", "rtc:5V", "red", [] ],
+    [ "esp:GND.1", "ups:GND", "black", [] ],
+    [ "esp:GND.1", "rpi5:GND", "black", [] ],
+    [ "esp:GND.1", "oled:GND", "black", [] ],
+    [ "esp:GND.1", "rtc:GND", "black", [] ],
+    [ "esp:GND.1", "btn_oled:2.l", "black", [] ],
+    [ "esp:GND.1", "pch:8t.a", "black", [] ],
+    [ "esp:21", "oled:SDA", "green", [] ],
+    [ "esp:21", "rtc:SDA", "green", [] ],
+    [ "esp:21", "ups:SDA", "green", [] ],
+    [ "esp:21", "pch:6t.a", "green", [] ],
+    [ "esp:22", "oled:SCL", "blue", [] ],
+    [ "esp:22", "rtc:SCL", "blue", [] ],
+    [ "esp:22", "ups:SCL", "blue", [] ],
+    [ "esp:22", "pch:7t.a", "blue", [] ],
+    [ "esp:25", "btn_oled:1.l", "yellow", [] ],
+    [ "esp:17", "rpi5:USB_FB_SERIAL", "cyan", [] ],
+    [ "ups:UPS_5V", "pch:5t.a", "red", [] ],
+    [ "ups:UPS_5V", "rpi5:UPS_5V", "red", [] ],
+    [ "ups:UPS_12V6", "pch:9t.a", "orange", [] ],
+    [ "ups:UPS_AUX_5V", "esp:5V", "red", [] ],
+    [ "sw_ups:1", "ups:SW_1", "purple", [] ],
+    [ "sw_ups:2", "ups:SW_2", "purple", [] ]
+  ],
+  "dependencies": {}
+}

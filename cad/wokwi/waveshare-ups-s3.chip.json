@@ -1,0 +1,36 @@
+{
+  "name": "waveshare-ups-s3",
+  "author": "Custom",
+  "pins": [
+    "CHG_12V6_IN",
+    "GND",
+    "BATT_3S_P",
+    "BATT_3S_N",
+    "UPS_5V",
+    "UPS_AUX_5V",
+    "SDA",
+    "SCL",
+    "SW_1",
+    "SW_2",
+    "UPS_12V6",
+    "3V3"
+  ],
+  "controls": [
+    {
+      "id": "busVoltage",
+      "label": "Battery Voltage (mV)",
+      "type": "range",
+      "min": 9000,
+      "max": 12600,
+      "step": 100
+    },
+    {
+      "id": "shuntVoltage",
+      "label": "Shunt Drop (uV)",
+      "type": "range",
+      "min": -50000,
+      "max": 50000,
+      "step": 1000
+    }
+  ]
+}
