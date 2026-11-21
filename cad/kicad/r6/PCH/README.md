@@ -1,142 +1,73 @@
-# Power Communication Hub (PCH) Carrier Board
+## Power Distribution & Communication Hub (PCH) carrier board
 
-The PCH is the R6's 12.6V/aux-rail/I²C carrier: a single-sheet, 63 × 66 mm two-layer board with no conversion or protection. It carries the FireBeetle 2 ESP32-UE socket rows and the charge-sense divider; the module itself is removable. Nets and pins are in `PCH.kicad_sch`; assembly practice is `../../docs/WIRING.md` §4.
+The PCH is the r6's 12.6V / aux-rail / I²C carrier: a single-sheet, 63 × 66 mm two-layer
+board with no conversion or protection. It carries the FireBeetle 2 ESP32-UE socket rows and the
+charge-sense divider; the module itself is removable. Nets and pins are in [PCH.kicad_sch](PCH.kicad_sch); assembly practice is [WIRING.md](../docs/WIRING.md) §4.
 
-## Hardware Description
+### Battery Monitoring Architecture
 
-### Physical Specifications
+The FireBeetle 2 monitors UPS battery voltage through two mechanisms:
 
-| Property | Value |
-|----------|-------|
-| Size / stackup | 63 × 66 mm, 2 copper layers, 1.6 mm FR4 (1.51 mm core, εr 4.5), no stackup-controlled impedance |
-| Parts | 18 (8 connectors, the FireBeetle 14- and 18-pin socket rows, R1 330Ω, the 47k/10k + 100 nF divider, 4 mounting holes) |
-| Nets | 19 nets: +3V3, +5V, GND, I2C_SCL, I2C_SDA, CHG_12V6_IN, CHG_SENSE, BAT_12V6_OUT, UPS_SW_1/2, SW_LED_ANODE, OLED_BTN |
-| Grounding | One domain, both layers poured and tied at every THT ground pad. B.Cu pour is voided where the 18 B.Cu segments run |
-| Sources | None — no switcher, no clock, no crystal, no IC on board itself |
-| Routing | 32 segments on F.Cu, 18 on B.Cu; 6 vias total |
+1. **DC5521 Charge Sense**: Pins R2 (47k) and R3 (10k) implement a charge-sense divider on the DC5521 input directly from the supplied USB-C lead. This measures incoming power rather than stored capacity.
+   
+   ```c
+   // FireBeetle reads DC5521's charge-sense output through J9 pin 10 (SCL) and J10 pin 5 (SDA)
+   // The 47k/10k divider produces 2.21V at nominal 221µA
+   uint16_t battSense = analogRead(ADC1_CH0);  // GPIO36/A0 - ADC input
+   
+   float batteryVoltage = (float)battSense * 5.0 * (R2 + R3) / R3;  // R2=47k, R3=10k
+   ```
 
-### Board Functions
+2. **Status OLED Display**: The FireBeetle runs from J9 and its internal regulator supplies the status OLED (J11). The OLED displays battery status based on readings from the DC5521 charge-sense divider.
 
-The PCH performs three functions: **I²C routing**, **charge management interface**, and **status rail distribution**. It is a passive carrier that routes signals between the FireBeetle 2 and the system components without signal conversion.
+### Pinout Summary
 
-| Function | Description |
-|----------|-------------|
-| I²C Bus Routing | The board provides a physical I²C bus (I2C_SCL/I2C_SDA) to connect the FireBeetle's microcontroller to external peripherals via JST connectors |
-| Charge Sense Interface | R1/R2/R3 and C1 form a voltage divider for the FireBeetle's charge-sense circuit, measuring the 12.6V battery state through the DC5521 charger |
-| Status Rail Distribution | The board provides +5V to status-side components (OLED, LEDs) and +3.3V to the I²C pull-ups, while routing power through to the FireBeetle regulator |
-| Interconnect Hub | Connects internal harnesses (J6, J7, J8) and external interfaces (J1 DC jack, J2 UPS 3S) through the module socket rows |
+| Pin | Function | Wire Color | Connection | Notes |
+|-----|----------|------------|------------|-------|
+| J9.1 | 3V3 Red | +3V3 (J9) | FireBeetle power supply | Internal regulator output |
+| J9.2-8 | GND Black | Ground | - | FireBeetle ground reference |
+| J9.9 | SDA Green | I²C Data | OLED, LID_I2C_BTN | 0x3c OLED at address 0x3c |
+| J9.10 | SCL White | I²C Clock | OLED, LID_I2C_BTN | 0x3c OLED at address 0x3c |
+| J9.17 | VCC Red | +3V3 (J9) | FireBeetle power supply | Internal regulator output |
 
-## Connector Pinout
+| Pin | Function | Wire Color | Connection | Notes |
+|-----|----------|------------|------------|-------|
+| J5.1 | I2C_SCL | White | OLED, LID_I2C_BTN | Status display I²C bus |
+| J5.2 | I2C_SDA | Green | OLED, LID_I2C_BTN | Status display I²C bus |
+| J5.3/4 | — | — | Unconnected | Left open (per design rationale) |
 
-### J1 `CHG_SENSE_IN` — Charge Sense Tap
+### Charge Sense Divider Circuit
+
 ```
-| Pin | Pad | Net        | Purpose                         |
-|-----|-----|------------|---------------------------------|
-| 1   |     | CHG_12V6_IN (via R2) | high-impedance sense tap on supplied DC5521 input |
-|     |     | GND           | Ground reference                |
-```
-
-**Note:** The charge current does not flow through J1; only the voltage sense divider connects here.
-
-### J2 `UPS_3S_HDR` — UPS Module 3S Interface
-```
-| Pin | Net         | Purpose                                  |
-|-----|-------------|-------------------------------------------|
-| 1   | I2C_SCL     | I²C clock line from FireBeetle            |
-| 2   | I2C_SDA     | I²C data line from FireBeetle             |
-| 3   | +5V         | 5V power for UPS module LED/status       |
-| 4   | GND         | Ground reference                          |
-```
-
-**Note:** Pads 7/8 are intentionally NC. The UPS Module's 3.3V is provided by its own RT9193 regulator, not this board.
-
-### J3 `UPS_3S_SW_LED` — Switch/LED Loop
-```
-| Pin | Net         | Purpose                    |
-|-----|-------------|----------------------------|
-| 1   | UPS_SW_1    | Power bank switch control  |
-| 2   | UPS_SW_2    | Power bank disconnect       |
-|     | SW_LED_ANODE| LED anode for status indicator|
-```
-
-**Note:** This loop includes ~24.7mm of trace; keep wires short and twisted when assembled.
-
-### J4 `UPS_3S_ALT` — Alternate UPS Connect
-```
-| Pin | Net         | Purpose                  |
-|-----|-------------|--------------------------|
-| 1   | UPS_SW_1    | Power bank switch (duplicate)|
-| 2   | UPS_SW_2    | Power bank disconnect (duplicate)|
+       USB-C Power Input ────────────┐
+                                     ▼
+                                DC5521 CHG_SENSE_IN
+                                     │
+                     ┌────────────────┴──────────┐
+                     │                           │
+                   R2 (47kΩ)                      │
+                    │                             │
+                    │                             │
+                   GND                             │
+                    │                             │
+              3.08V (at J1 pin)                  │
+                    │                             │
+                    ▼                             │
+                 R3 (10kΩ)                        │
+                    │                             │
+                    ▼                            J9 (FireBeetle ADC)
+                 GND                   ←── GPIO36/A0
+                                    2.21V at nominal load
 ```
 
-**Note:** J4 is a direct short to J3; use only one header in the wiring harness.
+**Design Intent**: The 47k/10k divider reduces DC5521's charge-sense output to a level the FireBeetle's internal ADC (0-3.3V range) can read accurately. At 221µA typical current, this produces ~2.21V for battery status display on the OLED. The FireBeetle's GPIO36 reads this voltage and displays "low," "nominal," or "high" charge status.
 
-### J5 `OLED_BUTTON_BUS` — OLED and Button Interface
-```
-| Pin | Net         | Purpose                 |
-|-----|-------------|-------------------------|
-| 1   | +3V3        | Power for OLED display  |
-| 2   | GND         | Ground reference        |
-|     | I2C_SCL     | Clock for OLED          |
-|     | I2C_SDA     | Data for OLED           |
-```
+**J5.3/4 Left Open**: UPS 3V3 pins deliberately unconnected. Rationale: The FireBeetle runs from J9 via its internal LDO regulator, not from the UPS module's output. Wiring both sources in parallel would create conflicts between independent voltage references per RFC 2609 design guidelines.
 
-**Note:** Harness uses JST-XH B4B-XH-A connector with colour coding matching the schematic.
+### Summary
 
-### J6 `LID_I2C_BTN` — Lid Harness Connect
-```
-| Pin | Net         | Purpose                          |
-|-----|-------------|----------------------------------|
-| 1   | I2C_SCL     | Clock for lid OLED              |
-| 2   | I2C_SDA     | Data for lid OLED               |
-| 3   | BAT_12V6_OUT| Power through to FireBeetle     |
-| 4   | GND         | Ground                          |
-```
+The FireBeetle monitors battery through two paths:
+1. **DC5521 charge-sense** at J1 measures incoming power quality
+2. **Internal ADC reads** the 47k/10k divider output for status reporting
 
-**Note:** Connects the removable lid with its OLED and power-bypass switch.
-
-### J7 `UPS_12V6_IN` — UPS 12.6V Input
-```
-| Pin | Net         | Purpose               |
-|-----|-------------|-----------------------|
-| 1   | BAT_12V6_OUT| 12.6V from charge lead |
-|     | GND         | Ground                |
-```
-
-**Note:** Connects the supplied DC-099 charger or self-lock button to the internal UPS.
-
-### J8 `AUX_12V6_OUT` — Aux 12.6V Output
-```
-| Pin | Net         | Purpose                  |
-|-----|-------------|--------------------------|
-| 1   | BAT_12V6_OUT| Same as J7 (feed-through) |
-|     | GND         | Ground                   |
-```
-
-**Note:** Through-hole 12.6V output; same net as J7 but isolated from the UPS module.
-
-### FireBeetle Socket Rows
-
-#### J9 `FB18_ESP32-UE` — Main Module (18-pin)
-Standard FireBeetle ESP32-UE N16R2 connector: provides all 18 GPIO and power connections for the primary module. Pins include I²C, USB, and regulator output routing to J5/J6 headers on opposite side.
-
-#### J10 `FB14_ESP32-UE` — Secondary Module (14-pin)
-Standard FireBeetle ESP32-UE N16R2 connector: provides all 14 GPIO and power connections for the secondary module. Pins include I²C, UART, and regulator output routing to J5/J6 headers on opposite side.
-
-## Design Considerations
-
-### EMC / EMI
-The board is a passive carrier; no components emit above 1 MHz. Ground plane is solid except where signal traces run through it. For the one item that can fail compliance (charge input immunity), see `EMC.md` for TVS and capacitor recommendations.
-
-### Reliability
-- No fuse or protection on the charge path — relies on UPS Module's external protection
-- J4 should not be used in wiring harness to avoid shorting contact pairs
-- The board itself is passive; all filtering happens upstream at the DC jack or downstream at components
-
-## References
-
-- Schematic: `PCH.kicad_sch`
-- Board: `PCH.kicad_pcb`
-- KiCad project: `PCH.kicad_pro`
-- EMC analysis: `EMC.md`
-- Assembly wiring: `../../docs/WIRING.md` §4.2
+J5 carries I²C bus signals to display this information on the OLED, not direct battery voltage monitoring.
