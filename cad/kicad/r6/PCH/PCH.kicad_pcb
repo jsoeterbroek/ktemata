@@ -483,7 +483,7 @@
 				)
 			)
 		)
-		(property "Description" "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 3V3, 4 3V3, 5 GND, 6 GND, 7 5V, 8 5V"
+		(property "Description" "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 NC, 4 NC, 5 GND, 6 GND, 7 5V, 8 5V; UPS 3V3 left open so the FireBeetle regulates the 3.3 V rail"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -509,6 +509,12 @@
 		(path "/f1ccc844-0058-4172-bc5b-cf058a473bd3")
 		(sheetname "/")
 		(sheetfile "PCH.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "3" "5" "7" "2" "4" "6" "8")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -671,6 +677,7 @@
 			(remove_unused_layers no)
 			(net "/I2C_SCL")
 			(pinfunction "Pin_1_1")
+			(pintype "passive")
 			(uuid "d2da303b-b09f-43b0-bdac-ecbecc8eeba1")
 		)
 		(pad "2" thru_hole circle
@@ -681,6 +688,7 @@
 			(remove_unused_layers no)
 			(net "/I2C_SDA")
 			(pinfunction "Pin_2_2")
+			(pintype "passive")
 			(uuid "b4ecfb36-8338-4abb-91c6-6b5e6acb0d50")
 		)
 		(pad "3" thru_hole circle
@@ -689,7 +697,9 @@
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
+			(net "unconnected-(J5-Pin_3-Pad3)")
 			(pinfunction "Pin_3_3")
+			(pintype "passive+no_connect")
 			(uuid "aedb758e-13c0-490d-a418-2e1008b3e00f")
 		)
 		(pad "4" thru_hole circle
@@ -698,7 +708,9 @@
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
+			(net "unconnected-(J5-Pin_4-Pad4)")
 			(pinfunction "Pin_4_4")
+			(pintype "passive+no_connect")
 			(uuid "d179ffb6-f027-4ccc-8ca9-8159caf6a194")
 		)
 		(pad "5" thru_hole circle
@@ -709,6 +721,7 @@
 			(remove_unused_layers no)
 			(net "/GND")
 			(pinfunction "Pin_5_5")
+			(pintype "passive")
 			(uuid "1b1c15a1-3f68-48f2-b644-0a4651e644a3")
 		)
 		(pad "6" thru_hole circle
@@ -719,6 +732,7 @@
 			(remove_unused_layers no)
 			(net "/GND")
 			(pinfunction "Pin_6_6")
+			(pintype "passive")
 			(uuid "e42c8b97-0fd6-4371-b08c-b4b40335b4e0")
 		)
 		(pad "7" thru_hole circle
@@ -729,6 +743,7 @@
 			(remove_unused_layers no)
 			(net "/+5V")
 			(pinfunction "Pin_7_7")
+			(pintype "passive")
 			(uuid "3b5756b0-4b9d-413e-b79f-f9eda48bfa54")
 		)
 		(pad "8" thru_hole circle
@@ -739,6 +754,7 @@
 			(remove_unused_layers no)
 			(net "/+5V")
 			(pinfunction "Pin_8_8")
+			(pintype "passive")
 			(uuid "a47071b1-bb76-4c17-80c5-116889f74181")
 		)
 		(embedded_fonts no)
@@ -1628,7 +1644,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "~"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -1665,6 +1681,12 @@
 		(path "/b1000000-0000-4000-8000-000000000003")
 		(sheetname "/")
 		(sheetfile "PCH.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1781,7 +1803,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "~"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
@@ -1818,6 +1840,12 @@
 		(path "/b1000000-0000-4000-8000-000000000004")
 		(sheetname "/")
 		(sheetfile "PCH.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2")
+			)
+		)
 		(attr smd)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -1879,7 +1907,6 @@
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
 			(net "/CHG_SENSE")
-			(pinfunction "_1")
 			(pintype "passive")
 			(uuid "1f8dbc66-0622-403b-9f0c-8e9cfcf407bf")
 		)
@@ -1889,7 +1916,6 @@
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
 			(net "/GND")
-			(pinfunction "_2")
 			(pintype "passive")
 			(uuid "eac93007-7c33-4a3a-a4b8-32e15c183adc")
 		)
@@ -1971,6 +1997,14 @@
 		(path "/b4000000-0000-4000-8000-000000000009")
 		(sheetname "/")
 		(sheetfile "PCH.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15"
+					"16" "17" "18"
+				)
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2142,7 +2176,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_1-Pad1)")
 			(pinfunction "Pin_1_1")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "c223b3ba-704f-4f5f-b3c3-12f115cc9552")
 		)
 		(pad "2" thru_hole circle
@@ -2153,7 +2187,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_2-Pad2)")
 			(pinfunction "Pin_2_2")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "b4984249-7d7f-4543-ab4b-537817d67ce3")
 		)
 		(pad "3" thru_hole circle
@@ -2164,7 +2198,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_3-Pad3)")
 			(pinfunction "Pin_3_3")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "ba41301d-02f1-4108-8061-4938a92e7ece")
 		)
 		(pad "4" thru_hole circle
@@ -2175,7 +2209,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_4-Pad4)")
 			(pinfunction "Pin_4_4")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "d269644c-2b89-4a9c-af21-317d15cd377c")
 		)
 		(pad "5" thru_hole circle
@@ -2186,7 +2220,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_5-Pad5)")
 			(pinfunction "Pin_5_5")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "3bd04f06-0167-45fa-895c-6105f526bd1a")
 		)
 		(pad "6" thru_hole circle
@@ -2197,7 +2231,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_6-Pad6)")
 			(pinfunction "Pin_6_6")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "cb6f1fe0-dbe0-41be-a76f-2152bd5273e1")
 		)
 		(pad "7" thru_hole circle
@@ -2208,7 +2242,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_7-Pad7)")
 			(pinfunction "Pin_7_7")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "603a15f2-e248-4c7a-9027-9cad817eaf24")
 		)
 		(pad "8" thru_hole circle
@@ -2219,7 +2253,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_8-Pad8)")
 			(pinfunction "Pin_8_8")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "61c6f935-c4cb-4858-96a9-213e13c6e192")
 		)
 		(pad "9" thru_hole circle
@@ -2252,7 +2286,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_11-Pad11)")
 			(pinfunction "Pin_11_11")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "4903fd38-e69a-49c8-9c3b-386fe927d5ad")
 		)
 		(pad "12" thru_hole circle
@@ -2263,7 +2297,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_12-Pad12)")
 			(pinfunction "Pin_12_12")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "20b79990-1970-4e83-9a5c-2867a99efed3")
 		)
 		(pad "13" thru_hole circle
@@ -2274,7 +2308,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_13-Pad13)")
 			(pinfunction "Pin_13_13")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "3de8a46a-aa5d-440b-a3f9-1fc7e749583f")
 		)
 		(pad "14" thru_hole circle
@@ -2283,7 +2317,7 @@
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
-			(net "unconnected-(J9-Pin_14-Pad14)")
+			(net "/GND")
 			(pinfunction "Pin_14_14")
 			(pintype "passive")
 			(uuid "3e05bacc-87a9-4959-ba71-7cf6633ad405")
@@ -2307,7 +2341,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_16-Pad16)")
 			(pinfunction "Pin_16_16")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "e293612b-2c69-45b0-abbb-ac44682dc478")
 		)
 		(pad "17" thru_hole circle
@@ -2329,7 +2363,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J9-Pin_18-Pad18)")
 			(pinfunction "Pin_18_18")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "f6c4c558-8189-46ff-989e-76214b3095d4")
 		)
 		(embedded_fonts no)
@@ -2410,6 +2444,12 @@
 		(path "/b1000000-0000-4000-8000-000000000001")
 		(sheetname "/")
 		(sheetfile "PCH.kicad_sch")
+		(units
+			(unit
+				(name "A")
+				(pins "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14")
+			)
+		)
 		(attr through_hole)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_line
@@ -2592,7 +2632,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J10-Pin_2-Pad2)")
 			(pinfunction "Pin_2_2")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "dcb4a07e-034f-426f-ad3d-e5aa478c73bf")
 		)
 		(pad "3" thru_hole circle
@@ -2636,7 +2676,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J10-Pin_6-Pad6)")
 			(pinfunction "Pin_6_6")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "929f2ac0-d43b-4a60-a9dc-d8ebc17cbd79")
 		)
 		(pad "7" thru_hole circle
@@ -2647,7 +2687,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J10-Pin_7-Pad7)")
 			(pinfunction "Pin_7_7")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "5b228259-c647-441b-b90a-8e32fe260721")
 		)
 		(pad "8" thru_hole circle
@@ -2658,7 +2698,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J10-Pin_8-Pad8)")
 			(pinfunction "Pin_8_8")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "4b0b7ae8-e9ec-4113-875d-15777ad3a423")
 		)
 		(pad "9" thru_hole circle
@@ -2669,7 +2709,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J10-Pin_9-Pad9)")
 			(pinfunction "Pin_9_9")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "bf628c2f-a6ba-4450-94c0-2806c4957847")
 		)
 		(pad "10" thru_hole circle
@@ -2691,7 +2731,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J10-Pin_11-Pad11)")
 			(pinfunction "Pin_11_11")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "9fc89d70-4eb2-4ff0-b2d9-8d102da0d8d6")
 		)
 		(pad "12" thru_hole circle
@@ -2724,7 +2764,7 @@
 			(remove_unused_layers no)
 			(net "unconnected-(J10-Pin_14-Pad14)")
 			(pinfunction "Pin_14_14")
-			(pintype "passive")
+			(pintype "passive+no_connect")
 			(uuid "12bc49db-794f-4db1-85c9-bdd93d989474")
 		)
 		(embedded_fonts no)
@@ -2768,7 +2808,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "~"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -3850,46 +3890,6 @@
 		(uuid "c4000000-0000-4000-8000-000000000024")
 	)
 	(segment
-		(start 110.5 151)
-		(end 156.46 160)
-		(width 0.25)
-		(layer "B.Cu")
-		(net "/+3V3")
-		(uuid "c4000000-0000-4000-8000-000000000001")
-	)
-	(segment
-		(start 156.46 160)
-		(end 156.46 163.8)
-		(width 0.25)
-		(layer "B.Cu")
-		(net "/+3V3")
-		(uuid "c4000000-0000-4000-8000-000000000002")
-	)
-	(segment
-		(start 156.46 160)
-		(end 155.23 159.07)
-		(width 0.25)
-		(layer "B.Cu")
-		(net "/+3V3")
-		(uuid "c4000000-0000-4000-8000-000000000009")
-	)
-	(segment
-		(start 155.23 159.07)
-		(end 155.23 119)
-		(width 0.25)
-		(layer "B.Cu")
-		(net "/+3V3")
-		(uuid "c4000000-0000-4000-8000-00000000000a")
-	)
-	(segment
-		(start 155.23 119)
-		(end 143 119)
-		(width 0.25)
-		(layer "B.Cu")
-		(net "/+3V3")
-		(uuid "c4000000-0000-4000-8000-00000000000b")
-	)
-	(segment
 		(start 104.825 124)
 		(end 104.825 125.5)
 		(width 0.8)
@@ -4008,6 +4008,46 @@
 		(layer "B.Cu")
 		(net "/+5V")
 		(uuid "c0000000-0000-4000-8000-000000000012")
+	)
+	(segment
+		(start 110.5 151)
+		(end 156.46 160)
+		(width 0.25)
+		(layer "B.Cu")
+		(net "/+3V3")
+		(uuid "c4000000-0000-4000-8000-000000000001")
+	)
+	(segment
+		(start 156.46 160)
+		(end 156.46 163.8)
+		(width 0.25)
+		(layer "B.Cu")
+		(net "/+3V3")
+		(uuid "c4000000-0000-4000-8000-000000000002")
+	)
+	(segment
+		(start 156.46 160)
+		(end 155.23 159.07)
+		(width 0.25)
+		(layer "B.Cu")
+		(net "/+3V3")
+		(uuid "c4000000-0000-4000-8000-000000000009")
+	)
+	(segment
+		(start 155.23 159.07)
+		(end 155.23 119)
+		(width 0.25)
+		(layer "B.Cu")
+		(net "/+3V3")
+		(uuid "c4000000-0000-4000-8000-00000000000a")
+	)
+	(segment
+		(start 155.23 119)
+		(end 143 119)
+		(width 0.25)
+		(layer "B.Cu")
+		(net "/+3V3")
+		(uuid "c4000000-0000-4000-8000-00000000000b")
 	)
 	(segment
 		(start 143 124.08)
