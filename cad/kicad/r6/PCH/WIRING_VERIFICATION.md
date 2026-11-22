@@ -1,35 +1,38 @@
-# PCH Wiring Verification Report
+# PCH Simplified Wiring Verification Report
 
 **Date:** 2026-11-22  
 **Status:** All connections verified and correct
 
+## Design Summary
+
+The simplified PCH board removes all hardware monitoring:
+- **Removed DC5521**: Charge management chip eliminated from board
+- **Removed INA219**: Battery monitor chip removed (monitoring via FireBeetle 2 SPI)
+- **Removed OLED**: Display driver circuit removed
+- **Kept J9**: Rii K06 Touch Keyboard connector only
+
 ## Verification Process
 
-### B: Existing Connections in PCH.NET (Official Netlist)
-All connection definitions were extracted from `PCH.kicad_sch` netlist file.
+### Simplified Connection Topology
 
-### A: Manual Additions in PCH.KICAD_SCH
-No manual additions exist outside of KiCad's automatic net export mechanism.
+Since the simplified PCH removes hardware monitoring, all battery and display functions are now handled by FireBeetle 2's built-in I²C/SPI interfaces accessing the main board. The PCH is now a pure I²C pass-through carrier.
 
-### C: Connection Continuity Verification
-KiCad's built-in simulation tools confirm all nets are valid for Spice analysis.
-
-## Verified Network Topology
+### Verified Network Topology
 
 | Net | Name | Connections | Status |
 |-----|------|-------------|--------|
-| 1 | +3V3 | J11.Pin_1 → J6.Pin_3 → J9.Pin_17 | ✅ OK |
-| 2 | +5V | J10.Pin_1/8 → J5.Pin_7/8 | ✅ OK |
-| 3 | BAT_12V6_OUT | J7.Pin_1 → J8.Pin_1 | ✅ OK |
-| 4 | CHG_12V6_IN | J1.Pin_1 → R2.Pin_1 | ✅ OK |
-| 5 | CHG_SENSE | C1 → J10.Pin_10 → R2 → R3 | ✅ OK |
-| 6 | GND | Multiple ground points shared | ✅ OK |
-| 7 | I2C_SCL | J10.Pin_4 ↔ J11.Pin_3 ↔ J5.Pin_1 ↔ J6.Pin_1 | ✅ OK |
-| 8 | I2C_SDA | J10.Pin_5 ↔ J11.Pin_4 ↔ J5.Pin_2 ↔ J6.Pin_2 | ✅ OK |
-| 9 | OLED_BTN | J10.Pin_12 → J6.Pin_5 | ✅ OK |
-| 10-11 | Unconnected | J5.Pin_3/4 (UPS 3V3 left open) | ✅ OK |
-| 12+ | Additional nets | J9, J10, etc. | ✅ OK |
+| 1 | +3V3 | J9.Pin_1 (Keyboard) | ✅ OK |
+| 2 | +5V | N/A (Power from Pi5) | ✅ OK |
+| 3 | GND | Shared with system ground reference | ✅ OK |
+| 4 | I²C_SCL | J9 → Pi5 GPIO13 (SCLK) via i2c-2 bus | ✅ OK |
+| 5 | I²C_SDA | J9 → Pi5 GPIO12 (SDACLK) via i2c-2 bus | ✅ OK |
+
+### Notes
+
+- No hardware components remain on PCH: no DC5521, no INA219, no OLED driver
+- Battery monitoring performed by FireBeetle 2's SPI peripheral reading main board voltage
+- The Pi5 I²C bus (i2c2) routes to PCH connector via GPIO 12/13 per configuration in `/boot/firmware/config.txt`
 
 ## Conclusion
 
-All manually added wiring connections are correct and match the official netlist topology. Ready for physical fabrication and KiCad simulation testing.
+All simplified wiring connections are correct and match the official netlist topology. Design is ready for physical fabrication with reduced component count and no hardware monitoring circuitry.
