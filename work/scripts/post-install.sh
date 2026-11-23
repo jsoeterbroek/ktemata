@@ -1521,31 +1521,12 @@ grant_library_access() {
     run_sh "chgrp -R '$SERVICE_USER' '$ZIM_DIR' && chmod -R g+rX '$ZIM_DIR'"
 }
 
-# Build $LIBRARY_XML from the archives present, using kiwix-manage (part of kiwix-tools).
-# The XML lives in the service's writable state directory, not in the read-only ZIM directory.
-# Called once here and on every service start via ExecStartPre, so adding a ZIM and restarting
-# is all that is needed.
+# Build $LIBRARY_XML only when the ZIM paths, sizes or mtimes change. The installed helper is
+# shared with ExecStartPre, so post-install and systemd use exactly the same cache and error paths.
 rebuild_library() {
-    local xml="$LIBRARY_XML" z tmp n=0
-    $DRY_RUN && { printf '%s  [dry-run]%s build %s\n' "$C_YELLOW" "$C_OFF" "$xml"; return 0; }
-
+    $DRY_RUN && { printf '%s  [dry-run]%s build %s\n' "$C_YELLOW" "$C_OFF" "$LIBRARY_XML"; return 0; }
     install -d -m 0755 -o "$SERVICE_USER" -g "$SERVICE_USER" "$STATE_DIR"
-    for z in "$ZIM_DIR"/*.zim; do [ -e "$z" ] && n=$((n + 1)); done
-    if [ "$n" -eq 0 ]; then
-        log_info "no ZIM files yet; the service waits for $xml"
-        return 0
-    fi
-
-    tmp="$xml.tmp"
-    printf '<library version="20110515">\n</library>\n' >"$tmp"
-    for z in "$ZIM_DIR"/*.zim; do
-        [ -e "$z" ] || continue
-        kiwix-manage "$tmp" add "$z" >/dev/null 2>&1 || log_warn "could not add $(basename "$z")"
-    done
-    mv "$tmp" "$xml"
-    chgrp "$SERVICE_USER" "$xml" 2>/dev/null || true
-    chmod 0644 "$xml"
-    log_ok "library.xml: $n archive(s)"
+    /usr/local/bin/kiwix-library "$ZIM_DIR" "$LIBRARY_XML"
 }
 
 install_service() {
@@ -1557,6 +1538,10 @@ install_service() {
     $WITH_SERVICE || { log_stage "Service"; log_info "skipped (--no-service)"; return 0; }
     log_stage "Service"
 
+    local dir helper_src
+    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    helper_src="$dir/kiwix-library.sh"
+    [ -r "$helper_src" ] || die "cannot find kiwix-library.sh next to this script"
     local unit="/etc/systemd/system/$SERVICE_NAME.service"
     log_info "writing $unit"
 
@@ -1583,7 +1568,7 @@ StateDirectoryMode=0755
 # Hundreds of ZIMs can take several minutes to index; do not kill and restart start-pre every 90 s.
 TimeoutStartSec=1800
 # Regenerate the XML on every start so dropping in a new ZIM and restarting is enough.
-ExecStartPre=/usr/local/bin/kiwix-library
+ExecStartPre=/usr/local/bin/kiwix-library "$ZIM_DIR" "$LIBRARY_XML"
 # No ZIMs -> the XML is absent -> would exit 1 and restart. sh -c lets us exit 0 instead and
 # wait for a restart, so an idle card does not produce a restart loop.
 # All IPv4 interfaces includes both loopback and the hotspot/LAN address. Local launchers use
@@ -1605,29 +1590,11 @@ EOF
         log_ok "unit written"
     fi
 
-    # small wrapper so ExecStartPre does not need a shell in the unit
-    if ! $DRY_RUN; then
-        cat >/usr/local/bin/kiwix-library <<HELPER
-#!/bin/sh
-# Rebuild the kiwix library XML from the ZIM files in the directory.
-set -e
-dir=$ZIM_DIR
-xml=$LIBRARY_XML
-set --
-for z in "\$dir"/*.zim; do
-    [ -e "\$z" ] && set -- "\$@" "\$z"
-done
-[ "\$#" -gt 0 ] || exit 0
-tmp=\$xml.tmp
-printf '<library version="20110515">\\n</library>\\n' > "\$tmp"
-for z in "\$@"; do
-    kiwix-manage "\$tmp" add "\$z"
-done
-mv "\$tmp" "\$xml"
-chgrp $SERVICE_USER "\$xml" 2>/dev/null || true
-chmod 0644 "\$xml"
-HELPER
-        chmod 0755 /usr/local/bin/kiwix-library
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s install %s -> /usr/local/bin/kiwix-library\n' \
+            "$C_YELLOW" "$C_OFF" "$helper_src"
+    else
+        install -m 0755 "$helper_src" /usr/local/bin/kiwix-library
         log_ok "/usr/local/bin/kiwix-library"
     fi
 

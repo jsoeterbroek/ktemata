@@ -489,7 +489,7 @@ It serves through a **library XML**, not a glob:
 ConditionPathExists=/srv/kiwix/zim
 StateDirectory=kiwix
 TimeoutStartSec=1800
-ExecStartPre=/usr/local/bin/kiwix-library
+ExecStartPre=/usr/local/bin/kiwix-library "/srv/kiwix/zim" "/var/lib/kiwix/library.xml"
 ExecStart=/bin/sh -c 'if [ -f "/var/lib/kiwix/library.xml" ]; then exec kiwix-serve --library …; fi; exit 0'
 ```
 
@@ -501,11 +501,16 @@ Unable to add the ZIM file '/srv/kiwix/zim/*.zim' to the internal library.
 ```
 
 `--library` takes an XML listing instead. `kiwix-library` (installed to `/usr/local/bin`) rebuilds that XML
-from the `*.zim` files on every start, so dropping in an archive and restarting is enough. `kiwix-manage`
-does the listing. The XML is written to `/var/lib/kiwix/library.xml`; systemd's `StateDirectory=kiwix`
-keeps that path writable while `/srv/kiwix/zim` remains read-only to the service. Indexing hundreds of
-archives can take several minutes; `TimeoutStartSec=1800` prevents systemd from repeatedly killing and
-restarting that work. While the unit is `activating (start-pre)`, port 8080 is not expected to be listening.
+when needed; dropping in an archive and restarting is enough. It stores a SHA-256 fingerprint of every
+ZIM's path, size and modification time in `/var/lib/kiwix/library.xml.inputs.sha256`. If that fingerprint
+and the existing XML are intact, the service skips re-indexing. Full content hashes are deliberately not
+used because they would read every multi-gigabyte archive on each start. Removing all ZIMs clears the XML.
+
+`kiwix-manage` does the listing when the inputs change. The XML is written to `/var/lib/kiwix/library.xml`;
+systemd's `StateDirectory=kiwix` keeps that path writable while `/srv/kiwix/zim` remains read-only to the
+service. Indexing hundreds of archives can take several minutes; `TimeoutStartSec=1800` prevents systemd
+from repeatedly killing and restarting that work. While the unit is `activating (start-pre)`, port 8080 is
+not expected to be listening.
 
 The condition is on the **directory**, not the XML: a `ConditionPathExists` on the XML would also suppress
 `ExecStartPre`, so the library could never be created. With no archives at all the start command prints
