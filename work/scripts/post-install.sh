@@ -1924,6 +1924,20 @@ summary() {
     fi
 }
 
+# An existing host installation needs no repeated install confirmation. Accept a disabled unit too:
+# its disabled state is a user choice, not a reason to treat the installation as new.
+host_install_present() {
+    $HOST_LIBRARY || return 1
+    has_command kiwix-serve || return 1
+    [ -d "$LIBRARY_DIR" ] || return 1
+    $WITH_SERVICE || return 0
+    if have_systemd; then
+        systemctl cat "$SERVICE_NAME.service" >/dev/null 2>&1
+    else
+        [ -f "/etc/systemd/system/$SERVICE_NAME.service" ]
+    fi
+}
+
 # ---------------- arguments ----------------
 main() {
     while [ $# -gt 0 ]; do
@@ -2000,7 +2014,7 @@ main() {
 
     $DRY_RUN || require_root "$@"
 
-    if ! $DRY_RUN && ! $ASSUME_YES && ! $HWTEST_ONLY; then
+    if ! $DRY_RUN && ! $ASSUME_YES && ! $HWTEST_ONLY && ! host_install_present; then
         confirm "Install Kiwix into $ZIM_DIR and enable $SERVICE_NAME.service on port $SERVICE_PORT?" \
             || { log_info "aborted"; exit 0; }
     fi

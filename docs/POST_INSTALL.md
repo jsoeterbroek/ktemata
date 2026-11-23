@@ -16,7 +16,8 @@ sudo ./work/scripts/post-install.sh --sample         # + fetch one small ZIM to 
 ```
 
 Inspired by [`after-effects`](https://github.com/tprasadtp/ubuntu-post-install) but deliberately small: one
-file, no YAML config, no whiptail menu. Idempotent — safe to re-run.
+file, no YAML config, no whiptail menu. Idempotent — safe to re-run. The install confirmation is skipped when
+an existing host installation is detected; a fresh installation still asks before changing the system.
 
 ## Library hotspot
 
