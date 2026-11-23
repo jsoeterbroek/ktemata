@@ -277,6 +277,21 @@ echo 100 | sudo tee /sys/class/backlight/*/brightness   # 0..255
 
 The app is a precompiled vendor binary, not built from source; it is optional.
 
+## UPS alternate I²C pins
+
+For the Pi 5 PCH wiring on GPIO12/GPIO13 (physical pins 32/33), opt in to the UPS bus overlay:
+
+```bash
+sudo ./work/scripts/post-install.sh --ups-i2c-alt-pins
+```
+
+This adds `dtoverlay=i2c2-pi5,pins_12_13` to `/boot/firmware/config.txt`, keeps the usual one-time
+`.ktemata.bak`, and takes effect after reboot. The UPS INA219 is then at `0x41` on Linux bus `2`;
+verify with `sudo i2cdetect -y 2`. An existing, differently configured `i2c2-pi5` overlay is left
+unchanged rather than loading a conflicting second instance. Standard GPIO2/GPIO3 wiring needs
+neither this flag nor the overlay. The tray app and its bus selection are documented in
+[`work/scripts/UPS_3S/README.md`](../work/scripts/UPS_3S/README.md).
+
 ## Desktop artwork
 
 The wallpaper and the early boot splash live in
@@ -321,9 +336,9 @@ It cannot be folded into this script:
 `--library nomad` only changes what this script does: no host `kiwix-serve`, and the status OLED
 and the hardware storage check read `${NOMAD_STORAGE_PATH}/zim`.
 
-## config.txt (opt-in)
+## Camera auto-detect (opt-in)
 
-Only one `config.txt` change is offered, and only when asked for, because a bad edit there can make the board
+This camera-specific `config.txt` change is only made when asked, because a bad boot edit can make the board
 unbootable:
 
 ```bash

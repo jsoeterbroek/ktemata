@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/python3 /usr/local/lib/ktemata-ups-tray/ups_tray.py "$@"
