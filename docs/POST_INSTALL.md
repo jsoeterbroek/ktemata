@@ -102,13 +102,25 @@ How it is put together:
 - **One root-owned helper**, `wifi-mode.sh` → `/usr/local/bin/wifi-mode`. It only drives
   `nmcli`; there is no hostapd path, because the switch needs a live NetworkManager to change
   modes without a reboot. On an image without NetworkManager the step is skipped.
-- **The AP profile is created on first use** from `/etc/ktemata/wifi-mode.conf`, which the
-  installer writes from `--hotspot-ssid`, `--hotspot-pass`, `--hotspot-addr` and
-  `--hotspot-band`. `--hotspot` still creates and starts the profile immediately; the switcher
-  is for changing your mind later. An existing profile is never overwritten.
-- **The file is mode 0600** because it carries the WPA2 passphrase. With no `--hotspot-pass` the
-  AP is open, and the switcher warns about that every time it starts it. If the file is missing,
-  AP mode refuses to create a profile instead of falling back to the built-in open defaults.
+- **AP settings live in `/etc/ktemata/wifi.conf`**, mode 0600:
+
+  | Key | Meaning |
+  |---|---|
+  | `AP_NAME` | NetworkManager connection/profile name (internal), default `Ktemata` |
+  | `AP_WELCOME` | SSID clients see when connecting; empty falls back to `Ktemata` |
+  | `AP_PASSWORD` | WPA2 passphrase, 8–63 characters; empty leaves a new profile open |
+  | `AP_ADDR`, `AP_CIDR` | AP address and prefix, default `10.10.10.1`/`24` |
+  | `AP_BAND` | `auto`, `2.4` or `5`, default `auto` |
+
+  The installer writes this file from `--hotspot-ssid`, `--hotspot-pass`, `--hotspot-addr` and
+  `--hotspot-band` only when it does not exist; an existing file is never overwritten. An
+  installation from the old helper migrates `/etc/ktemata/wifi-mode.conf` once. The helper reads
+  the old file as a fallback if the new one is absent. Because the file is sourced as root, the
+  helper refuses to run if it is not root-owned or is group/other-writable.
+- **The config is applied on every `wifi-mode ap`.** An existing profile whose SSID matches
+  `AP_WELCOME` is adopted and renamed to `AP_NAME`; the mode, SSID, address and password are then
+  written from the file. Editing `wifi.conf` is enough — no profile deletion. If the file is
+  missing, AP mode refuses to create a profile instead of falling back to open defaults.
 - **No password prompt.** `NetworkManager` connection changes are root operations on a stock
   image, so the installer writes `/etc/sudoers.d/ktemata-wifi`, which allows the desktop account
   to run exactly `wifi-mode client`, `wifi-mode ap` and `wifi-mode off` without a password. The
@@ -714,6 +726,13 @@ The profile property set was checked against real `nmcli` 1.52.1 with `nmcli --o
 shows `firewall-backend=none` from the drop-in. With a fake `nmcli`, a half-configured `Ktemata` profile
 (`mode=infrastructure`) was repaired on the first `ap` run and left alone on the second, and the drop-in
 writer produced a mode-0644 file. A real AP/NAT path was not exercised.
+
+`/etc/ktemata/wifi.conf` was driven through a fake `nmcli`: `AP_NAME`, `AP_WELCOME` and `AP_PASSWORD` created
+the profile, editing the file changed the SSID and PSK on the next `ap`, an empty `AP_WELCOME` fell back to
+`Ktemata`, and a 6-character password was refused. A legacy `wifi-mode.conf` was read as a fallback, an
+existing profile with the matching SSID was adopted and renamed, and the installer preserved an existing
+`wifi.conf`, migrated a legacy file, and created a fresh one from the hotspot flags. A real radio was not
+available in the container.
 
 **On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
 holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no

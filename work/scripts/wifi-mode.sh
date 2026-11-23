@@ -17,7 +17,7 @@
 # whatever uplink is present. hostapd is not touched; images without NetworkManager are out of
 # scope.
 #
-# The AP profile is created on first use from /etc/ktemata/wifi-mode.conf, which post-install.sh
+# The AP profile is created on first use from /etc/ktemata/wifi.conf, which post-install.sh
 # writes from --hotspot-ssid/-pass/-addr/-band. Running the installer with --hotspot still
 # creates and starts the profile immediately; this helper is for switching afterwards.
 #
@@ -26,22 +26,21 @@
 
 set -euo pipefail
 
-# The AP profile settings are written by post-install.sh. Deliberately not overridable from the
-# environment: the helper runs as root, and sourcing a user-chosen file would be a privilege
-# escalation. Root owns this file; the sudoers rule does not preserve the environment.
-CONFIG=/etc/ktemata/wifi-mode.conf
+# AP settings. `/etc/ktemata/wifi.conf` is the source of truth; the old wifi-mode.conf is
+# still read when the new file is absent, so existing installs keep working.
+#   AP_NAME      NetworkManager connection/profile name (internal)
+#   AP_WELCOME   SSID clients see; empty falls back to Ktemata
+#   AP_PASSWORD  WPA2 passphrase; empty leaves a new profile open
+#   AP_ADDR, AP_CIDR, AP_BAND  optional network settings
+# Deliberately not overridable from the environment: the helper runs as root, and sourcing a
+# user-chosen file would be a privilege escalation.
+CONFIG=/etc/ktemata/wifi.conf
+LEGACY_CONFIG=/etc/ktemata/wifi-mode.conf
 NO_NAT_CONF=/etc/NetworkManager/conf.d/90-ktemata-no-nat.conf
 WIFI_IF=${WIFI_IF:-wlan0}
-AP_PROFILE=${AP_PROFILE:-Ktemata}
 AP_ADDR=${AP_ADDR:-10.10.10.1}
 AP_CIDR=${AP_CIDR:-24}
 AP_BAND=${AP_BAND:-auto}      # auto | 2.4 | 5
-AP_PASS=${AP_PASS:-}          # empty: open network
-
-if [ -r "$CONFIG" ]; then
-    # shellcheck disable=SC1090
-    . "$CONFIG"
-fi
 
 SELF=${BASH_SOURCE[0]}
 SELF=$(cd "$(dirname "$SELF")" && pwd)/$(basename "$SELF")
@@ -55,6 +54,37 @@ fi
 die() { printf '%s✗%s %s\n' "$C_RED" "$C_OFF" "$*" >&2; exit 1; }
 info() { printf '%s•%s %s\n' "$C_YELLOW" "$C_OFF" "$*" >&2; }
 
+# These files are sourced as root, so a non-root-writable file would be a privilege escalation.
+# Only enforced for the root process; the desktop user's unprivileged menu just reads defaults.
+check_config_secure() {
+    local f=$1 owner mode
+    [ -r "$f" ] || return 0
+    [ "$(id -u)" -eq 0 ] || return 0
+    owner=$(stat -c '%u' "$f" 2>/dev/null || true)
+    mode=$(stat -c '%a' "$f" 2>/dev/null || true)
+    [ "$owner" = 0 ] || die "$f must be owned by root; run post-install.sh"
+    case $mode in
+        ''|*[!0-7]*) die "cannot check the permissions of $f" ;;
+    esac
+    [ $((8#$mode & 022)) -eq 0 ] || die "$f must not be group/other writable; chmod 600 $f"
+}
+
+check_config_secure "$CONFIG"
+check_config_secure "$LEGACY_CONFIG"
+
+if [ -r "$CONFIG" ]; then
+    # shellcheck disable=SC1090
+    . "$CONFIG"
+elif [ -r "$LEGACY_CONFIG" ]; then
+    # shellcheck disable=SC1090
+    . "$LEGACY_CONFIG"
+fi
+
+# Accept the old key names as well as the current ones.
+AP_PROFILE=${AP_NAME:-${AP_PROFILE:-Ktemata}}      # connection.id
+AP_SSID=${AP_WELCOME:-${AP_SSID:-Ktemata}}         # 802-11-wireless.ssid
+AP_PASS=${AP_PASSWORD:-${AP_PASS:-}}               # empty: open network
+
 usage() {
     cat <<EOF
 ${C_BOLD}wifi-mode${C_OFF} — Ktemata Wi-Fi control (NetworkManager)
@@ -65,11 +95,11 @@ USAGE
   menu      Choose client, access point or off (zenity, else terminal).
   status    Print the current mode.
   client    Radio on, access point down; join a known client network.
-  ap        Radio on; start the '$AP_PROFILE' access point at $AP_ADDR/$AP_CIDR.
+  ap        Radio on; start the '$AP_SSID' access point at $AP_ADDR/$AP_CIDR.
   off       Radio off. NetworkManager keeps this across reboots.
 
-No argument is the same as 'menu'. The AP profile is created on first use from
-$CONFIG; post-install.sh writes it.
+No argument is the same as 'menu'. AP_NAME, AP_WELCOME, AP_PASSWORD and the network
+settings are read from $CONFIG; post-install.sh writes it.
 EOF
 }
 
@@ -111,7 +141,7 @@ status_text() {
     if [ "$(radio_state)" != enabled ]; then
         printf 'Off - Wi-Fi radio disabled\n'
     elif ap_profile_active; then
-        printf 'Access point - %s at %s/%s\n' "$AP_PROFILE" "$AP_ADDR" "$AP_CIDR"
+        printf 'Access point - %s at %s/%s\n' "$AP_SSID" "$AP_ADDR" "$AP_CIDR"
     elif name=$(client_connection) && [ -n "$name" ]; then
         printf 'Client - connected to %s\n' "$name"
     else
@@ -125,6 +155,21 @@ ap_profile_mode() {
 
 ap_profile_key_mgmt() {
     nmcli -g 802-11-wireless-security.key-mgmt connection show "$AP_PROFILE" 2>/dev/null || true
+}
+
+# A profile whose connection.id is not AP_NAME but whose SSID is AP_WELCOME (for example the
+# old Ktemata profile) is adopted instead of creating a second profile for the same network.
+profile_with_ssid() {
+    local ssid=$1 name
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        [ "$name" = "$AP_PROFILE" ] && continue
+        if [ "$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null || true)" = "$ssid" ]; then
+            printf '%s\n' "$name"
+            return 0
+        fi
+    done < <(nmcli -t -f NAME connection show 2>/dev/null)
+    return 1
 }
 
 # Shared mode gives DHCP and DNS, but NetworkManager has no per-connection switch to stop it
@@ -153,6 +198,7 @@ ensure_no_nat() {
 configure_ap_profile() {
     local args=(
         802-11-wireless.mode ap
+        802-11-wireless.ssid "$AP_SSID"
         ipv4.method shared
         ipv4.addresses "$AP_ADDR/$AP_CIDR"
         ipv6.method disabled
@@ -165,32 +211,48 @@ configure_ap_profile() {
     nmcli connection modify "$AP_PROFILE" "${args[@]}" >/dev/null
 }
 
-# Create the AP profile on first use and repair one left half-configured by an interrupted run
-# (the old helper failed on ipv4.ip-forward after `connection add`). A working profile made by
-# --hotspot, or edited by hand, is not overwritten.
+# Apply AP_NAME / AP_WELCOME / AP_PASSWORD from the config. A missing profile is created (or an
+# existing profile with the same SSID is adopted and renamed); the values are then applied on
+# every start, so editing wifi.conf is enough. Empty AP_PASSWORD leaves the profile's security
+# untouched; a profile created without it is open.
 ensure_ap_profile() {
+    if [ ! -r "$CONFIG" ] && [ ! -r "$LEGACY_CONFIG" ]; then
+        die "neither $CONFIG nor $LEGACY_CONFIG exists; run post-install.sh"
+    fi
+    if [ -n "$AP_PASS" ] && [ ${#AP_PASS} -lt 8 ]; then
+        die "AP_PASSWORD needs 8-63 characters (WPA2); current length is ${#AP_PASS}"
+    fi
+    if [ ${#AP_PASS} -gt 63 ]; then
+        die "AP_PASSWORD needs 8-63 characters (WPA2); current length is ${#AP_PASS}"
+    fi
+
+    local existed=true
     if ! ap_profile_exists; then
-        # Fail closed: creating a profile without the installer's config would silently produce
-        # an open access point with the built-in defaults.
-        [ -r "$CONFIG" ] || \
-            die "$CONFIG is missing; run post-install.sh, or create the '$AP_PROFILE' profile first"
-        info "creating NetworkManager profile '$AP_PROFILE' on $WIFI_IF"
-        nmcli connection add type wifi ifname "$WIFI_IF" con-name "$AP_PROFILE" \
-            autoconnect no ssid "$AP_PROFILE" >/dev/null
+        existed=false
+        local adopt
+        adopt=$(profile_with_ssid "$AP_SSID" || true)
+        if [ -n "$adopt" ]; then
+            info "adopting profile '$adopt' as '$AP_PROFILE' ($AP_SSID)"
+            nmcli connection modify "$adopt" connection.id "$AP_PROFILE" >/dev/null
+        else
+            info "creating NetworkManager profile '$AP_PROFILE' ($AP_SSID) on $WIFI_IF"
+            nmcli connection add type wifi ifname "$WIFI_IF" con-name "$AP_PROFILE" \
+                autoconnect no ssid "$AP_SSID" >/dev/null
+        fi
     fi
 
-    if [ "$(ap_profile_mode)" != ap ]; then
+    if $existed && [ "$(ap_profile_mode)" != ap ]; then
         info "repairing profile '$AP_PROFILE' (missing 802-11-wireless.mode ap)"
-        configure_ap_profile
     fi
+    configure_ap_profile
 
-    if [ -n "$AP_PASS" ] && [ -z "$(ap_profile_key_mgmt)" ]; then
+    if [ -n "$AP_PASS" ]; then
         nmcli connection modify "$AP_PROFILE" \
             802-11-wireless-security.key-mgmt wpa-psk \
             802-11-wireless-security.psk "$AP_PASS" >/dev/null
     fi
-    printf '%s✓%s profile %s ready (%s/%s)\n' \
-        "$C_GREEN" "$C_OFF" "$AP_PROFILE" "$AP_ADDR" "$AP_CIDR" >&2
+    printf '%s✓%s profile %s ready: SSID %s at %s/%s\n' \
+        "$C_GREEN" "$C_OFF" "$AP_PROFILE" "$AP_SSID" "$AP_ADDR" "$AP_CIDR" >&2
 }
 
 mode_client() {
@@ -222,8 +284,8 @@ mode_client() {
 
 mode_ap() {
     nmcli radio wifi on >/dev/null
-    ensure_no_nat
     ensure_ap_profile
+    ensure_no_nat
     # AP mode is an explicit choice: let it reconnect at boot, and prefer it over client
     # profiles that were also saved with autoconnect.
     nmcli connection modify "$AP_PROFILE" \
@@ -234,8 +296,8 @@ mode_ap() {
         die "could not bring up '$AP_PROFILE': $out"
     fi
     printf '%s✓%s access point: %s at %s/%s\n' \
-        "$C_GREEN" "$C_OFF" "$AP_PROFILE" "$AP_ADDR" "$AP_CIDR"
-    if [ -z "$AP_PASS" ]; then
+        "$C_GREEN" "$C_OFF" "$AP_SSID" "$AP_ADDR" "$AP_CIDR"
+    if [ -z "$AP_PASS" ] && [ -z "$(ap_profile_key_mgmt)" ]; then
         info "open network: anyone in radio range can read the library"
     fi
 }

@@ -101,7 +101,8 @@ HOTSPOT_BAND=${HOTSPOT_BAND:-auto}      # auto (2.4+5 GHz) | 2.4 | 5
 # and an appliance should not ask for a password. --no-wifi-switch skips it.
 WITH_WIFI_SWITCH=true
 WIFI_SWITCH_BIN=/usr/local/bin/wifi-mode
-WIFI_SWITCH_CONF=/etc/ktemata/wifi-mode.conf
+WIFI_SWITCH_CONF=/etc/ktemata/wifi.conf
+WIFI_SWITCH_LEGACY_CONF=/etc/ktemata/wifi-mode.conf
 WIFI_SWITCH_SUDOERS=/etc/sudoers.d/ktemata-wifi
 WIFI_SWITCH_STATE="not installed"
 # NetworkManager has no per-connection switch to keep ipv4.method shared from NATing clients
@@ -1521,30 +1522,51 @@ install_wifi_switch() {
     WIFI_SWITCH_STATE="CLI installed"
     log_ok "$WIFI_SWITCH_BIN"
 
-    # Values for the AP profile the helper creates on first use. %q keeps a passphrase with
-    # spaces or quotes sourceable; the file is root-only because it holds that passphrase.
+    # AP settings for the helper. An existing wifi.conf is the user's source of truth and is
+    # never overwritten. A fresh install writes AP_NAME/AP_WELCOME/AP_PASSWORD; an install from
+    # the old helper migrates the legacy wifi-mode.conf values. %q keeps passphrases sourceable.
     if $DRY_RUN; then
-        printf '%s  [dry-run]%s write %s and %s\n' \
+        printf '%s  [dry-run]%s write %s (if absent) and %s\n' \
             "$C_YELLOW" "$C_OFF" "$WIFI_SWITCH_CONF" "$WIFI_SWITCH_SUDOERS"
     else
         install -d -m 0755 -o root -g root /etc/ktemata
-        (
-            umask 077
-            {
-                printf '# Written by post-install.sh: NetworkManager values for %s\n' "$WIFI_SWITCH_BIN"
-                printf '# AP_PASS is a WPA2 passphrase; empty means an open network.\n'
-                printf 'AP_PROFILE=%q\n' "$HOTSPOT_SSID"
-                printf 'AP_ADDR=%q\n' "$HOTSPOT_ADDR"
-                printf 'AP_CIDR=%q\n' "$HOTSPOT_CIDR"
-                printf 'AP_BAND=%q\n' "$HOTSPOT_BAND"
-                printf 'AP_PASS=%q\n' "$HOTSPOT_PASS"
-            } >"$WIFI_SWITCH_CONF"
-        )
+        if [ -r "$WIFI_SWITCH_CONF" ]; then
+            log_ok "$WIFI_SWITCH_CONF exists, leaving your AP settings alone"
+        else
+            (
+                umask 077
+                {
+                    printf '# Ktemata AP settings (post-install.sh)\n'
+                    printf '# AP_NAME is the NetworkManager profile; AP_WELCOME is the SSID clients see.\n'
+                    if [ -r "$WIFI_SWITCH_LEGACY_CONF" ]; then
+                        # It is about to be sourced as root; tighten it first.
+                        chown root:root "$WIFI_SWITCH_LEGACY_CONF"
+                        chmod 0600 "$WIFI_SWITCH_LEGACY_CONF"
+                        # shellcheck disable=SC1090
+                        . "$WIFI_SWITCH_LEGACY_CONF"
+                        printf 'AP_NAME=%q\n' "${AP_PROFILE:-Ktemata}"
+                        printf 'AP_WELCOME=%q\n' "${AP_PROFILE:-Ktemata}"
+                        printf 'AP_PASSWORD=%q\n' "${AP_PASS:-}"
+                        printf 'AP_ADDR=%q\n' "${AP_ADDR:-10.10.10.1}"
+                        printf 'AP_CIDR=%q\n' "${AP_CIDR:-24}"
+                        printf 'AP_BAND=%q\n' "${AP_BAND:-auto}"
+                    else
+                        printf 'AP_NAME=%q\n' "$HOTSPOT_SSID"
+                        printf 'AP_WELCOME=%q\n' "$HOTSPOT_SSID"
+                        printf 'AP_PASSWORD=%q\n' "$HOTSPOT_PASS"
+                        printf 'AP_ADDR=%q\n' "$HOTSPOT_ADDR"
+                        printf 'AP_CIDR=%q\n' "$HOTSPOT_CIDR"
+                        printf 'AP_BAND=%q\n' "$HOTSPOT_BAND"
+                        [ -n "$HOTSPOT_PASS" ] || \
+                            log_warn "no --hotspot-pass: AP mode will be an open network"
+                    fi
+                } >"$WIFI_SWITCH_CONF"
+            )
+            log_ok "$WIFI_SWITCH_CONF (new)"
+        fi
         chown root:root "$WIFI_SWITCH_CONF"
         chmod 0600 "$WIFI_SWITCH_CONF"
         log_ok "$WIFI_SWITCH_CONF (mode 0600)"
-        [ -n "$HOTSPOT_PASS" ] || \
-            log_warn "no --hotspot-pass: AP mode will be an open network"
     fi
 
     # The desktop entry and the passwordless rule belong to the account whose session owns
