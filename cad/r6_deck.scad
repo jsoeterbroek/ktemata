@@ -1,9 +1,9 @@
 // Ktemata R6 - deck (full-face cassette top: display, charge jack, power switch, guarded vent)
 //
-// r5's deck was the cassette's whole top face. R6 keeps that: the keyboard and status OLED moved to
-// the host lid (r6_lid_plate), so this deck carries the Waveshare 7inch DSI LCD (C) in a 10.5 mm
-// pocket, the 12.6 V charge jack, the 16 mm latching switch and a guarded air-flow opening, and it
-// closes the whole tray opening. There is no separate display frame any more.
+// r5's deck was the cassette's whole top face. R6 keeps that: the keyboard moved to the host lid
+// (r6_lid_plate), so this deck carries the Waveshare 7inch DSI LCD (C) in a 10.5 mm pocket, the
+// 12.6 V DC5521 charge jack, the 10 mm latching switch and a guarded air-flow opening, and it closes
+// the whole tray opening. There is no separate display frame any more.
 //
 // One joint: four M3 countersunk screws down through the top face into the tray's four Ø8 bosses
 // (pattern shared with r6_tray.scad). Those four points sit outside the panel's 192.96 x 110.76
@@ -67,14 +67,14 @@ R6D_SLOT_Y    = 58;                       // 1 mm clear of the pocket edge at 56
 R6D_SLOT_CX   = R6D_PANEL_C[0];
 
 // ---------------------------------------------------------------- connectors
-// Both nuts go on top, inside an 8 mm recess: the plate below them stays 5.5 mm, so a standard
-// M16 switch or DC-099 jack barrel reaches. Printing the nut pocket from the underside would put
-// a bridge over it, and a separate collar cannot hang below a slab whose underside is on the bed.
+// Both nuts go on top, inside an 8 mm recess: the plate below them stays 5.5 mm. Printing the nut
+// pocket from the underside would put a bridge over it, and a separate collar cannot hang below a
+// slab whose underside is on the bed.
 R6D_JACK      = [40, 25];
-R6D_JACK_D    = 11.2;                     // DC-099 mounting hole
+R6D_JACK_D    = 8.2;                      // DC5521 panel jack: 8 mm mounting hole + print clearance
 R6D_SW        = [120, 25];
-R6D_SW_D      = 16.2;                     // M16 latching switch
-R6D_RECESS    = 25;                       // nut recess, clears a 22 mm nut
+R6D_SW_D      = 10.2;                     // 10 mm latching switch + print clearance
+R6D_RECESS    = 25;                       // nut recess
 R6D_RECESS_D  = 8;
 
 // ---------------------------------------------------------------- guarded fan opening

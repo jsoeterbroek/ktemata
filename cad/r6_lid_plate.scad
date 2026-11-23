@@ -1,19 +1,17 @@
-// Ktemata R6 - keyboard / status-OLED lid plate
+// Ktemata R6 - keyboard lid plate
 //
 // This is the HOST LID plate, not the 7-inch display mount: R6's Waveshare panel belongs to the
-// separate cassette deck. The K06 and its keys finish flush with the broad front face;
-// the OLED and PBS-33B sit in that same face. The rear face tapes into the Peli lid. No host hole.
+// separate cassette deck. The K06 and its keys finish flush with the broad front face. The rear
+// face tapes into the Peli lid. No host hole, OLED opening, button opening or harness channel.
 //
-// Prototype fit part: positions are shared with paint_probe_r6.scad through common.scad. Measure
-// the actual lid and components before painting or final assembly.
+// Prototype fit part: keyboard positions are shared with paint_probe_r6.scad through common.scad.
+// Measure the actual lid and keyboard before painting or final assembly.
 //
 // Coordinates: x left->right, drawing y = 0 at the hinge, z = 0 at the rear/tape face and z = 15
 // at the visible front. PRINT VISIBLE-FRONT DOWN (export.scad flips about x). The open keyboard
-// recess and its 45-degree ledges, the rear OLED/button pockets and the rear harness channels all
-// print without support in that orientation.
+// recess and its 45-degree ledges print without support in that orientation.
 include <common.scad>
 
-module r6_lid_at(x, y, z=0) translate([x, R6_LID_L-y, z]) children();
 module r6_lid_box(x0, y0, x1, y1, z, h)
     translate([x0, R6_LID_L-y1, z]) cube([x1-x0, y1-y0, h]);
 
@@ -46,53 +44,14 @@ module r6_lid_kb_ledge(y_in, s) {
     }
 }
 
-// OLED: the glass window passes through the visible front; the larger pcb pocket opens at the
-// rear and stops at the seat. This preserves R5's measured glass recess (1.85 mm below the face).
-// Use thin adhesive pads on the two end seats; the rear opening provides service access.
-module r6_lid_oled_window() {
-    r6_lid_box(R5_OLED_WIN_X0, R5_OLED_WIN_Y0,
-               R5_OLED_WIN_X0+R5_OLED_WIN[0], R5_OLED_WIN_Y0+R5_OLED_WIN[1],
-               R6_LID_OLED_SEAT_Z, R6_LID_T-R6_LID_OLED_SEAT_Z+1);
-}
-module r6_lid_oled_pocket() {
-    r6_lid_box(R5_OLED_X0, R5_OLED_Y0,
-               R5_OLED_X0+R5_OLED_PCB[0], R5_OLED_Y0+R5_OLED_PCB[1],
-               -1, R6_LID_OLED_SEAT_Z+1.02);
-}
-
-// PBS-33B: through-hole plus a rear spot-face that leaves 2.5 mm of panel for its short thread.
-module r6_lid_oled_button() {
-    r6_lid_at(R5_OLED_BTN_X, R5_OLED_BTN_Y, -1)
-        cylinder(d=R5_OLED_BTN_D, h=R6_LID_T+2);
-    r6_lid_at(R5_OLED_BTN_X, R5_OLED_BTN_Y, -1)
-        cylinder(d=R5_OLED_BTN_CB_D, h=R6_LID_OBTN_CB_T+1);
-}
-
-// Rear-only channels for the five-conductor lid harness. The main run joins the OLED pocket to
-// the hinge edge; a branch reaches the button's rear spot-face. Neither marks the visible face.
-module r6_lid_harness_channels() {
-    r6_lid_box(R6_LID_HARNESS_X, -1,
-               R6_LID_HARNESS_X+R6_LID_HARNESS_W, R5_OLED_Y0+4,
-               -1, R6_LID_HARNESS_D+1);
-    r6_lid_box(R6_LID_HARNESS_X, R5_OLED_BTN_Y-R6_LID_HARNESS_W/2,
-               R5_OLED_BTN_X+2, R5_OLED_BTN_Y+R6_LID_HARNESS_W/2,
-               -1, R6_LID_HARNESS_D+1);
-}
-
-module r6_lid_plate() difference() {
-    union() {
-        // Cut the K06 opening before adding its ledges, so no floor appears across the opening.
-        difference() {
-            r6_lid_slab();
-            r6_lid_kb_cut();
-        }
-        r6_lid_kb_ledge(R5_KB_Y0, 1);
-        r6_lid_kb_ledge(R5_KB_Y0+R5_KB_POCKET[1], -1);
+module r6_lid_plate() union() {
+    // Cut the K06 opening before adding its ledges, so no floor appears across the opening.
+    difference() {
+        r6_lid_slab();
+        r6_lid_kb_cut();
     }
-    r6_lid_oled_window();
-    r6_lid_oled_pocket();
-    r6_lid_oled_button();
-    r6_lid_harness_channels();
+    r6_lid_kb_ledge(R5_KB_Y0, 1);
+    r6_lid_kb_ledge(R5_KB_Y0+R5_KB_POCKET[1], -1);
 }
 
 if (is_undef(ASSEMBLY)) r6_lid_plate();
