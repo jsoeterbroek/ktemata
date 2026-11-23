@@ -263,6 +263,13 @@ def service_state(cfg):
     return state
 
 
+def library_paths(root):
+    """Basenames recorded in kiwix-manage's XML. Current kiwix-tools writes <book> elements;
+    older files use <archive>, so accept both."""
+    entries = root.findall("book") + root.findall("archive")
+    return {os.path.basename(entry.get("path", "")) for entry in entries}
+
+
 def index_state(cfg, names):
     info = {
         "xml": cfg.library_xml,
@@ -282,7 +289,7 @@ def index_state(cfg, names):
     except (OSError, ET.ParseError) as exc:
         info["error"] = str(exc)
         return info
-    indexed = {os.path.basename(entry.get("path", "")) for entry in root.findall("archive")}
+    indexed = library_paths(root)
     info["archives"] = len(indexed)
     info["missing"] = sorted(names - indexed)
     info["gone"] = sorted(indexed - names)
@@ -309,7 +316,7 @@ def build_state(cfg):
     indexed = set()
     try:
         root = ET.parse(cfg.library_xml).getroot()
-        indexed = {os.path.basename(e.get("path", "")) for e in root.findall("archive")}
+        indexed = library_paths(root)
     except (OSError, ET.ParseError, AttributeError):
         pass
 
