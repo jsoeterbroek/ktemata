@@ -67,6 +67,9 @@ ARTWORK_SERVICE=ktemata-artwork
 # dark. --no-display-overlay is for the r4 Touch Display 2 build (auto-detected).
 WITH_DISPLAY_OVERLAY=true
 DISPLAY_OVERLAY="dtoverlay=vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1"
+# Optional Pi 5 UPS wiring on GPIO12/13 (physical pins 32/33), exposed as Linux I2C bus 2.
+UPS_I2C_ALT_PINS=${UPS_I2C_ALT_PINS:-false}
+UPS_I2C_OVERLAY="dtoverlay=i2c2-pi5,pins_12_13"
 DISPLAY_MODE=${DISPLAY_MODE:-1024x600M}
 # The vendor Brightness app is a Qt5 GUI; --no-brightness or --no-gui skips it.
 WITH_BRIGHTNESS=true
@@ -144,6 +147,8 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-display-overlay
                          Do not add the Waveshare 7inch DSI LCD (C) overlay to config.txt
                          (for the r4 Touch Display 2 build, which is auto-detected).
+      --ups-i2c-alt-pins Add dtoverlay=i2c2-pi5,pins_12_13 for the UPS on Pi 5 GPIO12/13
+                         (physical pins 32/33, Linux bus 2). Opt-in; reboot to apply.
       --no-brightness    Do not install the Waveshare Brightness app (Qt5 GUI).
       --no-gui           Skip the desktop Kiwix app (headless / server installs).
       --no-update        Skip the system upgrade (apt full-upgrade).
@@ -183,6 +188,7 @@ ${C_BOLD}OPTIONS${C_OFF}
 
 ${C_BOLD}ENVIRONMENT${C_OFF}
   ZIM_DIR, SERVICE_PORT, SERVICE_USER, LIBRARY, NOMAD_STORAGE_PATH, DISPLAY_MODE, NO_COLOR, OLED_PORT,
+  UPS_I2C_ALT_PINS,
   HOTSPOT_SSID, HOTSPOT_PASS, HOTSPOT_ADDR, HOTSPOT_CIDR, HOTSPOT_BAND
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
@@ -196,6 +202,7 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   8. writes and enables $ARTWORK_SERVICE.service: wallpaper + boot splash at graphical.target
   8b. adds the Waveshare 7inch DSI LCD (C) overlay unless --no-display-overlay
   8c. installs the Waveshare Brightness app unless --no-brightness / --no-gui
+  8d. optionally enables UPS I2C on Pi 5 GPIO12/13 (--ups-i2c-alt-pins)
   9. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
  10. optionally installs the kiosk autostart (--kiosk)
  11. enables GDM automatic login (unless --no-autologin)
@@ -1757,6 +1764,47 @@ EOF
     fi
 }
 
+# Enable the optional Pi 5 UPS I2C bus on GPIO12/13. Keep a differently configured i2c2-pi5
+# overlay untouched: loading two instances can fail or move the expected /dev/i2c-2 device.
+setup_ups_i2c() {
+    $UPS_I2C_ALT_PINS || return 0
+    log_stage "UPS I2C (alternate pins)"
+
+    local cfg="${CONFIG_TXT:-/boot/firmware/config.txt}"
+    if [ ! -f "$cfg" ]; then
+        log_info "no $cfg: not a Raspberry Pi boot partition, skipping"
+        return 0
+    fi
+    if grep -qE "^[[:space:]]*$UPS_I2C_OVERLAY[[:space:]]*$" "$cfg"; then
+        log_ok "already enabled on GPIO12/13 (Linux bus 2)"
+        return 0
+    fi
+    if grep -qE '^[[:space:]]*dtoverlay=i2c2-pi5([,[:space:]]|$)' "$cfg"; then
+        log_warn "i2c2-pi5 is already configured differently; leaving it unchanged"
+        return 0
+    fi
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s add %s to %s\n' "$C_YELLOW" "$C_OFF" "$UPS_I2C_OVERLAY" "$cfg"
+        return 0
+    fi
+
+    [ -f "$cfg.ktemata.bak" ] || cp -a "$cfg" "$cfg.ktemata.bak"
+    if grep -qE "^[[:space:]]*#[[:space:]]*$UPS_I2C_OVERLAY" "$cfg"; then
+        sed -i -E "s|^[[:space:]]*#[[:space:]]*$UPS_I2C_OVERLAY.*|$UPS_I2C_OVERLAY|" "$cfg"
+    else
+        printf '%s\n' "$UPS_I2C_OVERLAY" >>"$cfg"
+    fi
+
+    local n
+    n=$(grep -cE "^[[:space:]]*$UPS_I2C_OVERLAY[[:space:]]*$" "$cfg")
+    if [ "$n" = 1 ]; then
+        log_ok "added GPIO12/13 as I2C bus 2 (reboot, then use --i2c-bus 2)"
+    else
+        log_error "UPS I2C overlay edit looks wrong: $n live line(s)"
+        log_warn "restore with: sudo cp $cfg.ktemata.bak $cfg"
+    fi
+}
+
 # Add the Waveshare DSI overlay to config.txt. The panel is not auto-detected on the Pi 5, so
 # without this it stays dark. Idempotent, one live line, backup kept once.
 setup_display_overlay() {
@@ -2017,6 +2065,7 @@ main() {
             --no-oled)       WITH_OLED=false ;;
             --no-artwork)    WITH_ARTWORK=false ;;
             --no-display-overlay) WITH_DISPLAY_OVERLAY=false ;;
+            --ups-i2c-alt-pins) UPS_I2C_ALT_PINS=true ;;
             --no-brightness) WITH_BRIGHTNESS=false ;;
             --oled-port)     OLED_PORT=${2:?--oled-port needs a device}; shift ;;
             --no-gui)        WITH_GUI=false ;;
@@ -2104,6 +2153,7 @@ main() {
     install_status_oled
     install_artwork_unit
     setup_display_overlay
+    setup_ups_i2c
     install_brightness
     setup_rotation
     install_autologin
