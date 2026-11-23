@@ -112,24 +112,44 @@ ap_profile_exists() {
     nmcli -t -f NAME connection show 2>/dev/null | grep -Fxq "$AP_PROFILE"
 }
 
-ap_profile_active() {
-    nmcli -t -f NAME connection show --active 2>/dev/null | grep -Fxq "$AP_PROFILE"
+# The active profile, whatever its connection.id, that is running in AP mode. The installer
+# may have created it under a different name (for example ktemata-ap) than AP_NAME.
+active_ap_profile() {
+    local name
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        [ "$(nmcli -g 802-11-wireless.mode connection show "$name" 2>/dev/null || true)" = ap ] || continue
+        printf '%s\n' "$name"
+        return 0
+    done < <(nmcli -t -f NAME connection show --active 2>/dev/null)
+    return 1
+}
+
+is_ap_profile() {
+    [ "$(nmcli -g 802-11-wireless.mode connection show "$1" 2>/dev/null || true)" = ap ]
 }
 
 radio_state() {
     nmcli radio wifi 2>/dev/null || printf 'unknown\n'
 }
 
-# The active wireless connection that is not the access point, if any.
+# The active wireless connection that is not an access point, if any.
 client_connection() {
-    nmcli -t -f NAME,TYPE connection show --active 2>/dev/null |
-        awk -F: -v ap="$AP_PROFILE" '$2 ~ /wireless/ && $1 != ap { print $1; exit }'
+    local name
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        is_ap_profile "$name" && continue
+        printf '%s\n' "$name"
+        return 0
+    done < <(nmcli -t -f NAME,TYPE connection show --active 2>/dev/null |
+             awk -F: '$2 ~ /wireless/ { print $1 }')
+    return 1
 }
 
 current_mode() {
     if [ "$(radio_state)" != enabled ]; then
         printf 'off\n'
-    elif ap_profile_active; then
+    elif [ -n "$(active_ap_profile || true)" ]; then
         printf 'ap\n'
     else
         printf 'client\n'
@@ -137,11 +157,12 @@ current_mode() {
 }
 
 status_text() {
-    local name
+    local name ap_name ap_ssid
     if [ "$(radio_state)" != enabled ]; then
         printf 'Off - Wi-Fi radio disabled\n'
-    elif ap_profile_active; then
-        printf 'Access point - %s at %s/%s\n' "$AP_SSID" "$AP_ADDR" "$AP_CIDR"
+    elif ap_name=$(active_ap_profile) && [ -n "$ap_name" ]; then
+        ap_ssid=$(nmcli -g 802-11-wireless.ssid connection show "$ap_name" 2>/dev/null || true)
+        printf 'Access point - %s at %s/%s\n' "${ap_ssid:-$ap_name}" "$AP_ADDR" "$AP_CIDR"
     elif name=$(client_connection) && [ -n "$name" ]; then
         printf 'Client - connected to %s\n' "$name"
     else
@@ -257,18 +278,29 @@ ensure_ap_profile() {
 
 mode_client() {
     nmcli radio wifi on >/dev/null
-    # The AP must not win the next autoconnect race after someone chose client mode.
-    if ap_profile_exists; then
+    # The AP must not win the next autoconnect race after someone chose client mode. The active
+    # AP may have a different connection.id than AP_NAME, so handle both.
+    local active_ap
+    active_ap=$(active_ap_profile || true)
+    if [ -n "$active_ap" ]; then
+        nmcli connection modify "$active_ap" connection.autoconnect no >/dev/null || true
+    fi
+    if ap_profile_exists && [ "$AP_PROFILE" != "$active_ap" ]; then
         nmcli connection modify "$AP_PROFILE" connection.autoconnect no >/dev/null || true
     fi
-    if ap_profile_active; then
-        nmcli connection down "$AP_PROFILE" >/dev/null || true
+    if [ -n "$active_ap" ]; then
+        nmcli connection down "$active_ap" >/dev/null || true
     fi
 
-    local saved
-    saved=$(nmcli -t -f NAME,TYPE connection show 2>/dev/null) || saved=
-    if ! awk -F: -v ap="$AP_PROFILE" \
-            '$2 ~ /wireless/ && $1 != ap { found=1 } END { exit !found }' <<<"$saved"; then
+    local found=false name
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        is_ap_profile "$name" && continue
+        found=true
+        break
+    done < <(nmcli -t -f NAME,TYPE connection show 2>/dev/null |
+             awk -F: '$2 ~ /wireless/ { print $1 }')
+    if ! $found; then
         printf 'Client mode: radio is on but no saved network exists.\n' >&2
         printf 'Join one in the desktop network menu first (or nmcli device wifi connect SSID).\n' >&2
         return 0

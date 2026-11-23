@@ -184,6 +184,10 @@ How it is put together:
   `AP_WELCOME` is adopted and renamed to `AP_NAME`; the mode, SSID, address and password are then
   written from the file. Editing `wifi.conf` is enough — no profile deletion. If the file is
   missing, AP mode refuses to create a profile instead of falling back to open defaults.
+- **The active AP is found by mode, not by name.** `status` and `client` inspect
+  `802-11-wireless.mode` on the active connection, so a profile called `ktemata-ap` is reported
+  as an access point even when `AP_NAME=ktemata`. Set `AP_NAME=ktemata-ap` to keep that profile
+  name; otherwise the next `wifi-mode ap` adopts and renames it to `AP_NAME`.
 - **No password prompt.** `NetworkManager` connection changes are root operations on a stock
   image, so the installer writes `/etc/sudoers.d/ktemata-wifi`, which allows the desktop account
   to run exactly `wifi-mode client`, `wifi-mode ap` and `wifi-mode off` without a password. The
@@ -797,6 +801,10 @@ the profile, editing the file changed the SSID and PSK on the next `ap`, an empt
 existing profile with the matching SSID was adopted and renamed, and the installer preserved an existing
 `wifi.conf`, migrated a legacy file, and created a fresh one from the hotspot flags. A real radio was not
 available in the container.
+
+An active AP named `ktemata-ap` with `AP_NAME=ktemata` was also exercised: `status` reported the access point
+(from `802-11-wireless.mode`) rather than a client, `client` disabled and brought down `ktemata-ap`, and the
+next `ap` adopted and renamed it to `ktemata`.
 
 **On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
 holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no
