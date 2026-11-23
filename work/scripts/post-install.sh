@@ -1580,6 +1580,8 @@ Group=$SERVICE_USER
 # StateDirectory gives ExecStartPre a writable /var/lib/kiwix while the ZIMs stay read-only.
 StateDirectory=$SERVICE_NAME
 StateDirectoryMode=0755
+# Hundreds of ZIMs can take several minutes to index; do not kill and restart start-pre every 90 s.
+TimeoutStartSec=1800
 # Regenerate the XML on every start so dropping in a new ZIM and restarting is enough.
 ExecStartPre=/usr/local/bin/kiwix-library
 # No ZIMs -> the XML is absent -> would exit 1 and restart. sh -c lets us exit 0 instead and
