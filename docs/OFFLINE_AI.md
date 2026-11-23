@@ -410,7 +410,8 @@ been run on the Pi in this repository.
 
 ## Example: asking about a book ZIM
 
-Suppose `/srv/kiwix/zim/the_knowledge.zim` is Lewis Dartnell's *The Knowledge*, and the question is:
+Suppose `/srv/kiwix/zim/the_knowledge_dartnell.zim` is Lewis Dartnell's *The Knowledge*, and the
+question is:
 
 > What are the benefits of cooking food?
 
@@ -425,7 +426,7 @@ library** box uses the document index, so route B is the one that also works in 
 ls -lh /srv/kiwix/zim/*.zim
 
 ktemata-ai zim-ask \
-  --zim /srv/kiwix/zim/the_knowledge.zim \
+  --zim /srv/kiwix/zim/the_knowledge_dartnell.zim \
   --model qwen2.5:3b \
   "What are the benefits of cooking food?"
 ```
@@ -455,7 +456,7 @@ Inspect what the tool actually finds:
 ```bash
 KIWIX_HOME=/srv/kiwix/zim /opt/ktemata-ai/venv/bin/python - <<'PY'
 import llm_tools_kiwix as k
-zim = "/srv/kiwix/zim/the_knowledge.zim"
+zim = "/srv/kiwix/zim/the_knowledge_dartnell.zim"
 count, paths = k.kiwix_search(zim, "cooking microbes pathogens parasites")
 print(count, paths)
 for path in paths:
@@ -470,7 +471,7 @@ If `kiwix_search` returns `0`, the ZIM has no usable full-text result for that q
 
 ```bash
 sudo ktemata-ai zim-ingest \
-  --zim /srv/kiwix/zim/the_knowledge.zim \
+  --zim /srv/kiwix/zim/the_knowledge_dartnell.zim \
   --limit 200
 
 ktemata-ai ask "What are the benefits of cooking food?"
