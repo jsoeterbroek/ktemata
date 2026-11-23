@@ -74,7 +74,7 @@ ${C_BOLD}OPTIONS${C_OFF}
   -V, --version         Print the version.
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
-  1. installs python3-numpy, poppler-utils, curl and zstd
+  1. installs python3-numpy, poppler-utils, zim-tools, curl and zstd
   2. installs Ollama and enables ollama.service (localhost:11434)
   3. pulls the generation and embedding models unless --no-models
   4. installs /usr/local/bin/ktemata-ai and $AI_CONFIG
@@ -82,7 +82,7 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   6. indexes $AI_INGEST_DIRS (text, Markdown, HTML, XML, PDF, EPUB, DOCX, ODT)
   7. installs $AI_SERVICE.service + .timer; re-indexes every 6 hours
 
-ZIM archives are binary and are skipped; extract them to text first if you want them indexed.
+ZIM archives are skipped by ingest; use: ktemata-ai zim-ingest --zim FILE --limit 200
 Ask with: ktemata-ai ask "your question"
 EOF
 }
@@ -146,7 +146,7 @@ check_platform() {
 
 install_packages() {
     log_stage "Packages"
-    local packages=(curl ca-certificates python3 python3-numpy poppler-utils zstd)
+    local packages=(curl ca-certificates python3 python3-numpy poppler-utils zstd zim-tools)
     if ! $NO_UPDATE; then
         run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
     fi

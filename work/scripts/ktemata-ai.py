@@ -633,6 +633,136 @@ def cmd_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     return 0
 
 
+def zim_article_name(index: int, url: str) -> str:
+    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", url).strip("._")[:160] or "article"
+    digest = hashlib.sha1(url.encode("utf-8")).hexdigest()[:8]
+    return f"{index:05d}-{safe}-{digest}.html"
+
+
+def zim_urls(zimdump: str, zim: str, namespace: str, prefixes: list[str], limit: int) -> list[str]:
+    process = subprocess.Popen(
+        [zimdump, "list", f"--ns={namespace}", zim],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        errors="replace",
+    )
+    urls: list[str] = []
+    try:
+        assert process.stdout is not None
+        for line in process.stdout:
+            url = line.strip()
+            if not url:
+                continue
+            if prefixes and not any(url.startswith(prefix) for prefix in prefixes):
+                continue
+            urls.append(url)
+            if len(urls) >= limit:
+                break
+    finally:
+        if process.poll() is None:
+            process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=5)
+    stderr = process.stderr.read().strip() if process.stderr is not None else ""
+    if not urls and process.returncode not in (0, -15, 143):
+        die(f"zimdump list failed for {zim}: {stderr or 'unknown error'}")
+    return urls
+
+
+def cmd_zim_ingest(args: argparse.Namespace, cfg: dict[str, str]) -> int:
+    if args.limit < 1:
+        die("--limit must be at least 1")
+    if len(args.namespace) != 1:
+        die("--ns takes one namespace letter (usually A)")
+    zimdump = shutil.which("zimdump")
+    if not zimdump:
+        die("zimdump is not installed; run: sudo apt install zim-tools")
+
+    out = os.path.abspath(args.out)
+    roots = [os.path.abspath(root) for root in cfg["AI_INGEST_DIRS"].split()]
+    covered = any(out == root or out.startswith(root + os.sep) for root in roots)
+    prefixes = args.prefix or []
+    total = 0
+
+    for zim in args.zim:
+        zim = os.path.abspath(zim)
+        if not os.path.isfile(zim):
+            die(f"ZIM not found: {zim}")
+        base = re.sub(r"[^A-Za-z0-9._-]+", "_", os.path.splitext(os.path.basename(zim))[0]) or "zim"
+        stem = f"{base}-{hashlib.sha1(zim.encode('utf-8')).hexdigest()[:8]}"
+        target = os.path.join(out, stem)
+        urls = zim_urls(zimdump, zim, args.namespace, prefixes, args.limit)
+        print(f"{zim}: {len(urls)} article(s) selected")
+        if not urls:
+            print("no articles matched; existing staging left untouched", file=sys.stderr)
+            continue
+        if args.dry_run:
+            for url in urls:
+                print(f"  {url}")
+            continue
+
+        # Extract into a hidden temp directory and swap only on success. A failed zimdump run
+        # must not delete the articles that were already indexed.
+        temporary = os.path.join(out, f".{stem}.tmp")
+        shutil.rmtree(temporary, ignore_errors=True)
+        os.makedirs(temporary, exist_ok=True)
+
+        extracted = 0
+        for index, url in enumerate(urls, 1):
+            try:
+                result = subprocess.run(
+                    [zimdump, "show", f"--url={url}", zim],
+                    capture_output=True,
+                    timeout=120,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired:
+                print(f"skip {url}: zimdump timed out", file=sys.stderr)
+                continue
+            if result.returncode != 0 or not result.stdout.strip():
+                message = result.stderr.decode("utf-8", "replace").strip()
+                print(f"skip {url}: {message or 'no content'}", file=sys.stderr)
+                continue
+            if b"\x00" in result.stdout[:2048]:
+                print(f"skip {url}: binary content", file=sys.stderr)
+                continue
+            destination = os.path.join(temporary, zim_article_name(index, url))
+            with open(destination, "wb") as handle:
+                handle.write(result.stdout)
+            extracted += 1
+            if extracted % 25 == 0 or extracted == len(urls):
+                print(f"  extracted {extracted}/{len(urls)}")
+
+        if not extracted:
+            shutil.rmtree(temporary, ignore_errors=True)
+            print("no articles extracted; existing staging left untouched", file=sys.stderr)
+            continue
+        shutil.rmtree(target, ignore_errors=True)
+        os.replace(temporary, target)
+        total += extracted
+        print(f"extracted {extracted} article(s) from {os.path.basename(zim)} into {target}")
+
+    if args.dry_run:
+        print("dry run: nothing written")
+        return 0
+    if args.extract_only:
+        print(f"extract-only: run 'ktemata-ai ingest' to index {out}")
+        return 0
+    if not total:
+        print("nothing extracted; the index is unchanged")
+        return 0
+
+    if not covered:
+        roots.append(out)
+    ingest_args = argparse.Namespace(root=list(dict.fromkeys(roots)), force=False, limit=0, no_prune=False)
+    print(f"indexing {total} new article(s) and the configured roots…")
+    return cmd_ingest(ingest_args, cfg)
+
+
 def cmd_status(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     db_path = cfg["AI_DB"]
     docs = chunks = 0
@@ -706,6 +836,23 @@ def build_parser() -> argparse.ArgumentParser:
     status = sub.add_parser("status", help="show model, index and Ollama state")
     status.add_argument("--json", action="store_true", help="machine-readable output")
     status.set_defaults(func=cmd_status)
+
+    zim = sub.add_parser(
+        "zim-ingest",
+        help="extract a bounded slice of ZIM articles and index them",
+    )
+    zim.add_argument("--zim", action="append", required=True, help="ZIM file to extract (repeatable)")
+    zim.add_argument("--limit", type=int, default=200, help="articles per ZIM (default 200)")
+    zim.add_argument("--prefix", action="append", help="only URLs starting with this prefix (repeatable)")
+    zim.add_argument("--ns", dest="namespace", default="A", help="ZIM namespace (default A)")
+    zim.add_argument(
+        "--out",
+        default="/var/lib/kiwix/zim-text",
+        help="HTML staging directory (default /var/lib/kiwix/zim-text)",
+    )
+    zim.add_argument("--extract-only", action="store_true", help="extract but do not index")
+    zim.add_argument("--dry-run", action="store_true", help="list the selected articles only")
+    zim.set_defaults(func=cmd_zim_ingest)
     return parser
 
 

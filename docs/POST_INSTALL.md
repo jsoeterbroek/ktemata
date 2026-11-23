@@ -99,7 +99,8 @@ sudo ./work/scripts/post-install.sh --ai
 
 It indexes `/var/lib/kiwix` and `/srv/kiwix/zim` by default (text, Markdown, HTML, XML, PDF, EPUB,
 DOCX, ODT), answers with `ktemata-ai ask "..."`, and adds the **Ask the library** box to the admin
-page. ZIM archives are binary and are skipped; extract the articles you want first.
+page. ZIM archives are skipped by the normal ingest; use `ktemata-ai zim-ingest` for a bounded
+slice of articles.
 
 ## Library hotspot
 

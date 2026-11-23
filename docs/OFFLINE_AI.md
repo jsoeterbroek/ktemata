@@ -38,10 +38,9 @@ The default roots are:
 
 Hidden files and names are skipped, as are files larger than `AI_MAX_FILE_MB` (default 50).
 
-**ZIM is not a document format for this pipeline.** A `.zim` file is a compressed archive with its
-own index; ingesting all of Wikipedia as chunks is not practical on a Pi and is deliberately out of
-scope. ZIM files are skipped. If you want a ZIM's text in the AI, extract the articles you care
-about (`zimdump`) into text/HTML under one of the roots first.
+**ZIM is not indexed automatically.** A `.zim` file is a compressed archive with its own index;
+ingesting all of Wikipedia as chunks is not practical on a Pi. `zim-ingest` extracts a bounded
+slice of articles with `zimdump` and indexes only those — see [ZIM ingestion](#zim-ingestion).
 
 ## Hardware and expectations
 
@@ -87,7 +86,7 @@ sudo ./work/scripts/post-install-ai.sh --ingest-dir /srv/docs       # repeatable
 
 What it does:
 
-1. installs `python3-numpy`, `poppler-utils`, `curl`, `ca-certificates`, `zstd`;
+1. installs `python3-numpy`, `poppler-utils`, `zim-tools`, `curl`, `ca-certificates`, `zstd`;
 2. installs Ollama with the official installer if `ollama` is absent, and enables
    `ollama.service`;
 3. pulls the embedding and generation models through Ollama's API (skip with `--no-models`);
@@ -146,6 +145,45 @@ ktemata-ai ask "..." --json       # {answer, sources, model}
 `ingest` hashes each file and only embeds changed content. `--root DIR` overrides the configured
 roots for one run; `--limit N` bounds a first test.
 
+### ZIM ingestion
+
+`zim-ingest` extracts selected articles from a ZIM with `zimdump`, writes them as HTML under
+`/var/lib/kiwix/zim-text`, and indexes them. The extraction is deliberately bounded; it is not a
+way to ingest an entire Wikipedia archive.
+
+```bash
+# 200 articles from namespace A, then index them
+sudo ktemata-ai zim-ingest --zim /srv/kiwix/zim/your-file.zim --limit 200
+
+# only articles whose URL starts with Ab or Ac
+sudo ktemata-ai zim-ingest --zim /srv/kiwix/zim/your-file.zim \
+    --prefix Ab --prefix Ac --limit 50
+
+# see what would be selected, write nothing
+ktemata-ai zim-ingest --zim /srv/kiwix/zim/your-file.zim --limit 20 --dry-run
+
+# extract only; run ktemata-ai ingest later
+sudo ktemata-ai zim-ingest --zim /srv/kiwix/zim/your-file.zim --limit 20 --extract-only
+```
+
+| Option | Meaning |
+|---|---|
+| `--zim FILE` | ZIM to read; repeatable |
+| `--limit N` | articles per ZIM, default 200 |
+| `--prefix TEXT` | keep URLs starting with TEXT; repeatable |
+| `--ns N` | ZIM namespace, default `A` (articles) |
+| `--out DIR` | staging directory, default `/var/lib/kiwix/zim-text` |
+| `--extract-only` | extract without indexing |
+| `--dry-run` | list selected URLs, write nothing |
+
+The per-ZIM staging directory is removed before re-extraction, so lowering `--limit` removes the
+old extra articles from the next ingest. The default staging directory is under `/var/lib/kiwix`
+and is therefore already one of the normal ingest roots; a custom `--out` is added for that run.
+Run it as root because it writes the library and the index.
+
+Start with a small `--limit` and check `ktemata-ai status`; a 200-article slice is a useful test,
+a full `maxi` archive is not.
+
 The index is `/var/lib/ktemata-ai/index.sqlite3`, owned by root and readable by all (`0644`). The
 text itself is therefore readable by any local user; the source documents already are.
 
@@ -203,8 +241,8 @@ or just `sudo ktemata-ai ingest`.
   `ProtectSystem=strict` with only the index directory writable.
 - The model can be wrong. The prompt restricts it to the retrieved sources and prints them; always
   check the cited path for a factual answer.
-- This is retrieval over documents, not a search engine for ZIM archives. Large PDFs and OCR-free
-  scans produce poor text.
+- This is retrieval over documents; ZIM archives are only included through the bounded
+  `zim-ingest` extraction. Large PDFs and OCR-free scans produce poor text.
 
 ## Uninstall
 
@@ -222,8 +260,10 @@ sudo systemctl disable --now ollama
 
 The CLI was exercised against a fake Ollama endpoint: text/Markdown/HTML/EPUB/DOCX extraction,
 chunking, embedding, incremental re-index, pruning, `search`, `ask --json`, and `status --json`.
-The installer's dry run was checked in Debian 13, and the generated config/service/timer were
-inspected. The admin **Ask the library** box was driven in headless Chromium against a fake
-`ktemata-ai`: status, question, answer and sources rendered, and the box stayed disabled for a
-missing index/model. The real 3B model has not been benchmarked on the Pi in this repository; the
-numbers above are expectations, not measurements.
+The bounded ZIM extractor was exercised against the 4.4 MB `wikiciv` sample: dry-run, a URL prefix,
+extraction, cleaning on re-run, and a full ingest (3 articles, 10 chunks). The installer's dry run
+was checked in Debian 13, and the generated config/service/timer were inspected. The admin
+**Ask the library** box was driven in headless Chromium against a fake `ktemata-ai`: status,
+question, answer and sources rendered, and the box stayed disabled for a missing index/model. The
+real 3B model has not been benchmarked on the Pi in this repository; the numbers above are
+expectations, not measurements.
