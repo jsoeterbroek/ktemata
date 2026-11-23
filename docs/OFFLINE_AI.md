@@ -260,6 +260,9 @@ sudo systemctl disable --now ktemata-ai-ingest.timer
 sudo rm -f /etc/systemd/system/ktemata-ai-ingest.{service,timer}
 sudo systemctl daemon-reload
 sudo rm -f /usr/local/bin/ktemata-ai /etc/ktemata/ai.conf
+if [ "$(readlink -f /usr/local/bin/llm 2>/dev/null)" = /opt/ktemata-ai/venv/bin/llm ]; then
+    sudo rm -f /usr/local/bin/llm
+fi
 sudo rm -rf /var/lib/ktemata-ai /opt/ktemata-ai
 # optional: remove Ollama itself
 sudo systemctl disable --now ollama
@@ -298,8 +301,9 @@ sudo ./work/scripts/post-install-ai.sh --yes
 
 That installs `llm`, `llm-ollama` and `llm-tools-kiwix` in `/opt/ktemata-ai/venv`, with
 `libzim<4` pinned (`llm-tools-kiwix` 0.1 uses the libzim 3.x search API; 4.x returns no matches).
-The ZIM directory defaults to `/srv/kiwix/zim`; override it with `--zim-home DIR` or by editing
-`/etc/ktemata/ai.conf`.
+It also links `/usr/local/bin/llm` to the venv when that path is free, so `llm` works without
+activating the venv. The ZIM directory defaults to `/srv/kiwix/zim`; override it with `--zim-home
+DIR` or by editing `/etc/ktemata/ai.conf`.
 
 ### Use
 
@@ -322,12 +326,13 @@ KIWIX_HOME=/srv/kiwix/zim OLLAMA_HOST=http://127.0.0.1:11434 \
 `llm tools list` shows the three registered tools and the ZIM files the plugin discovered:
 
 ```bash
-KIWIX_HOME=/srv/kiwix/zim /opt/ktemata-ai/venv/bin/llm tools list
+KIWIX_HOME=/srv/kiwix/zim llm tools list
 ```
 
-The plugin searches `KIWIX_HOME/*.zim` (flat, not recursive) and also the current directory. The
-model receives the list in the tool description and selects the archive; `--zim` narrows the
-request to one file in the prompt. `-n` keeps the query out of `llm`'s SQLite log.
+If `/usr/local/bin/llm` was occupied, use `/opt/ktemata-ai/venv/bin/llm` instead. The plugin
+searches `KIWIX_HOME/*.zim` (flat, not recursive) and also the current directory. The model
+receives the list in the tool description and selects the archive; `--zim` narrows the request to
+one file in the prompt. `-n` keeps the query out of `llm`'s SQLite log.
 
 ### Models
 

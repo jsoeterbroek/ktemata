@@ -258,6 +258,14 @@ install_llm_kiwix() {
     run "$AI_VENV/bin/pip" install --upgrade pip
     # llm-tools-kiwix 0.1 uses the libzim 3.x search API; libzim 4.x returns no results.
     run "$AI_VENV/bin/pip" install --upgrade llm llm-ollama "libzim<4" llm-tools-kiwix
+    # Make the CLI reachable without remembering the venv path. The console script's shebang
+    # points at the venv, so a symlink still loads the plugins from there.
+    if [ ! -e /usr/local/bin/llm ] || [ -L /usr/local/bin/llm ]; then
+        run ln -sfn "$AI_LLM_BIN" /usr/local/bin/llm
+        log_ok "/usr/local/bin/llm -> $AI_LLM_BIN"
+    else
+        log_warn "/usr/local/bin/llm already exists; use $AI_LLM_BIN directly"
+    fi
     log_ok "$AI_VENV (llm + llm-ollama + llm-tools-kiwix, libzim<4)"
 }
 
@@ -402,6 +410,7 @@ summary() {
     printf '  search     ktemata-ai search "keyword"\n'
     printf '  ingest     sudo ktemata-ai ingest\n'
     printf '  zim ask    ktemata-ai zim-ask "..." (model %s, %s)\n' "$AI_ZIM_MODEL" "$AI_ZIM_HOME"
+    printf '  llm        %s (or /usr/local/bin/llm)\n' "$AI_LLM_BIN"
     printf '  admin      the library admin on :8081 has an "Ask the library" box\n'
     if $NO_SERVICE; then
         printf '  timer      not installed (--no-service)\n'
