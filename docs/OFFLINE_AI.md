@@ -407,3 +407,93 @@ returned 2 articles for `Abacus` and 3 for `arithmetic` from the `wikiciv` sampl
 4.1.0 it returned none, which is why the installer pins `<4`. The `zim-ask` wrapper was exercised
 with a fake `llm` binary, including `--zim` and `--json`; a real model-driven tool call has not
 been run on the Pi in this repository.
+
+## Example: asking about a book ZIM
+
+Suppose `/srv/kiwix/zim/the_knowledge.zim` is Lewis Dartnell's *The Knowledge*, and the question is:
+
+> What are the benefits of cooking food?
+
+The expected answer includes that cooking heat kills microbes, pathogens and parasites.
+
+There are two routes. The direct ZIM route is command-line only today; the admin **Ask the
+library** box uses the document index, so route B is the one that also works in the browser.
+
+### A. Direct ZIM search (CLI, no index build)
+
+```bash
+ls -lh /srv/kiwix/zim/*.zim
+
+ktemata-ai zim-ask \
+  --zim /srv/kiwix/zim/the_knowledge.zim \
+  --model qwen2.5:3b \
+  "What are the benefits of cooking food?"
+```
+
+If the model is not pulled:
+
+```bash
+ollama pull qwen2.5:3b
+```
+
+Raw `llm` equivalent:
+
+```bash
+KIWIX_HOME=/srv/kiwix/zim OLLAMA_HOST=http://127.0.0.1:11434 \
+  llm -m ollama/qwen2.5:3b -T kiwix_search_and_collect -n \
+  "What are the benefits of cooking food? Use The Knowledge."
+```
+
+This uses the ZIM's own Xapian index. It is the fastest route, but two things can block it:
+
+- the ZIM must have a usable full-text index;
+- the matching article(s) must fit the model's context. A whole book stored as one article can be
+  too large.
+
+Inspect what the tool actually finds:
+
+```bash
+KIWIX_HOME=/srv/kiwix/zim /opt/ktemata-ai/venv/bin/python - <<'PY'
+import llm_tools_kiwix as k
+zim = "/srv/kiwix/zim/the_knowledge.zim"
+count, paths = k.kiwix_search(zim, "cooking microbes pathogens parasites")
+print(count, paths)
+for path in paths:
+    print("---", path)
+    print(k.kiwix_read(zim, path)[:1200])
+PY
+```
+
+If `kiwix_search` returns `0`, the ZIM has no usable full-text result for that query; use route B.
+
+### B. Extract the book into the document index
+
+```bash
+sudo ktemata-ai zim-ingest \
+  --zim /srv/kiwix/zim/the_knowledge.zim \
+  --limit 200
+
+ktemata-ai ask "What are the benefits of cooking food?"
+ktemata-ai search "cooking microbes pathogens parasites"
+ktemata-ai status
+```
+
+`zim-ingest` extracts namespace-A articles into `/var/lib/kiwix/zim-text/`, chunks and embeds
+them, and then runs the normal ingest. If the book has more than 200 article entries, raise
+`--limit`; if it is one large article, the ingest chunks it and retrieval still finds the cooking
+passage. The sources printed by `ktemata-ai ask` show the extracted path and chunk.
+
+After this, reload the admin page: its **Ask the library** box uses the same document index and can
+answer the question in the browser. This is the route to use when the ZIM has no usable full-text
+index, when the book is one huge article, or when you want the admin UI.
+
+### Which route?
+
+| Situation | Route |
+|---|---|
+| ZIM has a working full-text index and article-sized entries | A: `zim-ask` |
+| One large article, a weak/missing ZIM index, or the admin box | B: `zim-ingest` then `ask` |
+| Browsing the book manually | `kiwix-serve` on `:8080` |
+
+The expected answer is the cooking-heat-kills-microbes fact, but the model may paraphrase it.
+The value of the answer is the cited source: check the ZIM path and article/chunk in the output.
