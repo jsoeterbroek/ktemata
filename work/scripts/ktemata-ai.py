@@ -678,6 +678,51 @@ def zim_urls(zimdump: str, zim: str, namespace: str, prefixes: list[str], limit:
     return urls
 
 
+def zim_text_urls(zimdump: str, zim: str, prefixes: list[str], limit: int) -> list[str]:
+    """Text entries across all namespaces, for ZIMs without a usable A namespace."""
+    process = subprocess.Popen(
+        [zimdump, "list", "--details", zim],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        errors="replace",
+    )
+    urls: list[str] = []
+    path = ""
+    try:
+        assert process.stdout is not None
+        for line in process.stdout:
+            stripped = line.lstrip()
+            if stripped.startswith("path:"):
+                path = stripped.split(":", 1)[1].strip()
+                continue
+            if not stripped.startswith("* mime-type:") or not path:
+                continue
+            mime = stripped.split(":", 1)[1].strip()
+            if not mime.startswith("text/"):
+                path = ""
+                continue
+            if prefixes and not any(path.startswith(prefix) for prefix in prefixes):
+                path = ""
+                continue
+            urls.append(path)
+            path = ""
+            if len(urls) >= limit:
+                break
+    finally:
+        if process.poll() is None:
+            process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=5)
+    stderr = process.stderr.read().strip() if process.stderr is not None else ""
+    if not urls and process.returncode not in (0, -15, 143):
+        die(f"zimdump list --details failed for {zim}: {stderr or 'unknown error'}")
+    return urls
+
+
 def cmd_zim_ingest(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     if args.limit < 1:
         die("--limit must be at least 1")
@@ -701,9 +746,13 @@ def cmd_zim_ingest(args: argparse.Namespace, cfg: dict[str, str]) -> int:
         stem = f"{base}-{hashlib.sha1(zim.encode('utf-8')).hexdigest()[:8]}"
         target = os.path.join(out, stem)
         urls = zim_urls(zimdump, zim, args.namespace, prefixes, args.limit)
+        if not urls and args.namespace == "A":
+            print("no namespace-A URLs; scanning text entries across namespaces", file=sys.stderr)
+            urls = zim_text_urls(zimdump, zim, prefixes, args.limit)
         print(f"{zim}: {len(urls)} article(s) selected")
         if not urls:
             print("no articles matched; existing staging left untouched", file=sys.stderr)
+            print(f"  inspect with: zimdump info {zim}; zimdump list --details {zim}", file=sys.stderr)
             continue
         if args.dry_run:
             for url in urls:
