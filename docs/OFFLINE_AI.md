@@ -198,7 +198,8 @@ text itself is therefore readable by any local user; the source documents alread
 ### From the library admin
 
 `http://<device>:8081/` has an **Ask the library** box in the Library panel, between the Library
-heading and the archive table. It calls
+heading and the archive table. The installer also adds a **Ktemata Admin** desktop icon for this
+page. It calls
 `ktemata-ai ask --json` as root, shows the answer, and lists the source paths/chunks. The box stays
 disabled until the index contains chunks, Ollama is reachable, and both the generation and embedding
 models are present; otherwise its status line says what is missing. The admin service needs no

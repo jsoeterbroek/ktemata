@@ -1740,6 +1740,59 @@ EOF
     fi
 }
 
+# Desktop shortcut for the management page, matching the Ktemata Library icon. The page is
+# protected by HTTP Basic auth, so the browser prompts for /etc/ktemata/admin.conf credentials.
+install_admin_icon() {
+    $WITH_GUI || return 0
+    local user=${KIOSK_USER:-$AUTOLOGIN_USER}
+    if ! id -u "$user" >/dev/null 2>&1; then
+        log_warn "no desktop user '$user'; no Ktemata Admin icon"
+        return 0
+    fi
+    local home group desktop entry launcher host
+    home=$(getent passwd "$user" | cut -d: -f6)
+    group=$(id -gn "$user")
+    if [ ! -d "$home" ]; then
+        log_warn "home directory not found for $user; no Ktemata Admin icon"
+        return 0
+    fi
+    host=$ADMIN_BIND
+    case $host in
+        0.0.0.0|'') host=127.0.0.1 ;;
+        ::)        host='[::1]' ;;
+    esac
+    if has_command firefox; then
+        launcher="$(command -v firefox) --new-window http://$host:$ADMIN_PORT/"
+    elif has_command xdg-open; then
+        launcher="xdg-open http://$host:$ADMIN_PORT/"
+    else
+        log_warn "no browser launcher; no Ktemata Admin icon"
+        return 0
+    fi
+    desktop="$home/Desktop"
+    entry="$desktop/ktemata-admin.desktop"
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s write %s (Ktemata Admin on %s:%s)\n' \
+            "$C_YELLOW" "$C_OFF" "$entry" "$host" "$ADMIN_PORT"
+        return 0
+    fi
+    install -d -m 0755 -o "$user" -g "$group" "$desktop"
+    cat >"$entry" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Ktemata Admin
+Comment=Manage archives, Kiwix and the offline AI
+Exec=$launcher
+Icon=preferences-system-network
+Terminal=false
+Categories=System;Settings;Network;
+EOF
+    chown "$user":"$group" "$entry"
+    chmod 0755 "$entry"
+    enable_desktop_quick_exec "$user" "$home"
+    log_ok "$entry"
+}
+
 install_admin() {
     if ! $HOST_LIBRARY || ! $WITH_SERVICE; then
         log_stage "Library admin"
@@ -1872,6 +1925,8 @@ EOF
         log_warn "  sudo systemctl enable --now $ADMIN_SERVICE.service"
         ADMIN_STATE="written (systemd not running)"
     fi
+
+    install_admin_icon
 }
 
 # PCManFM/libfm shows "Execute / Execute in Terminal / Open" for an executable .desktop file

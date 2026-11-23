@@ -28,6 +28,10 @@ cannot do from the kiosk: putting archives in, taking them out, and kicking the 
 http://<device>:8081/          # e.g. http://10.10.10.1:8081/ on the hotspot
 ```
 
+The installer also adds a **Ktemata Admin** desktop shortcut, like the library and Wi-Fi icons. It
+opens `http://127.0.0.1:8081/` in a new Firefox window (or the default browser via `xdg-open`);
+sign in with the credentials from `/etc/ktemata/admin.conf`.
+
 It lists every `*.zim` with its size, mtime and whether the current `library.xml` knows it, shows
 filesystem use and the space taken by ZIM files, and can:
 
@@ -236,10 +240,10 @@ sudo ./work/scripts/post-install.sh --no-wifi-switch   # do not install it
 
 ## Desktop icons
 
-Both Ktemata icons are executable `.desktop` entries. PCManFM/libfm still shows
-**Execute / Execute in Terminal / Open** unless `quick_exec=1` is set, so the installer writes it
-under `[config]` in the desktop user's `~/.config/libfm/libfm.conf`. Other keys are preserved, and
-the change is idempotent.
+All Ktemata desktop icons (Library, Wi-Fi, Admin) are executable `.desktop` entries. PCManFM/libfm
+still shows **Execute / Execute in Terminal / Open** unless `quick_exec=1` is set, so the installer
+writes it under `[config]` in the desktop user's `~/.config/libfm/libfm.conf`. Other keys are
+preserved, and the change is idempotent.
 
 Apply it to a running session by restarting the desktop manager, or simply log out and back in:
 
@@ -305,7 +309,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app, `i2c-tools` for the hardware report and `util-linux-extra` (provides `hwclock` on Debian 12+) | `--no-gui`; `--library nomad` skips the Kiwix packages |
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | `--library nomad` skips this |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service`; `--library nomad` skips it |
-| 6a | Write and enable `ktemata-admin.service` — the library admin on :8081, see above | `--no-admin`; `--library nomad` and `--no-service` skip it |
+| 6a | Write and enable `ktemata-admin.service` — the library admin on :8081, plus a **Ktemata Admin** desktop shortcut — see above | `--no-admin`; `--library nomad` and `--no-service` skip it |
 | 6b | Add **Ktemata Library** to the desktop; opens Firefox in full-screen kiosk mode on `http://127.0.0.1:8080/` | `--no-gui`, `--no-service`; `--library nomad` skips it |
 | 6c | **Write and enable `ktemata-artwork.service`**: wallpaper + boot splash at `graphical.target` — see [ARTWORK.md](ARTWORK.md) | `--no-artwork` |
 | 6d | **Add the Waveshare 7inch DSI LCD (C) overlay** (`vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1`) and ensure `vc4-kms-v3d` | `--no-display-overlay` (r4 / Touch Display 2) |
