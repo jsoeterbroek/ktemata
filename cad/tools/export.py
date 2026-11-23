@@ -4,7 +4,7 @@
   python3 cad/tools/export.py                                  # the shipped R5 set
   python3 cad/tools/export.py r5_deck                          # only some R5 parts
   python3 cad/tools/export.py r5_lid_cover_test_dimensions     # an R5 alternative, by name
-  python3 cad/tools/export.py r6_lid_plate                     # the R6 keyboard/OLED lid prototype
+  python3 cad/tools/export.py r6_lid_plate                     # the R6 keyboard lid prototype
   python3 cad/tools/export.py r6_tray                          # the R6 cassette tray
   python3 cad/tools/export.py r6_deck                          # the R6 full-face cassette deck
 

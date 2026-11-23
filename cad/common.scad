@@ -668,27 +668,16 @@ assert(sqrt((R5_BTN_X-R5_CHG_X)^2 + (R5_BTN_Y-R5_CHG_Y)^2)
 
 module rrect(w, h, r) offset(r=r) offset(delta=-r) square([w, h]);
 
-// ---------------- r6 prototype: keyboard/OLED lid plate ----------------
-// R6 moves the main display into the cassette; this plate carries only the K06, status OLED and
-// its button. Drawing coordinates and the measured component positions stay shared with the R5
-// deck so the paint probe and this plate cannot drift apart. z = 0 is the rear/tape face, z = 15
-// the visible front. Print visible-front down; export.scad performs that flip.
+// ---------------- r6 prototype: keyboard lid plate ----------------
+// R6 moves the main display into the cassette; this plate carries only the K06. Drawing coordinates
+// and the measured keyboard position stay shared with the R5 deck so the paint probe and this plate
+// cannot drift apart. z = 0 is the rear/tape face, z = 15 the visible front. Print visible-front
+// down; export.scad performs that flip.
 R6_LID_W = COVER_W;
 R6_LID_L = COVER_L;
 R6_LID_R = COVER_R;
 R6_LID_T = 15.0;                       // 4 mm behind the K06 + its 11 mm body, keys flush
 R6_LID_KB_SEAT_Z = 4.0;                // K06 underside above the rear/tape datum
-// Same OLED geometry as R5, translated to the R6 front datum. The pcb pocket opens at the rear;
-// its seat is 3.3 mm below the visible front and the glass finishes 1.85 mm below it.
-R6_LID_OLED_SEAT_Z = R6_LID_T - (R5_DECK_TOP - R5_OLED_SEAT);   // 11.7
-// PBS-33B needs <= 3 mm panel. A rear spot-face leaves 2.5 mm around the through-hole.
-R6_LID_OBTN_SKIN = 2.5;
-R6_LID_OBTN_CB_T = R6_LID_T - R6_LID_OBTN_SKIN;                 // 12.5 deep from the rear
-// Rear-only harness channels: from the OLED pocket to the hinge, with a branch to its button.
-// They do not break the visible painted face and require no support in the flipped print.
-R6_LID_HARNESS_W = 8.0;
-R6_LID_HARNESS_D = 2.0;
-R6_LID_HARNESS_X = R5_OLED_X0 + 12.0;
 // R6's full-face deck sits on the tray bosses at z 53 and is 13.5 mm thick, so the glass and the deck's
 // top face are 1.5 mm proud of the tray's 65 mm rim: 66.5 mm above the host floor.
 R6_BASE_GLASS_Z = 66.5;
@@ -701,7 +690,3 @@ assert(R6_LID_T + 4 <= HOST_LID,
 assert(R6_CLOSED_CLEAR >= 5,
        str("host ", HOST, ": only ", R6_CLOSED_CLEAR,
            " mm between the R6 keyboard face and cassette display glass"));
-assert(R6_LID_OBTN_SKIN <= 3.0 && R6_LID_OBTN_SKIN > 1.0,
-       "R6 OLED button skin must be 1..3 mm for the PBS-33B");
-assert(R6_LID_HARNESS_D < R6_LID_OBTN_SKIN,
-       "R6 rear harness channel must leave more than the button's 2.5 mm skin");

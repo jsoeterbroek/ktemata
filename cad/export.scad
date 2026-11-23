@@ -1,7 +1,7 @@
 // Print-oriented export wrapper (placed on the bed by tools/export.py)
 //   openscad -D 'PART="r5_deck"' -o deck.stl export.scad
 //
-// R5: tray, deck, lid plate, lid cover and alternatives. R6: named keyboard/OLED lid prototype.
+// R5: tray, deck, lid plate, lid cover and alternatives. R6: named keyboard lid prototype.
 // R5 parts print as modelled except the deck, which flips; the R6 lid flips for the same reason.
 ASSEMBLY = true;
 include <common.scad>
@@ -23,9 +23,9 @@ if (PART=="r5_lid_plate")     r5_lid_plate();                            // lid/
 if (PART=="r5_lid_cover")     r5_lid_cover();                            // lid/tape side down
 if (PART=="r5_lid_cover_waveshare_7in") r5_lid_cover_waveshare_7in();    // the 7" alternative
 if (PART=="r5_lid_cover_test_dimensions") r5_lid_cover_test_dimensions(); // 1 mm fit template
-// R6's lid plate also prints visible-front down: keyboard ledges and rear pockets then need no support.
+// R6's lid plate also prints visible-front down: its keyboard ledges then need no support.
 if (PART=="r6_lid_plate")         rotate([180,0,0]) r6_lid_plate();
-// The R6 tray prints exactly as modelled: floor on the bed, walls, bosses and saddles upward.
+// The R6 tray prints exactly as modelled: floor on the bed, walls and bosses upward.
 if (PART=="r6_tray")              r6_tray();
 // The R6 deck prints as modelled: underside on the bed, panel pocket, connector recesses and vents up.
 if (PART=="r6_deck")              r6_deck();
