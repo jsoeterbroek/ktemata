@@ -19,6 +19,69 @@ Inspired by [`after-effects`](https://github.com/tprasadtp/ubuntu-post-install) 
 file, no YAML config, no whiptail menu. Idempotent — safe to re-run. The install confirmation is skipped when
 an existing host installation is detected; a fresh installation still asks before changing the system.
 
+## Library admin (port 8081)
+
+Kiwix is a reader, not a file manager. The installer adds a small admin page for the part you
+cannot do from the kiosk: putting archives in, taking them out, and kicking the index.
+
+```
+http://<device>:8081/          # e.g. http://10.10.10.1:8081/ on the hotspot
+```
+
+It lists every `*.zim` with its size, mtime and whether the current `library.xml` knows it, shows
+filesystem use and the space taken by ZIM files, and can:
+
+- **upload** archives by drag-and-drop. Transfers are chunked (8 MiB) and resumable: an interrupted
+  upload leaves `<name>.zim.part`, and dropping the same file again continues where it stopped.
+  The archive is renamed into place only after the last chunk, so a half file is never served.
+  The first bytes must be a ZIM header, and the free-space check runs before any data is written.
+- **delete** an archive, or discard an interrupted upload.
+- **start, stop and restart** `kiwix.service`, with its state in the header.
+- **rebuild the index**: runs `/usr/local/bin/kiwix-library` (the same helper `kiwix.service`
+  uses as `ExecStartPre`) and restarts `kiwix-serve`. The page flags a stale index — archives on
+  disk that are not in `library.xml`, or entries whose files are gone — and offers the rebuild.
+
+Uploading or deleting a file does **not** publish it by itself: kiwix-serve reads `library.xml`
+at start, so use *Rebuild index & restart*. That is deliberate — a large upload should not
+restart the library while someone is reading.
+
+### Credentials and exposure
+
+The page can destroy the library, so it is not anonymous:
+
+```bash
+sudo cat /etc/ktemata/admin.conf     # KTEMATA_ADMIN_USER=ktemata, KTEMATA_ADMIN_PASSWORD=...
+```
+
+The password is generated once on first install (36 hex characters) and kept on re-runs. HTTP
+Basic auth protects every route. The unit runs as root because it writes `/srv/kiwix/zim` and
+rebuilds `/var/lib/kiwix/library.xml`; `ProtectSystem=strict` leaves everything else read-only,
+and the password file is mode 0600.
+
+There is **no TLS**. A password and ZIM payload cross the network in the clear. Keep the admin
+page on the hotspot or a trusted LAN, or bind it to loopback and use an SSH tunnel:
+
+```bash
+sudo ss -ltnp | grep 8081                                   # what is listening
+sudo ./work/scripts/post-install.sh --admin-bind 127.0.0.1  # loopback only
+# then, on a laptop: ssh -L 8081:127.0.0.1:8081 ktemata@<device>
+# and open http://127.0.0.1:8081/
+```
+
+`--no-admin` skips the page entirely; `--admin-user` and `--admin-pass` set the login (8+
+characters). To rotate the password, edit `/etc/ktemata/admin.conf` and
+`sudo systemctl restart ktemata-admin`.
+
+The server is [`work/scripts/ktemata-admin.py`](../work/scripts/ktemata-admin.py), standard
+library only, no framework:
+
+```bash
+python3 work/scripts/ktemata-admin.py --zim-dir /srv/kiwix/zim \
+    --state-dir /var/lib/kiwix --auth-file /etc/ktemata/admin.conf   # foreground, :8081
+```
+
+Without a credentials file it refuses to bind beyond `127.0.0.1`.
+
 ## Library hotspot
 
 The Pi 5 has a dual-band 2.4/5 GHz radio on board, so serving the library to a room is a
@@ -195,6 +258,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app, `i2c-tools` for the hardware report and `util-linux-extra` (provides `hwclock` on Debian 12+) | `--no-gui`; `--library nomad` skips the Kiwix packages |
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | `--library nomad` skips this |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service`; `--library nomad` skips it |
+| 6a | Write and enable `ktemata-admin.service` — the library admin on :8081, see above | `--no-admin`; `--library nomad` and `--no-service` skip it |
 | 6b | Add **Ktemata Library** to the desktop; opens Firefox in full-screen kiosk mode on `http://127.0.0.1:8080/` | `--no-gui`, `--no-service`; `--library nomad` skips it |
 | 6c | **Write and enable `ktemata-artwork.service`**: wallpaper + boot splash at `graphical.target` — see [ARTWORK.md](ARTWORK.md) | `--no-artwork` |
 | 6d | **Add the Waveshare 7inch DSI LCD (C) overlay** (`vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1`) and ensure `vc4-kms-v3d` | `--no-display-overlay` (r4 / Touch Display 2) |

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Ktemata · Library admin</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="1" y="1" width="62" height="62" rx="14" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="2"/>
+      <path d="M16 18h12a7 7 0 0 1 7 7v25H23a7 7 0 0 1-7-7z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M48 18H36a7 7 0 0 0-7 7v25h12a7 7 0 0 0 7-7z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-opacity=".55"/>
+    </svg>
+    <div class="brandtext">
+      <span class="wordmark">KTEMATA</span>
+      <span class="tagline">κτῆμα ἐς ἀεί &middot; library admin</span>
+    </div>
+  </div>
+  <div class="topright">
+    <span id="svc-pill" class="pill"><span class="dot"></span><span id="svc-pill-text">checking</span></span>
+    <a id="library-link" class="ghost-link" target="_blank" rel="noopener">Open library <span aria-hidden="true">↗</span></a>
+  </div>
+</header>
+
+<main>
+  <section class="metrics" aria-label="Overview">
+    <article class="metric">
+      <span class="label">Storage</span>
+      <strong id="disk-value">–</strong>
+      <div class="bar" role="progressbar" aria-labelledby="disk-value" id="disk-progress">
+        <span id="disk-bar"></span>
+      </div>
+      <span class="detail" id="disk-detail">reading…</span>
+    </article>
+
+    <article class="metric">
+      <span class="label">Archives</span>
+      <strong id="count-value">–</strong>
+      <span class="detail" id="count-detail">reading…</span>
+    </article>
+
+    <article class="metric">
+      <span class="label">Kiwix service</span>
+      <strong id="service-value">–</strong>
+      <span class="detail" id="service-detail">reading…</span>
+      <div class="mini-actions" id="service-actions">
+        <button class="mini" data-service="start" type="button">Start</button>
+        <button class="mini" data-service="restart" type="button">Restart</button>
+        <button class="mini" data-service="stop" type="button">Stop</button>
+      </div>
+    </article>
+
+    <article class="metric">
+      <span class="label">Index</span>
+      <strong id="index-value">–</strong>
+      <span class="detail" id="index-detail">reading…</span>
+      <button id="reindex" class="mini" type="button">Rebuild index</button>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h1>Library</h1>
+        <p class="path" id="library-path">…</p>
+      </div>
+      <div class="tools">
+        <label class="search">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13.5 13.5 18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <input id="filter" type="search" placeholder="Filter archives" autocomplete="off" aria-label="Filter archives">
+        </label>
+        <button id="pick" class="primary" type="button">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 14V3m0 0L6 7m4-4 4 4M4 13v3a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Upload ZIM
+        </button>
+        <input id="file" type="file" accept=".zim" multiple hidden>
+      </div>
+    </div>
+
+    <div id="banner" class="banner" hidden>
+      <span id="banner-text"></span>
+      <button id="banner-action" class="mini" type="button">Rebuild index &amp; restart</button>
+    </div>
+
+    <div id="zims-empty" class="empty" hidden>
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M14 12h15a8 8 0 0 1 8 8v34H14z" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <path d="M50 12H37a8 8 0 0 0-8 8v34h13a8 8 0 0 0 8-8z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-opacity=".5"/>
+      </svg>
+      <p><strong>No ZIM archives yet.</strong> Drop files here or use <em>Upload ZIM</em> — Wikipedia, Wiktionary, maps, Gutenberg.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table id="zim-table" aria-label="ZIM archives">
+        <thead>
+          <tr>
+            <th scope="col">Archive</th>
+            <th scope="col" class="num">Size</th>
+            <th scope="col" class="when">Modified</th>
+            <th scope="col">Index</th>
+            <th scope="col"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <div id="parts-block" class="parts" hidden>
+      <h2>Interrupted uploads</h2>
+      <ul id="parts"></ul>
+    </div>
+  </section>
+
+  <section id="queue-panel" class="panel" hidden>
+    <div class="panel-head">
+      <h2>Uploads</h2>
+      <button id="clear-done" class="mini" type="button">Clear finished</button>
+    </div>
+    <ul id="queue" class="queue"></ul>
+  </section>
+
+  <footer class="foot">
+    <span id="foot-version"></span>
+    <span>Kiwix serves this library on the device; this page only manages the files.</span>
+  </footer>
+</main>
+
+<div id="drop" class="drop" hidden><div>Drop ZIM files to upload</div></div>
+
+<dialog id="confirm" class="modal">
+  <form method="dialog">
+    <h2 id="confirm-title">Delete archive?</h2>
+    <p id="confirm-text"></p>
+    <div class="modal-actions">
+      <button value="cancel" class="ghost" type="submit">Cancel</button>
+      <button value="ok" id="confirm-ok" class="danger" type="submit">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+
+<script src="/app.js" defer></script>
+</body>
+</html>

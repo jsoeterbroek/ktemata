@@ -110,6 +110,18 @@ WIFI_SWITCH_STATE="not installed"
 # masquerading off while dnsmasq still provides DHCP and DNS for the AP.
 NM_NO_NAT_CONF=/etc/NetworkManager/conf.d/90-ktemata-no-nat.conf
 NM_NO_NAT_READY=false
+# Browser-based library admin: list, upload and delete ZIM files, drive kiwix-serve and rebuild
+# its index. It writes the library, so it runs as root behind HTTP Basic auth on its own port;
+# --no-admin skips it. The password lives in a root-only file, generated once.
+WITH_ADMIN=true
+ADMIN_PORT=${ADMIN_PORT:-8081}
+ADMIN_BIND=${ADMIN_BIND:-0.0.0.0}       # 127.0.0.1 + an SSH tunnel, or one management address
+ADMIN_USER=${ADMIN_USER:-ktemata}
+ADMIN_PASS=${ADMIN_PASS:-}              # empty: keep an existing password, or generate one
+ADMIN_CONFIG=/etc/ktemata/admin.conf
+ADMIN_ASSETS=/usr/share/ktemata/admin
+ADMIN_SERVICE=ktemata-admin
+ADMIN_STATE="not installed"
 # --no-radio turns the radios off in the firmware, so the device is silent at boot and stays
 # silent: no AP, no client association, no Bluetooth. Unlike --no-hotspot (which only declines
 # to create an AP) this is a real off switch, and it is persistent. Mutually exclusive with
@@ -192,6 +204,13 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-wifi-switch   Do not install the desktop Wi-Fi mode switcher (client / access
                          point / radio off). Skipped automatically with --no-radio, and when
                          NetworkManager is absent.
+      --no-admin         Do not install the browser library admin on :$ADMIN_PORT.
+      --admin-port N     Port for the library admin (default 8081).
+      --admin-bind A     Address the admin listens on (default 0.0.0.0). Use 127.0.0.1 and
+                         an SSH tunnel when the LAN is not trusted.
+      --admin-user N     Login name for the library admin (default ktemata).
+      --admin-pass P     Password for the library admin (8+ characters). Default: keep the
+                         existing one, or generate a random password on first install.
       --autologin-user N Account to log in automatically (default: ktemata).
   -h, --help             This message.
   -V, --version          Print the version.
@@ -199,7 +218,8 @@ ${C_BOLD}OPTIONS${C_OFF}
 ${C_BOLD}ENVIRONMENT${C_OFF}
   ZIM_DIR, SERVICE_PORT, SERVICE_USER, LIBRARY, NOMAD_STORAGE_PATH, DISPLAY_MODE, NO_COLOR,
   UPS_I2C_ALT_PINS, POWER_SOURCE,
-  HOTSPOT_SSID, HOTSPOT_PASS, HOTSPOT_ADDR, HOTSPOT_CIDR, HOTSPOT_BAND
+  HOTSPOT_SSID, HOTSPOT_PASS, HOTSPOT_ADDR, HOTSPOT_CIDR, HOTSPOT_BAND,
+  ADMIN_PORT, ADMIN_BIND, ADMIN_USER, ADMIN_PASS
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
   1. checks it is running as root on a Debian derivative
@@ -209,6 +229,8 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   5. creates the ZIM library directory                            [--library host]
   6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)  [--library host]
      and adds a Firefox full-screen library icon to the desktop unless --no-gui
+  6a. writes and enables $ADMIN_SERVICE.service: the library admin on :$ADMIN_PORT,
+      for uploading and deleting ZIM files and controlling kiwix-serve unless --no-admin
   7. writes and enables $ARTWORK_SERVICE.service: wallpaper + boot splash at graphical.target
   8. adds the Waveshare 7inch DSI LCD (C) overlay unless --no-display-overlay
   9. optionally enables UPS I2C on Pi 5 GPIO12/13 (--ups-i2c-alt-pins)
@@ -1694,6 +1716,140 @@ EOF
     fi
 }
 
+install_admin() {
+    if ! $HOST_LIBRARY || ! $WITH_SERVICE; then
+        log_stage "Library admin"
+        log_info "skipped (needs the host library and its $SERVICE_NAME service)"
+        ADMIN_STATE="skipped"
+        return 0
+    fi
+    if ! $WITH_ADMIN; then
+        log_stage "Library admin"
+        log_info "skipped (--no-admin)"
+        ADMIN_STATE="skipped"
+        return 0
+    fi
+    log_stage "Library admin"
+
+    local dir src assets unit
+    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    src="$dir/ktemata-admin.py"
+    assets="$dir/ktemata-admin"
+    unit="/etc/systemd/system/$ADMIN_SERVICE.service"
+    [ -r "$src" ] || die "cannot find ktemata-admin.py next to this script"
+    [ -r "$assets/index.html" ] || die "cannot find the ktemata-admin assets next to this script"
+
+    run install -d -m 0755 "$ADMIN_ASSETS"
+    local f
+    for f in index.html style.css app.js favicon.svg; do
+        run install -m 0644 "$assets/$f" "$ADMIN_ASSETS/$f"
+    done
+    run install -m 0755 -o root -g root "$src" /usr/local/bin/ktemata-admin
+    # library.xml lives here. kiwix.service creates it via StateDirectory, but the admin unit
+    # may be started first and needs a writable directory straight away.
+    run install -d -m 0755 -o "$SERVICE_USER" -g "$SERVICE_USER" "$STATE_DIR"
+    log_ok "/usr/local/bin/ktemata-admin + $ADMIN_ASSETS"
+
+    # Credentials: generated once and then left alone, so re-running the installer never resets
+    # a password someone wrote down. --admin-pass or ADMIN_PASS overrides it deliberately.
+    if [ -z "$ADMIN_PASS" ] && [ -s "$ADMIN_CONFIG" ]; then
+        log_ok "credentials kept in $ADMIN_CONFIG"
+    else
+        if [ -z "$ADMIN_PASS" ]; then
+            ADMIN_PASS=$(od -An -N18 -tx1 /dev/urandom | tr -d ' \n')
+        fi
+        run install -d -m 0755 /etc/ktemata
+        if $DRY_RUN; then
+            printf '%s  [dry-run]%s write %s (user %s, generated password)\n' \
+                "$C_YELLOW" "$C_OFF" "$ADMIN_CONFIG" "$ADMIN_USER"
+        else
+            local tmp
+            tmp=$(mktemp)
+            chmod 0600 "$tmp"
+            {
+                printf '# Ktemata library admin credentials. Root-only: the service writes the library.\n'
+                printf '# Change the password here and restart %s.service to apply.\n' "$ADMIN_SERVICE"
+                printf 'KTEMATA_ADMIN_USER=%s\n' "$ADMIN_USER"
+                printf 'KTEMATA_ADMIN_PASSWORD=%s\n' "$ADMIN_PASS"
+            } >"$tmp"
+            install -m 0600 -o root -g root "$tmp" "$ADMIN_CONFIG"
+            rm -f "$tmp"
+            log_ok "credentials written to $ADMIN_CONFIG (user $ADMIN_USER)"
+        fi
+    fi
+
+    log_info "writing $unit"
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s write %s (admin on :%s)\n' \
+            "$C_YELLOW" "$C_OFF" "$unit" "$ADMIN_PORT"
+    else
+        cat >"$unit" <<EOF
+[Unit]
+Description=Ktemata library admin (ZIM uploads and Kiwix control)
+Documentation=file:$ADMIN_ASSETS
+After=network.target
+ConditionPathExists=$ZIM_DIR
+
+[Service]
+Type=simple
+# The page deletes and writes ZIM files and rebuilds library.xml. Basic auth and a root-only
+# password file are the gate; ProtectSystem keeps the rest of the disk read-only.
+User=root
+ExecStart=/usr/local/bin/ktemata-admin --zim-dir $ZIM_DIR --state-dir $STATE_DIR \
+    --bind $ADMIN_BIND --port $ADMIN_PORT --library-port $SERVICE_PORT --service $SERVICE_NAME \
+    --auth-file $ADMIN_CONFIG --assets $ADMIN_ASSETS
+Restart=on-failure
+RestartSec=3
+# A chunk is 8 MiB; do not kill the unit mid-write on a restart.
+TimeoutStopSec=20
+ProtectSystem=strict
+ReadWritePaths=$ZIM_DIR $STATE_DIR
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        chmod 0644 "$unit"
+        log_ok "unit written"
+    fi
+
+    if have_systemd; then
+        run systemctl daemon-reload
+        run systemctl enable --now "$ADMIN_SERVICE.service"
+        ADMIN_STATE="enabled"
+        if ! $DRY_RUN; then
+            local check_user check_pass i
+            check_user=$(sed -n 's/^KTEMATA_ADMIN_USER=//p' "$ADMIN_CONFIG" 2>/dev/null | head -1)
+            check_pass=$(sed -n 's/^KTEMATA_ADMIN_PASSWORD=//p' "$ADMIN_CONFIG" 2>/dev/null | head -1)
+            for i in $(seq 1 20); do
+                if curl -fsS -o /dev/null --max-time 2 -u "$check_user:$check_pass" \
+                        "http://127.0.0.1:$ADMIN_PORT/healthz" 2>/dev/null; then
+                    ADMIN_STATE="active"
+                    break
+                fi
+                sleep 0.5
+            done
+            if [ "$ADMIN_STATE" = active ]; then
+                log_ok "answering on http://$ADMIN_BIND:$ADMIN_PORT"
+            else
+                log_warn "$ADMIN_SERVICE.service is not answering yet: journalctl -u $ADMIN_SERVICE"
+                ADMIN_STATE="installed (not answering)"
+            fi
+        fi
+    else
+        log_warn "systemd not running here: start it later with"
+        log_warn "  sudo systemctl enable --now $ADMIN_SERVICE.service"
+        ADMIN_STATE="written (systemd not running)"
+    fi
+}
+
 install_library_icon() {
     if ! $WITH_GUI || ! $HOST_LIBRARY || ! $WITH_SERVICE; then
         log_stage "Library desktop icon"
@@ -2161,6 +2317,18 @@ summary() {
         if $WITH_SERVICE; then
             printf '  service   %s.service (port %s)\n' "$SERVICE_NAME" "$SERVICE_PORT"
             printf '  check     systemctl status %s\n' "$SERVICE_NAME"
+            if $WITH_ADMIN; then
+                local admin_user=$ADMIN_USER
+                if [ -r "$ADMIN_CONFIG" ]; then
+                    admin_user=$(sed -n 's/^KTEMATA_ADMIN_USER=//p' "$ADMIN_CONFIG" | head -1)
+                    [ -n "$admin_user" ] || admin_user=$ADMIN_USER
+                fi
+                local admin_host=$ADMIN_BIND
+                [ "$admin_host" = 0.0.0.0 ] && admin_host="<device>"
+                printf '  admin     http://%s:%s (user %s, password in %s)\n' \
+                    "$admin_host" "$ADMIN_PORT" "$admin_user" "$ADMIN_CONFIG"
+                printf '            %s\n' "$ADMIN_STATE"
+            fi
         fi
     else
         printf '  library   NOMAD (%s)\n' "$LIBRARY_DIR"
@@ -2244,6 +2412,11 @@ main() {
             --hotspot-band)  HOTSPOT_BAND=${2:?--hotspot-band takes auto, 2.4 or 5}; shift ;;
             --hotspot-addr)  HOTSPOT_ADDR=${2:?--hotspot-addr needs an address}; shift ;;
             --no-wifi-switch) WITH_WIFI_SWITCH=false ;;
+            --no-admin)      WITH_ADMIN=false ;;
+            --admin-port)    ADMIN_PORT=${2:?--admin-port needs a number}; shift ;;
+            --admin-bind)    ADMIN_BIND=${2:?--admin-bind needs an address}; shift ;;
+            --admin-user)    ADMIN_USER=${2:?--admin-user needs a name}; shift ;;
+            --admin-pass)    ADMIN_PASS=${2:?--admin-pass needs a password}; shift ;;
             --autologin-user) AUTOLOGIN_USER=${2:?--autologin-user needs a name}; shift ;;
             --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
             --rotate)        ROTATE=${2:?--rotate needs normal|left|right|inverted}; shift ;;
@@ -2270,6 +2443,14 @@ main() {
         log_warn "--zim-dir is ignored with --library nomad; NOMAD uses $LIBRARY_DIR"
     fi
     case $SERVICE_PORT in ''|*[!0-9]*) die "--port must be a number" ;; esac
+    case $ADMIN_PORT in ''|*[!0-9]*) die "--admin-port must be a number" ;; esac
+    [ "$ADMIN_PORT" != "$SERVICE_PORT" ] || die "--admin-port must differ from --port ($SERVICE_PORT)"
+    case $ADMIN_BIND in ''|*[!0-9A-Za-z.:_-]*) die "--admin-bind must be an IP address or hostname" ;; esac
+    case $ADMIN_USER in ''|*[!A-Za-z0-9._-]*) die "--admin-user takes letters, digits, dot, dash or underscore" ;; esac
+    if [ -n "$ADMIN_PASS" ]; then
+        [ ${#ADMIN_PASS} -ge 8 ] || die "--admin-pass needs at least 8 characters"
+        case $ADMIN_PASS in *$'\n'*|*$'\r'*) die "--admin-pass must be a single line" ;; esac
+    fi
     # fail fast on a bad --rotate instead of halfway through the install
     [ -z "$ROTATE" ] || rotation_degrees "$ROTATE" >/dev/null
     case ${POWER_SOURCE:-usbc} in usbc|ups3s) ;; *) die "--power takes usbc or ups3s" ;; esac
@@ -2307,6 +2488,7 @@ main() {
     install_packages
     setup_library
     install_service
+    install_admin
     install_library_icon
     install_artwork_unit
     setup_display_overlay
