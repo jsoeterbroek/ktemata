@@ -265,6 +265,19 @@ button.primary svg { width: 16px; height: 16px; }
 }
 .search input::placeholder { color: var(--faint); }
 
+.ai-panel {
+  margin: 0 1.2rem 1rem;
+  padding: 1rem 1.1rem 1.1rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.ai-panel .panel-head { padding: 0 0 .8rem; }
+.ai-panel h2 { color: var(--accent-bright); }
+.ai-panel .ai-form { padding: 0; }
+.ai-panel .ai-answer { margin: .85rem 0 0; }
+
 .ai-form {
   display: flex;
   gap: .55rem;
@@ -516,6 +529,7 @@ tr.hidden { display: none; }
   .metric { min-height: 0; }
   .metric:not(:has(.mini-actions)) strong { font-size: 1.35rem; }
   .search input { width: 8rem; }
+  .ai-panel { margin: 0 .8rem .9rem; padding: .85rem .8rem; }
   .ai-form { flex-direction: column; }
   .ai-form button { width: 100%; }
   th, td { padding-left: .8rem; padding-right: .8rem; }

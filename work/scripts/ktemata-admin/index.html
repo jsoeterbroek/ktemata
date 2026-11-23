@@ -83,6 +83,25 @@
       </div>
     </div>
 
+    <section class="ai-panel" aria-labelledby="ai-title">
+      <div class="panel-head">
+        <div>
+          <h2 id="ai-title">Ask the library</h2>
+          <p class="path" id="ai-status">checking offline AI…</p>
+        </div>
+      </div>
+      <form id="ai-form" class="ai-form">
+        <label class="sr-only" for="ai-question">Question</label>
+        <input id="ai-question" type="text" name="question" maxlength="2000" autocomplete="off"
+               placeholder="Ask about the documents in /var/lib/kiwix…" disabled required>
+        <button id="ai-ask" class="primary" type="submit" disabled>Ask</button>
+      </form>
+      <div id="ai-answer" class="ai-answer" hidden>
+        <p id="ai-text"></p>
+        <ul id="ai-sources" class="ai-sources"></ul>
+      </div>
+    </section>
+
     <div id="banner" class="banner" hidden>
       <span id="banner-text"></span>
       <button id="banner-action" class="mini" type="button">Rebuild index &amp; restart</button>
@@ -114,25 +133,6 @@
     <div id="parts-block" class="parts" hidden>
       <h2>Interrupted uploads</h2>
       <ul id="parts"></ul>
-    </div>
-  </section>
-
-  <section class="panel ai-panel" aria-labelledby="ai-title">
-    <div class="panel-head">
-      <div>
-        <h2 id="ai-title">Ask the library</h2>
-        <p class="path" id="ai-status">checking offline AI…</p>
-      </div>
-    </div>
-    <form id="ai-form" class="ai-form">
-      <label class="sr-only" for="ai-question">Question</label>
-      <input id="ai-question" type="text" name="question" maxlength="2000" autocomplete="off"
-             placeholder="Ask about the documents in /var/lib/kiwix…" disabled required>
-      <button id="ai-ask" class="primary" type="submit" disabled>Ask</button>
-    </form>
-    <div id="ai-answer" class="ai-answer" hidden>
-      <p id="ai-text"></p>
-      <ul id="ai-sources" class="ai-sources"></ul>
     </div>
   </section>
 
