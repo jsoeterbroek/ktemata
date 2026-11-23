@@ -33,6 +33,7 @@ AI_VENV=/opt/ktemata-ai/venv
 AI_LLM_BIN=$AI_VENV/bin/llm
 AI_ZIM_MODEL=${AI_ZIM_MODEL:-}
 AI_ZIM_HOME=${AI_ZIM_HOME:-/srv/kiwix/zim}
+SHELL_USER=${SHELL_USER:-${SUDO_USER:-}}
 
 DRY_RUN=false
 ASSUME_YES=false
@@ -73,6 +74,7 @@ ${C_BOLD}OPTIONS${C_OFF}
       --zim-model NAME  Model for ZIM direct search (default: AI_MODEL). Qwen 2.5 3B is
                         recommended for tool calling; it is pulled when different.
       --zim-home DIR    ZIM directory for direct search (default: $AI_ZIM_HOME).
+      --shell-user N    Add KIWIX_HOME to this user's ~/.bashrc (default: sudo user).
       --no-models       Do not pull models (for a preloaded or offline Ollama).
       --no-ingest       Do not run the first index build now.
       --no-service      Do not install/enable the re-index timer.
@@ -269,6 +271,44 @@ install_llm_kiwix() {
     log_ok "$AI_VENV (llm + llm-ollama + llm-tools-kiwix, libzim<4)"
 }
 
+install_shell_env() {
+    log_stage "Shell environment"
+    if [ -z "$SHELL_USER" ]; then
+        log_warn "no shell user; set KIWIX_HOME=$AI_ZIM_HOME in ~/.bashrc manually"
+        return 0
+    fi
+    if ! id -u "$SHELL_USER" >/dev/null 2>&1; then
+        log_warn "no such user '$SHELL_USER'; not updating ~/.bashrc"
+        return 0
+    fi
+    local home group bashrc target
+    home=$(getent passwd "$SHELL_USER" | cut -d: -f6)
+    group=$(id -gn "$SHELL_USER")
+    if [ ! -d "$home" ]; then
+        log_warn "home directory not found for $SHELL_USER; not updating ~/.bashrc"
+        return 0
+    fi
+    bashrc="$home/.bashrc"
+    target=$(readlink -f "$bashrc" 2>/dev/null || printf '%s' "$bashrc")
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s add KIWIX_HOME=%s to %s\n' \
+            "$C_YELLOW" "$C_OFF" "$AI_ZIM_HOME" "$bashrc"
+        return 0
+    fi
+    [ -e "$target" ] || install -m 0644 -o "$SHELL_USER" -g "$group" /dev/null "$target"
+    # Replace only our marked block, so a re-run is a no-op and the user's other shell
+    # configuration survives.
+    sed -i '/^# >>> ktemata offline AI >>>$/,/^# <<< ktemata offline AI <<<$/d' "$target"
+    {
+        printf '\n# >>> ktemata offline AI >>>\n'
+        printf '# Used by llm-tools-kiwix; remove this block to manage KIWIX_HOME yourself.\n'
+        printf 'export KIWIX_HOME=%q\n' "$AI_ZIM_HOME"
+        printf '# <<< ktemata offline AI <<<\n'
+    } >>"$target"
+    chown "$SHELL_USER":"$group" "$target"
+    log_ok "$bashrc (KIWIX_HOME=$AI_ZIM_HOME)"
+}
+
 write_config() {
     log_stage "Configuration"
     if $CONFIG_EXISTED; then
@@ -411,6 +451,9 @@ summary() {
     printf '  ingest     sudo ktemata-ai ingest\n'
     printf '  zim ask    ktemata-ai zim-ask "..." (model %s, %s)\n' "$AI_ZIM_MODEL" "$AI_ZIM_HOME"
     printf '  llm        %s (or /usr/local/bin/llm)\n' "$AI_LLM_BIN"
+    if [ -n "$SHELL_USER" ]; then
+        printf '  shell      KIWIX_HOME in %s/.bashrc\n' "$SHELL_USER"
+    fi
     printf '  admin      the library admin on :8081 has an "Ask the library" box\n'
     if $NO_SERVICE; then
         printf '  timer      not installed (--no-service)\n'
@@ -432,6 +475,7 @@ main() {
             --db)           AI_DB=${2:?--db needs a path}; shift ;;
             --zim-model)    AI_ZIM_MODEL=${2:?--zim-model needs a name}; shift ;;
             --zim-home)     AI_ZIM_HOME=${2:?--zim-home needs a path}; shift ;;
+            --shell-user)   SHELL_USER=${2:?--shell-user needs a name}; shift ;;
             --no-models)    NO_MODELS=true ;;
             --no-ingest)    NO_INGEST=true ;;
             --no-service)   NO_SERVICE=true ;;
@@ -468,6 +512,9 @@ main() {
     AI_ZIM_MODEL=${AI_ZIM_MODEL:-$AI_MODEL}
     AI_ZIM_HOME=${AI_ZIM_HOME:-/srv/kiwix/zim}
     AI_LLM_BIN=$AI_VENV/bin/llm
+    if [ -z "$SHELL_USER" ] && id -u ktemata >/dev/null 2>&1; then
+        SHELL_USER=ktemata
+    fi
     case $AI_ZIM_HOME in /*) ;; *) die "--zim-home must be an absolute path" ;; esac
     case $AI_OLLAMA_URL in http://*|https://*) ;; *) die "--ollama-url must be an http(s) URL" ;; esac
 
@@ -489,6 +536,7 @@ main() {
     fi
     install_cli
     install_llm_kiwix
+    install_shell_env
     write_config
     run install -d -m 0755 "$AI_STATE_DIR"
     install_units

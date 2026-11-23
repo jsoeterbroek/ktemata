@@ -100,7 +100,9 @@ sudo ./work/scripts/post-install.sh --ai
 It indexes `/var/lib/kiwix` and `/srv/kiwix/zim` by default (text, Markdown, HTML, XML, PDF, EPUB,
 DOCX, ODT), answers with `ktemata-ai ask "..."`, and adds the **Ask the library** box to the admin
 page. ZIM archives are skipped by the normal ingest; use `ktemata-ai zim-ask` for Kiwix's own
-search index (no vector build), or `ktemata-ai zim-ingest` for a bounded vector slice.
+search index (no vector build), or `ktemata-ai zim-ingest` for a bounded vector slice. The
+installer also adds `export KIWIX_HOME=/srv/kiwix/zim` to the desktop user's `~/.bashrc` so the
+raw `llm tools list` / `llm` commands work after a new shell.
 
 ## Library hotspot
 

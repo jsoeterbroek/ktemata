@@ -96,10 +96,12 @@ What it does:
 4. installs `/usr/local/bin/ktemata-ai` and `/etc/ktemata/ai.conf`;
 5. installs `llm`, `llm-ollama` and `llm-tools-kiwix` in `/opt/ktemata-ai/venv`, pinning
    `libzim<4` because the plugin's search API breaks with libzim 4.x;
-6. updates the library admin UI and server with the **Ask the library** box and restarts
+6. adds `export KIWIX_HOME="..."` to the shell user's `~/.bashrc` (`--shell-user`, default: the
+   sudo user, else `ktemata`);
+7. updates the library admin UI and server with the **Ask the library** box and restarts
    `ktemata-admin.service` if it is installed;
-7. runs the first `ktemata-ai ingest` (skip with `--no-ingest`);
-8. installs and enables `ktemata-ai-ingest.timer` for a re-index every six hours.
+8. runs the first `ktemata-ai ingest` (skip with `--no-ingest`);
+9. installs and enables `ktemata-ai-ingest.timer` for a re-index every six hours.
 
 A re-run is idempotent. An existing `/etc/ktemata/ai.conf` is the source of truth: the installer
 uses its models and roots instead of the flags, and never overwrites it. Edit the file to change
@@ -302,8 +304,22 @@ sudo ./work/scripts/post-install-ai.sh --yes
 That installs `llm`, `llm-ollama` and `llm-tools-kiwix` in `/opt/ktemata-ai/venv`, with
 `libzim<4` pinned (`llm-tools-kiwix` 0.1 uses the libzim 3.x search API; 4.x returns no matches).
 It also links `/usr/local/bin/llm` to the venv when that path is free, so `llm` works without
-activating the venv. The ZIM directory defaults to `/srv/kiwix/zim`; override it with `--zim-home
-DIR` or by editing `/etc/ktemata/ai.conf`.
+activating the venv.
+
+The installer writes a marked block to the shell user's `~/.bashrc`:
+
+```bash
+# >>> ktemata offline AI >>>
+# Used by llm-tools-kiwix; remove this block to manage KIWIX_HOME yourself.
+export KIWIX_HOME=/srv/kiwix/zim
+# <<< ktemata offline AI <<<
+```
+
+Open a new shell or `source ~/.bashrc` to pick it up. The block is replaced on re-runs, so it never
+duplicates; use `--shell-user NAME` to choose the account (default: the sudo user, else `ktemata`).
+This assumes bash, the Pi OS default; for zsh add the same `export KIWIX_HOME=...` to `~/.zshrc`.
+The ZIM directory defaults to `/srv/kiwix/zim`; override it with `--zim-home DIR` or by editing
+`/etc/ktemata/ai.conf`.
 
 ### Use
 
