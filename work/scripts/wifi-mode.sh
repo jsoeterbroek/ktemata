@@ -12,8 +12,10 @@
 #   wifi-mode off          radio off (NetworkManager remembers it across reboots)
 #
 # NetworkManager is the only backend: the AP is an ordinary nmcli profile (mode ap, ipv4.method
-# shared, no forwarding), so DHCP/DNS come from NM's own dnsmasq and nothing else is installed.
-# hostapd is not touched; images without NetworkManager are out of scope.
+# shared), so DHCP/DNS come from NM's own dnsmasq and nothing else is installed. A drop-in sets
+# NM's firewall backend to none, because ipv4.method shared would otherwise NAT clients onto
+# whatever uplink is present. hostapd is not touched; images without NetworkManager are out of
+# scope.
 #
 # The AP profile is created on first use from /etc/ktemata/wifi-mode.conf, which post-install.sh
 # writes from --hotspot-ssid/-pass/-addr/-band. Running the installer with --hotspot still
@@ -28,6 +30,7 @@ set -euo pipefail
 # environment: the helper runs as root, and sourcing a user-chosen file would be a privilege
 # escalation. Root owns this file; the sudoers rule does not preserve the environment.
 CONFIG=/etc/ktemata/wifi-mode.conf
+NO_NAT_CONF=/etc/NetworkManager/conf.d/90-ktemata-no-nat.conf
 WIFI_IF=${WIFI_IF:-wlan0}
 AP_PROFILE=${AP_PROFILE:-Ktemata}
 AP_ADDR=${AP_ADDR:-10.10.10.1}
@@ -116,25 +119,42 @@ status_text() {
     fi
 }
 
-# Create the AP profile only if it is absent, so a profile made by --hotspot (or with a
-# password changed by hand) is never overwritten. Same shape as post-install's nmcli path.
-ensure_ap_profile() {
-    if ap_profile_exists; then
+ap_profile_mode() {
+    nmcli -g 802-11-wireless.mode connection show "$AP_PROFILE" 2>/dev/null || true
+}
+
+ap_profile_key_mgmt() {
+    nmcli -g 802-11-wireless-security.key-mgmt connection show "$AP_PROFILE" 2>/dev/null || true
+}
+
+# Shared mode gives DHCP and DNS, but NetworkManager has no per-connection switch to stop it
+# NATing clients onto the uplink. `ipv4.ip-forward` does not exist (nmcli: "invalid property").
+# The firewall backend is global, so a drop-in disables masquerading for shared connections.
+ensure_no_nat() {
+    local want='firewall-backend=none'
+    if [ -r "$NO_NAT_CONF" ] && grep -qx "$want" "$NO_NAT_CONF"; then
+        # Ask NM to re-read its config: a manually dropped file may not have been loaded yet.
+        nmcli general reload conf >/dev/null 2>&1 || true
         return 0
     fi
-    # Fail closed: creating a profile without the installer's config would silently produce an
-    # open access point with the built-in defaults.
-    [ -r "$CONFIG" ] || \
-        die "$CONFIG is missing; run post-install.sh, or create the '$AP_PROFILE' profile first"
-    info "creating NetworkManager profile '$AP_PROFILE' on $WIFI_IF"
-    nmcli connection add type wifi ifname "$WIFI_IF" con-name "$AP_PROFILE" \
-        autoconnect no ssid "$AP_PROFILE" >/dev/null
+    info "disabling NetworkManager NAT for shared connections ($NO_NAT_CONF)"
+    install -d -m 0755 "$(dirname "$NO_NAT_CONF")"
+    {
+        printf '[main]\n'
+        printf '# Ktemata: the library AP serves DHCP/DNS but must not NAT clients onto the uplink.\n'
+        printf '%s\n' "$want"
+    } >"$NO_NAT_CONF"
+    chmod 0644 "$NO_NAT_CONF"
+    nmcli general reload conf >/dev/null 2>&1 || \
+        systemctl reload NetworkManager >/dev/null 2>&1 || \
+        info "reload NetworkManager to apply the no-NAT setting"
+}
 
+configure_ap_profile() {
     local args=(
         802-11-wireless.mode ap
         ipv4.method shared
         ipv4.addresses "$AP_ADDR/$AP_CIDR"
-        ipv4.ip-forward 0
         ipv6.method disabled
         connection.autoconnect no
     )
@@ -143,13 +163,31 @@ ensure_ap_profile() {
         5)   args+=(802-11-wireless.band a) ;;
     esac
     nmcli connection modify "$AP_PROFILE" "${args[@]}" >/dev/null
+}
 
-    if [ -n "$AP_PASS" ]; then
+# Create the AP profile on first use and repair one left half-configured by an interrupted run
+# (the old helper failed on ipv4.ip-forward after `connection add`). A working profile made by
+# --hotspot, or edited by hand, is not overwritten.
+ensure_ap_profile() {
+    if ! ap_profile_exists; then
+        # Fail closed: creating a profile without the installer's config would silently produce
+        # an open access point with the built-in defaults.
+        [ -r "$CONFIG" ] || \
+            die "$CONFIG is missing; run post-install.sh, or create the '$AP_PROFILE' profile first"
+        info "creating NetworkManager profile '$AP_PROFILE' on $WIFI_IF"
+        nmcli connection add type wifi ifname "$WIFI_IF" con-name "$AP_PROFILE" \
+            autoconnect no ssid "$AP_PROFILE" >/dev/null
+    fi
+
+    if [ "$(ap_profile_mode)" != ap ]; then
+        info "repairing profile '$AP_PROFILE' (missing 802-11-wireless.mode ap)"
+        configure_ap_profile
+    fi
+
+    if [ -n "$AP_PASS" ] && [ -z "$(ap_profile_key_mgmt)" ]; then
         nmcli connection modify "$AP_PROFILE" \
             802-11-wireless-security.key-mgmt wpa-psk \
             802-11-wireless-security.psk "$AP_PASS" >/dev/null
-    else
-        info "no AP password configured: the library will be readable by anyone in range"
     fi
     printf '%s✓%s profile %s ready (%s/%s)\n' \
         "$C_GREEN" "$C_OFF" "$AP_PROFILE" "$AP_ADDR" "$AP_CIDR" >&2
@@ -184,6 +222,7 @@ mode_client() {
 
 mode_ap() {
     nmcli radio wifi on >/dev/null
+    ensure_no_nat
     ensure_ap_profile
     # AP mode is an explicit choice: let it reconnect at boot, and prefer it over client
     # profiles that were also saved with autoconnect.

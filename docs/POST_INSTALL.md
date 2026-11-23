@@ -55,11 +55,17 @@ How it is implemented:
 - **hostapd + dnsmasq otherwise.** For images without NetworkManager, it writes
   `/etc/hostapd/hostapd.conf` (mode 0600) and `/etc/dnsmasq.d/ktemata-hotspot.conf` and enables
   both units.
-- **No routing.** `ipv4.ip-forward 0` stops `method shared` from NATing clients onto whatever
-  uplink is present. The AP serves this box and nothing beyond it — an appliance that silently
-  becomes a router on a hotel or office LAN is a worse failure than not routing.
-- **Idempotent.** An existing profile with the same SSID is left untouched, so re-running the
-  installer never resets a password.
+- **No NAT.** NetworkManager has no per-connection switch to keep `ipv4.method shared` from
+  masquerading clients onto whatever uplink is present (`ipv4.ip-forward` is not a property and
+  fails with `invalid property 'ip-forward'`). The installer writes
+  `/etc/NetworkManager/conf.d/90-ktemata-no-nat.conf` with `firewall-backend=none`: dnsmasq still
+  provides DHCP and DNS, but no NAT rule is added. Clients reach the box without being
+  masqueraded onto the uplink — an appliance that silently becomes a router on a hotel or office
+  LAN is a worse failure than not routing. The setting is global, so every shared connection on
+  this box is NAT-less.
+- **Idempotent.** An existing working profile with the same SSID is left untouched, so re-running
+  the installer never resets a password. A profile left half-configured by an interrupted run
+  (or the old `ip-forward` failure) is repaired.
 - **Verified, not assumed.** The step brings the AP up and then fetches
   `http://<addr>:8080/` to prove the library answers over that interface.
 
@@ -107,6 +113,10 @@ How it is put together:
   image, so the installer writes `/etc/sudoers.d/ktemata-wifi`, which allows the desktop account
   to run exactly `wifi-mode client`, `wifi-mode ap` and `wifi-mode off` without a password. The
   helper is root-owned; the rule cannot run arbitrary arguments.
+- **AP mode is NAT-less.** The helper writes the same
+  `/etc/NetworkManager/conf.d/90-ktemata-no-nat.conf` drop-in as `--hotspot`, so
+  `ipv4.method shared` supplies DHCP/DNS without masquerading clients onto an uplink. It reloads
+  NetworkManager's configuration after writing it.
 - **The chooser is zenity** (`--no-gui` skips the desktop entry). Without zenity the command
   prints a terminal menu, so it still works over ssh.
 - **Radio off is not firmware off.** It stops NetworkManager scanning and associating and it
@@ -690,13 +700,20 @@ live server and 1 without one.
 
 The Wi-Fi mode switch was exercised against a fake `nmcli` in Debian 13, both as root and as an
 unprivileged desktop user through the generated sudoers rule: `off` disables the radio, `ap` creates the
-profile with `mode ap`/`ipv4.method shared`/`ipv4.ip-forward 0` and activates it, `client` turns the AP's
+profile with `mode ap`/`ipv4.method shared` and activates it, `client` turns the AP's
 autoconnect off and joins a saved client profile, and `status` reports all three states. The sudoers file
 parses with `visudo -cf`, the three mode words run without a password, and an arbitrary argument is refused.
 `install_wifi_switch` was dry-run in Debian 13 with user `ktemata`: helper, mode-0600 config, sudoers rule and
 `~/Desktop/ktemata-wifi.desktop` were all reported. The zenity chooser was driven with a stub; the terminal
 chooser was driven over a pty against the fake `nmcli`. A real radio and NetworkManager were not available in
 the containers.
+
+The profile property set was checked against real `nmcli` 1.52.1 with `nmcli --offline connection add`:
+`ipv4.ip-forward` is rejected (`invalid property 'ip-forward'`), while the current set (`mode ap`,
+`ipv4.method shared`, `ipv4.addresses`, `ipv6.method disabled`) is accepted. `NetworkManager --print-config`
+shows `firewall-backend=none` from the drop-in. With a fake `nmcli`, a half-configured `Ktemata` profile
+(`mode=infrastructure`) was repaired on the first `ap` run and left alone on the second, and the drop-in
+writer produced a mode-0644 file. A real AP/NAT path was not exercised.
 
 **On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
 holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no

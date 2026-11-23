@@ -104,6 +104,11 @@ WIFI_SWITCH_BIN=/usr/local/bin/wifi-mode
 WIFI_SWITCH_CONF=/etc/ktemata/wifi-mode.conf
 WIFI_SWITCH_SUDOERS=/etc/sudoers.d/ktemata-wifi
 WIFI_SWITCH_STATE="not installed"
+# NetworkManager has no per-connection switch to keep ipv4.method shared from NATing clients
+# (`ipv4.ip-forward` is not a property). The firewall backend is global, so a drop-in turns
+# masquerading off while dnsmasq still provides DHCP and DNS for the AP.
+NM_NO_NAT_CONF=/etc/NetworkManager/conf.d/90-ktemata-no-nat.conf
+NM_NO_NAT_READY=false
 # --no-radio turns the radios off in the firmware, so the device is silent at boot and stays
 # silent: no AP, no client association, no Bluetooth. Unlike --no-hotspot (which only declines
 # to create an AP) this is a real off switch, and it is persistent. Mutually exclusive with
@@ -1265,12 +1270,50 @@ set_radio_off() {
 # so the machine can still be updated over Ethernet while it serves.
 #
 # Deliberately NOT done here:
-#   - no NAT to the internet. `ipv4.method shared` normally forwards clients to whatever uplink is
-#     up, so ipv4.ip-forward is pinned to 0: DHCP and DNS still come from NetworkManager's own
-#     dnsmasq, but clients reach this box and nothing beyond it. An appliance that silently NATs a
-#     room onto a hotel/office LAN is worse than one that does not.
+#   - no NAT to the internet. `ipv4.method shared` normally masquerades clients onto whatever
+#     uplink is up, and NetworkManager has no per-connection switch for it (`ipv4.ip-forward` is
+#     not a property). A conf.d drop-in sets firewall-backend=none: DHCP and DNS still come from
+#     NetworkManager's own dnsmasq, but no masquerade rule is added. An appliance that silently
+#     NATs a room onto a hotel/office LAN is worse than one that does not.
 #   - no rfkill unblock by default: if the radio is hard-blocked by a switch, the step reports it.
 #   - no hostname change: `kiwix.local` and the IP both work, and mDNS is already on the image.
+
+# One drop-in, shared by the --hotspot step and the desktop switcher. Idempotent; reloads
+# NetworkManager's configuration when it had to write the file.
+write_nm_no_nat() {
+    $NM_NO_NAT_READY && return 0
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s write %s (firewall-backend=none; no NAT for shared connections)\n' \
+            "$C_YELLOW" "$C_OFF" "$NM_NO_NAT_CONF"
+        NM_NO_NAT_READY=true
+        return 0
+    fi
+
+    if [ -r "$NM_NO_NAT_CONF" ] && grep -qx 'firewall-backend=none' "$NM_NO_NAT_CONF"; then
+        log_ok "$NM_NO_NAT_CONF already disables NAT for shared connections"
+        NM_NO_NAT_READY=true
+        if has_command nmcli; then
+            run nmcli general reload conf >/dev/null 2>&1 || true
+        fi
+        return 0
+    fi
+
+    install -d -m 0755 "$(dirname "$NM_NO_NAT_CONF")"
+    {
+        printf '[main]\n'
+        printf '# Ktemata: the library AP serves DHCP/DNS but must not NAT clients onto the uplink.\n'
+        printf 'firewall-backend=none\n'
+    } >"$NM_NO_NAT_CONF"
+    chmod 0644 "$NM_NO_NAT_CONF"
+    NM_NO_NAT_READY=true
+    log_ok "$NM_NO_NAT_CONF (no NAT for shared connections)"
+    if has_command nmcli; then
+        run nmcli general reload conf >/dev/null 2>&1 || \
+            run systemctl reload NetworkManager >/dev/null 2>&1 || \
+            log_warn "reload NetworkManager to apply the no-NAT setting"
+    fi
+}
+
 setup_hotspot() {
     $WITH_HOTSPOT || return 0
     log_stage "Library hotspot"
@@ -1280,11 +1323,23 @@ setup_hotspot() {
         return 0
     fi
 
-    # an existing AP profile must not be silently overwritten by re-running the installer
+    # Also on the "profile already exists" path below: an older profile may have been created
+    # while NAT was still on, and this drop-in is what keeps it off.
+    if has_command nmcli; then
+        write_nm_no_nat
+    fi
+
+    # An existing, working AP profile must not be overwritten by re-running the installer.
+    # A half-configured one (for example from the old ipv4.ip-forward failure) is repaired below.
     if has_command nmcli && nmcli -t -f NAME connection show 2>/dev/null | grep -qx "$HOTSPOT_SSID"; then
-        log_ok "NetworkManager profile '$HOTSPOT_SSID' already exists, leaving it alone"
-        verify_hotspot
-        return 0
+        local mode
+        mode=$(nmcli -g 802-11-wireless.mode connection show "$HOTSPOT_SSID" 2>/dev/null || true)
+        if [ "$mode" = ap ]; then
+            log_ok "NetworkManager profile '$HOTSPOT_SSID' already exists, leaving it alone"
+            verify_hotspot
+            return 0
+        fi
+        log_warn "profile '$HOTSPOT_SSID' exists but is not an access point; repairing it"
     fi
 
     if has_command nmcli; then
@@ -1306,17 +1361,20 @@ hotspot_nm_band() {
 
 install_hotspot_nm() {
     log_info "NetworkManager is present: creating a shared AP profile"
+    write_nm_no_nat
     $DRY_RUN || {
-        # 802-11-wireless mode ap = real access point (not ad-hoc), so phones connect normally
-        nmcli connection add type wifi ifname wlan0 con-name "$HOTSPOT_SSID" \
-            autoconnect yes ssid "$HOTSPOT_SSID" >/dev/null
+        # 802-11-wireless mode ap = real access point (not ad-hoc), so phones connect normally.
+        # Only add when missing: setup_hotspot routes a half-configured profile here for repair.
+        if ! nmcli -t -f NAME connection show 2>/dev/null | grep -Fxq "$HOTSPOT_SSID"; then
+            nmcli connection add type wifi ifname wlan0 con-name "$HOTSPOT_SSID" \
+                autoconnect yes ssid "$HOTSPOT_SSID" >/dev/null
+        fi
         # band is only set when pinned: an empty value is an nmcli error, and leaving it unset
         # lets the driver pick, which is what "auto" should mean
         local nm_args=(
             802-11-wireless.mode ap
             ipv4.method shared
             ipv4.addresses "$HOTSPOT_ADDR/$HOTSPOT_CIDR"
-            ipv4.ip-forward 0
             ipv6.method disabled
         )
         local band; band=$(hotspot_nm_band)
@@ -1329,14 +1387,14 @@ install_hotspot_nm() {
         else
             log_warn "no password: the library is readable by anyone in radio range"
         fi
-        log_ok "profile '$HOTSPOT_SSID' created on wlan0 ($HOTSPOT_ADDR/$HOTSPOT_CIDR)"
+        log_ok "profile '$HOTSPOT_SSID' configured on wlan0 ($HOTSPOT_ADDR/$HOTSPOT_CIDR)"
     }
     $DRY_RUN && printf '%s  [dry-run]%s nmcli connection add ... ssid %s\n' \
         "$C_YELLOW" "$C_OFF" "$HOTSPOT_SSID"
 
     # ipv4.method shared gives DHCP + DNS via NetworkManager's own dnsmasq instance, so no
-    # separate dnsmasq/hostapd unit is needed; ip-forward=0 keeps it from routing anyone onwards.
-    # Bring it up now rather than at the next boot.
+    # separate dnsmasq/hostapd unit is needed. The no-NAT drop-in keeps it from masquerading
+    # clients onto the uplink. Bring it up now rather than at the next boot.
     run nmcli connection up "$HOTSPOT_SSID" || log_warn "could not bring the AP up yet"
 }
 
@@ -1451,6 +1509,9 @@ install_wifi_switch() {
         log_info "  use --hotspot for the hostapd path, or --no-radio for a silent device"
         return 0
     fi
+
+    # AP mode uses ipv4.method shared; the drop-in keeps it from NATing clients onto the uplink.
+    write_nm_no_nat
 
     local dir src
     dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

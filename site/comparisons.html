@@ -80,8 +80,9 @@
 <p>
   The r5 row below is the shipped hotspot configuration: <code>post-install.sh --hotspot</code>
   builds a NetworkManager access point (or <code>hostapd</code> + <code>dnsmasq</code>) at
-  <code>10.10.10.1:8080</code>, with <code>ipv4.ip-forward&nbsp;0</code> so it serves this box and
-  never becomes a router on someone else's LAN. It adds an estimated 0.4&nbsp;W.
+  <code>10.10.10.1:8080</code>, with the NetworkManager firewall backend set to
+  <code>none</code> so it serves this box and never masquerades clients onto someone else's LAN.
+  It adds an estimated 0.4&nbsp;W.
 </p>
 
 <figure>
