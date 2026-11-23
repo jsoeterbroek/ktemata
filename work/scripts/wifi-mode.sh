@@ -129,6 +129,18 @@ is_ap_profile() {
     [ "$(nmcli -g 802-11-wireless.mode connection show "$1" 2>/dev/null || true)" = ap ]
 }
 
+# Every AP profile, whatever its connection.id, must stop autoconnecting when the user asks for
+# client mode. Disabling only AP_NAME is not enough: ktemata-ap or an older Ktemata profile can
+# still win the next autoconnect or `device connect`.
+disable_ap_autoconnect() {
+    local name
+    while IFS= read -r name; do
+        [ -n "$name" ] || continue
+        is_ap_profile "$name" || continue
+        nmcli connection modify "$name" connection.autoconnect no >/dev/null || true
+    done < <(nmcli -t -f NAME connection show 2>/dev/null)
+}
+
 radio_state() {
     nmcli radio wifi 2>/dev/null || printf 'unknown\n'
 }
@@ -278,29 +290,23 @@ ensure_ap_profile() {
 
 mode_client() {
     nmcli radio wifi on >/dev/null
-    # The AP must not win the next autoconnect race after someone chose client mode. The active
-    # AP may have a different connection.id than AP_NAME, so handle both.
+    disable_ap_autoconnect
+
+    # Bring down whichever AP is actually running, even under another connection.id.
     local active_ap
     active_ap=$(active_ap_profile || true)
-    if [ -n "$active_ap" ]; then
-        nmcli connection modify "$active_ap" connection.autoconnect no >/dev/null || true
-    fi
-    if ap_profile_exists && [ "$AP_PROFILE" != "$active_ap" ]; then
-        nmcli connection modify "$AP_PROFILE" connection.autoconnect no >/dev/null || true
-    fi
     if [ -n "$active_ap" ]; then
         nmcli connection down "$active_ap" >/dev/null || true
     fi
 
-    local found=false name
+    local clients=() name
     while IFS= read -r name; do
         [ -n "$name" ] || continue
         is_ap_profile "$name" && continue
-        found=true
-        break
+        clients+=("$name")
     done < <(nmcli -t -f NAME,TYPE connection show 2>/dev/null |
              awk -F: '$2 ~ /wireless/ { print $1 }')
-    if ! $found; then
+    if [ ${#clients[@]} -eq 0 ]; then
         printf 'Client mode: radio is on but no saved network exists.\n' >&2
         printf 'Join one in the desktop network menu first (or nmcli device wifi connect SSID).\n' >&2
         return 0
@@ -310,6 +316,18 @@ mode_client() {
     if ! out=$(nmcli --wait 30 device connect "$WIFI_IF" 2>&1); then
         printf 'Client mode: radio is on, no network connected (%s).\n' "$out" >&2
         return 0
+    fi
+
+    # `device connect` can still pick an AP profile (the local AP is always "available"). Do not
+    # end in AP mode: take it down and try the saved client profiles explicitly.
+    active_ap=$(active_ap_profile || true)
+    if [ -n "$active_ap" ]; then
+        nmcli connection down "$active_ap" >/dev/null || true
+        for name in "${clients[@]}"; do
+            if nmcli --wait 30 connection up "$name" >/dev/null 2>&1; then
+                break
+            fi
+        done
     fi
     printf '%s✓%s client mode: %s\n' "$C_GREEN" "$C_OFF" "$(status_text)"
 }

@@ -189,6 +189,10 @@ How it is put together:
   `802-11-wireless.mode` on the active connection, so a profile called `ktemata-ap` is reported
   as an access point even when `AP_NAME=ktemata`. Set `AP_NAME=ktemata-ap` to keep that profile
   name; otherwise the next `wifi-mode ap` adopts and renames it to `AP_NAME`.
+- **Client mode cannot fall back into AP mode.** It disables autoconnect on every AP-mode
+  profile, brings down the active AP, then joins a saved client profile. If NetworkManager's
+  `device connect` picks the local AP anyway, the helper takes it down and activates a client
+  profile explicitly. With no saved client network it leaves the radio on and the AP down.
 - **No password prompt.** `NetworkManager` connection changes are root operations on a stock
   image, so the installer writes `/etc/sudoers.d/ktemata-wifi`, which allows the desktop account
   to run exactly `wifi-mode client`, `wifi-mode ap` and `wifi-mode off` without a password. The
@@ -806,7 +810,9 @@ available in the container.
 An active AP named `ktemata-ap` with `AP_NAME=ktemata` was also exercised: `status` reported the access point
 (from `802-11-wireless.mode`) rather than a client, `client` disabled and brought down `ktemata-ap`, and the
 next `ap` adopted and renamed it to `ktemata`. Changing `AP_PASSWORD` on an already-active profile wrote the
-new PSK and reactivated the AP instead of leaving the old password in the running hostapd.
+new PSK and reactivated the AP instead of leaving the old password in the running hostapd. With two AP
+profiles (`Ktemata`, `ktemata-ap`) both autoconnecting, `client` set both to `autoconnect no`; with a fake
+`device connect` forced to pick the AP, it was taken down and the saved `HomeNet` profile was activated.
 
 **On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
 holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no
