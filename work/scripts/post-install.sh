@@ -96,6 +96,14 @@ HOTSPOT_PASS=${HOTSPOT_PASS:-}          # empty: open network (no password)
 HOTSPOT_ADDR=${HOTSPOT_ADDR:-10.10.10.1}
 HOTSPOT_CIDR=${HOTSPOT_CIDR:-24}
 HOTSPOT_BAND=${HOTSPOT_BAND:-auto}      # auto (2.4+5 GHz) | 2.4 | 5
+# The desktop switcher between client, AP and radio-off. It is a root-owned helper plus a
+# one-line sudoers rule, because NetworkManager connection changes need root on a stock image
+# and an appliance should not ask for a password. --no-wifi-switch skips it.
+WITH_WIFI_SWITCH=true
+WIFI_SWITCH_BIN=/usr/local/bin/wifi-mode
+WIFI_SWITCH_CONF=/etc/ktemata/wifi-mode.conf
+WIFI_SWITCH_SUDOERS=/etc/sudoers.d/ktemata-wifi
+WIFI_SWITCH_STATE="not installed"
 # --no-radio turns the radios off in the firmware, so the device is silent at boot and stays
 # silent: no AP, no client association, no Bluetooth. Unlike --no-hotspot (which only declines
 # to create an AP) this is a real off switch, and it is persistent. Mutually exclusive with
@@ -175,6 +183,9 @@ ${C_BOLD}OPTIONS${C_OFF}
       --hotspot-open     Explicitly leave the network open, even if a password was set.
       --hotspot-band B   auto (default) | 2.4 | 5. Only 2.4 GHz reaches older e-readers.
       --hotspot-addr A   AP address (default: 10.10.10.1, matching the Prepper Disk's habit).
+      --no-wifi-switch   Do not install the desktop Wi-Fi mode switcher (client / access
+                         point / radio off). Skipped automatically with --no-radio, and when
+                         NetworkManager is absent.
       --autologin-user N Account to log in automatically (default: ktemata).
   -h, --help             This message.
   -V, --version          Print the version.
@@ -197,6 +208,7 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   9. optionally enables UPS I2C on Pi 5 GPIO12/13 (--ups-i2c-alt-pins)
  10. installs the Waveshare Brightness app unless --no-brightness / --no-gui
  11. optionally sets display rotation, autologin, kiosk, RTC charging and networking
+     (including the desktop Wi-Fi mode switcher unless --no-wifi-switch)
  12. optionally downloads a sample ZIM (--sample)
  13. verifies the server answers (or the NOMAD containers with --library nomad)
 
@@ -866,6 +878,12 @@ install_packages() {
     if [ -n "$ROTATE" ] && $WITH_GUI; then
         pkgs+=(wlr-randr)
     fi
+    # the Wi-Fi switcher's chooser is zenity; the CLI works without it
+    if $WITH_GUI && $WITH_WIFI_SWITCH && ! $WITH_NO_RADIO; then
+        if apt-cache show zenity >/dev/null 2>&1; then
+            pkgs+=(zenity)
+        fi
+    fi
     # The kiosk needs a browser. Debian ships `chromium`; Ubuntu only has `chromium-browser`,
     # which is a snap transition, and Raspberry Pi OS has `chromium`. Ask apt which exists
     # instead of guessing, and never let this fail the install.
@@ -1406,6 +1424,127 @@ verify_hotspot() {
             log_warn "library did not answer on http://$HOTSPOT_ADDR:$SERVICE_PORT/ (no ZIM yet?)"
         fi
     fi
+}
+
+# Desktop switch between client, access point and radio off, through NetworkManager.
+#
+# The helper is root-owned and the desktop entry runs it as the user. NetworkManager connection
+# changes need root on a stock Pi OS / Ubuntu image, and an appliance should not show a password
+# prompt, so a one-line sudoers rule allows exactly the three mode words. The AP profile itself
+# is created lazily by the helper from the values written here, which means the switch also works
+# on an image installed without --hotspot.
+install_wifi_switch() {
+    log_stage "Wi-Fi mode switch"
+    if ! $WITH_WIFI_SWITCH; then
+        WIFI_SWITCH_STATE="skipped"
+        log_info "skipped (--no-wifi-switch)"
+        return 0
+    fi
+    if $WITH_NO_RADIO; then
+        WIFI_SWITCH_STATE="skipped (radio off)"
+        log_info "skipped (--no-radio: the radio is disabled in firmware)"
+        return 0
+    fi
+    if ! $DRY_RUN && ! has_command nmcli; then
+        WIFI_SWITCH_STATE="skipped (no NetworkManager)"
+        log_warn "NetworkManager (nmcli) not found: no Wi-Fi switcher"
+        log_info "  use --hotspot for the hostapd path, or --no-radio for a silent device"
+        return 0
+    fi
+
+    local dir src
+    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    src="$dir/wifi-mode.sh"
+    [ -f "$src" ] || die "cannot find wifi-mode.sh next to this script"
+    run install -m 0755 -o root -g root "$src" "$WIFI_SWITCH_BIN"
+    WIFI_SWITCH_STATE="CLI installed"
+    log_ok "$WIFI_SWITCH_BIN"
+
+    # Values for the AP profile the helper creates on first use. %q keeps a passphrase with
+    # spaces or quotes sourceable; the file is root-only because it holds that passphrase.
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s write %s and %s\n' \
+            "$C_YELLOW" "$C_OFF" "$WIFI_SWITCH_CONF" "$WIFI_SWITCH_SUDOERS"
+    else
+        install -d -m 0755 -o root -g root /etc/ktemata
+        (
+            umask 077
+            {
+                printf '# Written by post-install.sh: NetworkManager values for %s\n' "$WIFI_SWITCH_BIN"
+                printf '# AP_PASS is a WPA2 passphrase; empty means an open network.\n'
+                printf 'AP_PROFILE=%q\n' "$HOTSPOT_SSID"
+                printf 'AP_ADDR=%q\n' "$HOTSPOT_ADDR"
+                printf 'AP_CIDR=%q\n' "$HOTSPOT_CIDR"
+                printf 'AP_BAND=%q\n' "$HOTSPOT_BAND"
+                printf 'AP_PASS=%q\n' "$HOTSPOT_PASS"
+            } >"$WIFI_SWITCH_CONF"
+        )
+        chown root:root "$WIFI_SWITCH_CONF"
+        chmod 0600 "$WIFI_SWITCH_CONF"
+        log_ok "$WIFI_SWITCH_CONF (mode 0600)"
+        [ -n "$HOTSPOT_PASS" ] || \
+            log_warn "no --hotspot-pass: AP mode will be an open network"
+    fi
+
+    # The desktop entry and the passwordless rule belong to the account whose session owns
+    # the screen, same rule as the kiosk and the library icon.
+    local user=${KIOSK_USER:-$AUTOLOGIN_USER}
+    if ! id -u "$user" >/dev/null 2>&1; then
+        log_warn "no desktop user '$user': installed the CLI, not the desktop entry"
+        return 0
+    fi
+    local home group
+    home=$(getent passwd "$user" | cut -d: -f6)
+    group=$(id -gn "$user")
+    if [ ! -d "$home" ]; then
+        log_warn "home directory not found for $user: no desktop entry"
+        return 0
+    fi
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s allow %s to run %s client|ap|off without a password\n' \
+            "$C_YELLOW" "$C_OFF" "$user" "$WIFI_SWITCH_BIN"
+        if $WITH_GUI; then
+            printf '%s  [dry-run]%s write %s/Desktop/ktemata-wifi.desktop\n' \
+                "$C_YELLOW" "$C_OFF" "$home"
+        fi
+        return 0
+    fi
+
+    local tmp
+    tmp=$(mktemp)
+    {
+        printf '# Ktemata Wi-Fi mode switch (post-install.sh)\n'
+        printf '# The helper is root-owned and accepts only client, ap and off.\n'
+        printf '%s ALL=(root) NOPASSWD: %s client, %s ap, %s off\n' \
+            "$user" "$WIFI_SWITCH_BIN" "$WIFI_SWITCH_BIN" "$WIFI_SWITCH_BIN"
+    } >"$tmp"
+    if has_command visudo && visudo -cf "$tmp" >/dev/null 2>&1; then
+        install -m 0440 -o root -g root "$tmp" "$WIFI_SWITCH_SUDOERS"
+        WIFI_SWITCH_STATE="installed"
+        log_ok "$WIFI_SWITCH_SUDOERS"
+    else
+        log_warn "could not install the sudoers rule; use sudo $WIFI_SWITCH_BIN"
+    fi
+    rm -f "$tmp"
+
+    $WITH_GUI || { log_info "no desktop entry (--no-gui)"; return 0; }
+
+    local entry="$home/Desktop/ktemata-wifi.desktop"
+    install -d -m 0755 -o "$user" -g "$group" "$home/Desktop"
+    cat >"$entry" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Ktemata Wi-Fi
+Comment=Switch between client, access point and radio off
+Exec=$WIFI_SWITCH_BIN menu
+Icon=network-wireless
+Terminal=false
+Categories=Network;Settings;
+EOF
+    chown "$user":"$group" "$entry"
+    chmod 0755 "$entry"
+    WIFI_SWITCH_STATE="installed (desktop + sudoers)"
+    log_ok "$entry"
 }
 
 install_kiosk() {
@@ -1963,6 +2102,8 @@ summary() {
     fi
     if $WITH_NO_RADIO; then
         printf '  radios    %s\n' "$RADIO_STATE"
+    elif $WITH_WIFI_SWITCH; then
+        printf '  wifi      %s (%s)\n' "$WIFI_SWITCH_BIN" "$WIFI_SWITCH_STATE"
     fi
     if $WITH_HWTEST; then
         printf '  hardware  %d checks, %d failed, %d warning(s)\n' "$HW_CHECKS" "$HW_FAILS" "$HW_WARNS"
@@ -2018,6 +2159,7 @@ main() {
             --hotspot-open)  HOTSPOT_PASS="" ;;
             --hotspot-band)  HOTSPOT_BAND=${2:?--hotspot-band takes auto, 2.4 or 5}; shift ;;
             --hotspot-addr)  HOTSPOT_ADDR=${2:?--hotspot-addr needs an address}; shift ;;
+            --no-wifi-switch) WITH_WIFI_SWITCH=false ;;
             --autologin-user) AUTOLOGIN_USER=${2:?--autologin-user needs a name}; shift ;;
             --kiosk-user)    KIOSK_USER=${2:?--kiosk-user needs a name}; shift ;;
             --rotate)        ROTATE=${2:?--rotate needs normal|left|right|inverted}; shift ;;
@@ -2092,6 +2234,7 @@ main() {
     setup_rtc_charge
     set_radio_off
     setup_hotspot
+    install_wifi_switch
     install_kiosk
     $WITH_SAMPLE && download_sample
     verify

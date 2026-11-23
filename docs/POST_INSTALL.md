@@ -70,6 +70,54 @@ sudo nmcli connection delete Ktemata        # NetworkManager path
 sudo systemctl disable --now hostapd dnsmasq   # hostapd path
 ```
 
+## Wi-Fi mode switch
+
+The desktop gets a **Ktemata Wi-Fi** launcher that switches the radio between three modes at
+runtime — no reinstall and no reboot:
+
+| Mode | What it does |
+|---|---|
+| **Client** | Radio on, access point down. NetworkManager joins a saved client network. |
+| **Access point** | Radio on, brings up the `Ktemata` AP profile at `10.10.10.1/24`; DHCP/DNS come from NetworkManager. |
+| **Off** | `nmcli radio wifi off`. NetworkManager keeps the radio disabled across reboots. |
+
+From a terminal:
+
+```bash
+wifi-mode status      # one line: off / client - connected to X / access point
+wifi-mode client
+wifi-mode ap
+wifi-mode off
+wifi-mode menu        # same chooser the desktop entry opens
+```
+
+How it is put together:
+
+- **One root-owned helper**, `wifi-mode.sh` → `/usr/local/bin/wifi-mode`. It only drives
+  `nmcli`; there is no hostapd path, because the switch needs a live NetworkManager to change
+  modes without a reboot. On an image without NetworkManager the step is skipped.
+- **The AP profile is created on first use** from `/etc/ktemata/wifi-mode.conf`, which the
+  installer writes from `--hotspot-ssid`, `--hotspot-pass`, `--hotspot-addr` and
+  `--hotspot-band`. `--hotspot` still creates and starts the profile immediately; the switcher
+  is for changing your mind later. An existing profile is never overwritten.
+- **The file is mode 0600** because it carries the WPA2 passphrase. With no `--hotspot-pass` the
+  AP is open, and the switcher warns about that every time it starts it. If the file is missing,
+  AP mode refuses to create a profile instead of falling back to the built-in open defaults.
+- **No password prompt.** `NetworkManager` connection changes are root operations on a stock
+  image, so the installer writes `/etc/sudoers.d/ktemata-wifi`, which allows the desktop account
+  to run exactly `wifi-mode client`, `wifi-mode ap` and `wifi-mode off` without a password. The
+  helper is root-owned; the rule cannot run arbitrary arguments.
+- **The chooser is zenity** (`--no-gui` skips the desktop entry). Without zenity the command
+  prints a terminal menu, so it still works over ssh.
+- **Radio off is not firmware off.** It stops NetworkManager scanning and associating and it
+  survives a reboot, but it can be undone from the same launcher. The permanent switch remains
+  [`--no-radio`](#radio-silence---no-radio); with that flag the installer skips the switcher,
+  because a disabled radio cannot host an AP or join a network.
+
+```bash
+sudo ./work/scripts/post-install.sh --no-wifi-switch   # do not install it
+```
+
 ## Radio silence: `--no-radio`
 
 Deleting the AP is not the same as being silent. Without `--hotspot` the installer simply declines
@@ -136,6 +184,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 12c | **Enables the Pi RTC trickle charge** (`dtparam=rtc_bbat_vchg=3000000`) for the rechargeable ML-2020 | `--no-rtc-charge` (required with a non-rechargeable CR2032) |
 | 12b | **Optionally disables the Wi-Fi and Bluetooth radios in the firmware** — see below | `--no-radio` |
 | 13 | **Optionally serves the library over its own Wi-Fi AP** — see below | `--hotspot` |
+| 13b | **Install the desktop Wi-Fi mode switch** (`wifi-mode`: client / access point / off) — see above | `--no-wifi-switch`, `--no-gui`, `--no-radio`; skipped without NetworkManager |
 | 14 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 
 The wallpaper and the early boot splash are installed as a **one-shot unit at `graphical.target`**
@@ -555,6 +604,7 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
                        skip the Waveshare DSI overlay (for the r4 Touch Display 2)
     --no-brightness    skip the Waveshare Brightness app
     --no-gui           skip the desktop app
+    --no-wifi-switch   skip the desktop Wi-Fi mode switcher (client / AP / off)
     --no-update        skip the system upgrade
     --rotate WHAT      normal | left | right | inverted (or 0|90|180|270 clockwise)
     --kiosk            install the kiosk launcher + autostart
@@ -631,6 +681,16 @@ missing `chromium-sandbox`, which is unrelated).
 The kiosk path was tested the same way: `/usr/local/bin/kiwix-kiosk` installed, the autostart entry written
 with `Exec=/usr/local/bin/kiwix-kiosk --transform 270`, and the launcher's `--selftest` returning 0 against a
 live server and 1 without one.
+
+The Wi-Fi mode switch was exercised against a fake `nmcli` in Debian 13, both as root and as an
+unprivileged desktop user through the generated sudoers rule: `off` disables the radio, `ap` creates the
+profile with `mode ap`/`ipv4.method shared`/`ipv4.ip-forward 0` and activates it, `client` turns the AP's
+autoconnect off and joins a saved client profile, and `status` reports all three states. The sudoers file
+parses with `visudo -cf`, the three mode words run without a password, and an arbitrary argument is refused.
+`install_wifi_switch` was dry-run in Debian 13 with user `ktemata`: helper, mode-0600 config, sudoers rule and
+`~/Desktop/ktemata-wifi.desktop` were all reported. The zenity chooser was driven with a stub; the terminal
+chooser was driven over a pty against the fake `nmcli`. A real radio and NetworkManager were not available in
+the containers.
 
 **On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
 holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no
