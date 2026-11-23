@@ -207,7 +207,7 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | **Throttle flags** | `vcgencmd get_throttled` = `0x0` | **FAIL only on undervoltage** (bits 0/16) — a supply fault. Thermal/clock bits are WARN |
 | **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the connector (`DSI-1`) and active mode (`1024x600` for the r5 Waveshare, `720x1280` for the TD2) |
 | **I2C devices** | names the UPS Module 3S INA219 at `0x41` | Unknown addresses are only **counted**, not listed. Buses that answer for nearly every address are **ignored** and named |
-| **UPS gauge** | INA219 at `0x41` on bus `1`, or bus `2` with `--ups-i2c-alt-pins` | FAIL when the selected bus exists but the gauge does not answer; SKIP when tools or the selected bus are unavailable |
+| **UPS gauge** | INA219 at `0x41` on bus `1`, a unique auto-detected bus, or bus `2` with `--ups-i2c-alt-pins` | FAIL when no gauge answers or several buses are ambiguous; SKIP when tools or an explicitly required bus are unavailable |
 | **Pi RTC** | `/dev/rtc0` with a sane epoch | FAIL if the cell is flat/unset; the install step enables `dtparam=rtc_bbat_vchg=3000000` for the ML-2020 |
 | **Storage** | ≥ 2 GB free on `/`, and the active ZIM library not empty | `$ZIM_DIR` with `--library host`, `${NOMAD_STORAGE_PATH}/zim` with `nomad` |
 | **Network** | any interface `up` | SKIP when none — normal, Wi-Fi/LAN are off |
@@ -487,8 +487,9 @@ It serves through a **library XML**, not a glob:
 
 ```ini
 ConditionPathExists=/srv/kiwix/zim
+StateDirectory=kiwix
 ExecStartPre=/usr/local/bin/kiwix-library
-ExecStart=/bin/sh -c 'if [ -f "$ZIM_DIR/library.xml" ]; then exec kiwix-serve --library …; fi; exit 0'
+ExecStart=/bin/sh -c 'if [ -f "/var/lib/kiwix/library.xml" ]; then exec kiwix-serve --library …; fi; exit 0'
 ```
 
 Why: **systemd does not run `ExecStart` through a shell**, so a bare `/srv/kiwix/zim/*.zim` arrives at
@@ -500,7 +501,8 @@ Unable to add the ZIM file '/srv/kiwix/zim/*.zim' to the internal library.
 
 `--library` takes an XML listing instead. `kiwix-library` (installed to `/usr/local/bin`) rebuilds that XML
 from the `*.zim` files on every start, so dropping in an archive and restarting is enough. `kiwix-manage`
-does the listing.
+does the listing. The XML is written to `/var/lib/kiwix/library.xml`; systemd's `StateDirectory=kiwix`
+keeps that path writable while `/srv/kiwix/zim` remains read-only to the service.
 
 The condition is on the **directory**, not the XML: a `ConditionPathExists` on the XML would also suppress
 `ExecStartPre`, so the library could never be created. With no archives at all the start command prints

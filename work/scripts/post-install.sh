@@ -31,6 +31,8 @@ ZIM_DIR=${ZIM_DIR:-/srv/kiwix/zim}
 SERVICE_PORT=${SERVICE_PORT:-8080}
 SERVICE_NAME=kiwix
 SERVICE_USER=${SERVICE_USER:-kiwix}
+STATE_DIR=/var/lib/$SERVICE_NAME
+LIBRARY_XML=$STATE_DIR/library.xml
 # Which library front end: "host" installs kiwix-serve here; "nomad" leaves the library to
 # the Project NOMAD stack (admin on :8080, its Kiwix container on :8090, ZIMs under
 # $NOMAD_STORAGE_PATH/zim). The two cannot share :8080, so choose one.
@@ -467,7 +469,7 @@ i2c_tool() {
     return 127
 }
 
-# Scan once and cache: hw_ups needs the same data, and i2cdetect over every bus is slow.
+# Scan once and cache: the UPS check uses the same data, and i2cdetect over every bus is slow.
 # Sets I2C_BUSES, I2C_FOUND ("bus:addr ...") and I2C_ALL (unique lowercase addresses).
 I2C_SCANNED=false
 I2C_BUSES=""
@@ -556,28 +558,49 @@ hw_i2c_bus() {
 }
 
 hw_ups() {
-    local bus=1
-    $UPS_I2C_ALT_PINS && bus=2
-
     i2c_tool i2cdetect -l >/dev/null 2>&1 \
         || { hw_skip "UPS Module 3S gauge (i2c-tools not installed)"; return; }
     i2c_scan || { hw_skip "UPS Module 3S gauge (no I2C bus)"; return; }
-    if ! printf '%s\n' $I2C_BUSES | grep -qx "i2c-$bus"; then
-        hw_skip "UPS Module 3S gauge (i2c-$bus unavailable)"
-        $UPS_I2C_ALT_PINS && hw_note "the GPIO12/13 overlay requires a reboot before i2c-2 appears"
+
+    if $UPS_I2C_ALT_PINS; then
+        if ! printf '%s\n' $I2C_BUSES | grep -qx "i2c-2"; then
+            hw_skip "UPS Module 3S gauge (i2c-2 unavailable)"
+            hw_note "the GPIO12/13 overlay requires a reboot before i2c-2 appears"
+            return
+        fi
+        if printf '%s\n' $I2C_FOUND | grep -qx "i2c-2:41"; then
+            hw_pass "UPS Module 3S INA219 answering at 0x41 on i2c-2"
+        else
+            hw_fail "UPS Module 3S INA219 not detected at 0x41 on i2c-2"
+            hw_note "check UPS SDA/SCL/GND on physical pins 32/33 and the shared ground"
+        fi
         return
     fi
 
-    if printf '%s\n' $I2C_FOUND | grep -qx "i2c-$bus:41"; then
-        hw_pass "UPS Module 3S INA219 answering at 0x41 on i2c-$bus"
-    else
-        hw_fail "UPS Module 3S INA219 not detected at 0x41 on i2c-$bus"
-        if printf '%s\n' $I2C_ALL | grep -qx 41; then
-            hw_note "0x41 answered on another bus; check the selected bus against the wiring"
-        else
-            hw_note "check UPS SDA/SCL/GND and enable the matching Pi I2C bus"
-        fi
+    # Default wiring uses bus 1, but board revisions and other overlays can expose a different
+    # bus number. A single 0x41 elsewhere is still the UPS; bogus adapters were filtered out.
+    if printf '%s\n' $I2C_FOUND | grep -qx "i2c-1:41"; then
+        hw_pass "UPS Module 3S INA219 answering at 0x41 on i2c-1"
+        return
     fi
+
+    local matches bus
+    matches=$(printf '%s\n' $I2C_FOUND | grep ':41$' || true)
+    case $(printf '%s\n' $matches | grep -c . || true) in
+        0)
+            hw_fail "UPS Module 3S INA219 not detected at 0x41 on any available I2C bus"
+            hw_note "check UPS SDA/SCL/GND and enable the matching Pi I2C bus"
+            ;;
+        1)
+            bus=${matches%:41}
+            hw_pass "UPS Module 3S INA219 answering at 0x41 on $bus (auto-detected)"
+            hw_note "for the tray, use: ktemata-ups-tray --i2c-bus ${bus#i2c-} --once"
+            ;;
+        *)
+            hw_fail "UPS Module 3S INA219 is ambiguous: $matches"
+            hw_note "use --ups-i2c-alt-pins only for the GPIO12/13 wiring on bus 2"
+            ;;
+    esac
 }
 
 hw_rtc() {
@@ -1498,13 +1521,15 @@ grant_library_access() {
     run_sh "chgrp -R '$SERVICE_USER' '$ZIM_DIR' && chmod -R g+rX '$ZIM_DIR'"
 }
 
-# Build $ZIM_DIR/library.xml from the archives present, using kiwix-manage (part of
-# kiwix-tools). Called once here and on every service start via ExecStartPre, so adding a ZIM
-# and restarting is all that is needed.
+# Build $LIBRARY_XML from the archives present, using kiwix-manage (part of kiwix-tools).
+# The XML lives in the service's writable state directory, not in the read-only ZIM directory.
+# Called once here and on every service start via ExecStartPre, so adding a ZIM and restarting
+# is all that is needed.
 rebuild_library() {
-    local xml="$ZIM_DIR/library.xml" z tmp n=0
+    local xml="$LIBRARY_XML" z tmp n=0
     $DRY_RUN && { printf '%s  [dry-run]%s build %s\n' "$C_YELLOW" "$C_OFF" "$xml"; return 0; }
 
+    install -d -m 0755 -o "$SERVICE_USER" -g "$SERVICE_USER" "$STATE_DIR"
     for z in "$ZIM_DIR"/*.zim; do [ -e "$z" ] && n=$((n + 1)); done
     if [ "$n" -eq 0 ]; then
         log_info "no ZIM files yet; the service waits for $xml"
@@ -1552,14 +1577,16 @@ ConditionPathExists=$ZIM_DIR
 Type=simple
 User=$SERVICE_USER
 Group=$SERVICE_USER
-# The XML lists the archives; regenerate it on every start so dropping in a new ZIM and
-# restarting is enough. Passed as argv (no shell), so quoting is simple.
+# StateDirectory gives ExecStartPre a writable /var/lib/kiwix while the ZIMs stay read-only.
+StateDirectory=$SERVICE_NAME
+StateDirectoryMode=0755
+# Regenerate the XML on every start so dropping in a new ZIM and restarting is enough.
 ExecStartPre=/usr/local/bin/kiwix-library
 # No ZIMs -> the XML is absent -> would exit 1 and restart. sh -c lets us exit 0 instead and
 # wait for a restart, so an idle card does not produce a restart loop.
 # All IPv4 interfaces includes both loopback and the hotspot/LAN address. Local launchers use
 # 127.0.0.1 explicitly: "localhost" may resolve to ::1, which this IPv4 listener does not serve.
-ExecStart=/bin/sh -c 'if [ -f "$ZIM_DIR/library.xml" ]; then exec /usr/bin/kiwix-serve --address=0.0.0.0 --port=$SERVICE_PORT --library "$ZIM_DIR/library.xml"; fi; echo "no ZIM files yet in $ZIM_DIR"; exit 0'
+ExecStart=/bin/sh -c 'if [ -f "$LIBRARY_XML" ]; then exec /usr/bin/kiwix-serve --address=0.0.0.0 --port=$SERVICE_PORT --library "$LIBRARY_XML"; fi; echo "no ZIM files yet in $ZIM_DIR"; exit 0'
 Restart=on-failure
 RestartSec=3
 # the library is read-only; keep the service boxed in
@@ -1583,7 +1610,7 @@ EOF
 # Rebuild the kiwix library XML from the ZIM files in the directory.
 set -e
 dir=$ZIM_DIR
-xml=\$dir/library.xml
+xml=$LIBRARY_XML
 set --
 for z in "\$dir"/*.zim; do
     [ -e "\$z" ] && set -- "\$@" "\$z"
