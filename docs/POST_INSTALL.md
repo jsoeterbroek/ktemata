@@ -212,6 +212,22 @@ How it is put together:
 sudo ./work/scripts/post-install.sh --no-wifi-switch   # do not install it
 ```
 
+## Desktop icons
+
+Both Ktemata icons are executable `.desktop` entries. PCManFM/libfm still shows
+**Execute / Execute in Terminal / Open** unless `quick_exec=1` is set, so the installer writes it
+under `[config]` in the desktop user's `~/.config/libfm/libfm.conf`. Other keys are preserved, and
+the change is idempotent.
+
+Apply it to a running session by restarting the desktop manager, or simply log out and back in:
+
+```bash
+pcmanfm --desktop-off
+pcmanfm --desktop &
+```
+
+On older Pi OS releases the same key may live in `~/.config/pcmanfm/LXDE-pi/pcmanfm.conf`.
+
 ## Radio silence: `--no-radio`
 
 Deleting the AP is not the same as being silent. Without `--hotspot` the installer simply declines
@@ -806,6 +822,10 @@ the profile, editing the file changed the SSID and PSK on the next `ap`, an empt
 existing profile with the matching SSID was adopted and renamed, and the installer preserved an existing
 `wifi.conf`, migrated a legacy file, and created a fresh one from the hotspot flags. A real radio was not
 available in the container.
+
+The libfm quick-exec writer was tested against empty, existing, and sectioned `libfm.conf` files: it creates
+`[config]`/`quick_exec=1`, replaces an existing `quick_exec=0`, inserts into an existing `[config]`, leaves
+other sections and keys alone, is idempotent, and changes nothing in a dry run.
 
 An active AP named `ktemata-ap` with `AP_NAME=ktemata` was also exercised: `status` reported the access point
 (from `802-11-wireless.mode`) rather than a client, `client` disabled and brought down `ktemata-ap`, and the

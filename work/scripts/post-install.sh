@@ -1611,6 +1611,7 @@ install_wifi_switch() {
         if $WITH_GUI; then
             printf '%s  [dry-run]%s write %s/Desktop/ktemata-wifi.desktop\n' \
                 "$C_YELLOW" "$C_OFF" "$home"
+            enable_desktop_quick_exec "$user" "$home"
         fi
         return 0
     fi
@@ -1648,6 +1649,7 @@ Categories=Network;Settings;
 EOF
     chown "$user":"$group" "$entry"
     chmod 0755 "$entry"
+    enable_desktop_quick_exec "$user" "$home"
     WIFI_SWITCH_STATE="installed (desktop + sudoers)"
     log_ok "$entry"
 }
@@ -1850,6 +1852,58 @@ EOF
     fi
 }
 
+# PCManFM/libfm shows "Execute / Execute in Terminal / Open" for an executable .desktop file
+# unless quick_exec is set. The Ktemata icons are meant to launch on a double-click.
+DESKTOP_QUICK_EXEC_USER=""
+enable_desktop_quick_exec() {
+    local user=$1 home=$2 group dir conf tmp
+    [ "$DESKTOP_QUICK_EXEC_USER" = "$user" ] && return 0
+    group=$(id -gn "$user")
+    dir="$home/.config/libfm"
+    conf="$dir/libfm.conf"
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s set quick_exec=1 in %s\n' \
+            "$C_YELLOW" "$C_OFF" "$conf"
+        DESKTOP_QUICK_EXEC_USER=$user
+        return 0
+    fi
+
+    [ -d "$home/.config" ] || \
+        install -d -m 0755 -o "$user" -g "$group" "$home/.config"
+    install -d -m 0755 -o "$user" -g "$group" "$dir"
+
+    if [ ! -e "$conf" ]; then
+        printf '[config]\nquick_exec=1\n' >"$conf"
+    else
+        tmp=$(mktemp "$dir/.libfm.conf.XXXXXX")
+        awk '
+            BEGIN { in_config=0; seen_config=0; done=0 }
+            /^\[/ {
+                if (in_config && !done) { print "quick_exec=1"; done=1 }
+                in_config = ($0 ~ /^\[config\][[:space:]]*$/)
+                if (in_config) seen_config=1
+                print
+                next
+            }
+            in_config && /^[[:space:]]*quick_exec[[:space:]]*=/ {
+                if (!done) { print "quick_exec=1"; done=1 }
+                next
+            }
+            { print }
+            END {
+                if (in_config && !done) print "quick_exec=1"
+                if (!seen_config) { print ""; print "[config]"; print "quick_exec=1" }
+            }
+        ' "$conf" >"$tmp"
+        mv "$tmp" "$conf"
+    fi
+    chown "$user":"$group" "$dir" "$conf"
+    chmod 0755 "$dir"
+    chmod 0644 "$conf"
+    DESKTOP_QUICK_EXEC_USER=$user
+    log_ok "$conf (quick_exec=1)"
+}
+
 install_library_icon() {
     if ! $WITH_GUI || ! $HOST_LIBRARY || ! $WITH_SERVICE; then
         log_stage "Library desktop icon"
@@ -1873,6 +1927,7 @@ install_library_icon() {
     if $DRY_RUN; then
         printf '%s  [dry-run]%s write %s (Firefox kiosk on 127.0.0.1:%s)\n' \
             "$C_YELLOW" "$C_OFF" "$entry" "$SERVICE_PORT"
+        enable_desktop_quick_exec "$user" "$home"
         return 0
     fi
 
@@ -1889,6 +1944,7 @@ Categories=Education;Network;
 EOF
     chown "$user":"$(id -gn "$user")" "$entry"
     chmod 0755 "$entry"
+    enable_desktop_quick_exec "$user" "$home"
     log_ok "$entry"
 }
 
