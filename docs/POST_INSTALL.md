@@ -124,7 +124,6 @@ hciconfig -a 2>/dev/null           # nothing
 | 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app, `i2c-tools` for the hardware report and `util-linux-extra` (provides `hwclock` on Debian 12+) | `--no-gui`; `--library nomad` skips the Kiwix packages |
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | `--library nomad` skips this |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service`; `--library nomad` skips it |
-| 6b | **Write and enable `ktemata-status-oled.service`**: UTC + library free space + the Wi-Fi state to the FireBeetle over USB serial — see below | `--no-oled`, `--oled-port DEV` |
 | 6c | **Write and enable `ktemata-artwork.service`**: wallpaper + boot splash at `graphical.target` — see [ARTWORK.md](ARTWORK.md) | `--no-artwork` |
 | 6d | **Add the Waveshare 7inch DSI LCD (C) overlay** (`vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1`) and ensure `vc4-kms-v3d` | `--no-display-overlay` (r4 / Touch Display 2) |
 | 6e | **Install Waveshare's Brightness app** and the Qt5 libs it needs | `--no-brightness`, `--no-gui` |
@@ -144,8 +143,8 @@ waits for the session, or apply it immediately from the desktop with
 [`work/scripts/desktop-artwork.sh`](../work/scripts/desktop-artwork.sh) — see [ARTWORK.md](ARTWORK.md).
 
 With **`--library nomad`** the Kiwix packages, `/srv/kiwix/zim`, `kiwix.service` and `--sample` are
-skipped: the library belongs to the Project NOMAD stack. The OLED sender and the hardware report
-follow the active library directory (`${NOMAD_STORAGE_PATH}/zim` in that mode). See
+skipped: the library belongs to the Project NOMAD stack. The hardware report follows the active
+library directory (`${NOMAD_STORAGE_PATH}/zim` in that mode). See
 [Host Kiwix or NOMAD](#host-kiwix-or-nomad).
 
 The update runs **first** so the later package install needs no second upgrade pass, and a fresh image does
@@ -205,11 +204,10 @@ sudo ./work/scripts/post-install.sh --strict        # exit 1 if any check failed
 | **SoC temperature** | 5 samples + actual CPU busy %; PASS < 80 °C | **WARN** ≥ 80/85 °C under load. **FAIL** if ≥ 85 °C while the CPU is idle — that is not the missing cooler |
 | **Throttle flags** | `vcgencmd get_throttled` = `0x0` | **FAIL only on undervoltage** (bits 0/16) — a supply fault. Thermal/clock bits are WARN |
 | **DSI display** | a `card*-DSI-*` connector with `status=connected` | reports the connector (`DSI-1`) and active mode (`1024x600` for the r5 Waveshare, `720x1280` for the TD2) |
-| **I2C devices** | one line naming the build's chips: `0x3c (OLED), 0x42 (UPS INA219), 0x68 (DS3231)` | unknown addresses are only **counted**, not listed; SKIP when nothing replies (the **FireBeetle** is the I2C master). Buses that answer for nearly every address are **ignored** and named |
-| **UPS gauge** | INA219 at 0x42 visible | SKIP on the Pi itself; the gauge is read by the ESP32 |
+| **I2C devices** | names the UPS Module 3S INA219 at `0x41` | Unknown addresses are only **counted**, not listed. Buses that answer for nearly every address are **ignored** and named |
+| **UPS gauge** | INA219 at `0x41` on bus `1`, or bus `2` with `--ups-i2c-alt-pins` | FAIL when the selected bus exists but the gauge does not answer; SKIP when tools or the selected bus are unavailable |
 | **Pi RTC** | `/dev/rtc0` with a sane epoch | FAIL if the cell is flat/unset; the install step enables `dtparam=rtc_bbat_vchg=3000000` for the ML-2020 |
 | **Storage** | ≥ 2 GB free on `/`, and the active ZIM library not empty | `$ZIM_DIR` with `--library host`, `${NOMAD_STORAGE_PATH}/zim` with `nomad` |
-| **Status OLED** | the FireBeetle's CH340 found on `/dev/serial/by-id` or `/dev/ttyUSB*` | SKIP when the board is not connected; `ttyACM*` is accepted too (a native-USB ESP32) |
 | **Network** | any interface `up` | SKIP when none — normal, Wi-Fi/LAN are off |
 | **Port** | 8080 listening | informational only. It is not listening on a fresh install because there is no `library.xml` until a ZIM exists |
 
@@ -217,19 +215,18 @@ Checks never block the install: findings are counted and reported. `--strict` fa
 (undervoltage), not on a **warning** (heat). `--hwtest-only` prints the report and exits without touching the
 system.
 
-### Heat is expected here
+### Thermal warnings
 
-There is **no cooler in this build** — the UPS HAT (B) occupies the Pi's component side, so neither the Active
-Cooler nor a heatsink fits. The Pi 5's soft limit is 80 °C and its hard limit 85 °C, so a bare
-board under load sits at 85 °C and throttles. That is the design, not a defect: the check reports it as a
-warning with the load average, and only treats **undervoltage** as a fault.
+The Pi 5's soft limit is 80 °C and its hard limit is 85 °C. Thermal and clock throttling are reported as
+warnings with actual CPU load; **undervoltage** is treated as a supply fault. A reading of at least 85 °C while
+idle is a failure because the heat is not explained by CPU load.
 
 The check measures **actual CPU busy time** (two `/proc/stat` samples), not load average, so it can tell the
 two causes apart:
 
 | Reading | Verdict |
 |---|---|
-| ≥ 85 °C, CPU busy | **WARN** — expected: no cooler, it throttles instead of failing |
+| ≥ 85 °C, CPU busy | **WARN** — load-related throttling; inspect cooling and airflow |
 | ≥ 85 °C, CPU idle | **FAIL** — a bare Pi 5 idles 55–70 °C, so the heat is not from load |
 | 80–85 °C, idle | **WARN** — warm for idle |
 | < 80 °C | **PASS** |
@@ -240,17 +237,16 @@ implied. If an idle board is hot with nothing running, look for clearance under 
 
 ### Power path
 
-The Pi **cannot detect the UPS HAT (B)**: its INA219 gauge is on the FireBeetle's I²C bus, so nothing on the
-Pi side reports it. Tell the script which supply you are using:
+The Pi reads the UPS Module 3S's INA219 directly at `0x41`. Select the supply used for undervoltage
+diagnostic hints:
 
 ```bash
-sudo ./work/scripts/post-install.sh --hwtest-only --power usbc   # default: bench, USB-C only
-sudo ./work/scripts/post-install.sh --hwtest-only --power hat    # in the case, on the HAT
+./work/scripts/post-install.sh --hwtest-only --power usbc   # default: direct USB-C supply
+./work/scripts/post-install.sh --hwtest-only --power ups3s  # UPS Module 3S 5 V output
 ```
 
-It only changes the wording of an undervoltage hint — USB-C points at the 27 W supply and cable, `hat` points
-at the pogo pins and the 8.4 V input. On the 27 W supply an undervoltage flag should never appear; if it does,
-suspect the cable or the connector rather than the PSU.
+This option only changes the hint wording. USB-C points at the 27 W supply and cable; `ups3s` points at the
+cells, output switch and 5 V Type-C lead. The UPS gauge itself is detected by the I²C check above.
 
 ## Display overlay and backlight
 
@@ -262,7 +258,7 @@ dtoverlay=vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1
 ```
 
 to `config.txt` (idempotent, one live line each, `.ktemata.bak` once), then reboots. `i2c1` is the
-Pi's touch bus; it is separate from the FireBeetle's I²C bus. The panel is 1024 × 600 and gets the
+Pi's touch bus; it is separate from the UPS Module 3S I²C bus. The panel is 1024 × 600 and gets the
 mode from the overlay; `--rotate` only writes `video=DSI-1:1024x600M@60,rotate=…` for the console.
 
 The Brightness step mirrors Waveshare's `install.sh`: it downloads
@@ -333,8 +329,8 @@ It cannot be folded into this script:
 - its own update and hotspot/firewall scripts are stubs (`update_nomad.sh` exits 1, the hotspot
   scripts are preview-only and refuse to write to `/`).
 
-`--library nomad` only changes what this script does: no host `kiwix-serve`, and the status OLED
-and the hardware storage check read `${NOMAD_STORAGE_PATH}/zim`.
+`--library nomad` only changes what this script does: no host `kiwix-serve`, and the hardware
+storage check reads `${NOMAD_STORAGE_PATH}/zim`.
 
 ## Camera auto-detect (opt-in)
 
@@ -470,8 +466,8 @@ Consequences:
 
 - The host `kiwix-serve` must not run together with NOMAD: both want **:8080**. `--library nomad`
   avoids the clash by not installing the host stack at all.
-- The two ZIM directories are different. `--library nomad` makes the hardware check and the
-  status OLED report `${NOMAD_STORAGE_PATH}/zim`, not `/srv/kiwix/zim`.
+- The two ZIM directories are different. `--library nomad` makes the hardware check read
+  `${NOMAD_STORAGE_PATH}/zim`, not `/srv/kiwix/zim`.
 - `--sample` is skipped in `nomad` mode; add content in the NOMAD Command Center.
 - The kiosk still opens `http://localhost:8080`, which is the NOMAD admin in this mode (the
   Information Library is a page inside it; the raw Kiwix UI is on :8090).
@@ -520,49 +516,6 @@ curl -sI http://localhost:8080/ | head -1
 
 Override the location with `--zim-dir` and the port with `--port`; both are also honoured in the unit.
 
-## Status OLED sender
-
-The FireBeetle 2 in `firmware/` drives the 1.3" panel and has no clock of its own unless a
-DS3231 is fitted, so the Pi pushes UTC and the free space of the library filesystem over the
-USB serial link. This step installs `work/scripts/status-oled.py` to `/usr/local/lib/ktemata/`
-and enables `ktemata-status-oled.service`. It runs as root only to open the serial device and
-writes nothing but the board's JSON.
-
-- Autodetects the CH340 on its stable `/dev/serial/by-id` name, else `ttyUSB*` / `ttyACM*`;
-  `--oled-port` pins the device (the CH340 has no serial number, so with several attached the
-  autodetect can only take the first).
-- Sends `{"cmd":"time","epoch":…}` at start and hourly, and again whenever the board announces
-  a boot. The epoch is **UTC**; the firmware applies `TIMEZONE` when it renders. Opening the
-  port can reset the board, so the first line waits two seconds, and an unconfirmed send is
-  repeated every 5 s until the board logs `time synced` (six tries, then hourly).
-- Sends `{"cmd":"storage","used_pct":…,"free_gb":…}` at start and every 60 s, computed with
-  `df` semantics (`f_bavail`) for `--zim-dir`.
-- Sends `{"cmd":"wifi","state":…,"ip":…}` at start, after a board boot and every 15 s, for the
-  OLED's `WIFI` screen. The IP is read from `ip -4 addr show wlan0`, with
-  `nmcli -g IP4.ADDRESS` as the fallback; it is sent only while the state is not `off`. The board has no radio, so this is the Pi's own state: `nmcli` on `wlan0` plus
-  the active profile's `802-11-wireless.mode` gives `ap` (the `--hotspot` profile) or `client`;
-  without NetworkManager an active `hostapd` means `ap` and `iw dev wlan0 link` means `client`;
-  a wireless interface that is up with neither tool is treated as `client`, otherwise `off`.
-  Read-only, so the service needs no extra rights. `iw` is installed with the OLED step.
-- Reads the board's telemetry back and logs alert and Wi-Fi transitions and rejected commands to
-  the journal. Lines that are not JSON (the ESP32 boot ROM) are ignored unless `-v` is given; the
-  firmware silences its own core logger so the stream stays JSON.
-- Retries when the board is absent or unplugged, so the unit is harmless on a box without one.
-  `--no-oled` skips the step entirely.
-
-```bash
-systemctl status ktemata-status-oled
-journalctl -u ktemata-status-oled -f
-sudo systemctl stop ktemata-status-oled
-sudo python3 work/scripts/status-oled.py --once -v   # one manual sync, echo the board's lines
-sudo systemctl start ktemata-status-oled
-```
-
-Opening a CH340 port can pulse the ESP32 reset line; expect the OLED to restart once per service
-start, after which the sender sees the boot banner and re-syncs. The sender holds an exclusive lock:
-running it by hand while the service runs is refused, because two readers on one tty split the
-board's replies (one of them then never sees `time synced`).
-
 ## Where the ZIMs come from
 
 <https://download.kiwix.org/zim/> — the same library the device itself carries (see [`../zim/zim.md`](../zim/zim.md)).
@@ -581,8 +534,6 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --port PORT        kiwix-serve port (default 8080)
     --library WHAT     host (default) or nomad
     --no-service       packages only
-    --no-oled          skip the status OLED sender
-    --oled-port DEV    FireBeetle serial device (default: autodetect)
     --no-artwork       skip the graphical.target wallpaper/splash unit
     --no-display-overlay
                        skip the Waveshare DSI overlay (for the r4 Touch Display 2)
@@ -595,7 +546,7 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --no-hwtest        skip the hardware checks
     --hwtest-only      run the hardware checks and exit
     --strict           non-zero exit when a hardware check fails (not on warnings)
-    --power usbc|hat   supply in use, for the diagnostic hints (default usbc)
+    --power usbc|ups3s supply in use, for undervoltage hints (default usbc)
     --no-camera-autodetect
                        set camera_auto_detect=0 in config.txt (opt-in)
     --no-rtc-charge    do not enable the ML-2020 RTC trickle charge
@@ -605,7 +556,7 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
 ```
 
 `ZIM_DIR`, `SERVICE_PORT`, `SERVICE_USER`, `LIBRARY`, `NOMAD_STORAGE_PATH`, `SAMPLE_ZIM`, `ROTATE`,
-`DISPLAY_MODE`, `NO_COLOR`, `OLED_PORT` and `CMDLINE_FILE` (test hook) can be set in the environment.
+`DISPLAY_MODE`, `NO_COLOR`, `POWER_SOURCE`, `UPS_I2C_ALT_PINS` and `CMDLINE_FILE` (test hook) can be set in the environment.
 
 ## Verified
 
@@ -622,7 +573,7 @@ The hardware report was tested inside the same container (correct SKIPs for a no
 Pi-only branches forced in a harness: a fake Pi model PASSes, a missing `vcgencmd` SKIPs, an unset RTC FAILs
 ("cell flat or unset"), a sane `/dev/rtc0` PASSes, an empty ZIM library FAILs and a populated one reports
 `1 archive(s), 4.5M`. Step order was confirmed from the `==>` lines: Platform → Hardware → System update →
-Packages → Library → Service → Status OLED → Rotation → Kiosk.
+Packages → Library → Service → Rotation → Kiosk.
 
 Autologin was tested against real-shaped configs in a container. **LightDM** (the Pi OS path): the commented
 `#autologin-user=` in a stock `[Seat:*]` block is enabled in place, `greeter-session` and
@@ -652,8 +603,8 @@ The artwork steps now live in `desktop-artwork.sh`; their verification is record
 [ARTWORK.md](ARTWORK.md), including the container runs that produced the PNG and TGA.
 
 `--library nomad` was exercised function by function: the package list drops `kiwix-tools` and the
-desktop app, the library and service steps report "skipped", the status OLED unit is written with
-`--storage ${NOMAD_STORAGE_PATH}/zim`, and the hardware storage check reads that directory. The
+desktop app, the library and service steps report "skipped", and the hardware storage check reads
+`${NOMAD_STORAGE_PATH}/zim`. The
 verify step reports the NOMAD container state instead of probing `kiwix-serve`. It has not been run
 against a live NOMAD install on the Pi.
 
@@ -664,15 +615,6 @@ missing `chromium-sandbox`, which is unrelated).
 The kiosk path was tested the same way: `/usr/local/bin/kiwix-kiosk` installed, the autostart entry written
 with `Exec=/usr/local/bin/kiwix-kiosk --transform 270`, and the launcher's `--selftest` returning 0 against a
 live server and 1 without one.
-
-The status OLED sender was exercised against a pseudo-terminal standing in for the board: nothing is written
-during the two-second reset window, the boot banner and an unconfirmed send both trigger a re-sync, a `bad
-json` reply triggers a retry, `time synced` stops the 5 s retries, non-JSON lines stay out of the journal
-unless `-v` is given, an unplug is logged and recovered from, and SIGTERM stops it with status 0. The generated
-unit was inspected with and without `--oled-port` and with a space in the ZIM path. The serial check reports
-SKIP on a host with no FireBeetle; on the Pi the board enumerates as
-`/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0`, which is the name the check and the sender prefer. The firmware change (silenced core
-logger) builds for the DFR1140 (`pio run`), but has not been flashed and rechecked on the board yet.
 
 **On real hardware** (Debian 13 trixie, Pi 5 Rev 1.1): model, serial, display `DSI-1 (720x1280)`, RTC
 holding a sane time, microSD storage and network all PASS; SoC 58–60 °C at idle with the 27 W supply and no

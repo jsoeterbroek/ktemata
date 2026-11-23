@@ -4,8 +4,8 @@
 # Installs Kiwix (the offline library reader the device is built around), sets up the ZIM
 # library directory, and enables kiwix-serve as a systemd service so the library is reachable
 # from a browser on the device or over USB tethering. --library nomad skips that stack and
-# leaves the library to Project NOMAD. Also enables the status OLED sender, which pushes UTC and
-# the library free space to the FireBeetle over USB serial.
+# leaves the library to Project NOMAD. Hardware checks target the Pi 5 and its directly attached
+# Waveshare UPS Module 3S on the simplified PCH.
 #
 #   sudo ./work/scripts/post-install.sh                 # update, install, enable the service
 #   sudo ./work/scripts/post-install.sh --sample        # also fetch one small ZIM to test with
@@ -37,7 +37,7 @@ SERVICE_USER=${SERVICE_USER:-kiwix}
 LIBRARY=${LIBRARY:-host}                    # host | nomad
 NOMAD_STORAGE_PATH=${NOMAD_STORAGE_PATH:-/opt/project-nomad/storage}
 HOST_LIBRARY=true                           # derived from LIBRARY after argument parsing
-LIBRARY_DIR=$ZIM_DIR                        # the path the status OLED reports
+LIBRARY_DIR=$ZIM_DIR                        # active library path, including NOMAD mode
 
 # a small, genuinely useful ZIM for the smoke test (4.4 MB, wikiHow-style civil defence)
 SAMPLE_ZIM=${SAMPLE_ZIM:-wikiciv_en_all_maxi_2025-11.zim}
@@ -52,12 +52,6 @@ ASSUME_YES=false
 WITH_SAMPLE=false
 WITH_SERVICE=true
 WITH_GUI=true
-# The status OLED (FireBeetle 2 + 1.3" panel) is part of the build: the Pi pushes UTC and the
-# library free space over USB serial. The sender waits for the board, so the unit is harmless
-# on a box without one; --no-oled skips it.
-WITH_OLED=true
-OLED_PORT=${OLED_PORT:-}       # empty: autodetect the CH340
-OLED_SERVICE=ktemata-status-oled
 # The wallpaper and early boot splash run once at graphical.target (runlevel 5), after the
 # desktop user's session bus exists. --no-artwork skips the unit; the script still works
 # when run by hand from the desktop.
@@ -80,9 +74,8 @@ WITH_HWTEST=true
 HWTEST_ONLY=false
 STRICT=false
 HW_FAILS=0          # faults (e.g. undervoltage): --strict fails on these
-HW_WARNS=0          # expected-or-degraded conditions (heat without a cooler): --strict ignores
+HW_WARNS=0          # degraded conditions (e.g. thermal throttling): --strict ignores
 HW_CHECKS=0
-HW_WARNS_NOTE=false
 KIOSK_USER=${KIOSK_USER:-${SUDO_USER:-}}   # whose session autostarts the kiosk
 # The account the kiosk runs as, and the one GDM logs in automatically. "ktemata" keeps the
 # desktop session separate from the admin user you ssh in as.
@@ -141,8 +134,6 @@ ${C_BOLD}OPTIONS${C_OFF}
                          library to Project NOMAD (admin :8080, Kiwix :8090, ZIMs in
                          $NOMAD_STORAGE_PATH/zim) and installs no host Kiwix.
       --no-service       Install the packages only; do not create/enable the service.
-      --no-oled          Do not install the status OLED sender (FireBeetle over USB serial).
-      --oled-port DEV    Serial device for the FireBeetle (default: autodetect the CH340).
       --no-artwork       Do not install the wallpaper/boot-splash unit at graphical.target.
       --no-display-overlay
                          Do not add the Waveshare 7inch DSI LCD (C) overlay to config.txt
@@ -160,7 +151,7 @@ ${C_BOLD}OPTIONS${C_OFF}
       --no-hwtest        Skip the hardware checks.
       --hwtest-only      Run the hardware checks and exit (implies --dry-run).
       --strict           Exit non-zero if a hardware check fails.
-      --power usbc|hat   How the Pi is powered, for the diagnostic hints (default: usbc).
+      --power usbc|ups3s How the Pi is powered, for undervoltage hints (default: usbc).
       --no-autologin     Do not enable GDM automatic login.
       --no-camera-autodetect
                          Set camera_auto_detect=0 in config.txt (no CSI camera in this
@@ -187,27 +178,23 @@ ${C_BOLD}OPTIONS${C_OFF}
   -V, --version          Print the version.
 
 ${C_BOLD}ENVIRONMENT${C_OFF}
-  ZIM_DIR, SERVICE_PORT, SERVICE_USER, LIBRARY, NOMAD_STORAGE_PATH, DISPLAY_MODE, NO_COLOR, OLED_PORT,
-  UPS_I2C_ALT_PINS,
+  ZIM_DIR, SERVICE_PORT, SERVICE_USER, LIBRARY, NOMAD_STORAGE_PATH, DISPLAY_MODE, NO_COLOR,
+  UPS_I2C_ALT_PINS, POWER_SOURCE,
   HOTSPOT_SSID, HOTSPOT_PASS, HOTSPOT_ADDR, HOTSPOT_CIDR, HOTSPOT_BAND
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
   1. checks it is running as root on a Debian derivative
-  2. runs the hardware checks (Pi model, display, I2C, UPS gauge, RTC, storage, network)
+  2. checks the Pi, display, UPS Module 3S gauge, RTC, storage and network
   3. updates the system (apt update + full-upgrade) unless --no-update
   4. installs kiwix-tools (+ kiwix desktop app unless --no-gui)   [--library host]
   5. creates the ZIM library directory                            [--library host]
   6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)  [--library host]
-  7. writes and enables $OLED_SERVICE.service: UTC + free space to the status OLED
-  8. writes and enables $ARTWORK_SERVICE.service: wallpaper + boot splash at graphical.target
-  8b. adds the Waveshare 7inch DSI LCD (C) overlay unless --no-display-overlay
-  8c. installs the Waveshare Brightness app unless --no-brightness / --no-gui
-  8d. optionally enables UPS I2C on Pi 5 GPIO12/13 (--ups-i2c-alt-pins)
-  9. optionally sets the display rotation (--rotate) and downloads a sample ZIM (--sample)
- 10. optionally installs the kiosk autostart (--kiosk)
- 11. enables GDM automatic login (unless --no-autologin)
- 12. optionally serves the library over its own Wi-Fi access point (--hotspot)
- 12b. enables the Pi RTC trickle charge for the ML-2020 unless --no-rtc-charge
+  7. writes and enables $ARTWORK_SERVICE.service: wallpaper + boot splash at graphical.target
+  8. adds the Waveshare 7inch DSI LCD (C) overlay unless --no-display-overlay
+  9. optionally enables UPS I2C on Pi 5 GPIO12/13 (--ups-i2c-alt-pins)
+ 10. installs the Waveshare Brightness app unless --no-brightness / --no-gui
+ 11. optionally sets display rotation, autologin, kiosk, RTC charging and networking
+ 12. optionally downloads a sample ZIM (--sample)
  13. verifies the server answers (or the NOMAD containers with --library nomad)
 
 The artwork itself runs in $ARTWORK_SERVICE.service at the next boot, once the desktop user's
@@ -281,9 +268,9 @@ check_platform() {
 }
 
 # ============================ hardware checks ============================
-# Everything the software depends on but cannot test: the Pi itself, the I2C devices on the
-# FireBeetle bus, the UPS gauge, the RTCs, storage and the display. Each check prints PASS,
-# FAIL or SKIP (not applicable here), so the report is readable on a fresh box.
+# Everything the software depends on but cannot test: the Pi itself, the directly attached UPS
+# gauge, RTC, storage and display. Each check prints PASS, FAIL or SKIP (not applicable here), so
+# the report is readable on a fresh box.
 #
 # These are diagnostics, not gates: a missing sensor does not stop Kiwix from working, so
 # failures are collected and only affect the exit status with --strict.
@@ -303,12 +290,11 @@ is_pi() {
 
 pi_model() { tr -d '\0' </proc/device-tree/model 2>/dev/null || echo "unknown"; }
 
-# How the board is powered. The Pi cannot detect the UPS HAT (B): its INA219 sits on the
-# FireBeetle's I2C bus, so there is nothing on the Pi side to query. Declare it instead, with
-# --power hat / POWER_SOURCE=hat, and default to the bench case (USB-C only).
+# Select the undervoltage hint with --power ups3s / POWER_SOURCE=ups3s when the Pi is powered by
+# the UPS Module 3S. The default remains the bench case (a direct USB-C supply).
 power_hint() {
-    if [ "${POWER_SOURCE:-usbc}" = hat ]; then
-        printf '%s\n' "on the UPS HAT: re-seat the pogo pins, then check the 8.4 V input"
+    if [ "${POWER_SOURCE:-usbc}" = ups3s ]; then
+        printf '%s\n' "on the UPS Module 3S: check the cells, output switch and 5 V Type-C lead"
     else
         printf '%s' "on USB-C: use the 27 W (5 V/5 A) supply - a 3 A charger gives exactly"
         printf '%s\n' " this under load; check the cable too"
@@ -340,11 +326,8 @@ report_hot_processes() {
 }
 
 # Pi 5 thermal limits (Raspberry Pi documentation): 80 C soft limit -> clock is reduced,
-# 85 C hard limit -> hard throttling. A reading above 85 is therefore "at the ceiling", not
-# necessarily a fault, and this build deliberately runs without a cooler (the UPS HAT (B)
-# occupies the Pi's component side, so neither the Active Cooler nor a heatsink fits).
-# So: FAIL only on undervoltage, which *is* a fault. Heat is reported as a warning with the
-# context needed to judge it.
+# 85 C hard limit -> hard throttling. Report heat and clock throttling as warnings with load
+# context; undervoltage is a supply fault.
 hw_thermal() {
     if ! has_command vcgencmd; then
         hw_skip "thermals (install libraspberrypi-bin for throttle/temperature)"
@@ -366,8 +349,8 @@ hw_thermal() {
 
     # --- how busy is it, really? ------------------------------------------------------------
     # Load average counts uninterruptible sleep too, so use actual CPU busy time. Without this
-    # a single hot reading cannot distinguish "working hard, no cooler, expected" from
-    # "idle and still 85 C", which means the heat is not coming from the CPU.
+    # A single hot reading cannot distinguish "working hard" from "idle and still 85 C", where
+    # the heat is not coming from the CPU.
     local busy_pct cores
     busy_pct=$(cpu_busy_percent)
     cores=$(nproc 2>/dev/null || echo 4)
@@ -390,8 +373,7 @@ hw_thermal() {
                 report_hot_processes
             else
                 hw_warn "SoC ${tmax} C - at the 85 C hard limit (throttling); $ctx"
-                hw_note "expected without a cooler (the UPS HAT (B) takes the component side);"
-                hw_note "it throttles here under load rather than failing"
+                hw_note "load-related throttling; check the cooler, vents and case airflow"
                 report_hot_processes
             fi
         elif [ "$hot" -ge 80 ]; then
@@ -524,20 +506,16 @@ i2c_scan() {
     return 0
 }
 
-# Label our own devices so the report names them instead of dumping raw addresses.
+# Label devices used by the current build instead of dumping raw addresses.
 i2c_label() {
     case $1 in
-        42) echo "UPS INA219" ;;
-        3c|3d) echo "OLED" ;;
-        68) echo "DS3231" ;;
-        76|77) echo "BME688" ;;
+        41) echo "UPS Module 3S INA219" ;;
         *)  return 1 ;;
     esac
 }
 
 hw_i2c_bus() {
-    # The FireBeetle, not the Pi, is the I2C master (the Pi has no 40-pin header in this
-    # build), so a bare Pi shows nothing useful. Report our devices, not every address.
+    # The Pi is the I2C master for the UPS Module 3S. Display touch uses its own bus.
     if ! i2c_tool i2cdetect -l >/dev/null 2>&1; then
         hw_skip "I2C (i2c-tools not installed: sudo apt install i2c-tools)"
         return
@@ -550,11 +528,10 @@ hw_i2c_bus() {
     local nbus; nbus=$(echo $I2C_BUSES | wc -w)
 
     if [ -z "${I2C_FOUND// /}" ]; then
-        hw_skip "I2C: nothing on ${nbus} bus(es) — the FireBeetle is the I2C master in this build"
+        hw_skip "I2C: no devices detected on ${nbus} bus(es)"
         return
     fi
 
-    # one line for our devices: "0x42 (UPS INA219), 0x68 (DS3231)"
     local known="" unknown="" addr label
     for addr in $I2C_ALL; do
         if label=$(i2c_label "$addr"); then
@@ -565,17 +542,7 @@ hw_i2c_bus() {
     done
     [ -n "$known" ] && hw_pass "I2C: $known"
 
-    # 0x3c/0x3d (OLED) and 0x76/0x77 (BME688) are strap options of one chip: a real bus
-    # cannot show both, so the addresses are coming from somewhere that is not a device.
-    has_addr() { printf '%s\n' $I2C_ALL | grep -qx "$1"; }
-    if has_addr 3c && has_addr 3d; then
-        hw_warn "I2C: 0x3c and 0x3d cannot both exist - one OLED, two strap options"
-    fi
-    if has_addr 76 && has_addr 77; then
-        hw_warn "I2C: 0x76 and 0x77 cannot both exist - one BME688, two strap options"
-    fi
-
-    # anything else is only counted: display/camera bridges and HATs are not our business
+    # Display/camera bridges and unrelated devices are counted, not identified.
     if [ -n "${unknown// /}" ]; then
         local n; n=$(echo $unknown | wc -w)
         hw_note "I2C: $n other address(es) present (not part of this build)"
@@ -588,15 +555,27 @@ hw_i2c_bus() {
 }
 
 hw_ups() {
-    # The HAT (B) reports through the INA219 at 0x42 on the FireBeetle bus, so on the Pi itself
-    # this only reports whether 0x42 appeared in the scan above.
-    i2c_tool i2cdetect -l >/dev/null 2>&1 || { hw_skip "UPS gauge (i2c-tools not installed)"; return; }
-    i2c_scan || { hw_skip "UPS gauge (no I2C bus)"; return; }
+    local bus=1
+    $UPS_I2C_ALT_PINS && bus=2
 
-    if printf '%s\n' $I2C_ALL | grep -qx 42; then
-        hw_pass "UPS HAT (B) INA219 answering at 0x42"
+    i2c_tool i2cdetect -l >/dev/null 2>&1 \
+        || { hw_skip "UPS Module 3S gauge (i2c-tools not installed)"; return; }
+    i2c_scan || { hw_skip "UPS Module 3S gauge (no I2C bus)"; return; }
+    if ! printf '%s\n' $I2C_BUSES | grep -qx "i2c-$bus"; then
+        hw_skip "UPS Module 3S gauge (i2c-$bus unavailable)"
+        $UPS_I2C_ALT_PINS && hw_note "the GPIO12/13 overlay requires a reboot before i2c-2 appears"
+        return
+    fi
+
+    if printf '%s\n' $I2C_FOUND | grep -qx "i2c-$bus:41"; then
+        hw_pass "UPS Module 3S INA219 answering at 0x41 on i2c-$bus"
     else
-        hw_skip "UPS HAT (B) gauge at 0x42 not visible from the Pi (the FireBeetle reads it)"
+        hw_fail "UPS Module 3S INA219 not detected at 0x41 on i2c-$bus"
+        if printf '%s\n' $I2C_ALL | grep -qx 41; then
+            hw_note "0x41 answered on another bus; check the selected bus against the wiring"
+        else
+            hw_note "check UPS SDA/SCL/GND and enable the matching Pi I2C bus"
+        fi
     fi
 }
 
@@ -699,30 +678,6 @@ hw_audio() {
     fi
 }
 
-hw_oled_link() {
-    # The FireBeetle 2's CH340 enumerates as ttyUSB* and has no serial number, so report the
-    # stable by-id name when the kernel gives one.
-    local candidate port=""
-    for candidate in /dev/serial/by-id/*; do
-        [ -e "$candidate" ] || continue
-        case ${candidate,,} in
-            *1a86*|*ch34*|*wch*) port=$candidate; break ;;
-        esac
-    done
-    if [ -z "$port" ]; then
-        for candidate in /dev/ttyUSB*; do
-            [ -e "$candidate" ] && { port=$candidate; break; }
-        done
-    fi
-    if [ -n "$port" ]; then
-        hw_pass "status OLED serial: $port (FireBeetle CH340)"
-    elif [ -e /dev/ttyACM0 ]; then
-        hw_pass "status OLED serial: /dev/ttyACM0"
-    else
-        hw_skip "status OLED serial: no FireBeetle on USB (no /dev/ttyUSB*)"
-    fi
-}
-
 run_hw_tests() {
     if ! $WITH_HWTEST; then
         log_stage "Hardware"
@@ -739,13 +694,8 @@ run_hw_tests() {
     hw_storage /
     hw_network
     hw_audio
-    hw_oled_link
 
     printf '\n  %d checks, %d failed, %d warning(s)\n' "$HW_CHECKS" "$HW_FAILS" "$HW_WARNS"
-    if [ "$HW_WARNS" -gt 0 ] && ! $HW_WARNS_NOTE; then
-        log_warn "$HW_WARNS warning(s): this build runs without a cooler, so the SoC sits at"
-        log_warn "its thermal limit under load. That is expected, not a fault."
-    fi
     if [ "$HW_FAILS" -gt 0 ]; then
         log_warn "$HW_FAILS hardware check(s) failed; the software is installed regardless"
     fi
@@ -861,14 +811,13 @@ install_packages() {
 
     local pkgs=(curl ca-certificates)
     $HOST_LIBRARY && pkgs+=(kiwix-tools)
-    # the status OLED sender is stdlib-only Python 3, already present on the Pi image
-    $WITH_OLED && pkgs+=(python3)
     if $WITH_GUI && $HOST_LIBRARY; then
         pkgs+=(kiwix)
     fi
     # The Waveshare Brightness app is a Qt5 GUI; add the libs it links when the archive has
     # them (t64 names on Debian 13, plain names on Ubuntu 24.04).
     if $WITH_GUI && $WITH_BRIGHTNESS; then
+        pkgs+=(python3)  # unpacks the vendor archive with python3 -m zipfile
         local pkg
         for pkg in libqt5core5t64 libqt5core5a; do
             if apt-cache show "$pkg" >/dev/null 2>&1; then pkgs+=("$pkg"); break; fi
@@ -899,8 +848,6 @@ install_packages() {
     fi
     # the hardware report uses i2cdetect/vcgencmd; harmless if a package is unavailable
     $WITH_HWTEST && pkgs+=(i2c-tools)
-    # the OLED wifi screen reads the Pi's radio through iw; NetworkManager supplies nmcli
-    $WITH_OLED && pkgs+=(iw)
     # hwclock moved to util-linux-extra on Debian 12+ (still in util-linux on older releases)
     if apt-cache show util-linux-extra >/dev/null 2>&1; then
         pkgs+=(util-linux-extra)
@@ -1699,71 +1646,6 @@ EOF
     fi
 }
 
-install_status_oled() {
-    $WITH_OLED || { log_stage "Status OLED"; log_info "skipped (--no-oled)"; return 0; }
-    log_stage "Status OLED"
-
-    local dir src dest unit port_arg=""
-    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-    src="$dir/status-oled.py"
-    dest=/usr/local/lib/ktemata/status-oled.py
-    unit="/etc/systemd/system/$OLED_SERVICE.service"
-    [ -n "$OLED_PORT" ] && port_arg=" --port $OLED_PORT"
-
-    if [ ! -r "$src" ]; then
-        log_warn "$src not found; skipping the sender (run this from the repository checkout)"
-        return 0
-    fi
-    log_info "storage: $LIBRARY_DIR${OLED_PORT:+, port $OLED_PORT}"
-
-    if $DRY_RUN; then
-        printf '%s  [dry-run]%s install %s -> %s\n' "$C_YELLOW" "$C_OFF" "$src" "$dest"
-        printf '%s  [dry-run]%s write %s (UTC + %s free space)\n' "$C_YELLOW" "$C_OFF" "$unit" "$LIBRARY_DIR"
-        printf '%s  [dry-run]%s systemctl enable --now %s.service\n' "$C_YELLOW" "$C_OFF" "$OLED_SERVICE"
-        return 0
-    fi
-
-    install -d -m 0755 /usr/local/lib/ktemata
-    install -m 0755 "$src" "$dest"
-    log_ok "$dest"
-
-    cat >"$unit" <<EOF
-[Unit]
-Description=Ktemata status OLED sender (UTC and free space over USB serial)
-Documentation=file:$dest
-# The sender autodetects the port and retries, so there is no device dependency: the unit
-# survives replugging the FireBeetle and a boot that enumerates the CH340 late.
-ConditionPathExists=$dest
-
-[Service]
-Type=simple
-# root only to open the serial device; the script writes nothing but the board's JSON
-ExecStart=/usr/bin/python3 $dest --storage "$LIBRARY_DIR"$port_arg
-Restart=always
-RestartSec=5
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ProtectKernelTunables=true
-ProtectControlGroups=true
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    chmod 0644 "$unit"
-    log_ok "unit written"
-
-    if have_systemd; then
-        run systemctl daemon-reload
-        run systemctl enable --now "$OLED_SERVICE.service"
-        log_ok "enabled; the OLED keeps time and shows free space in $LIBRARY_DIR"
-    else
-        log_warn "systemd not running here: start it later with"
-        log_warn "  sudo systemctl enable --now $OLED_SERVICE.service"
-    fi
-}
-
 # Enable the optional Pi 5 UPS I2C bus on GPIO12/13. Keep a differently configured i2c2-pi5
 # overlay untouched: loading two instances can fail or move the expected /dev/i2c-2 device.
 setup_ups_i2c() {
@@ -1998,14 +1880,6 @@ verify() {
         fi
     fi
 
-    if $WITH_OLED && have_systemd; then
-        local oled_state
-        oled_state=$(systemctl is-active "$OLED_SERVICE.service" 2>/dev/null || true)
-        case $oled_state in
-            active) log_ok "$OLED_SERVICE.service active" ;;
-            *) log_warn "$OLED_SERVICE.service: ${oled_state:-unknown} (journalctl -u $OLED_SERVICE)" ;;
-        esac
-    fi
 }
 
 summary() {
@@ -2019,9 +1893,6 @@ summary() {
     else
         printf '  library   NOMAD (%s)\n' "$LIBRARY_DIR"
         printf '  service   NOMAD containers (admin :8080, Kiwix :8090)\n'
-    fi
-    if $WITH_OLED; then
-        printf '  OLED      %s.service (UTC + %s free space)\n' "$OLED_SERVICE" "$LIBRARY_DIR"
     fi
     if $HOST_LIBRARY; then
         printf '  next      drop *.zim files into %s, then: sudo systemctl restart %s\n' "$ZIM_DIR" "$SERVICE_NAME"
@@ -2062,19 +1933,17 @@ main() {
             --sample)        WITH_SAMPLE=true ;;
             --no-service)    WITH_SERVICE=false ;;
             --library)       LIBRARY=${2:?--library takes host or nomad}; shift ;;
-            --no-oled)       WITH_OLED=false ;;
             --no-artwork)    WITH_ARTWORK=false ;;
             --no-display-overlay) WITH_DISPLAY_OVERLAY=false ;;
             --ups-i2c-alt-pins) UPS_I2C_ALT_PINS=true ;;
             --no-brightness) WITH_BRIGHTNESS=false ;;
-            --oled-port)     OLED_PORT=${2:?--oled-port needs a device}; shift ;;
             --no-gui)        WITH_GUI=false ;;
             --no-update)     WITH_UPDATE=false ;;
             --kiosk)         WITH_KIOSK=true ;;
             --no-hwtest)     WITH_HWTEST=false ;;
             --hwtest-only)   HWTEST_ONLY=true; DRY_RUN=true; WITH_HWTEST=true ;;
             --strict)        STRICT=true ;;
-            --power)         POWER_SOURCE=${2:?--power takes usbc or hat}; shift ;;
+            --power)         POWER_SOURCE=${2:?--power takes usbc or ups3s}; shift ;;
             --no-autologin)  WITH_AUTOLOGIN=false ;;
             --no-camera-autodetect) WITH_NOCAMERA=true ;;
             --no-rtc-charge) WITH_RTC_CHARGE=false ;;
@@ -2111,11 +1980,10 @@ main() {
     if ! $HOST_LIBRARY && [ "$ZIM_DIR" != /srv/kiwix/zim ]; then
         log_warn "--zim-dir is ignored with --library nomad; NOMAD uses $LIBRARY_DIR"
     fi
-    [ -z "$OLED_PORT" ] || case $OLED_PORT in /*) ;; *) die "--oled-port must be an absolute path" ;; esac
     case $SERVICE_PORT in ''|*[!0-9]*) die "--port must be a number" ;; esac
     # fail fast on a bad --rotate instead of halfway through the install
     [ -z "$ROTATE" ] || rotation_degrees "$ROTATE" >/dev/null
-    case ${POWER_SOURCE:-usbc} in usbc|hat) ;; *) die "--power takes usbc or hat" ;; esac
+    case ${POWER_SOURCE:-usbc} in usbc|ups3s) ;; *) die "--power takes usbc or ups3s" ;; esac
     case $HOTSPOT_BAND in auto|2.4|5) ;; *) die "--hotspot-band takes auto, 2.4 or 5" ;; esac
     # a disabled radio cannot host an access point: refuse rather than install both and have
     # the AP fail at boot with "no wlan0"
@@ -2150,7 +2018,6 @@ main() {
     install_packages
     setup_library
     install_service
-    install_status_oled
     install_artwork_unit
     setup_display_overlay
     setup_ups_i2c
