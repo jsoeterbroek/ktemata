@@ -673,6 +673,95 @@ async function runUpload(item) {
   toast(`Uploaded ${item.name} — rebuild the index to publish it`, 'good');
 }
 
+/* ------------------------------------------------------------------ offline AI */
+async function refreshAiStatus() {
+  const label = $('#ai-status');
+  const input = $('#ai-question');
+  const button = $('#ai-ask');
+  try {
+    const state = await api('/api/ai/status');
+    if (!state || state.installed === false) {
+      label.textContent = 'offline AI is not installed — run post-install-ai.sh';
+      input.disabled = true;
+      button.disabled = true;
+      return;
+    }
+    if (state.error) {
+      label.textContent = `offline AI · ${state.error}`;
+      input.disabled = true;
+      button.disabled = true;
+      return;
+    }
+    if (!state.chunks) {
+      label.textContent = 'offline AI · no documents indexed yet — run sudo ktemata-ai ingest';
+      input.disabled = true;
+      button.disabled = true;
+      return;
+    }
+    if (!state.ollama) {
+      label.textContent = 'offline AI · Ollama is not running';
+      input.disabled = true;
+      button.disabled = true;
+      return;
+    }
+    const models = state.ollama_models || [];
+    const hasModel = (wanted) =>
+      models.some((name) => name === wanted || name.startsWith(`${wanted}:`));
+    if (!hasModel(state.model) || !hasModel(state.embed_model)) {
+      label.textContent = 'offline AI · model not pulled — see docs/OFFLINE_AI.md';
+      input.disabled = true;
+      button.disabled = true;
+      return;
+    }
+    input.disabled = false;
+    button.disabled = false;
+    const when = state.last_ingest ? relTime(state.last_ingest) : 'never';
+    label.textContent =
+      `offline AI · ${state.docs} documents · ${state.chunks} chunks · ` +
+      `${state.model} · indexed ${when}`;
+  } catch (err) {
+    label.textContent = `offline AI · ${err.message}`;
+    input.disabled = true;
+    button.disabled = true;
+  }
+}
+
+async function askAi(event) {
+  event.preventDefault();
+  const input = $('#ai-question');
+  const button = $('#ai-ask');
+  const box = $('#ai-answer');
+  const text = $('#ai-text');
+  const sources = $('#ai-sources');
+  const question = input.value.trim();
+  if (!question) return;
+
+  button.disabled = true;
+  button.textContent = 'Thinking…';
+  box.hidden = true;
+  try {
+    const result = await api('/api/ai/ask', { method: 'POST', json: { question } });
+    text.textContent = result.answer || '(the model returned an empty answer)';
+    sources.replaceChildren();
+    for (const [index, source] of (result.sources || []).entries()) {
+      const item = document.createElement('li');
+      const where = document.createElement('span');
+      where.textContent = `[${index + 1}] ${source.path} · chunk ${source.ordinal}`;
+      const score = document.createElement('span');
+      score.className = 'score';
+      score.textContent = Number(source.score).toFixed(3);
+      item.append(where, score);
+      sources.append(item);
+    }
+    box.hidden = false;
+  } catch (err) {
+    toast(err.message, 'bad');
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Ask';
+  }
+}
+
 /* ------------------------------------------------------------------ wiring */
 $('#pick').addEventListener('click', () => $('#file').click());
 $('#file').addEventListener('change', (event) => {
@@ -698,6 +787,7 @@ $('#clear-done').addEventListener('click', () => {
   });
   $('#queue-panel').hidden = ui.queue.length === 0;
 });
+$('#ai-form').addEventListener('submit', askAi);
 
 // Drag and drop anywhere on the page.
 let dragDepth = 0;
@@ -739,3 +829,4 @@ document.addEventListener('visibilitychange', () => {
 });
 
 refresh();
+refreshAiStatus();

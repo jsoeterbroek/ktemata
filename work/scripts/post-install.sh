@@ -72,6 +72,7 @@ WITH_BRIGHTNESS=true
 BRIGHTNESS_URL="https://files.waveshare.com/wiki/common/Brightness.zip"
 WITH_UPDATE=true
 WITH_KIOSK=false
+WITH_AI=false
 WITH_HWTEST=true
 HWTEST_ONLY=false
 STRICT=false
@@ -176,6 +177,8 @@ ${C_BOLD}OPTIONS${C_OFF}
                          'left' = 90 deg counter-clockwise.
       --kiosk            Install the kiosk launcher and autostart it in the desktop session.
       --kiosk-user NAME  Whose session autostarts it (default: the user running sudo).
+      --ai               Install the offline AI (Ollama + ktemata-ai) after the base install.
+                         Downloads models and is opt-in; see docs/OFFLINE_AI.md.
       --no-hwtest        Skip the hardware checks.
       --hwtest-only      Run the hardware checks and exit (implies --dry-run).
       --strict           Exit non-zero if a hardware check fails.
@@ -237,8 +240,9 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
  10. installs the Waveshare Brightness app unless --no-brightness / --no-gui
  11. optionally sets display rotation, autologin, kiosk, RTC charging and networking
      (including the desktop Wi-Fi mode switcher unless --no-wifi-switch)
- 12. optionally downloads a sample ZIM (--sample)
- 13. verifies the server answers (or the NOMAD containers with --library nomad)
+ 12. optionally installs the offline AI (--ai) — see OFFLINE_AI.md
+ 13. optionally downloads a sample ZIM (--sample)
+ 14. verifies the server answers (or the NOMAD containers with --library nomad)
 
 The artwork itself runs in $ARTWORK_SERVICE.service at the next boot, once the desktop user's
 session bus exists; to apply it immediately, run ./desktop-artwork.sh from the desktop.
@@ -1654,6 +1658,23 @@ EOF
     log_ok "$entry"
 }
 
+# The offline AI is a separate installer: it downloads models and has its own config. Keep it
+# opt-in so a plain post-install does not turn a Pi into a slow model host.
+install_offline_ai() {
+    $WITH_AI || return 0
+    log_stage "Offline AI"
+    local dir script
+    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    script="$dir/post-install-ai.sh"
+    [ -x "$script" ] || die "cannot find post-install-ai.sh next to this script"
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s %s --yes --dry-run\n' \
+            "$C_YELLOW" "$C_OFF" "$script"
+        return 0
+    fi
+    "$script" --yes
+}
+
 install_kiosk() {
     $WITH_KIOSK || { log_stage "Kiosk"; log_info "skipped (pass --kiosk to enable)"; return 0; }
     log_stage "Kiosk"
@@ -2408,6 +2429,9 @@ summary() {
     if $WITH_KIOSK; then
         printf '  kiosk     %s autostarts kiwix-kiosk on login\n' "$KIOSK_USER"
     fi
+    if $WITH_AI; then
+        printf '  ai        ktemata-ai ask "..." (see docs/OFFLINE_AI.md)\n'
+    fi
     if $WITH_NO_RADIO; then
         printf '  radios    %s\n' "$RADIO_STATE"
     elif $WITH_WIFI_SWITCH; then
@@ -2452,6 +2476,7 @@ main() {
             --no-gui)        WITH_GUI=false ;;
             --no-update)     WITH_UPDATE=false ;;
             --kiosk)         WITH_KIOSK=true ;;
+            --ai)            WITH_AI=true ;;
             --no-hwtest)     WITH_HWTEST=false ;;
             --hwtest-only)   HWTEST_ONLY=true; DRY_RUN=true; WITH_HWTEST=true ;;
             --strict)        STRICT=true ;;
@@ -2558,6 +2583,7 @@ main() {
     setup_hotspot
     install_wifi_switch
     install_kiosk
+    install_offline_ai
     $WITH_SAMPLE && download_sample
     verify
     summary

@@ -265,6 +265,56 @@ button.primary svg { width: 16px; height: 16px; }
 }
 .search input::placeholder { color: var(--faint); }
 
+.ai-form {
+  display: flex;
+  gap: .55rem;
+  padding: 0 1.2rem 1.1rem;
+}
+.ai-form input {
+  flex: 1;
+  min-width: 0;
+  padding: .62rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #121920;
+  color: var(--fg);
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .15s;
+}
+.ai-form input:focus { border-color: var(--accent); }
+.ai-form input:disabled { opacity: .55; }
+.ai-form button { flex: none; }
+.ai-answer {
+  margin: 0 1.2rem 1.2rem;
+  padding: .9rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #121920;
+}
+.ai-answer p {
+  white-space: pre-wrap;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.ai-sources {
+  display: grid;
+  gap: .3rem;
+  margin-top: .75rem;
+  padding: 0;
+  list-style: none;
+  color: var(--faint);
+  font-family: ui-monospace, "SF Mono", "Liberation Mono", Menlo, monospace;
+  font-size: .74rem;
+}
+.ai-sources li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  word-break: break-all;
+}
+.ai-sources .score { flex: none; color: var(--accent); }
+
 .banner {
   display: flex;
   align-items: center;
@@ -466,6 +516,8 @@ tr.hidden { display: none; }
   .metric { min-height: 0; }
   .metric:not(:has(.mini-actions)) strong { font-size: 1.35rem; }
   .search input { width: 8rem; }
+  .ai-form { flex-direction: column; }
+  .ai-form button { width: 100%; }
   th, td { padding-left: .8rem; padding-right: .8rem; }
   td.name { max-width: 11rem; }
   th.when, td.when { display: none; }

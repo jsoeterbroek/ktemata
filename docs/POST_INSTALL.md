@@ -82,6 +82,25 @@ python3 work/scripts/ktemata-admin.py --zim-dir /srv/kiwix/zim \
 
 Without a credentials file it refuses to bind beyond `127.0.0.1`.
 
+If the optional [offline AI](OFFLINE_AI.md) is installed and indexed, the page also has an
+**Ask the library** box that answers from the documents under `/var/lib/kiwix` and the library
+directories.
+
+## Offline AI (optional)
+
+The local assistant is a separate install because it downloads models and changes the memory and
+thermal profile. See [OFFLINE_AI.md](OFFLINE_AI.md) for models, limits and the ZIM caveat.
+
+```bash
+sudo ./work/scripts/post-install-ai.sh --yes
+# or let the main installer delegate to it
+sudo ./work/scripts/post-install.sh --ai
+```
+
+It indexes `/var/lib/kiwix` and `/srv/kiwix/zim` by default (text, Markdown, HTML, XML, PDF, EPUB,
+DOCX, ODT), answers with `ktemata-ai ask "..."`, and adds the **Ask the library** box to the admin
+page. ZIM archives are binary and are skipped; extract the articles you want first.
+
 ## Library hotspot
 
 The Pi 5 has a dual-band 2.4/5 GHz radio on board, so serving the library to a room is a
@@ -722,6 +741,7 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --rotate WHAT      normal | left | right | inverted (or 0|90|180|270 clockwise)
     --kiosk            install the kiosk launcher + autostart
     --kiosk-user NAME  desktop user to autostart it for (default: the sudo user)
+    --ai               install the offline AI (Ollama + ktemata-ai); see OFFLINE_AI.md
     --no-hwtest        skip the hardware checks
     --hwtest-only      run the hardware checks and exit
     --strict           non-zero exit when a hardware check fails (not on warnings)

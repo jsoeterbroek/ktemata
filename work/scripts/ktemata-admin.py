@@ -55,6 +55,7 @@ DEFAULT_LIBRARY_HELPER = "/usr/local/bin/kiwix-library"
 DEFAULT_AUTH_FILE = "/etc/ktemata/admin.conf"
 DEFAULT_LIBRARY_PORT = 8080
 DEFAULT_PORT = 8081
+DEFAULT_AI_CLI = "/usr/local/bin/ktemata-ai"
 
 # One chunk: small enough for a flaky link, large enough that the request overhead vanishes.
 MAX_CHUNK = 64 * 1024 * 1024
@@ -183,6 +184,46 @@ def systemctl(*args, timeout=30):
         )
     except subprocess.TimeoutExpired:
         raise AdminError(HTTPStatus.GATEWAY_TIMEOUT, f"systemctl {' '.join(args)} timed out")
+
+
+def ai_command(args, timeout=110):
+    """Run ktemata-ai as root and return its JSON. It is installed separately."""
+    binary = os.environ.get("KTEMATA_AI_CLI", DEFAULT_AI_CLI)
+    if not os.path.isfile(binary):
+        raise AdminError(
+            HTTPStatus.SERVICE_UNAVAILABLE,
+            "offline AI is not installed; run post-install-ai.sh",
+        )
+    try:
+        result = subprocess.run(
+            [binary, *args],
+            check=False,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        raise AdminError(HTTPStatus.GATEWAY_TIMEOUT, "offline AI timed out")
+    except OSError as exc:
+        raise AdminError(HTTPStatus.SERVICE_UNAVAILABLE, f"offline AI is not available: {exc}")
+    if result.returncode != 0:
+        lines = (result.stderr or result.stdout).strip().splitlines()
+        message = lines[-1] if lines else f"ktemata-ai exited {result.returncode}"
+        raise AdminError(HTTPStatus.SERVICE_UNAVAILABLE, message)
+    try:
+        return json.loads(result.stdout)
+    except ValueError:
+        raise AdminError(HTTPStatus.INTERNAL_SERVER_ERROR, "offline AI returned invalid JSON")
+
+
+def ai_status():
+    if not os.path.isfile(os.environ.get("KTEMATA_AI_CLI", DEFAULT_AI_CLI)):
+        return {"installed": False}
+    try:
+        return ai_command(["status", "--json"], timeout=30)
+    except AdminError as exc:
+        return {"installed": True, "error": exc.message}
 
 
 def service_state(cfg):
@@ -501,6 +542,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json({"ok": True, "version": VERSION})
             elif path == "/api/state":
                 self.send_json(build_state(self.cfg))
+            elif path == "/api/ai/status":
+                self.send_json(ai_status())
             elif path == "/api/upload":
                 self.upload_status()
             elif path == "/api/download":
@@ -545,6 +588,14 @@ class Handler(BaseHTTPRequestHandler):
                         "state": build_state(self.cfg),
                     }
                 )
+            elif path == "/api/ai/ask":
+                payload = self.body_json()
+                question = str(payload.get("question") or "").strip()
+                if not question:
+                    raise AdminError(HTTPStatus.BAD_REQUEST, "question is required")
+                if len(question) > 2000:
+                    raise AdminError(HTTPStatus.BAD_REQUEST, "question is too long (2000 characters)")
+                self.send_json(ai_command(["ask", question, "--json"]))
             else:
                 raise AdminError(HTTPStatus.NOT_FOUND, "not found")
         except AdminError as exc:
