@@ -26,6 +26,7 @@ AI_DB=${AI_DB:-/var/lib/ktemata-ai/index.sqlite3}
 AI_CONFIG=/etc/ktemata/ai.conf
 AI_CLI=/usr/local/bin/ktemata-ai
 AI_SERVICE=ktemata-ai-ingest
+ADMIN_SERVICE=ktemata-admin
 AI_STATE_DIR=/var/lib/ktemata-ai
 AI_PULL_TIMEOUT=7200
 
@@ -77,7 +78,7 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   2. installs Ollama and enables ollama.service (localhost:11434)
   3. pulls the generation and embedding models unless --no-models
   4. installs /usr/local/bin/ktemata-ai and $AI_CONFIG
-  5. updates the library admin UI with the Ask the library box, if installed
+  5. updates the library admin UI and server, restarting ktemata-admin if installed
   6. indexes $AI_INGEST_DIRS (text, Markdown, HTML, XML, PDF, EPUB, DOCX, ODT)
   7. installs $AI_SERVICE.service + .timer; re-indexes every 6 hours
 
@@ -213,7 +214,20 @@ install_admin_assets() {
         run install -m 0644 -o root -g root \
             "$dir/ktemata-admin/$file" "/usr/share/ktemata/admin/$file"
     done
-    log_ok "library admin UI updated (Ask the library)"
+    # The page's /api/ai routes live in the server, not only in the assets. Update the
+    # installed server too, or the new box will ask an old binary that answers 404.
+    if [ -f /usr/local/bin/ktemata-admin ]; then
+        run install -m 0755 -o root -g root \
+            "$dir/ktemata-admin.py" /usr/local/bin/ktemata-admin
+        if have_systemd && systemctl cat "$ADMIN_SERVICE.service" >/dev/null 2>&1; then
+            run systemctl restart "$ADMIN_SERVICE.service"
+            log_ok "library admin updated and restarted (Ask the library)"
+        else
+            log_ok "library admin updated (Ask the library); restart it manually"
+        fi
+    else
+        log_ok "library admin UI updated (Ask the library)"
+    fi
 }
 
 install_cli() {

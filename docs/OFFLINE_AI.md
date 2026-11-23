@@ -92,7 +92,8 @@ What it does:
    `ollama.service`;
 3. pulls the embedding and generation models through Ollama's API (skip with `--no-models`);
 4. installs `/usr/local/bin/ktemata-ai` and `/etc/ktemata/ai.conf`;
-5. updates the library admin UI with the **Ask the library** box if the admin is installed;
+5. updates the library admin UI and server with the **Ask the library** box and restarts
+   `ktemata-admin.service` if it is installed;
 6. runs the first `ktemata-ai ingest` (skip with `--no-ingest`);
 7. installs and enables `ktemata-ai-ingest.timer` for a re-index every six hours.
 
