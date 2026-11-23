@@ -251,8 +251,12 @@ install_wallpaper() {
         fi
     fi
 
-    # 2. Raspberry Pi OS: pcmanfm desktop preferences + the live apply command
-    local pcdir="$home/.config/pcmanfm/LXDE-pi"
+    # 2. Raspberry Pi OS: pcmanfm desktop preferences + the live apply command.
+    # Current releases start pcmanfm through pcmanfm-pi without --profile, selecting "default".
+    # Older LXDE-pi sessions use the legacy profile. Both the file and live command must match it.
+    local profile=LXDE-pi
+    has_command pcmanfm-pi && profile=default
+    local pcdir="$home/.config/pcmanfm/$profile"
     local pcfile="$pcdir/desktop-items-0.conf"
     if has_command pcmanfm || has_command labwc; then
         if $DRY_RUN; then
@@ -284,7 +288,7 @@ EOF
             chown "$OWNER":"$(id -gn "$OWNER")" "$pcfile"
             # apply now if a session is running; harmless (and bounded) if not
             if have_session_bus && has_command pcmanfm; then
-                run_as_owner pcmanfm --set-wallpaper="$user_img" >/dev/null 2>&1 \
+                run_as_owner pcmanfm --profile "$profile" --set-wallpaper="$user_img" >/dev/null 2>&1 \
                     || log_warn "pcmanfm --set-wallpaper failed; the config applies at next login"
             fi
             log_ok "pcmanfm desktop set for $OWNER ($pcfile)"

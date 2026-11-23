@@ -189,6 +189,7 @@ ${C_BOLD}WHAT IT DOES${C_OFF}
   4. installs kiwix-tools (+ kiwix desktop app unless --no-gui)   [--library host]
   5. creates the ZIM library directory                            [--library host]
   6. writes and enables $SERVICE_NAME.service (kiwix-serve on :$SERVICE_PORT)  [--library host]
+     and adds a Firefox full-screen library icon to the desktop unless --no-gui
   7. writes and enables $ARTWORK_SERVICE.service: wallpaper + boot splash at graphical.target
   8. adds the Waveshare 7inch DSI LCD (C) overlay unless --no-display-overlay
   9. optionally enables UPS I2C on Pi 5 GPIO12/13 (--ups-i2c-alt-pins)
@@ -813,6 +814,14 @@ install_packages() {
     $HOST_LIBRARY && pkgs+=(kiwix-tools)
     if $WITH_GUI && $HOST_LIBRARY; then
         pkgs+=(kiwix)
+    fi
+    # The desktop shortcut opens the host library in Firefox's full-screen kiosk mode.
+    if $WITH_GUI && $HOST_LIBRARY && $WITH_SERVICE && ! has_command firefox; then
+        if apt-cache show firefox >/dev/null 2>&1; then
+            pkgs+=(firefox)
+        else
+            log_warn "Firefox is not available from this system's package sources"
+        fi
     fi
     # The Waveshare Brightness app is a Qt5 GUI; add the libs it links when the archive has
     # them (t64 names on Debian 13, plain names on Ubuntu 24.04).
@@ -1440,6 +1449,48 @@ EOF
     fi
 }
 
+install_library_icon() {
+    if ! $WITH_GUI || ! $HOST_LIBRARY || ! $WITH_SERVICE; then
+        log_stage "Library desktop icon"
+        log_info "skipped (requires the host service and a desktop)"
+        return 0
+    fi
+    log_stage "Library desktop icon"
+    if ! $DRY_RUN && ! has_command firefox; then
+        log_warn "Firefox is not installed; no library icon created"
+        return 0
+    fi
+
+    local user=${KIOSK_USER:-$AUTOLOGIN_USER}
+    id -u "$user" >/dev/null 2>&1 || die "no desktop user: $user"
+    local home
+    home=$(getent passwd "$user" | cut -d: -f6)
+    [ -d "$home" ] || die "home directory not found for $user"
+
+    local desktop="$home/Desktop"
+    local entry="$desktop/ktemata-library.desktop"
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s write %s (Firefox kiosk on 127.0.0.1:%s)\n' \
+            "$C_YELLOW" "$C_OFF" "$entry" "$SERVICE_PORT"
+        return 0
+    fi
+
+    install -d -m 0755 -o "$user" -g "$(id -gn "$user")" "$desktop"
+    cat >"$entry" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Ktemata Library
+Comment=Open the offline library full screen in Firefox
+Exec=/usr/bin/firefox --kiosk http://127.0.0.1:$SERVICE_PORT/
+Icon=firefox
+Terminal=false
+Categories=Education;Network;
+EOF
+    chown "$user":"$(id -gn "$user")" "$entry"
+    chmod 0755 "$entry"
+    log_ok "$entry"
+}
+
 # The service runs as SERVICE_USER; every archive must be group-readable by it. Called again
 # after a download, because a freshly written ZIM is owned by root.
 grant_library_access() {
@@ -1506,7 +1557,9 @@ Group=$SERVICE_USER
 ExecStartPre=/usr/local/bin/kiwix-library
 # No ZIMs -> the XML is absent -> would exit 1 and restart. sh -c lets us exit 0 instead and
 # wait for a restart, so an idle card does not produce a restart loop.
-ExecStart=/bin/sh -c 'if [ -f "$ZIM_DIR/library.xml" ]; then exec /usr/bin/kiwix-serve --port=$SERVICE_PORT --library "$ZIM_DIR/library.xml"; fi; echo "no ZIM files yet in $ZIM_DIR"; exit 0'
+# All IPv4 interfaces includes both loopback and the hotspot/LAN address. Local launchers use
+# 127.0.0.1 explicitly: "localhost" may resolve to ::1, which this IPv4 listener does not serve.
+ExecStart=/bin/sh -c 'if [ -f "$ZIM_DIR/library.xml" ]; then exec /usr/bin/kiwix-serve --address=0.0.0.0 --port=$SERVICE_PORT --library "$ZIM_DIR/library.xml"; fi; echo "no ZIM files yet in $ZIM_DIR"; exit 0'
 Restart=on-failure
 RestartSec=3
 # the library is read-only; keep the service boxed in
@@ -1554,7 +1607,7 @@ HELPER
     if have_systemd; then
         run systemctl daemon-reload
         run systemctl enable --now "$SERVICE_NAME.service"
-        log_ok "enabled; serving on http://localhost:$SERVICE_PORT"
+        log_ok "enabled; serving locally on http://127.0.0.1:$SERVICE_PORT"
     else
         log_warn "systemd not running here: start it later with"
         log_warn "  sudo systemctl enable --now $SERVICE_NAME.service"
@@ -2032,6 +2085,7 @@ main() {
     install_packages
     setup_library
     install_service
+    install_library_icon
     install_artwork_unit
     setup_display_overlay
     setup_ups_i2c

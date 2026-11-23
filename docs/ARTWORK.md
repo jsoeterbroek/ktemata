@@ -55,7 +55,7 @@ It is rendered to `/usr/local/share/ktemata/ktemata-wallpaper.png` and copied to
 
 | Desktop | Mechanism |
 |---|---|
-| Raspberry Pi OS (labwc/pcmanfm) | `~/.config/pcmanfm/LXDE-pi/desktop-items-0.conf` (`wallpaper=`, `wallpaper_mode=crop`, `desktop_bg=#000000`) + `pcmanfm --set-wallpaper` for the live session |
+| Raspberry Pi OS (labwc/pcmanfm) | `~/.config/pcmanfm/default/desktop-items-0.conf` on current releases (`LXDE-pi` on older sessions), with `wallpaper=`, `wallpaper_mode=crop`, `desktop_bg=#000000`; the live `pcmanfm --set-wallpaper` uses the same profile |
 | GNOME | `gsettings org.gnome.desktop.background picture-uri` **and** `picture-uri-dark` (a dark theme otherwise keeps its own image), `picture-options=scaled` |
 | minimal X11 | `feh --bg-fill` from an autostart entry |
 

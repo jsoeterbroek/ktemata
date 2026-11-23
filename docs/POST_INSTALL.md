@@ -125,6 +125,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 4 | Install `kiwix-tools`, `curl`, `ca-certificates`, the `kiwix` desktop app, `i2c-tools` for the hardware report and `util-linux-extra` (provides `hwclock` on Debian 12+) | `--no-gui`; `--library nomad` skips the Kiwix packages |
 | 5 | Create `/srv/kiwix/zim` and the `kiwix` system user | `--library nomad` skips this |
 | 6 | Write and enable `kiwix.service` (`kiwix-serve` on :8080) | `--no-service`; `--library nomad` skips it |
+| 6b | Add **Ktemata Library** to the desktop; opens Firefox in full-screen kiosk mode on `http://127.0.0.1:8080/` | `--no-gui`, `--no-service`; `--library nomad` skips it |
 | 6c | **Write and enable `ktemata-artwork.service`**: wallpaper + boot splash at `graphical.target` — see [ARTWORK.md](ARTWORK.md) | `--no-artwork` |
 | 6d | **Add the Waveshare 7inch DSI LCD (C) overlay** (`vc4-kms-dsi-waveshare-panel,7_0_inchC,i2c1`) and ensure `vc4-kms-v3d` | `--no-display-overlay` (r4 / Touch Display 2) |
 | 6e | **Install Waveshare's Brightness app** and the Qt5 libs it needs | `--no-brightness`, `--no-gui` |
@@ -516,6 +517,10 @@ curl -sI http://localhost:8080/ | head -1
 ```
 
 Override the location with `--zim-dir` and the port with `--port`; both are also honoured in the unit.
+The service listens explicitly on `0.0.0.0`, covering loopback and the device’s LAN/hotspot addresses. Local
+shortcuts use `http://127.0.0.1:8080/` because `localhost` can resolve to IPv6 `::1`, which the IPv4 listener
+does not serve. If the connection still fails, check that at least one ZIM is installed and inspect
+`systemctl status kiwix`; the service intentionally exits when `library.xml` cannot be created.
 
 ## Where the ZIMs come from
 
