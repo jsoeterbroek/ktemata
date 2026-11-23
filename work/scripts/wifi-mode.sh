@@ -323,6 +323,15 @@ mode_ap() {
     nmcli connection modify "$AP_PROFILE" \
         connection.autoconnect yes connection.autoconnect-priority 100 >/dev/null
 
+    # Force reactivation: `connection up` on an already-active AP does not apply a changed
+    # SSID or PSK. Bring down the active AP (even under another id) and the target profile.
+    local active_ap
+    active_ap=$(active_ap_profile || true)
+    if [ -n "$active_ap" ] && [ "$active_ap" != "$AP_PROFILE" ]; then
+        nmcli connection down "$active_ap" >/dev/null || true
+    fi
+    nmcli connection down "$AP_PROFILE" >/dev/null 2>&1 || true
+
     local out
     if ! out=$(nmcli --wait 30 connection up "$AP_PROFILE" 2>&1); then
         die "could not bring up '$AP_PROFILE': $out"
