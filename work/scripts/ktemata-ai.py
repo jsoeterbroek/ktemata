@@ -26,10 +26,12 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
 import zipfile
+from glob import glob
 from html.parser import HTMLParser
 
 try:
@@ -50,6 +52,9 @@ DEFAULTS = {
     "AI_CHUNK_OVERLAP": "200",
     "AI_TOP_K": "4",
     "AI_MAX_FILE_MB": "50",
+    "AI_ZIM_MODEL": "",                 # resolved to AI_MODEL unless set
+    "AI_ZIM_HOME": "/srv/kiwix/zim",
+    "AI_LLM_BIN": "/opt/ktemata-ai/venv/bin/llm",
 }
 
 TEXT_EXTENSIONS = {
@@ -763,6 +768,87 @@ def cmd_zim_ingest(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     return cmd_ingest(ingest_args, cfg)
 
 
+def cmd_zim_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
+    llm_bin = os.path.abspath(os.path.expanduser(cfg.get("AI_LLM_BIN") or "/opt/ktemata-ai/venv/bin/llm"))
+    if not (os.path.isfile(llm_bin) and os.access(llm_bin, os.X_OK)):
+        die("llm-tools-kiwix is not installed; run: sudo ./work/scripts/post-install-ai.sh --yes")
+
+    zim_home = os.path.abspath(os.path.expanduser(cfg["AI_ZIM_HOME"]))
+    selected = ""
+    if args.zim:
+        selected = os.path.abspath(os.path.expanduser(args.zim))
+        if not os.path.isfile(selected):
+            die(f"ZIM not found: {selected}")
+        zim_home = os.path.dirname(selected)
+    zims = sorted(glob(os.path.join(zim_home, "*.zim")))
+    if not zims:
+        die(f"no .zim files in {zim_home}")
+
+    model = (args.model or cfg.get("AI_ZIM_MODEL") or cfg["AI_MODEL"]).removeprefix("ollama/")
+    prompt = (
+        "You are Ktemata, an offline library assistant. Use the kiwix_search_and_collect tool "
+        "to search the local ZIM library, read the matching articles, and answer using only that "
+        "tool output. Cite the ZIM file and article path. If the tool finds nothing, say that the "
+        "library does not contain the answer. Do not invent facts.\n\n"
+        f"Question: {args.question}"
+    )
+    if selected:
+        prompt += f"\nUse only this ZIM file: {os.path.basename(selected)}."
+
+    search_home = zim_home
+    temporary = None
+    if selected:
+        # The plugin lists KIWIX_HOME/*.zim in the tool description and also scans the cwd.
+        # A private directory with only this symlink keeps the model on the chosen archive.
+        temporary = tempfile.mkdtemp(prefix="ktemata-zim-")
+        os.symlink(selected, os.path.join(temporary, os.path.basename(selected)))
+        search_home = temporary
+
+    env = os.environ.copy()
+    env["KIWIX_HOME"] = search_home
+    env["OLLAMA_HOST"] = cfg["AI_OLLAMA_URL"]
+    command = [
+        llm_bin,
+        "-m", f"ollama/{model}",
+        "-T", "kiwix_search_and_collect",
+        "-n",  # do not grow llm's SQLite log from a service
+        prompt,
+    ]
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=600,
+            env=env,
+            cwd=search_home,
+        )
+    except subprocess.TimeoutExpired:
+        die("ZIM search timed out")
+    except OSError as exc:
+        die(f"cannot run {llm_bin}: {exc}")
+    finally:
+        if temporary:
+            shutil.rmtree(temporary, ignore_errors=True)
+    if result.returncode != 0:
+        lines = (result.stderr or result.stdout).strip().splitlines()
+        message = lines[-1] if lines else f"exit {result.returncode}"
+        die(f"llm failed: {message}")
+    answer = result.stdout.strip()
+    if not answer:
+        die("llm returned no answer")
+    if args.json:
+        print(json.dumps({
+            "answer": answer,
+            "model": model,
+            "zim": selected or None,
+            "zims": len(zims),
+        }))
+    else:
+        print(answer)
+    return 0
+
+
 def cmd_status(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     db_path = cfg["AI_DB"]
     docs = chunks = 0
@@ -778,6 +864,10 @@ def cmd_status(args: argparse.Namespace, cfg: dict[str, str]) -> int:
         except sqlite3.Error:
             pass
     names = ollama_tags(cfg)
+    llm_bin = os.path.abspath(os.path.expanduser(cfg.get("AI_LLM_BIN") or "/opt/ktemata-ai/venv/bin/llm"))
+    zim_home = os.path.abspath(os.path.expanduser(cfg["AI_ZIM_HOME"]))
+    zims = sorted(glob(os.path.join(zim_home, "*.zim")))
+    zim_model = cfg.get("AI_ZIM_MODEL") or cfg["AI_MODEL"]
     payload = {
         "installed": True,
         "db": db_path,
@@ -790,6 +880,12 @@ def cmd_status(args: argparse.Namespace, cfg: dict[str, str]) -> int:
         "ollama": names is not None,
         "ollama_models": names or [],
         "ingest_dirs": cfg["AI_INGEST_DIRS"].split(),
+        "zim": {
+            "installed": os.path.isfile(llm_bin) and os.access(llm_bin, os.X_OK),
+            "home": zim_home,
+            "files": len(zims),
+            "model": zim_model,
+        },
     }
     if args.json:
         print(json.dumps(payload))
@@ -801,6 +897,8 @@ def cmd_status(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     print(f"chunks      {chunks}")
     print(f"last ingest {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_ingest)) if last_ingest else 'never'}")
     print(f"roots       {' '.join(cfg['AI_INGEST_DIRS'].split())}")
+    print(f"zim search  {len(zims)} archive(s) in {zim_home}, model {zim_model}, "
+          f"llm {'ready' if payload['zim']['installed'] else 'missing'}")
     print(f"ollama      {'reachable' if names is not None else 'not reachable'}")
     return 0
 
@@ -853,6 +951,16 @@ def build_parser() -> argparse.ArgumentParser:
     zim.add_argument("--extract-only", action="store_true", help="extract but do not index")
     zim.add_argument("--dry-run", action="store_true", help="list the selected articles only")
     zim.set_defaults(func=cmd_zim_ingest)
+
+    zim_ask = sub.add_parser(
+        "zim-ask",
+        help="ask a question with Kiwix's own search index (llm-tools-kiwix)",
+    )
+    zim_ask.add_argument("question")
+    zim_ask.add_argument("--zim", default="", help="restrict to this ZIM file")
+    zim_ask.add_argument("--model", default="", help="override AI_ZIM_MODEL")
+    zim_ask.add_argument("--json", action="store_true", help="machine-readable output")
+    zim_ask.set_defaults(func=cmd_zim_ask)
     return parser
 
 
@@ -860,6 +968,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     cfg = read_config(args.config)
+    cfg["AI_ZIM_MODEL"] = cfg.get("AI_ZIM_MODEL") or cfg["AI_MODEL"]
     return int(args.func(args, cfg) or 0)
 
 

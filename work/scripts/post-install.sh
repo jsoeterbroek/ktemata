@@ -177,8 +177,8 @@ ${C_BOLD}OPTIONS${C_OFF}
                          'left' = 90 deg counter-clockwise.
       --kiosk            Install the kiosk launcher and autostart it in the desktop session.
       --kiosk-user NAME  Whose session autostarts it (default: the user running sudo).
-      --ai               Install the offline AI (Ollama + ktemata-ai) after the base install.
-                         Downloads models and is opt-in; see docs/OFFLINE_AI.md.
+      --ai               Install the offline AI (Ollama + ktemata-ai + llm-tools-kiwix) after
+                         the base install. Downloads models and is opt-in; see docs/OFFLINE_AI.md.
       --no-hwtest        Skip the hardware checks.
       --hwtest-only      Run the hardware checks and exit (implies --dry-run).
       --strict           Exit non-zero if a hardware check fails.
@@ -1668,11 +1668,11 @@ install_offline_ai() {
     script="$dir/post-install-ai.sh"
     [ -x "$script" ] || die "cannot find post-install-ai.sh next to this script"
     if $DRY_RUN; then
-        printf '%s  [dry-run]%s %s --yes --dry-run\n' \
-            "$C_YELLOW" "$C_OFF" "$script"
+        printf '%s  [dry-run]%s %s --yes --dry-run --zim-home %s\n' \
+            "$C_YELLOW" "$C_OFF" "$script" "$LIBRARY_DIR"
         return 0
     fi
-    "$script" --yes
+    "$script" --yes --zim-home "$LIBRARY_DIR"
 }
 
 install_kiosk() {

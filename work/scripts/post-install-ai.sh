@@ -29,6 +29,10 @@ AI_SERVICE=ktemata-ai-ingest
 ADMIN_SERVICE=ktemata-admin
 AI_STATE_DIR=/var/lib/ktemata-ai
 AI_PULL_TIMEOUT=7200
+AI_VENV=/opt/ktemata-ai/venv
+AI_LLM_BIN=$AI_VENV/bin/llm
+AI_ZIM_MODEL=${AI_ZIM_MODEL:-}
+AI_ZIM_HOME=${AI_ZIM_HOME:-/srv/kiwix/zim}
 
 DRY_RUN=false
 ASSUME_YES=false
@@ -66,6 +70,9 @@ ${C_BOLD}OPTIONS${C_OFF}
       --ollama-url URL  Ollama API (default: $AI_OLLAMA_URL).
       --ingest-dir DIR  Document root (repeatable; default: /var/lib/kiwix /srv/kiwix/zim).
       --db PATH         SQLite index (default: $AI_DB).
+      --zim-model NAME  Model for ZIM direct search (default: AI_MODEL). Qwen 2.5 3B is
+                        recommended for tool calling; it is pulled when different.
+      --zim-home DIR    ZIM directory for direct search (default: $AI_ZIM_HOME).
       --no-models       Do not pull models (for a preloaded or offline Ollama).
       --no-ingest       Do not run the first index build now.
       --no-service      Do not install/enable the re-index timer.
@@ -74,16 +81,18 @@ ${C_BOLD}OPTIONS${C_OFF}
   -V, --version         Print the version.
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
-  1. installs python3-numpy, poppler-utils, zim-tools, curl and zstd
+  1. installs python3-numpy, python3-venv, poppler-utils, zim-tools, curl and zstd
   2. installs Ollama and enables ollama.service (localhost:11434)
   3. pulls the generation and embedding models unless --no-models
   4. installs /usr/local/bin/ktemata-ai and $AI_CONFIG
-  5. updates the library admin UI and server, restarting ktemata-admin if installed
-  6. indexes $AI_INGEST_DIRS (text, Markdown, HTML, XML, PDF, EPUB, DOCX, ODT)
-  7. installs $AI_SERVICE.service + .timer; re-indexes every 6 hours
+  5. installs llm + llm-ollama + llm-tools-kiwix in $AI_VENV
+  6. updates the library admin UI and server, restarting ktemata-admin if installed
+  7. indexes $AI_INGEST_DIRS (text, Markdown, HTML, XML, PDF, EPUB, DOCX, ODT)
+  8. installs $AI_SERVICE.service + .timer; re-indexes every 6 hours
 
-ZIM archives are skipped by ingest; use: ktemata-ai zim-ingest --zim FILE --limit 200
-Ask with: ktemata-ai ask "your question"
+ZIM direct search: ktemata-ai zim-ask "your question"
+Bounded vector slices: ktemata-ai zim-ingest --zim FILE --limit 200
+Document index: ktemata-ai ask "your question"
 EOF
 }
 
@@ -146,7 +155,7 @@ check_platform() {
 
 install_packages() {
     log_stage "Packages"
-    local packages=(curl ca-certificates python3 python3-numpy poppler-utils zstd zim-tools)
+    local packages=(curl ca-certificates python3 python3-numpy python3-venv python3-pip poppler-utils zstd zim-tools)
     if ! $NO_UPDATE; then
         run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
     fi
@@ -240,9 +249,35 @@ install_cli() {
     install_admin_assets "$dir"
 }
 
+install_llm_kiwix() {
+    log_stage "ZIM direct search"
+    run install -d -m 0755 /opt/ktemata-ai
+    if [ ! -x "$AI_VENV/bin/python" ]; then
+        run python3 -m venv "$AI_VENV"
+    fi
+    run "$AI_VENV/bin/pip" install --upgrade pip
+    # llm-tools-kiwix 0.1 uses the libzim 3.x search API; libzim 4.x returns no results.
+    run "$AI_VENV/bin/pip" install --upgrade llm llm-ollama "libzim<4" llm-tools-kiwix
+    log_ok "$AI_VENV (llm + llm-ollama + llm-tools-kiwix, libzim<4)"
+}
+
 write_config() {
     log_stage "Configuration"
     if $CONFIG_EXISTED; then
+        if ! $DRY_RUN; then
+            # Add the ZIM keys introduced after the first install without touching the
+            # user's existing values. Existing keys always win; missing ones take this run's
+            # flags/defaults.
+            if ! grep -q '^AI_ZIM_MODEL=' "$AI_CONFIG"; then
+                printf 'AI_ZIM_MODEL=%q\n' "$AI_ZIM_MODEL" >>"$AI_CONFIG"
+            fi
+            if ! grep -q '^AI_ZIM_HOME=' "$AI_CONFIG"; then
+                printf 'AI_ZIM_HOME=%q\n' "$AI_ZIM_HOME" >>"$AI_CONFIG"
+            fi
+            if ! grep -q '^AI_LLM_BIN=' "$AI_CONFIG"; then
+                printf 'AI_LLM_BIN=%q\n' "$AI_LLM_BIN" >>"$AI_CONFIG"
+            fi
+        fi
         log_ok "using existing $AI_CONFIG (edit it to change models or roots)"
         return 0
     fi
@@ -263,6 +298,9 @@ write_config() {
         printf 'AI_CHUNK_OVERLAP=%q\n' "200"
         printf 'AI_TOP_K=%q\n' "4"
         printf 'AI_MAX_FILE_MB=%q\n' "50"
+        printf 'AI_ZIM_MODEL=%q\n' "$AI_ZIM_MODEL"
+        printf 'AI_ZIM_HOME=%q\n' "$AI_ZIM_HOME"
+        printf 'AI_LLM_BIN=%q\n' "$AI_LLM_BIN"
     } >"$AI_CONFIG"
     chmod 0644 "$AI_CONFIG"
     log_ok "$AI_CONFIG"
@@ -363,6 +401,7 @@ summary() {
     printf '  ask        ktemata-ai ask "What is in these documents?"\n'
     printf '  search     ktemata-ai search "keyword"\n'
     printf '  ingest     sudo ktemata-ai ingest\n'
+    printf '  zim ask    ktemata-ai zim-ask "..." (model %s, %s)\n' "$AI_ZIM_MODEL" "$AI_ZIM_HOME"
     printf '  admin      the library admin on :8081 has an "Ask the library" box\n'
     if $NO_SERVICE; then
         printf '  timer      not installed (--no-service)\n'
@@ -382,6 +421,8 @@ main() {
             --ollama-url)   AI_OLLAMA_URL=${2:?--ollama-url needs a URL}; shift ;;
             --ingest-dir)   dirs+=("${2:?--ingest-dir needs a path}"); shift ;;
             --db)           AI_DB=${2:?--db needs a path}; shift ;;
+            --zim-model)    AI_ZIM_MODEL=${2:?--zim-model needs a name}; shift ;;
+            --zim-home)     AI_ZIM_HOME=${2:?--zim-home needs a path}; shift ;;
             --no-models)    NO_MODELS=true ;;
             --no-ingest)    NO_INGEST=true ;;
             --no-service)   NO_SERVICE=true ;;
@@ -415,12 +456,16 @@ main() {
         [ "$AI_STATE_DIR" != "/" ] || die "AI_DB must not be at the filesystem root"
         CONFIG_EXISTED=true
     fi
+    AI_ZIM_MODEL=${AI_ZIM_MODEL:-$AI_MODEL}
+    AI_ZIM_HOME=${AI_ZIM_HOME:-/srv/kiwix/zim}
+    AI_LLM_BIN=$AI_VENV/bin/llm
+    case $AI_ZIM_HOME in /*) ;; *) die "--zim-home must be an absolute path" ;; esac
     case $AI_OLLAMA_URL in http://*|https://*) ;; *) die "--ollama-url must be an http(s) URL" ;; esac
 
     $DRY_RUN || require_root "$@"
 
     if ! $DRY_RUN && ! $ASSUME_YES; then
-        confirm "Install Ollama, pull $AI_MODEL + $AI_EMBED_MODEL (about 2.3 GB), and index $AI_INGEST_DIRS?" \
+        confirm "Install Ollama, pull the local models, install the ZIM tools, and index $AI_INGEST_DIRS?" \
             || { log_info "aborted"; exit 0; }
     fi
 
@@ -430,7 +475,11 @@ main() {
     wait_ollama
     pull_model "$AI_EMBED_MODEL"
     pull_model "$AI_MODEL"
+    if [ "$AI_ZIM_MODEL" != "$AI_MODEL" ]; then
+        pull_model "$AI_ZIM_MODEL"
+    fi
     install_cli
+    install_llm_kiwix
     write_config
     run install -d -m 0755 "$AI_STATE_DIR"
     install_units

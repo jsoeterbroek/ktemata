@@ -99,8 +99,8 @@ sudo ./work/scripts/post-install.sh --ai
 
 It indexes `/var/lib/kiwix` and `/srv/kiwix/zim` by default (text, Markdown, HTML, XML, PDF, EPUB,
 DOCX, ODT), answers with `ktemata-ai ask "..."`, and adds the **Ask the library** box to the admin
-page. ZIM archives are skipped by the normal ingest; use `ktemata-ai zim-ingest` for a bounded
-slice of articles.
+page. ZIM archives are skipped by the normal ingest; use `ktemata-ai zim-ask` for Kiwix's own
+search index (no vector build), or `ktemata-ai zim-ingest` for a bounded vector slice.
 
 ## Library hotspot
 
@@ -742,7 +742,8 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --rotate WHAT      normal | left | right | inverted (or 0|90|180|270 clockwise)
     --kiosk            install the kiosk launcher + autostart
     --kiosk-user NAME  desktop user to autostart it for (default: the sudo user)
-    --ai               install the offline AI (Ollama + ktemata-ai); see OFFLINE_AI.md
+    --ai               install the offline AI (Ollama + ktemata-ai + llm-tools-kiwix);
+                       see OFFLINE_AI.md
     --no-hwtest        skip the hardware checks
     --hwtest-only      run the hardware checks and exit
     --strict           non-zero exit when a hardware check fails (not on warnings)

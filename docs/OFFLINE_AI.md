@@ -39,8 +39,10 @@ The default roots are:
 Hidden files and names are skipped, as are files larger than `AI_MAX_FILE_MB` (default 50).
 
 **ZIM is not indexed automatically.** A `.zim` file is a compressed archive with its own index;
-ingesting all of Wikipedia as chunks is not practical on a Pi. `zim-ingest` extracts a bounded
-slice of articles with `zimdump` and indexes only those — see [ZIM ingestion](#zim-ingestion).
+ingesting all of Wikipedia as chunks is not practical on a Pi. For large archives use `zim-ask`,
+which searches Kiwix's own index directly — see
+[ZIM direct search](#zim-direct-search-llm-tools-kiwix). `zim-ingest` remains available when you
+want a curated vector slice — see [ZIM ingestion](#zim-ingestion).
 
 ## Hardware and expectations
 
@@ -86,15 +88,18 @@ sudo ./work/scripts/post-install-ai.sh --ingest-dir /srv/docs       # repeatable
 
 What it does:
 
-1. installs `python3-numpy`, `poppler-utils`, `zim-tools`, `curl`, `ca-certificates`, `zstd`;
+1. installs `python3-numpy`, `python3-venv`, `python3-pip`, `poppler-utils`, `zim-tools`, `curl`,
+   `ca-certificates`, `zstd`;
 2. installs Ollama with the official installer if `ollama` is absent, and enables
    `ollama.service`;
 3. pulls the embedding and generation models through Ollama's API (skip with `--no-models`);
 4. installs `/usr/local/bin/ktemata-ai` and `/etc/ktemata/ai.conf`;
-5. updates the library admin UI and server with the **Ask the library** box and restarts
+5. installs `llm`, `llm-ollama` and `llm-tools-kiwix` in `/opt/ktemata-ai/venv`, pinning
+   `libzim<4` because the plugin's search API breaks with libzim 4.x;
+6. updates the library admin UI and server with the **Ask the library** box and restarts
    `ktemata-admin.service` if it is installed;
-6. runs the first `ktemata-ai ingest` (skip with `--no-ingest`);
-7. installs and enables `ktemata-ai-ingest.timer` for a re-index every six hours.
+7. runs the first `ktemata-ai ingest` (skip with `--no-ingest`);
+8. installs and enables `ktemata-ai-ingest.timer` for a re-index every six hours.
 
 A re-run is idempotent. An existing `/etc/ktemata/ai.conf` is the source of truth: the installer
 uses its models and roots instead of the flags, and never overwrites it. Edit the file to change
@@ -140,6 +145,7 @@ sudo ktemata-ai ingest --force    # re-embed everything
 ktemata-ai search "keyword"       # show the closest chunks without the model
 ktemata-ai ask "What does the manual say about charging?"
 ktemata-ai ask "..." --json       # {answer, sources, model}
+ktemata-ai zim-ask "How do I install Gentoo?"   # Kiwix's own index, no vector build
 ```
 
 `ingest` hashes each file and only embeds changed content. `--root DIR` overrides the configured
@@ -236,6 +242,8 @@ or just `sudo ktemata-ai ingest`.
 ## Security and limits
 
 - Ollama binds `127.0.0.1`; no API port is opened on the LAN.
+- The ZIM direct-search venv is installed from PyPI at install time. At runtime `llm` only talks
+  to the local Ollama server and reads the ZIM files; it adds no listening service.
 - The admin page is authenticated; the AI route is under the same auth.
 - The ingest service runs as root because it reads the library and writes the index. It is
   `ProtectSystem=strict` with only the index directory writable.
@@ -251,7 +259,7 @@ sudo systemctl disable --now ktemata-ai-ingest.timer
 sudo rm -f /etc/systemd/system/ktemata-ai-ingest.{service,timer}
 sudo systemctl daemon-reload
 sudo rm -f /usr/local/bin/ktemata-ai /etc/ktemata/ai.conf
-sudo rm -rf /var/lib/ktemata-ai
+sudo rm -rf /var/lib/ktemata-ai /opt/ktemata-ai
 # optional: remove Ollama itself
 sudo systemctl disable --now ollama
 ```
@@ -267,3 +275,112 @@ was checked in Debian 13, and the generated config/service/timer were inspected.
 question, answer and sources rendered, and the box stayed disabled for a missing index/model. The
 real 3B model has not been benchmarked on the Pi in this repository; the numbers above are
 expectations, not measurements.
+
+
+## ZIM direct search (llm-tools-kiwix)
+
+ZIM archives already carry a Xapian full-text index. For large archives, use that index directly
+instead of building a vector database. The AI calls `kiwix_search_and_collect`, reads up to three
+matching articles, and answers from that content. There is no pre-indexing step and the RAM cost
+is essentially the model.
+
+This is the recommended ZIM path on a Pi; `zim-ingest` (above) is only for bounded vector slices.
+
+### Install
+
+The offline AI installer creates a dedicated venv and installs the LLM CLI, its Ollama plugin,
+and the Kiwix tools plugin:
+
+```bash
+sudo ./work/scripts/post-install-ai.sh --yes
+```
+
+That installs `llm`, `llm-ollama` and `llm-tools-kiwix` in `/opt/ktemata-ai/venv`, with
+`libzim<4` pinned (`llm-tools-kiwix` 0.1 uses the libzim 3.x search API; 4.x returns no matches).
+The ZIM directory defaults to `/srv/kiwix/zim`; override it with `--zim-home DIR` or by editing
+`/etc/ktemata/ai.conf`.
+
+### Use
+
+```bash
+ktemata-ai zim-ask "How do I install Gentoo?"
+ktemata-ai zim-ask --zim /srv/kiwix/zim/gentoo_en_all_maxi_2021-03.zim "How do I install Gentoo?"
+ktemata-ai zim-ask --json "..."       # {answer, model, zim, zims}
+```
+
+The wrapper runs the plugin's `kiwix_search_and_collect` tool through the LLM CLI. You can also run
+it directly:
+
+```bash
+KIWIX_HOME=/srv/kiwix/zim OLLAMA_HOST=http://127.0.0.1:11434 \
+  /opt/ktemata-ai/venv/bin/llm -m ollama/qwen2.5:3b \
+  -T kiwix_search_and_collect -n \
+  "How do I install Gentoo?"
+```
+
+`llm tools list` shows the three registered tools and the ZIM files the plugin discovered:
+
+```bash
+KIWIX_HOME=/srv/kiwix/zim /opt/ktemata-ai/venv/bin/llm tools list
+```
+
+The plugin searches `KIWIX_HOME/*.zim` (flat, not recursive) and also the current directory. The
+model receives the list in the tool description and selects the archive; `--zim` narrows the
+request to one file in the prompt. `-n` keeps the query out of `llm`'s SQLite log.
+
+### Models
+
+`AI_ZIM_MODEL` selects the model for this path; it defaults to `AI_MODEL`. **Tool calling is
+required**, and Qwen 2.5 3B is the recommendation for a 4–8 GB Pi:
+
+```bash
+sudo ./work/scripts/post-install-ai.sh --yes --zim-model qwen2.5:3b
+# or on an existing install:
+ollama pull qwen2.5:3b
+sudo sed -i 's/^AI_ZIM_MODEL=.*/AI_ZIM_MODEL=qwen2.5:3b/' /etc/ktemata/ai.conf
+```
+
+With an existing `/etc/ktemata/ai.conf`, existing keys win over the installer flags; missing ZIM
+keys are appended on the next installer run. Edit the file to change a value.
+
+| Key | Meaning |
+|---|---|
+| `AI_ZIM_MODEL` | tool-calling model for `zim-ask` (default: `AI_MODEL`) |
+| `AI_ZIM_HOME` | directory scanned for `*.zim` (default `/srv/kiwix/zim`) |
+
+`ktemata-ai status` prints the ZIM archive count, the model and whether the `llm` venv is ready.
+
+### Why not KiwixRAG or a full vector index?
+
+`KiwixRAG` (brunuff) is a work-in-progress chat application built around sentence-transformers
+and ChromaDB; it builds a vector index and its README warns that indexing can take hours. That is
+the heavy path this design avoids. `zim-llm` similarly vectorises ZIMs and is reasonable only for
+small, specialised archives. `llm-tools-kiwix` is a single small plugin that uses Kiwix's existing
+Xapian index, so the CPU and storage cost stays at model inference and the articles you actually
+read.
+
+The normal `zim-ingest` command remains for curated slices you want in the document index; it is
+not the ZIM search path.
+
+### Limits
+
+- The plugin returns at most three matching articles per tool call, so very broad questions read
+  only the top results.
+- The model must support tool calling. If it does not, `llm` reports a tool/schema error; switch
+  `AI_ZIM_MODEL` to Qwen 2.5 3B or another tool-capable model.
+- The tool description lists every ZIM in the directory. Keep the directory focused, or use
+  `--zim` to point at one archive.
+- The answer quality depends on the model and the ZIM's own index; verify citations in the answer
+  against `kiwix-serve` on `:8080`.
+- This path is CLI-only. The admin **Ask the library** box uses the document index; ask ZIM
+  questions with `ktemata-ai zim-ask` over SSH or a terminal.
+
+### Verified
+
+The `llm-tools-kiwix` venv was installed on Debian 13 arm64 (`llm 0.38`, `libzim 3.13.1`,
+`llm-tools-kiwix 0.1`, `llm-ollama 0.20`), and `llm tools list` registered
+`kiwix_search_and_collect`, `kiwix_search` and `kiwix_read`. With `libzim<4`, the plugin's search
+returned 2 articles for `Abacus` and 3 for `arithmetic` from the `wikiciv` sample; with libzim
+4.1.0 it returned none, which is why the installer pins `<4`. The `zim-ask` wrapper was exercised
+with a fake `llm` binary, including `--zim` and `--json`; a real model-driven tool call has not
+been run on the Pi in this repository.
