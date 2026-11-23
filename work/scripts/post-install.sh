@@ -1710,9 +1710,10 @@ TimeoutStartSec=1800
 ExecStartPre=/usr/local/bin/kiwix-library "$ZIM_DIR" "$LIBRARY_XML"
 # No ZIMs -> the XML is absent -> would exit 1 and restart. sh -c lets us exit 0 instead and
 # wait for a restart, so an idle card does not produce a restart loop.
-# All IPv4 interfaces includes both loopback and the hotspot/LAN address. Local launchers use
-# 127.0.0.1 explicitly: "localhost" may resolve to ::1, which this IPv4 listener does not serve.
-ExecStart=/bin/sh -c 'if [ -f "$LIBRARY_XML" ]; then exec /usr/bin/kiwix-serve --address=0.0.0.0 --port=$SERVICE_PORT --library "$LIBRARY_XML"; fi; echo "no ZIM files yet in $ZIM_DIR"; exit 0'
+# No --address: kiwix-serve then listens on every available address. Do not pass 0.0.0.0 —
+# it treats that as a literal interface address and exits with "IP address is not available".
+# Local launchers use 127.0.0.1 explicitly, so they do not depend on the IPv6/IPv4 choice.
+ExecStart=/bin/sh -c 'if [ -f "$LIBRARY_XML" ]; then exec /usr/bin/kiwix-serve --port=$SERVICE_PORT --library "$LIBRARY_XML"; fi; echo "no ZIM files yet in $ZIM_DIR"; exit 0'
 Restart=on-failure
 RestartSec=3
 # the library is read-only; keep the service boxed in

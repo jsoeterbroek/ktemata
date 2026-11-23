@@ -123,7 +123,7 @@ sudo ./work/scripts/post-install.sh --no-wifi-switch   # do not install it
 Deleting the AP is not the same as being silent. Without `--hotspot` the installer simply declines
 to create an access point: the radio is still enabled, `wlan0` exists, and if the box has ever been
 joined to a network it will associate with it again. `kiwix-serve` also runs with no `--address`, so
-it binds `0.0.0.0:8080` on every interface that comes up.
+it binds every available interface (IPv4 and IPv6) on :8080.
 
 `--no-radio` is the real off switch. It disables the on-board Wi-Fi and Bluetooth **in the
 firmware**, which is persistent and applies before the kernel probes the hardware:
@@ -576,10 +576,12 @@ curl -sI http://localhost:8080/ | head -1
 ```
 
 Override the location with `--zim-dir` and the port with `--port`; both are also honoured in the unit.
-The service listens explicitly on `0.0.0.0`, covering loopback and the device’s LAN/hotspot addresses. Local
-shortcuts use `http://127.0.0.1:8080/` because `localhost` can resolve to IPv6 `::1`, which the IPv4 listener
-does not serve. If the connection still fails, check that at least one ZIM is installed and inspect
-`systemctl status kiwix`; the service intentionally exits when `library.xml` cannot be created.
+The service listens on every available address because `kiwix-serve` gets no `--address`. Do not add
+`--address=0.0.0.0`: kiwix-serve treats it as a literal interface address and exits with
+`ERROR: IP address is not available on this system: 0.0.0.0` (reproduced with 3.7.0). Omitting the option
+is the wildcard. Local shortcuts use `http://127.0.0.1:8080/` because `localhost` may resolve to IPv6 `::1`
+and older builds served IPv4 only. If the connection still fails, check that at least one ZIM is installed
+and inspect `systemctl status kiwix`; the service intentionally exits when `library.xml` cannot be created.
 
 ## Where the ZIMs come from
 
@@ -631,6 +633,10 @@ Run inside `ubuntu:24.04` (amd64): dry run, then a real install with `--yes --sa
 (Arch) the platform check correctly refuses. A re-run is idempotent ("already exists", "already the newest
 version"), the generated unit was inspected, and the service user was confirmed able to read the archive
 (`head -c4` returns the `ZIM\x04` magic).
+
+The service bind was rechecked in Debian 13 with **kiwix-tools 3.7.0**: `--address=0.0.0.0` fails after loading
+the library with `ERROR: IP address is not available on this system: 0.0.0.0`, while the same unit without
+`--address` starts and answers HTTP 200 on `127.0.0.1`. The unit no longer passes an address.
 
 Rotation was exercised against synthetic `cmdline.txt` copies: append to a file without a trailing newline,
 replace an existing `rotate=0`, and a repeat run reporting "already set".
