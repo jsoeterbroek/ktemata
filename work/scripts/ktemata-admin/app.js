@@ -21,8 +21,9 @@ const ui = {
   lastFetchError: 0,
   seq: 0,
   aiInstalled: null,
-  aiIndexed: new Set(),
+  aiStates: new Map(),
   aiBuilding: new Set(),
+  sort: { key: '', dir: 1 },
 };
 
 /* ------------------------------------------------------------------ utils */
@@ -274,14 +275,61 @@ function renderIndex(index, zims) {
   }
 }
 
+function aiStateFor(zim) {
+  const state = ui.aiStates.get(zim.name);
+  return {
+    indexed: Boolean(zim.ai_indexed) || Boolean(state?.indexed),
+    active: Boolean(state?.active) || ui.aiBuilding.has(zim.name),
+    failed: Boolean(state?.failed),
+  };
+}
+
+function sortValue(zim, key) {
+  if (key === 'size') return Number(zim.size) || 0;
+  if (key === 'mtime') return Number(zim.mtime) || 0;
+  if (key === 'index') {
+    if (ui.state?.index?.error) return 0;
+    if (ui.reindexing) return 2;
+    return zim.indexed ? 3 : 1;
+  }
+  if (key === 'ai') {
+    const state = aiStateFor(zim);
+    if (state.failed) return 0;
+    if (state.active) return 2;
+    return state.indexed ? 3 : 1;
+  }
+  return 0;
+}
+
+function sortedZims(zims) {
+  if (!ui.sort.key) return [...zims];
+  const dir = ui.sort.dir;
+  return [...zims].sort((a, b) => {
+    const delta = sortValue(a, ui.sort.key) - sortValue(b, ui.sort.key);
+    if (delta) return delta * dir;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function updateSortHeaders() {
+  for (const button of $$('.sort')) {
+    const th = button.closest('th');
+    const active = button.dataset.sort === ui.sort.key;
+    if (th) th.setAttribute('aria-sort', active ? (ui.sort.dir > 0 ? 'ascending' : 'descending') : 'none');
+    const mark = $('.sort-mark', button);
+    if (mark) mark.textContent = active ? (ui.sort.dir > 0 ? '▲' : '▼') : '';
+  }
+}
+
 function renderTable(zims) {
   const rows = $('#rows');
+  const sorted = sortedZims(zims);
   rows.replaceChildren();
   const empty = $('#zims-empty');
   empty.hidden = zims.length !== 0;
   $('#zim-table').hidden = zims.length === 0;
 
-  for (const zim of zims) {
+  for (const zim of sorted) {
     const tr = document.createElement('tr');
     tr.dataset.name = zim.name.toLowerCase();
 
@@ -303,42 +351,73 @@ function renderTable(zims) {
     when.title = absTime(zim.mtime);
 
     const index = document.createElement('td');
-    const badge = document.createElement('span');
-    badge.className = `badge ${zim.indexed ? 'ok' : 'stale'}`;
-    badge.textContent = zim.indexed ? 'Indexed' : 'Not indexed';
-    badge.title = zim.indexed
-      ? 'Present in library.xml'
-      : 'Not in library.xml yet — rebuild the index to publish it';
-    index.append(badge);
+    const indexBadge = document.createElement('span');
+    if (ui.state?.index?.error) {
+      indexBadge.className = 'badge bad';
+      indexBadge.textContent = 'Error';
+      indexBadge.title = ui.state.index.error;
+    } else if (ui.reindexing) {
+      indexBadge.className = 'badge busy';
+      indexBadge.textContent = 'Indexing';
+      indexBadge.title = 'library.xml is being rebuilt';
+    } else if (zim.indexed) {
+      indexBadge.className = 'badge ok';
+      indexBadge.textContent = 'Indexed';
+      indexBadge.title = 'Present in library.xml';
+    } else {
+      indexBadge.className = 'badge warn';
+      indexBadge.textContent = 'Not indexed';
+      indexBadge.title = 'Not in library.xml yet — rebuild the index to publish it';
+    }
+    index.append(indexBadge);
 
     const ai = document.createElement('td');
     ai.className = 'ai';
-    const aiReady = Boolean(zim.ai_indexed) || ui.aiIndexed.has(zim.name);
-    const building = ui.aiBuilding.has(zim.name);
-    const aiBadge = document.createElement('span');
+    const state = aiStateFor(zim);
+    let aiTone = 'warn';
+    let aiText = 'Not indexed';
+    let aiTitle = 'No KiwixRAG vector index yet';
+    let buttonText = 'Build';
     if (ui.aiInstalled === false) {
-      aiBadge.className = 'badge';
-      aiBadge.textContent = 'AI off';
-      aiBadge.title = 'KiwixRAG is not installed — run post-install-ai.sh';
-      ai.append(aiBadge);
-    } else {
-      aiBadge.className = `badge ${aiReady ? 'ok' : 'stale'}`;
-      aiBadge.textContent = building ? 'Indexing' : aiReady ? 'AI ready' : 'AI';
-      aiBadge.title = aiReady
-        ? 'KiwixRAG vector index is ready'
-        : 'No KiwixRAG vector index yet';
+      aiTone = 'bad';
+      aiText = 'Unavailable';
+      aiTitle = 'KiwixRAG is not installed — run post-install-ai.sh';
+      buttonText = '';
+    } else if (state.failed) {
+      aiTone = 'bad';
+      aiText = 'Error';
+      aiTitle = 'The last KiwixRAG index attempt failed; check the unit journal';
+      buttonText = 'Retry';
+    } else if (state.active) {
+      aiTone = 'busy';
+      aiText = 'Indexing';
+      aiTitle = 'The KiwixRAG index is building now';
+      buttonText = 'Indexing…';
+    } else if (state.indexed) {
+      aiTone = 'ok';
+      aiText = 'Indexed';
+      aiTitle = 'KiwixRAG vector index is ready';
+      buttonText = 'Rebuild';
+    }
+    const aiBadge = document.createElement('span');
+    aiBadge.className = `badge ${aiTone}`;
+    aiBadge.textContent = aiText;
+    aiBadge.title = aiTitle;
+    ai.append(aiBadge);
+
+    if (ui.aiInstalled !== false) {
       const aiButton = document.createElement('button');
       aiButton.type = 'button';
       aiButton.className = 'mini';
-      aiButton.textContent = building ? 'Indexing…' : aiReady ? 'Rebuild' : 'Build';
-      aiButton.disabled = building || ui.aiInstalled === null;
-      aiButton.title = building
+      aiButton.textContent = buttonText;
+      aiButton.disabled = state.active || ui.aiInstalled === null;
+      aiButton.title = state.active
         ? 'The KiwixRAG index is building; this page refreshes when it finishes'
-        : aiReady
+        : state.indexed
           ? 'Discard and rebuild the KiwixRAG vector index'
           : 'Build the KiwixRAG vector index for this archive';
       aiButton.addEventListener('click', () => buildAiIndex(zim.name));
-      ai.append(aiBadge, aiButton);
+      ai.append(aiButton);
     }
 
     const act = document.createElement('td');
@@ -364,6 +443,7 @@ function renderTable(zims) {
     tr.append(name, size, when, index, ai, act);
     rows.append(tr);
   }
+  updateSortHeaders();
   applyFilter();
 }
 
@@ -459,7 +539,10 @@ async function serviceAction(action) {
 async function reindex() {
   if (ui.reindexing) return;
   ui.reindexing = true;
-  if (ui.state) renderIndex(ui.state.index, ui.state.zims);
+  if (ui.state) {
+    renderIndex(ui.state.index, ui.state.zims);
+    renderTable(ui.state.zims);
+  }
   try {
     const result = await api('/api/reindex', { method: 'POST', json: { restart: true } });
     const line = (result.output || '')
@@ -731,9 +814,10 @@ async function waitForAiIndex(name) {
     }
     ui.aiBuilding.delete(name);
     if (state.indexed) {
-      ui.aiIndexed.add(name);
+      ui.aiStates.set(name, { indexed: true, active: false, failed: false });
       toast(`KiwixRAG index ready for ${name}`, 'good');
     } else if (state.result === 'failed') {
+      ui.aiStates.set(name, { indexed: false, active: false, failed: true });
       toast(`KiwixRAG indexing failed for ${name}; check journalctl -u ${state.unit}`, 'bad');
     }
     refreshAiStatus();
@@ -814,7 +898,16 @@ async function refreshAiStatus() {
     const rag = state.kiwixrag;
     const zims = (rag?.zims || []).filter((zim) => zim.indexed);
     ui.aiInstalled = Boolean(rag && rag.installed);
-    ui.aiIndexed = new Set(zims.map((zim) => zim.name));
+    ui.aiStates = new Map(
+      (rag?.zims || []).map((zim) => [
+        zim.name,
+        {
+          indexed: Boolean(zim.indexed),
+          active: Boolean(zim.active),
+          failed: Boolean(zim.failed),
+        },
+      ]),
+    );
     if (ui.state) renderTable(ui.state.zims);
 
     const models = state.ollama_models || [];
@@ -921,6 +1014,16 @@ $('#file').addEventListener('change', (event) => {
 $('#filter').addEventListener('input', (event) => {
   ui.filter = event.target.value;
   applyFilter();
+});
+$$('.sort').forEach((button) => {
+  button.addEventListener('click', () => {
+    const key = button.dataset.sort;
+    if (!key) return;
+    ui.sort.dir = ui.sort.key === key ? -ui.sort.dir : 1;
+    ui.sort.key = key;
+    if (ui.state) renderTable(ui.state.zims);
+    else updateSortHeaders();
+  });
 });
 $('#reindex').addEventListener('click', reindex);
 $('#banner-action').addEventListener('click', reindex);

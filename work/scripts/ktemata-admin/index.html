@@ -127,10 +127,18 @@
         <thead>
           <tr>
             <th scope="col">Archive</th>
-            <th scope="col" class="num">Size</th>
-            <th scope="col" class="when">Modified</th>
-            <th scope="col">Index</th>
-            <th scope="col">AI index</th>
+            <th scope="col" class="num" aria-sort="none">
+              <button class="sort" type="button" data-sort="size">Size<span class="sort-mark" aria-hidden="true"></span></button>
+            </th>
+            <th scope="col" class="when" aria-sort="none">
+              <button class="sort" type="button" data-sort="mtime">Modified<span class="sort-mark" aria-hidden="true"></span></button>
+            </th>
+            <th scope="col" aria-sort="none">
+              <button class="sort" type="button" data-sort="index">Index<span class="sort-mark" aria-hidden="true"></span></button>
+            </th>
+            <th scope="col" aria-sort="none">
+              <button class="sort" type="button" data-sort="ai">AI index<span class="sort-mark" aria-hidden="true"></span></button>
+            </th>
             <th scope="col"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>

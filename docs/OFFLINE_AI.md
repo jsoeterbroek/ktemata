@@ -255,9 +255,9 @@ single very large article is split into KiwixRAG chunks (500 characters, 50 over
 - **AI index** controls in each ZIM row:
   - **Build** starts `ktemata-ai-zim-index@<name>.service` in the background;
   - **Rebuild** does the same with `--rebuild`;
-  - the badge changes to **Indexing** while the unit is active and **AI ready** when the metadata
-    is present;
-  - **AI off** means KiwixRAG is not installed.
+  - the badge shows **Indexed** (green), **Not indexed** (yellow), **Indexing** (orange), or
+    **Error**/**Unavailable** (red); an active unit is orange and a failed unit is red;
+  - **Size**, **Modified**, **Index** and **AI index** headers sort the archive table.
 
 The admin service is root, but the index build is a separate systemd oneshot. The page polls the
 unit's `ActiveState`/`Result`; it does not hold an HTTP request open for hours. Check progress

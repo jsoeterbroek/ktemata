@@ -222,13 +222,67 @@ def ai_command(args, timeout=110):
         raise AdminError(HTTPStatus.INTERNAL_SERVER_ERROR, "offline AI returned invalid JSON")
 
 
-def ai_status():
+def systemd_unescape(instance):
+    binary = shutil.which("systemd-escape")
+    if not binary:
+        return instance
+    try:
+        result = subprocess.run(
+            [binary, "--unescape", instance],
+            check=False,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return instance
+    return result.stdout.strip() if result.returncode == 0 else instance
+
+
+def ai_unit_states():
+    """Active/failed KiwixRAG index units, in one systemctl call."""
+    if not shutil.which("systemctl"):
+        return {}
+    try:
+        result = systemctl(
+            "list-units", "--all", "--no-legend", "--plain", "ktemata-ai-zim-index@*"
+        )
+    except AdminError:
+        return {}
+    states = {}
+    for line in result.stdout.splitlines():
+        fields = line.split()
+        if len(fields) < 3 or not fields[0].startswith(ZIM_AI_UNIT):
+            continue
+        unit = fields[0]
+        active = fields[2]
+        if active not in ("active", "activating", "failed"):
+            continue
+        instance = unit[len(ZIM_AI_UNIT):]
+        if instance.endswith(".service"):
+            instance = instance[: -len(".service")]
+        states[systemd_unescape(instance)] = {
+            "active": active in ("active", "activating"),
+            "failed": active == "failed",
+        }
+    return states
+
+
+def ai_status(cfg=None):
     if not os.path.isfile(os.environ.get("KTEMATA_AI_CLI", DEFAULT_AI_CLI)):
         return {"installed": False}
     try:
-        return ai_command(["status", "--json"], timeout=30)
+        payload = ai_command(["status", "--json"], timeout=30)
     except AdminError as exc:
         return {"installed": True, "error": exc.message}
+    if cfg and isinstance(payload, dict) and payload.get("kiwixrag"):
+        states = ai_unit_states()
+        for item in payload["kiwixrag"].get("zims", []):
+            state = states.get(item.get("name"), {})
+            item["active"] = bool(state.get("active"))
+            item["failed"] = bool(state.get("failed"))
+    return payload
 
 
 def zim_ai_index_path(cfg, name):
@@ -629,7 +683,7 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/state":
                 self.send_json(build_state(self.cfg))
             elif path == "/api/ai/status":
-                self.send_json(ai_status())
+                self.send_json(ai_status(self.cfg))
             elif path == "/api/ai/zim-index":
                 self.send_json(zim_ai_status(self.cfg, self.query_name()))
             elif path == "/api/upload":
