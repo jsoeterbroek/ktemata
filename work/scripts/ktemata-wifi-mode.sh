@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Ktemata Wi-Fi mode switch, installed as /usr/local/bin/wifi-mode by post-install.sh.
+# Ktemata Wi-Fi mode switch, installed as /usr/local/bin/ktemata-wifi-mode by post-install.sh.
 #
-# The desktop entry runs "wifi-mode menu": pick client, access point, or radio off. The same
+# The desktop entry runs "ktemata-wifi-mode menu": pick client, access point, or radio off. The same
 # choices are available from a terminal, which is what the installer verifies.
 #
-#   wifi-mode              chooser (GUI, else terminal)
-#   wifi-mode menu         same
-#   wifi-mode status       current mode, one line
-#   wifi-mode client       radio on; leave the AP, join a known network
-#   wifi-mode ap           radio on; bring up the Ktemata access point
-#   wifi-mode off          radio off (NetworkManager remembers it across reboots)
+#   ktemata-wifi-mode              chooser (GUI, else terminal)
+#   ktemata-wifi-mode menu         same
+#   ktemata-wifi-mode status       current mode, one line
+#   ktemata-wifi-mode client       radio on; leave the AP, join a known network
+#   ktemata-wifi-mode ap           radio on; bring up the Ktemata access point
+#   ktemata-wifi-mode off          radio off (NetworkManager remembers it across reboots)
 #
 # NetworkManager is the only backend: the AP is an ordinary nmcli profile (mode ap, ipv4.method
 # shared), so DHCP/DNS come from NM's own dnsmasq and nothing else is installed. A drop-in sets
@@ -87,10 +87,10 @@ AP_PASS=${AP_PASSWORD:-${AP_PASS:-}}               # empty: open network
 
 usage() {
     cat <<EOF
-${C_BOLD}wifi-mode${C_OFF} — Ktemata Wi-Fi control (NetworkManager)
+${C_BOLD}ktemata-wifi-mode${C_OFF} — Ktemata Wi-Fi control (NetworkManager)
 
 USAGE
-  wifi-mode [menu|status|client|ap|off]
+  ktemata-wifi-mode [menu|status|client|ap|off]
 
   menu      Choose client, access point or off (zenity, else terminal).
   status    Print the current mode.
@@ -438,7 +438,7 @@ menu() {
     elif [ -t 0 ] && [ -t 1 ]; then
         choice=$(terminal_choose "$(status_text)") || exit 0
     else
-        die "no graphical or terminal session; run: wifi-mode status|client|ap|off"
+        die "no graphical or terminal session; run: ktemata-wifi-mode status|client|ap|off"
     fi
     [ -n "$choice" ] || exit 0
     case $choice in
