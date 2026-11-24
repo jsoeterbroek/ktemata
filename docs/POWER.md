@@ -160,16 +160,14 @@ much ($500–800 against $150–300).
   fair single number, so this page does not claim one.
 - **The power tier is in a different class.** A 24/7 RTX build (840 Wh/day, 369 W of panel) is a
   fixed installation with a battery bank, not something you carry. Its idle draw alone (35 W) is
-  5.4× Ktemata's *reading* draw (6.5 W).
+  4.6× Ktemata's reading draw (7.6 W).
 - **The 20–30 W panel in this repository cannot run any NOMAD tier 24/7.** At 3.5 peak-sun-hours
-  and 0.65 derate it delivers ≈ 46–68 Wh/day, i.e. 33–63 % of even Ktemata's daily need — so a
-  24/7 role needs the 48–61 W the table asks for, not the 20–30 W the BOM lists. For a NOMAD
-  station it is a quarter of the recommended tier's panel and a twentieth of the power tier's
-  (84 W and 369 W respectively), with 226–988 Wh of battery behind them.
-- **Ktemata's own pack does not cover a 24/7 day.** 128–164 Wh is what the 24/7 profiles above
-  need; the shipped 22.2 Wh is a session buffer of 2.6–4.2 h. That is a design statement, not a
-  shortfall: the device is carried and recharged, and a pack large enough for 24/7 (≈ 130 Wh, a
-  6× increase) would not fit the case at all — the 2× 18650 holders are the case's floor.
+  and 0.65 derate it delivers ≈ 46–68 Wh/day, i.e. 42–62 % of Ktemata's 4 h reading profile
+  (110 Wh/day). A 24/7 role needs the 48–74 W in the table, not the 20–30 W the BOM lists.
+- **Ktemata's own pack does not cover a 24/7 day.** 128–199 Wh is what the 24/7 profiles need;
+  the shipped 33.3 Wh is a 3–4 h screen-on buffer (1.8 h at heavy load) or 6.2 h screen-off. That
+  is a design statement, not a shortfall: the device is carried and recharged, and the three-cell
+  3S holder is the case's floor.
 
 ## Reproducing these numbers
 
