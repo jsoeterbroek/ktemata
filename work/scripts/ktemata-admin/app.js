@@ -838,29 +838,41 @@ async function refreshAiStatus() {
 
 async function askAi(event) {
   event.preventDefault();
+  const select = $('#ai-source');
   const input = $('#ai-question');
   const button = $('#ai-ask');
   const box = $('#ai-answer');
   const text = $('#ai-text');
   const sources = $('#ai-sources');
+  const choice = select.value;
   const question = input.value.trim();
-  if (!question) return;
+  if (!choice || !question) return;
+  const isZim = choice.startsWith('zim:');
+  const name = isZim ? choice.slice(4) : '';
 
   button.disabled = true;
   button.textContent = 'Thinking…';
   box.hidden = true;
   try {
-    const result = await api('/api/ai/ask', { method: 'POST', json: { question } });
+    const result = isZim
+      ? await api('/api/ai/zim-ask', { method: 'POST', json: { name, question } })
+      : await api('/api/ai/ask', { method: 'POST', json: { question } });
     text.textContent = result.answer || '(the model returned an empty answer)';
     sources.replaceChildren();
     for (const [index, source] of (result.sources || []).entries()) {
       const item = document.createElement('li');
       const where = document.createElement('span');
-      where.textContent = `[${index + 1}] ${source.path} · chunk ${source.ordinal}`;
-      const score = document.createElement('span');
-      score.className = 'score';
-      score.textContent = Number(source.score).toFixed(3);
-      item.append(where, score);
+      if (isZim) {
+        where.textContent =
+          `[${index + 1}] ${source.title || source.path} · chunk ${source.chunk}`;
+        item.append(where);
+      } else {
+        where.textContent = `[${index + 1}] ${source.path} · chunk ${source.ordinal}`;
+        const score = document.createElement('span');
+        score.className = 'score';
+        score.textContent = Number(source.score).toFixed(3);
+        item.append(where, score);
+      }
       sources.append(item);
     }
     box.hidden = false;
@@ -869,45 +881,6 @@ async function askAi(event) {
   } finally {
     button.disabled = false;
     button.textContent = 'Ask';
-  }
-}
-
-/* ------------------------------------------------------------------ wiring */
-async function askZim(event) {
-  event.preventDefault();
-  const select = $('#zim-select');
-  const input = $('#zim-question');
-  const button = $('#zim-ask');
-  const box = $('#zim-answer');
-  const text = $('#zim-text');
-  const sources = $('#zim-sources');
-  const name = select.value;
-  const question = input.value.trim();
-  if (!name || !question) return;
-
-  button.disabled = true;
-  button.textContent = 'Thinking…';
-  box.hidden = true;
-  try {
-    const result = await api('/api/ai/zim-ask', {
-      method: 'POST',
-      json: { name, question },
-    });
-    text.textContent = result.answer || '(the model returned an empty answer)';
-    sources.replaceChildren();
-    for (const [index, source] of (result.sources || []).entries()) {
-      const item = document.createElement('li');
-      const where = document.createElement('span');
-      where.textContent = `[${index + 1}] ${source.title || source.path} · chunk ${source.chunk}`;
-      item.append(where);
-      sources.append(item);
-    }
-    box.hidden = false;
-  } catch (err) {
-    toast(err.message, 'bad');
-  } finally {
-    button.disabled = false;
-    button.textContent = 'Ask ZIM';
   }
 }
 
@@ -937,7 +910,6 @@ $('#clear-done').addEventListener('click', () => {
   $('#queue-panel').hidden = ui.queue.length === 0;
 });
 $('#ai-form').addEventListener('submit', askAi);
-$('#zim-form').addEventListener('submit', askZim);
 
 // Drag and drop anywhere on the page.
 let dragDepth = 0;

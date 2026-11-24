@@ -91,26 +91,18 @@
         </div>
       </div>
       <form id="ai-form" class="ai-form">
+        <label class="sr-only" for="ai-source">Answer source</label>
+        <select id="ai-source" aria-label="Answer source" disabled>
+          <option value="documents">Documents</option>
+        </select>
         <label class="sr-only" for="ai-question">Question</label>
         <input id="ai-question" type="text" name="question" maxlength="2000" autocomplete="off"
-               placeholder="Ask about the documents in /var/lib/kiwix…" disabled required>
+               placeholder="Ask about the documents or an indexed ZIM…" disabled required>
         <button id="ai-ask" class="primary" type="submit" disabled>Ask</button>
       </form>
       <div id="ai-answer" class="ai-answer" hidden>
         <p id="ai-text"></p>
         <ul id="ai-sources" class="ai-sources"></ul>
-      </div>
-      <form id="zim-form" class="ai-form">
-        <label class="sr-only" for="zim-select">ZIM archive</label>
-        <select id="zim-select" aria-label="ZIM archive" disabled></select>
-        <label class="sr-only" for="zim-question">Question about a ZIM</label>
-        <input id="zim-question" type="text" name="question" maxlength="2000" autocomplete="off"
-               placeholder="Ask about a KiwixRAG-indexed ZIM…" disabled required>
-        <button id="zim-ask" class="primary" type="submit" disabled>Ask ZIM</button>
-      </form>
-      <div id="zim-answer" class="ai-answer" hidden>
-        <p id="zim-text"></p>
-        <ul id="zim-sources" class="ai-sources"></ul>
       </div>
       <p class="path">ZIM indexing and retrieval by
         <a href="https://github.com/brunuff/KiwixRAG" target="_blank" rel="noopener">KiwixRAG</a>

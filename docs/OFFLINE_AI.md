@@ -14,7 +14,8 @@ KiwixRAG is by [brunuff](https://github.com/brunuff/KiwixRAG). The installer clo
 time; its source is not vendored here.
 
 Nothing is exposed on the LAN by the AI itself. The CLI is local, and the existing library admin
-on `:8081` gains **Ask the library**, **Ask ZIM**, and **AI index** controls for each ZIM archive.
+on `:8081` gains one **Ask** form with a Documents/ZIM source selector, and **AI index** controls
+for each ZIM archive.
 
 This is a separate install because it downloads models and changes the memory/thermal profile.
 The base [`post-install.sh`](POST_INSTALL.md) stays the same unless you pass `--ai`.
@@ -107,8 +108,8 @@ What it does:
    [`kiwixrag-constraints.txt`](../work/scripts/kiwixrag-constraints.txt), and warms the BGE model;
 6. installs `ktemata-ai-zim-index@.service`, the on-demand unit the admin uses to build a ZIM
    index in the background;
-7. updates the library admin UI and server with **Ask the library**, **Ask ZIM**, and the **AI index**
-   column, restarting `ktemata-admin.service` if installed;
+7. updates the library admin UI and server with the unified **Ask** form (Documents or ZIM
+   source) and the **AI index** column, restarting `ktemata-admin.service` if installed;
 8. runs the first `ktemata-ai ingest` (skip with `--no-ingest`);
 9. installs and enables `ktemata-ai-ingest.timer` for a document re-index every six hours.
 
@@ -248,9 +249,9 @@ single very large article is split into KiwixRAG chunks (500 characters, 50 over
 
 `http://<device>:8081/` has:
 
-- **Ask the library** for the document index, with source paths and chunks.
-- **Ask ZIM** for an archive with a KiwixRAG index; it calls `zim-ask --json` and lists the
-  matching article titles and chunks. It stays disabled until at least one index exists.
+- **Ask** for documents or an indexed ZIM. One source selector chooses **Documents** or a
+  KiwixRAG-indexed archive; one input and one **Ask** button call `ask --json` or
+  `zim-ask --json` and list the matching document paths or ZIM article titles/chunks.
 - **AI index** controls in each ZIM row:
   - **Build** starts `ktemata-ai-zim-index@<name>.service` in the background;
   - **Rebuild** does the same with `--rebuild`;
@@ -266,8 +267,8 @@ with:
 journalctl -u 'ktemata-ai-zim-index@*' -f
 ```
 
-Both forms are in the same AI panel: **Ask the library** uses the SQLite document index, and
-**Ask ZIM** uses the selected KiwixRAG Chroma index. The CLI remains `ktemata-ai zim-ask`.
+The single **Ask** form uses the SQLite document index for **Documents** and the selected
+KiwixRAG Chroma index for a ZIM. The CLI remains `ktemata-ai ask` / `ktemata-ai zim-ask`.
 
 The admin page is protected by HTTP Basic auth, but there is no TLS. Keep it on the hotspot or a
 trusted LAN, or bind it to loopback and use an SSH tunnel.
@@ -365,12 +366,12 @@ The document index, prompts, CLI and admin integration are part of Ktemata.
 
 ## Verified
 
-The document CLI and admin **Ask the library** box were exercised against a fake Ollama endpoint
-and headless Chromium. The **AI index** column and **Ask ZIM** form were driven in headless
-Chromium against a fake `ktemata-ai`/`systemctl` with a sample archive, including the per-row
-Build/Rebuild controls and ZIM answer sources. The KiwixRAG path was exercised on Debian 13 arm64
-with a venv containing `sentence-transformers`, `chromadb` and `torch`. With the 4.4 MB `wikiciv`
-sample and `--limit 3`, the wrapper indexed 3 articles / 10 chunks; the query
+The document CLI and the unified admin **Ask** form were exercised against a fake Ollama endpoint
+and headless Chromium. The **AI index** column and the Documents/ZIM source selector were driven in
+headless Chromium against a fake `ktemata-ai`/`systemctl` with a sample archive, including the
+per-row Build/Rebuild controls and ZIM answer sources. The KiwixRAG path was exercised on Debian 13
+arm64 with a venv containing `sentence-transformers`, `chromadb` and `torch`. With the 4.4 MB
+`wikiciv` sample and `--limit 3`, the wrapper indexed 3 articles / 10 chunks; the query
 `What is an abacus?` returned the Abacus article. `zim-ask` was then exercised end-to-end with a
 fake Ollama endpoint and the real Chroma index. The installer dry run was checked in Debian 13.
 Real 3B model latency on the Pi is not benchmarked in this repository; the numbers above are

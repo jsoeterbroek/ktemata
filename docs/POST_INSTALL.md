@@ -87,8 +87,8 @@ python3 work/scripts/ktemata-admin.py --zim-dir /srv/kiwix/zim \
 Without a credentials file it refuses to bind beyond `127.0.0.1`.
 
 If the optional [offline AI](OFFLINE_AI.md) is installed and indexed, the page also has an
-**Ask the library** box that answers from the documents under `/var/lib/kiwix` and the library
-directories.
+**Ask** form that answers from the documents under `/var/lib/kiwix` and the library directories,
+or from a selected KiwixRAG-indexed ZIM.
 
 ## Offline AI (optional)
 
@@ -102,12 +102,12 @@ sudo ./work/scripts/post-install.sh --ai
 ```
 
 It indexes `/var/lib/kiwix` and `/srv/kiwix/zim` by default (text, Markdown, HTML, XML, PDF, EPUB,
-DOCX, ODT), answers with `ktemata-ai ask "..."`, and adds **Ask the library**, **Ask ZIM**, and the
-**AI index** column to the admin page. ZIM archives are skipped by the normal document ingest.
-KiwixRAG is installed for them: build a vector index with
+DOCX, ODT), answers with `ktemata-ai ask "..."`, and adds one **Ask** form with a Documents/ZIM
+source selector plus the **AI index** column to the admin page. ZIM archives are skipped by the
+normal document ingest. KiwixRAG is installed for them: build a vector index with
 `sudo ktemata-ai zim-index --zim FILE`, or use the **AI index** column in the admin archive table.
-Ask with `ktemata-ai zim-ask --zim FILE "..."` or the admin **Ask ZIM** form. KiwixRAG is by
-[brunuff](https://github.com/brunuff/KiwixRAG); see [OFFLINE_AI.md](OFFLINE_AI.md).
+Ask with `ktemata-ai zim-ask --zim FILE "..."` or select a ZIM in the admin **Ask** form. KiwixRAG
+is by [brunuff](https://github.com/brunuff/KiwixRAG); see [OFFLINE_AI.md](OFFLINE_AI.md).
 
 ## Library hotspot
 
