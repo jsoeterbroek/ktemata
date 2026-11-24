@@ -15,6 +15,7 @@ WHAT THE PAGE CAN DO
   delete    remove an archive (and discard an interrupted upload)
   service   start, stop and restart kiwix.service, show its state
   reindex   rebuild library.xml with kiwix-library, then restart kiwix-serve
+  ai        build KiwixRAG ZIM indexes and ask document/ZIM questions
   storage   filesystem use and the share taken by ZIM files
 
 SAFETY
@@ -33,6 +34,7 @@ SAFETY
 import argparse
 import base64
 import grp
+import hashlib
 import hmac
 import json
 import os
@@ -56,6 +58,7 @@ DEFAULT_AUTH_FILE = "/etc/ktemata/admin.conf"
 DEFAULT_LIBRARY_PORT = 8080
 DEFAULT_PORT = 8081
 DEFAULT_AI_CLI = "/usr/local/bin/ktemata-ai"
+ZIM_AI_UNIT = "ktemata-ai-zim-index@"
 
 # One chunk: small enough for a flaky link, large enough that the request overhead vanishes.
 MAX_CHUNK = 64 * 1024 * 1024
@@ -142,6 +145,8 @@ def valid_name(name):
     # can never pick up.
     if not name.endswith(".zim"):
         return False
+    if '"' in name:
+        return False
     return not any(ord(ch) < 32 or ord(ch) == 127 for ch in name)
 
 
@@ -224,6 +229,77 @@ def ai_status():
         return ai_command(["status", "--json"], timeout=30)
     except AdminError as exc:
         return {"installed": True, "error": exc.message}
+
+
+def zim_ai_index_path(cfg, name):
+    path = os.path.abspath(os.path.join(cfg.zim_dir, name))
+    digest = hashlib.md5(path.encode("utf-8")).hexdigest()[:8]
+    stem = os.path.splitext(name)[0]
+    return os.path.join(cfg.zim_dir, f"{stem}_{digest}_rag_index")
+
+
+def zim_ai_status(cfg, name):
+    path = zim_path(cfg, name)
+    unit = f"{ZIM_AI_UNIT}{escape_unit(name)}.service"
+    index = zim_ai_index_path(cfg, name)
+    indexed = os.path.isfile(os.path.join(index, "metadata.json"))
+    active = False
+    result = ""
+    try:
+        active = systemctl("is-active", unit).returncode == 0
+        result = systemctl("show", "-p", "Result", "--value", unit).stdout.strip()
+    except AdminError:
+        pass
+    return {
+        "name": name,
+        "unit": unit,
+        "active": active,
+        "result": result,
+        "indexed": indexed,
+        "index": index,
+        "size": os.path.getsize(path) if os.path.isfile(path) else 0,
+    }
+
+
+def escape_unit(name):
+    binary = shutil.which("systemd-escape")
+    if not binary:
+        raise AdminError(HTTPStatus.SERVICE_UNAVAILABLE, "systemd-escape is not available")
+    try:
+        result = subprocess.run(
+            [binary, name],
+            check=False,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            timeout=10,
+        )
+    except subprocess.TimeoutExpired:
+        raise AdminError(HTTPStatus.GATEWAY_TIMEOUT, "systemd-escape timed out")
+    if result.returncode != 0:
+        raise AdminError(HTTPStatus.BAD_REQUEST, "cannot encode the ZIM file name for systemd")
+    return result.stdout.strip()
+
+
+def start_zim_ai_index(cfg, name):
+    path = zim_path(cfg, name)
+    if not os.path.isfile(path):
+        raise AdminError(HTTPStatus.NOT_FOUND, "ZIM file not found")
+    unit = f"{ZIM_AI_UNIT}{escape_unit(name)}.service"
+    try:
+        known = systemctl("cat", unit)
+    except AdminError as exc:
+        raise AdminError(HTTPStatus.SERVICE_UNAVAILABLE, exc.message)
+    if known.returncode != 0:
+        raise AdminError(
+            HTTPStatus.SERVICE_UNAVAILABLE,
+            "ZIM index service is not installed; re-run post-install-ai.sh",
+        )
+    result = systemctl("start", "--no-block", unit, timeout=30)
+    if result.returncode != 0:
+        message = (result.stderr or result.stdout).strip() or f"exit {result.returncode}"
+        raise AdminError(HTTPStatus.INTERNAL_SERVER_ERROR, f"could not start {unit}: {message}")
+    return zim_ai_status(cfg, name)
 
 
 def service_state(cfg):
@@ -335,6 +411,9 @@ def build_state(cfg):
                         "size": st.st_size,
                         "mtime": int(st.st_mtime),
                         "indexed": entry.name in indexed,
+                        "ai_indexed": os.path.isfile(
+                            os.path.join(zim_ai_index_path(cfg, entry.name), "metadata.json")
+                        ),
                     }
                 )
             elif entry.name.endswith(".zim.part"):
@@ -551,6 +630,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(build_state(self.cfg))
             elif path == "/api/ai/status":
                 self.send_json(ai_status())
+            elif path == "/api/ai/zim-index":
+                self.send_json(zim_ai_status(self.cfg, self.query_name()))
             elif path == "/api/upload":
                 self.upload_status()
             elif path == "/api/download":
@@ -603,6 +684,29 @@ class Handler(BaseHTTPRequestHandler):
                 if len(question) > 2000:
                     raise AdminError(HTTPStatus.BAD_REQUEST, "question is too long (2000 characters)")
                 self.send_json(ai_command(["ask", question, "--json"]))
+            elif path == "/api/ai/zim-index":
+                payload = self.body_json()
+                name = str(payload.get("name") or "")
+                if not valid_name(name):
+                    raise AdminError(HTTPStatus.BAD_REQUEST, "invalid ZIM file name")
+                self.send_json(start_zim_ai_index(self.cfg, name))
+            elif path == "/api/ai/zim-ask":
+                payload = self.body_json()
+                name = str(payload.get("name") or "")
+                if not valid_name(name):
+                    raise AdminError(HTTPStatus.BAD_REQUEST, "invalid ZIM file name")
+                question = str(payload.get("question") or "").strip()
+                if not question:
+                    raise AdminError(HTTPStatus.BAD_REQUEST, "question is required")
+                if len(question) > 2000:
+                    raise AdminError(HTTPStatus.BAD_REQUEST, "question is too long (2000 characters)")
+                path = zim_path(self.cfg, name)
+                self.send_json(
+                    ai_command(
+                        ["zim-ask", "--zim", path, "--json", "--", question],
+                        timeout=600,
+                    )
+                )
             else:
                 raise AdminError(HTTPStatus.NOT_FOUND, "not found")
         except AdminError as exc:

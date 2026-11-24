@@ -177,7 +177,7 @@ ${C_BOLD}OPTIONS${C_OFF}
                          'left' = 90 deg counter-clockwise.
       --kiosk            Install the kiosk launcher and autostart it in the desktop session.
       --kiosk-user NAME  Whose session autostarts it (default: the user running sudo).
-      --ai               Install the offline AI (Ollama + ktemata-ai + llm-tools-kiwix) after
+      --ai               Install the offline AI (Ollama + ktemata-ai + KiwixRAG) after
                          the base install. Downloads models and is opt-in; see docs/OFFLINE_AI.md.
       --no-hwtest        Skip the hardware checks.
       --hwtest-only      Run the hardware checks and exit (implies --dry-run).
@@ -1663,17 +1663,16 @@ EOF
 install_offline_ai() {
     $WITH_AI || return 0
     log_stage "Offline AI"
-    local dir script shell_user
+    local dir script
     dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
     script="$dir/post-install-ai.sh"
-    shell_user=${KIOSK_USER:-$AUTOLOGIN_USER}
     [ -x "$script" ] || die "cannot find post-install-ai.sh next to this script"
     if $DRY_RUN; then
-        printf '%s  [dry-run]%s %s --yes --dry-run --zim-home %s --shell-user %s\n' \
-            "$C_YELLOW" "$C_OFF" "$script" "$LIBRARY_DIR" "$shell_user"
+        printf '%s  [dry-run]%s %s --yes --dry-run --zim-home %s\n' \
+            "$C_YELLOW" "$C_OFF" "$script" "$LIBRARY_DIR"
         return 0
     fi
-    "$script" --yes --zim-home "$LIBRARY_DIR" --shell-user "$shell_user"
+    "$script" --yes --zim-home "$LIBRARY_DIR"
 }
 
 install_kiosk() {

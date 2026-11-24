@@ -297,6 +297,19 @@ button.primary svg { width: 16px; height: 16px; }
 }
 .ai-form input:focus { border-color: var(--accent); }
 .ai-form input:disabled { opacity: .55; }
+.ai-form select {
+  flex: none;
+  max-width: 16rem;
+  padding: .62rem .65rem;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #121920;
+  color: var(--fg);
+  font-size: .84rem;
+  outline: none;
+}
+.ai-form select:focus { border-color: var(--accent); }
+.ai-form select:disabled { opacity: .55; }
 .ai-form button { flex: none; }
 .ai-answer {
   margin: 0 1.2rem 1.2rem;
@@ -384,6 +397,9 @@ td.act { width: 5.5rem; text-align: right; white-space: nowrap; }
 td.act a.icon { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: var(--muted); border: 1px solid transparent; }
 td.act a.icon:hover { color: var(--fg); background: var(--panel-2); border-color: var(--line); }
 td.act svg { width: 17px; height: 17px; }
+td.ai { white-space: nowrap; }
+td.ai .badge { margin-right: .45rem; }
+button.mini { padding: .22rem .55rem; font-size: .72rem; border-radius: 7px; }
 
 .badge {
   display: inline-flex;

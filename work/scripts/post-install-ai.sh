@@ -2,9 +2,11 @@
 # Ktemata offline AI, installed and configured separately from the library post-install.
 #
 # Installs Ollama, pulls a small local model and an embedding model, installs the ktemata-ai CLI,
+# installs KiwixRAG (brunuff, https://github.com/brunuff/KiwixRAG) for ZIM retrieval,
 # writes /etc/ktemata/ai.conf, and enables a timer that re-indexes the configured document roots
 # (default: /var/lib/kiwix and /srv/kiwix/zim). Nothing is exposed on the network: Ollama stays on
-# localhost and the CLI is local. The library admin can call `ktemata-ai ask --json`.
+# localhost and the CLI is local. The library admin can build ZIM indexes and call
+# `ktemata-ai ask --json`.
 #
 #   sudo ./post-install-ai.sh --yes
 #   sudo ./post-install-ai.sh --model llama3.2:1b --no-ingest
@@ -29,11 +31,13 @@ AI_SERVICE=ktemata-ai-ingest
 ADMIN_SERVICE=ktemata-admin
 AI_STATE_DIR=/var/lib/ktemata-ai
 AI_PULL_TIMEOUT=7200
-AI_VENV=/opt/ktemata-ai/venv
-AI_LLM_BIN=$AI_VENV/bin/llm
+AI_KIWIXRAG_DIR=${AI_KIWIXRAG_DIR:-/opt/ktemata-ai/kiwixrag}
+AI_KIWIXRAG_URL=${AI_KIWIXRAG_URL:-https://github.com/brunuff/KiwixRAG.git}
+AI_KIWIXRAG_REF=${AI_KIWIXRAG_REF:-main}
+AI_KIWIX_USER=${AI_KIWIX_USER:-ktemata}
 AI_ZIM_MODEL=${AI_ZIM_MODEL:-}
 AI_ZIM_HOME=${AI_ZIM_HOME:-/srv/kiwix/zim}
-SHELL_USER=${SHELL_USER:-${SUDO_USER:-}}
+AI_ZIM_TOP_K=${AI_ZIM_TOP_K:-6}
 
 DRY_RUN=false
 ASSUME_YES=false
@@ -41,6 +45,8 @@ NO_MODELS=false
 NO_INGEST=false
 NO_SERVICE=false
 NO_UPDATE=false
+WITH_KIWIXRAG=true
+WITH_ZIM_INDEX=false
 CONFIG_EXISTED=false
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -71,30 +77,35 @@ ${C_BOLD}OPTIONS${C_OFF}
       --ollama-url URL  Ollama API (default: $AI_OLLAMA_URL).
       --ingest-dir DIR  Document root (repeatable; default: /var/lib/kiwix /srv/kiwix/zim).
       --db PATH         SQLite index (default: $AI_DB).
-      --zim-model NAME  Model for ZIM direct search (default: AI_MODEL). Qwen 2.5 3B is
-                        recommended for tool calling; it is pulled when different.
-      --zim-home DIR    ZIM directory for direct search (default: $AI_ZIM_HOME).
-      --shell-user N    Add KIWIX_HOME to this user's ~/.bashrc (default: sudo user).
+      --zim-model NAME  Generation model for ZIM questions (default: AI_MODEL).
+      --zim-home DIR    ZIM directory (default: $AI_ZIM_HOME).
+      --zim-top N       KiwixRAG chunks per ZIM question (default: $AI_ZIM_TOP_K).
+      --kiwixrag-dir D  KiwixRAG checkout and venv (default: $AI_KIWIXRAG_DIR).
+      --kiwix-user N    Owner of built ZIM indexes (default: $AI_KIWIX_USER).
+      --no-kiwixrag     Do not install KiwixRAG; zim-index/zim-ask will not work.
+      --zim-index       Build KiwixRAG indexes for all ZIMs in --zim-home after install.
       --no-models       Do not pull models (for a preloaded or offline Ollama).
-      --no-ingest       Do not run the first index build now.
+      --no-ingest       Do not run the first document index build now.
       --no-service      Do not install/enable the re-index timer.
       --no-update       Do not run apt-get update first.
   -h, --help            This message.
   -V, --version         Print the version.
 
 ${C_BOLD}WHAT IT DOES${C_OFF}
-  1. installs python3-numpy, python3-venv, poppler-utils, zim-tools, curl and zstd
+  1. installs python3-numpy, python3-venv, poppler-utils, zim-tools, git, curl and zstd
   2. installs Ollama and enables ollama.service (localhost:11434)
   3. pulls the generation and embedding models unless --no-models
   4. installs /usr/local/bin/ktemata-ai and $AI_CONFIG
-  5. installs llm + llm-ollama + llm-tools-kiwix in $AI_VENV
+  5. installs KiwixRAG (git checkout + venv with sentence-transformers/chromadb)
   6. updates the library admin UI and server, restarting ktemata-admin if installed
   7. indexes $AI_INGEST_DIRS (text, Markdown, HTML, XML, PDF, EPUB, DOCX, ODT)
-  8. installs $AI_SERVICE.service + .timer; re-indexes every 6 hours
+  8. installs $AI_SERVICE.service + .timer; re-indexes documents every 6 hours
 
-ZIM direct search: ktemata-ai zim-ask "your question"
-Bounded vector slices: ktemata-ai zim-ingest --zim FILE --limit 200
-Document index: ktemata-ai ask "your question"
+ZIM index:  sudo ktemata-ai zim-index --zim FILE
+ZIM ask:    ktemata-ai zim-ask --zim FILE "your question"
+Documents:  ktemata-ai ask "your question"
+
+ZIM indexing uses KiwixRAG by brunuff: https://github.com/brunuff/KiwixRAG
 EOF
 }
 
@@ -157,7 +168,7 @@ check_platform() {
 
 install_packages() {
     log_stage "Packages"
-    local packages=(curl ca-certificates python3 python3-numpy python3-venv python3-pip poppler-utils zstd zim-tools)
+    local packages=(curl ca-certificates git python3 python3-numpy python3-venv python3-pip poppler-utils zstd zim-tools)
     if ! $NO_UPDATE; then
         run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
     fi
@@ -251,62 +262,43 @@ install_cli() {
     install_admin_assets "$dir"
 }
 
-install_llm_kiwix() {
-    log_stage "ZIM direct search"
+install_kiwixrag() {
+    log_stage "KiwixRAG"
+    local dir
+    dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+    [ -r "$dir/kiwixrag_query.py" ] || die "cannot find kiwixrag_query.py next to this script"
+    [ -r "$dir/kiwixrag_index.py" ] || die "cannot find kiwixrag_index.py next to this script"
+    [ -r "$dir/kiwixrag-constraints.txt" ] || die "cannot find kiwixrag-constraints.txt next to this script"
     run install -d -m 0755 /opt/ktemata-ai
-    if [ ! -x "$AI_VENV/bin/python" ]; then
-        run python3 -m venv "$AI_VENV"
+    if [ ! -d "$AI_KIWIXRAG_DIR/.git" ]; then
+        run git clone --depth 1 --branch "$AI_KIWIXRAG_REF" "$AI_KIWIXRAG_URL" "$AI_KIWIXRAG_DIR"
+    elif ! $DRY_RUN; then
+        if ! git -C "$AI_KIWIXRAG_DIR" fetch --depth 1 origin "$AI_KIWIXRAG_REF" \
+                || ! git -C "$AI_KIWIXRAG_DIR" reset --hard FETCH_HEAD; then
+            log_warn "could not update $AI_KIWIXRAG_DIR; keeping the existing checkout"
+        fi
     fi
-    run "$AI_VENV/bin/pip" install --upgrade pip
-    # llm-tools-kiwix 0.1 uses the libzim 3.x search API; libzim 4.x returns no results.
-    run "$AI_VENV/bin/pip" install --upgrade llm llm-ollama "libzim<4" llm-tools-kiwix
-    # Make the CLI reachable without remembering the venv path. The console script's shebang
-    # points at the venv, so a symlink still loads the plugins from there.
-    if [ ! -e /usr/local/bin/llm ] || [ -L /usr/local/bin/llm ]; then
-        run ln -sfn "$AI_LLM_BIN" /usr/local/bin/llm
-        log_ok "/usr/local/bin/llm -> $AI_LLM_BIN"
-    else
-        log_warn "/usr/local/bin/llm already exists; use $AI_LLM_BIN directly"
+    if [ ! -x "$AI_KIWIXRAG_DIR/venv/bin/python" ]; then
+        run python3 -m venv "$AI_KIWIXRAG_DIR/venv"
     fi
-    log_ok "$AI_VENV (llm + llm-ollama + llm-tools-kiwix, libzim<4)"
-}
-
-install_shell_env() {
-    log_stage "Shell environment"
-    if [ -z "$SHELL_USER" ]; then
-        log_warn "no shell user; set KIWIX_HOME=$AI_ZIM_HOME in ~/.bashrc manually"
-        return 0
+    run "$AI_KIWIXRAG_DIR/venv/bin/pip" install --upgrade pip
+    run "$AI_KIWIXRAG_DIR/venv/bin/pip" install -r "$AI_KIWIXRAG_DIR/requirements.txt" \
+        -c "$dir/kiwixrag-constraints.txt"
+    run install -m 0755 -o root -g root "$dir/kiwixrag_query.py" "$AI_KIWIXRAG_DIR/kiwixrag_query.py"
+    run install -m 0755 -o root -g root "$dir/kiwixrag_index.py" "$AI_KIWIXRAG_DIR/kiwixrag_index.py"
+    if ! $DRY_RUN && ! $NO_MODELS; then
+        log_info "warming the BGE embedding model (first run downloads ~110 MB)"
+        if ! HF_HOME="$AI_KIWIXRAG_DIR/.cache/huggingface" \
+                "$AI_KIWIXRAG_DIR/venv/bin/python" - <<'PY'
+from sentence_transformers import SentenceTransformer
+SentenceTransformer("BAAI/bge-base-en-v1.5")
+PY
+        then
+            log_warn "embedding model not warmed; the first zim-index will download it"
+        fi
+        chmod -R a+rX "$AI_KIWIXRAG_DIR/.cache" 2>/dev/null || true
     fi
-    if ! id -u "$SHELL_USER" >/dev/null 2>&1; then
-        log_warn "no such user '$SHELL_USER'; not updating ~/.bashrc"
-        return 0
-    fi
-    local home group bashrc target
-    home=$(getent passwd "$SHELL_USER" | cut -d: -f6)
-    group=$(id -gn "$SHELL_USER")
-    if [ ! -d "$home" ]; then
-        log_warn "home directory not found for $SHELL_USER; not updating ~/.bashrc"
-        return 0
-    fi
-    bashrc="$home/.bashrc"
-    target=$(readlink -f "$bashrc" 2>/dev/null || printf '%s' "$bashrc")
-    if $DRY_RUN; then
-        printf '%s  [dry-run]%s add KIWIX_HOME=%s to %s\n' \
-            "$C_YELLOW" "$C_OFF" "$AI_ZIM_HOME" "$bashrc"
-        return 0
-    fi
-    [ -e "$target" ] || install -m 0644 -o "$SHELL_USER" -g "$group" /dev/null "$target"
-    # Replace only our marked block, so a re-run is a no-op and the user's other shell
-    # configuration survives.
-    sed -i '/^# >>> ktemata offline AI >>>$/,/^# <<< ktemata offline AI <<<$/d' "$target"
-    {
-        printf '\n# >>> ktemata offline AI >>>\n'
-        printf '# Used by llm-tools-kiwix; remove this block to manage KIWIX_HOME yourself.\n'
-        printf 'export KIWIX_HOME=%q\n' "$AI_ZIM_HOME"
-        printf '# <<< ktemata offline AI <<<\n'
-    } >>"$target"
-    chown "$SHELL_USER":"$group" "$target"
-    log_ok "$bashrc (KIWIX_HOME=$AI_ZIM_HOME)"
+    log_ok "$AI_KIWIXRAG_DIR (KiwixRAG + venv + headless helpers)"
 }
 
 write_config() {
@@ -322,8 +314,14 @@ write_config() {
             if ! grep -q '^AI_ZIM_HOME=' "$AI_CONFIG"; then
                 printf 'AI_ZIM_HOME=%q\n' "$AI_ZIM_HOME" >>"$AI_CONFIG"
             fi
-            if ! grep -q '^AI_LLM_BIN=' "$AI_CONFIG"; then
-                printf 'AI_LLM_BIN=%q\n' "$AI_LLM_BIN" >>"$AI_CONFIG"
+            if ! grep -q '^AI_ZIM_TOP_K=' "$AI_CONFIG"; then
+                printf 'AI_ZIM_TOP_K=%q\n' "$AI_ZIM_TOP_K" >>"$AI_CONFIG"
+            fi
+            if ! grep -q '^AI_KIWIXRAG_DIR=' "$AI_CONFIG"; then
+                printf 'AI_KIWIXRAG_DIR=%q\n' "$AI_KIWIXRAG_DIR" >>"$AI_CONFIG"
+            fi
+            if ! grep -q '^AI_KIWIX_USER=' "$AI_CONFIG"; then
+                printf 'AI_KIWIX_USER=%q\n' "$AI_KIWIX_USER" >>"$AI_CONFIG"
             fi
         fi
         log_ok "using existing $AI_CONFIG (edit it to change models or roots)"
@@ -337,6 +335,7 @@ write_config() {
     {
         printf '# Ktemata offline AI. Read by /usr/local/bin/ktemata-ai and the ingest timer.\n'
         printf '# AI_INGEST_DIRS is a space-separated list; paths must not contain spaces.\n'
+        printf '# ZIM retrieval uses KiwixRAG by brunuff: https://github.com/brunuff/KiwixRAG\n'
         printf 'AI_MODEL=%q\n' "$AI_MODEL"
         printf 'AI_EMBED_MODEL=%q\n' "$AI_EMBED_MODEL"
         printf 'AI_OLLAMA_URL=%q\n' "$AI_OLLAMA_URL"
@@ -348,7 +347,9 @@ write_config() {
         printf 'AI_MAX_FILE_MB=%q\n' "50"
         printf 'AI_ZIM_MODEL=%q\n' "$AI_ZIM_MODEL"
         printf 'AI_ZIM_HOME=%q\n' "$AI_ZIM_HOME"
-        printf 'AI_LLM_BIN=%q\n' "$AI_LLM_BIN"
+        printf 'AI_ZIM_TOP_K=%q\n' "$AI_ZIM_TOP_K"
+        printf 'AI_KIWIXRAG_DIR=%q\n' "$AI_KIWIXRAG_DIR"
+        printf 'AI_KIWIX_USER=%q\n' "$AI_KIWIX_USER"
     } >"$AI_CONFIG"
     chmod 0644 "$AI_CONFIG"
     log_ok "$AI_CONFIG"
@@ -423,6 +424,67 @@ EOF
     fi
 }
 
+install_zim_unit() {
+    $WITH_KIWIXRAG || return 0
+    log_stage "ZIM index service"
+    local unit="/etc/systemd/system/ktemata-ai-zim-index@.service"
+    if $DRY_RUN; then
+        printf '%s  [dry-run]%s write %s\n' "$C_YELLOW" "$C_OFF" "$unit"
+        return 0
+    fi
+    cat >"$unit" <<EOF
+[Unit]
+Description=Ktemata KiwixRAG index for %I
+Documentation=file:$AI_CONFIG
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Nice=10
+IOSchedulingClass=idle
+# A large archive may take hours; the admin starts one unit per ZIM and polls it.
+TimeoutStartSec=0
+ExecStart=$AI_CLI zim-index --zim "$AI_ZIM_HOME/%I"
+ProtectSystem=strict
+ReadWritePaths=$AI_ZIM_HOME -$AI_KIWIXRAG_DIR/.cache
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+NoNewPrivileges=true
+EOF
+    chmod 0644 "$unit"
+    if have_systemd; then
+        run systemctl daemon-reload
+    fi
+    log_ok "$unit"
+}
+
+initial_zim_index() {
+    $WITH_ZIM_INDEX || return 0
+    if ! $WITH_KIWIXRAG; then
+        log_warn "--zim-index needs KiwixRAG (remove --no-kiwixrag)"
+        return 0
+    fi
+    if $NO_MODELS; then
+        log_stage "ZIM indexes"
+        log_warn "skipped because --no-models was used; run: sudo ktemata-ai zim-index"
+        return 0
+    fi
+    if ! compgen -G "$AI_ZIM_HOME/*.zim" >/dev/null; then
+        log_stage "ZIM indexes"
+        log_info "no .zim files in $AI_ZIM_HOME; nothing to index"
+        return 0
+    fi
+    log_stage "ZIM indexes"
+    run "$AI_CLI" zim-index
+}
+
 initial_ingest() {
     if $NO_INGEST; then
         log_stage "Initial index"
@@ -449,12 +511,15 @@ summary() {
     printf '  ask        ktemata-ai ask "What is in these documents?"\n'
     printf '  search     ktemata-ai search "keyword"\n'
     printf '  ingest     sudo ktemata-ai ingest\n'
-    printf '  zim ask    ktemata-ai zim-ask "..." (model %s, %s)\n' "$AI_ZIM_MODEL" "$AI_ZIM_HOME"
-    printf '  llm        %s (or /usr/local/bin/llm)\n' "$AI_LLM_BIN"
-    if [ -n "$SHELL_USER" ]; then
-        printf '  shell      KIWIX_HOME in %s/.bashrc\n' "$SHELL_USER"
+    if $WITH_KIWIXRAG; then
+        printf '  zim index  sudo ktemata-ai zim-index --zim FILE (KiwixRAG by brunuff)\n'
+        printf '  zim ask    ktemata-ai zim-ask --zim FILE "..." (model %s)\n' "$AI_ZIM_MODEL"
+        printf '  credit     https://github.com/brunuff/KiwixRAG\n'
+        printf '  admin      the library admin on :8081 has Ask the library, Ask ZIM and AI index controls\n'
+    else
+        printf '  zim        not installed (--no-kiwixrag)\n'
+        printf '  admin      the library admin on :8081 has Ask the library\n'
     fi
-    printf '  admin      the library admin on :8081 has an "Ask the library" box\n'
     if $NO_SERVICE; then
         printf '  timer      not installed (--no-service)\n'
     else
@@ -475,7 +540,11 @@ main() {
             --db)           AI_DB=${2:?--db needs a path}; shift ;;
             --zim-model)    AI_ZIM_MODEL=${2:?--zim-model needs a name}; shift ;;
             --zim-home)     AI_ZIM_HOME=${2:?--zim-home needs a path}; shift ;;
-            --shell-user)   SHELL_USER=${2:?--shell-user needs a name}; shift ;;
+            --zim-top)      AI_ZIM_TOP_K=${2:?--zim-top needs a number}; shift ;;
+            --kiwixrag-dir) AI_KIWIXRAG_DIR=${2:?--kiwixrag-dir needs a path}; shift ;;
+            --kiwix-user)   AI_KIWIX_USER=${2:?--kiwix-user needs a user}; shift ;;
+            --no-kiwixrag)  WITH_KIWIXRAG=false ;;
+            --zim-index)    WITH_ZIM_INDEX=true ;;
             --no-models)    NO_MODELS=true ;;
             --no-ingest)    NO_INGEST=true ;;
             --no-service)   NO_SERVICE=true ;;
@@ -511,17 +580,22 @@ main() {
     fi
     AI_ZIM_MODEL=${AI_ZIM_MODEL:-$AI_MODEL}
     AI_ZIM_HOME=${AI_ZIM_HOME:-/srv/kiwix/zim}
-    AI_LLM_BIN=$AI_VENV/bin/llm
-    if [ -z "$SHELL_USER" ] && id -u ktemata >/dev/null 2>&1; then
-        SHELL_USER=ktemata
-    fi
+    AI_ZIM_TOP_K=${AI_ZIM_TOP_K:-6}
+    AI_KIWIXRAG_DIR=${AI_KIWIXRAG_DIR:-/opt/ktemata-ai/kiwixrag}
+    AI_KIWIX_USER=${AI_KIWIX_USER:-ktemata}
     case $AI_ZIM_HOME in /*) ;; *) die "--zim-home must be an absolute path" ;; esac
+    case $AI_ZIM_HOME in *" "*) die "--zim-home must not contain spaces" ;; esac
+    case $AI_KIWIXRAG_DIR in /*) ;; *) die "--kiwixrag-dir must be an absolute path" ;; esac
+    case $AI_KIWIXRAG_DIR in *" "*) die "--kiwixrag-dir must not contain spaces" ;; esac
+    case $AI_ZIM_TOP_K in ''|*[!0-9]*) die "--zim-top must be a positive integer" ;; esac
+    [ "$AI_ZIM_TOP_K" -ge 1 ] || die "--zim-top must be at least 1"
+    case $AI_KIWIX_USER in ''|*[!A-Za-z0-9._-]*) die "invalid --kiwix-user: $AI_KIWIX_USER" ;; esac
     case $AI_OLLAMA_URL in http://*|https://*) ;; *) die "--ollama-url must be an http(s) URL" ;; esac
 
     $DRY_RUN || require_root "$@"
 
     if ! $DRY_RUN && ! $ASSUME_YES; then
-        confirm "Install Ollama, pull the local models, install the ZIM tools, and index $AI_INGEST_DIRS?" \
+        confirm "Install Ollama, pull the local models, install KiwixRAG, and index $AI_INGEST_DIRS?" \
             || { log_info "aborted"; exit 0; }
     fi
 
@@ -535,12 +609,18 @@ main() {
         pull_model "$AI_ZIM_MODEL"
     fi
     install_cli
-    install_llm_kiwix
-    install_shell_env
+    if $WITH_KIWIXRAG; then
+        install_kiwixrag
+    else
+        log_stage "KiwixRAG"
+        log_info "skipped (--no-kiwixrag); zim-index and zim-ask are unavailable"
+    fi
     write_config
     run install -d -m 0755 "$AI_STATE_DIR"
     install_units
+    install_zim_unit
     initial_ingest
+    initial_zim_index
     if ! $DRY_RUN; then
         log_stage "Status"
         "$AI_CLI" status

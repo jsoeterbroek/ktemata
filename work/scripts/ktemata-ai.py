@@ -8,6 +8,10 @@ the closest chunks, and asks the local model to answer from those chunks only.
 
 No network service is added here: Ollama listens on localhost and this is a CLI. The library admin
 can call `ktemata-ai ask --json` to expose the same thing in its web page.
+
+ZIM indexes and retrieval use KiwixRAG by brunuff (https://github.com/brunuff/KiwixRAG); the
+installer clones it and the `zim-index` / `zim-ask` commands wrap its headless index and Chroma
+store.
 """
 
 from __future__ import annotations
@@ -26,7 +30,6 @@ import shutil
 import sqlite3
 import subprocess
 import sys
-import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -54,7 +57,9 @@ DEFAULTS = {
     "AI_MAX_FILE_MB": "50",
     "AI_ZIM_MODEL": "",                 # resolved to AI_MODEL unless set
     "AI_ZIM_HOME": "/srv/kiwix/zim",
-    "AI_LLM_BIN": "/opt/ktemata-ai/venv/bin/llm",
+    "AI_ZIM_TOP_K": "6",
+    "AI_KIWIXRAG_DIR": "/opt/ktemata-ai/kiwixrag",
+    "AI_KIWIX_USER": "ktemata",
 }
 
 TEXT_EXTENSIONS = {
@@ -92,6 +97,16 @@ sources below. If the sources do not contain the answer, say that the documents 
 Do not invent facts. Keep the answer concise. Cite sources as [1], [2] and so on.
 
 Sources:
+{context}
+
+Question: {question}
+Answer:"""
+
+ZIM_PROMPT = """You are Ktemata, an offline library assistant. Answer the question using only the
+ZIM excerpts below. If the excerpts do not contain the answer, say that the archive does not
+contain it. Do not invent facts. Keep the answer concise. Cite sources as [1], [2] and so on.
+
+Excerpts:
 {context}
 
 Question: {question}
@@ -466,7 +481,11 @@ def cmd_ingest(args: argparse.Namespace, cfg: dict[str, str]) -> int:
             print(f"skip root {root}: not a directory", file=sys.stderr)
             continue
         for directory, dirnames, filenames in os.walk(root):
-            dirnames[:] = sorted(name for name in dirnames if not name.startswith("."))
+            dirnames[:] = sorted(
+                name
+                for name in dirnames
+                if not name.startswith(".") and not name.endswith("_rag_index")
+            )
             for filename in sorted(filenames):
                 if filename.startswith("."):
                     continue
@@ -597,18 +616,15 @@ def cmd_search(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     return 0
 
 
-def cmd_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
-    top = args.top or config_int(cfg, "AI_TOP_K", 4, 1)
-    ranked = retrieve(cfg, args.question, top)
-    context = "\n\n".join(
-        f"[{index}] {row[1]} (chunk {row[2] + 1})\n{row[3]}"
-        for index, (_score, row) in enumerate(ranked, 1)
-    )
-    prompt = PROMPT.format(context=context, question=args.question)
-    model = args.model or cfg["AI_MODEL"]
-    ensure_ollama(cfg, "AI_MODEL")
-    if not args.json:
-        eprint(f"asking {model} with {len(ranked)} source(s)…")
+def generate_answer(cfg: dict[str, str], prompt: str, model: str, timeout: int = 600) -> str:
+    names = ollama_tags(cfg)
+    if names is None:
+        die(
+            f"Ollama is not reachable at {ollama_base(cfg)}; "
+            "start it with: sudo systemctl start ollama"
+        )
+    if model not in names:
+        die(f"model '{model}' is not pulled; run: ollama pull {model}")
     try:
         data = http_json(
             f"{ollama_base(cfg)}/api/generate",
@@ -618,12 +634,26 @@ def cmd_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
                 "stream": False,
                 "options": {"temperature": 0.2, "num_ctx": 4096},
             },
-            timeout=600,
+            timeout=timeout,
         )
     except OllamaError as exc:
         die(f"generation failed: {exc}")
+    return (data.get("response") or "").strip()
 
-    answer = (data.get("response") or "").strip()
+
+def cmd_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
+    top = args.top or config_int(cfg, "AI_TOP_K", 4, 1)
+    ranked = retrieve(cfg, args.question, top)
+    context = "\n\n".join(
+        f"[{index}] {row[1]} (chunk {row[2] + 1})\n{row[3]}"
+        for index, (_score, row) in enumerate(ranked, 1)
+    )
+    prompt = PROMPT.format(context=context, question=args.question)
+    model = args.model or cfg["AI_MODEL"]
+    if not args.json:
+        eprint(f"asking {model} with {len(ranked)} source(s)…")
+    answer = generate_answer(cfg, prompt, model)
+
     sources = [
         {"path": row[1], "ordinal": row[2] + 1, "score": round(score, 4)}
         for score, row in ranked
@@ -638,263 +668,198 @@ def cmd_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     return 0
 
 
-def zim_article_name(index: int, url: str) -> str:
-    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", url).strip("._")[:160] or "article"
-    digest = hashlib.sha1(url.encode("utf-8")).hexdigest()[:8]
-    return f"{index:05d}-{safe}-{digest}.html"
-
-
-def zim_urls(zimdump: str, zim: str, namespace: str, prefixes: list[str], limit: int) -> list[str]:
-    process = subprocess.Popen(
-        [zimdump, "list", f"--ns={namespace}", zim],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        errors="replace",
+def kiwixrag_paths(cfg: dict[str, str]) -> tuple[str, str, str, str]:
+    root = os.path.abspath(os.path.expanduser(cfg["AI_KIWIXRAG_DIR"]))
+    return (
+        root,
+        os.path.join(root, "venv/bin/python"),
+        os.path.join(root, "kiwixrag_index.py"),
+        os.path.join(root, "kiwixrag_query.py"),
     )
-    urls: list[str] = []
+
+
+def kiwixrag_index_path(zim: str) -> str:
+    zim = os.path.abspath(zim)
+    digest = hashlib.md5(zim.encode("utf-8")).hexdigest()[:8]
+    stem = os.path.splitext(os.path.basename(zim))[0]
+    return os.path.join(os.path.dirname(zim), f"{stem}_{digest}_rag_index")
+
+
+def fix_index_owner(index: str, cfg: dict[str, str]) -> None:
+    """Let the admin user read/write Chroma after a root-owned index build."""
+    if not os.path.isdir(index):
+        return
+    import grp
+    import pwd
+
+    name = cfg.get("AI_KIWIX_USER") or "ktemata"
     try:
-        assert process.stdout is not None
-        for line in process.stdout:
-            url = line.strip()
-            if not url:
-                continue
-            if prefixes and not any(url.startswith(prefix) for prefix in prefixes):
-                continue
-            urls.append(url)
-            if len(urls) >= limit:
-                break
-    finally:
-        if process.poll() is None:
-            process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=5)
-    stderr = process.stderr.read().strip() if process.stderr is not None else ""
-    if not urls and process.returncode not in (0, -15, 143):
-        die(f"zimdump list failed for {zim}: {stderr or 'unknown error'}")
-    return urls
-
-
-def zim_text_urls(zimdump: str, zim: str, prefixes: list[str], limit: int) -> list[str]:
-    """Text entries across all namespaces, for ZIMs without a usable A namespace."""
-    process = subprocess.Popen(
-        [zimdump, "list", "--details", zim],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        errors="replace",
-    )
-    urls: list[str] = []
-    path = ""
+        entry = pwd.getpwnam(name)
+    except KeyError:
+        entry = pwd.getpwuid(os.getuid())
+        name = entry.pw_name
     try:
-        assert process.stdout is not None
-        for line in process.stdout:
-            stripped = line.lstrip()
-            if stripped.startswith("path:"):
-                path = stripped.split(":", 1)[1].strip()
-                continue
-            if not stripped.startswith("* mime-type:") or not path:
-                continue
-            mime = stripped.split(":", 1)[1].strip()
-            if not mime.startswith("text/"):
-                path = ""
-                continue
-            if prefixes and not any(path.startswith(prefix) for prefix in prefixes):
-                path = ""
-                continue
-            urls.append(path)
-            path = ""
-            if len(urls) >= limit:
-                break
-    finally:
-        if process.poll() is None:
-            process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=5)
-    stderr = process.stderr.read().strip() if process.stderr is not None else ""
-    if not urls and process.returncode not in (0, -15, 143):
-        die(f"zimdump list --details failed for {zim}: {stderr or 'unknown error'}")
-    return urls
+        gid = grp.getgrnam(name).gr_gid
+    except KeyError:
+        gid = entry.pw_gid
+    try:
+        for root, dirs, files in os.walk(index):
+            os.chown(root, entry.pw_uid, gid)
+            os.chmod(root, 0o775)
+            for child in dirs:
+                path = os.path.join(root, child)
+                os.chown(path, entry.pw_uid, gid)
+                os.chmod(path, 0o775)
+            for child in files:
+                path = os.path.join(root, child)
+                os.chown(path, entry.pw_uid, gid)
+                os.chmod(path, 0o664)
+    except PermissionError:
+        eprint(f"cannot hand {index} to {name}; run zim-index as root")
 
 
-def cmd_zim_ingest(args: argparse.Namespace, cfg: dict[str, str]) -> int:
-    if args.limit < 1:
-        die("--limit must be at least 1")
-    if len(args.namespace) != 1:
-        die("--ns takes one namespace letter (usually A)")
-    zimdump = shutil.which("zimdump")
-    if not zimdump:
-        die("zimdump is not installed; run: sudo apt install zim-tools")
+def cmd_zim_index(args: argparse.Namespace, cfg: dict[str, str]) -> int:
+    root, venv_python, index_helper, query_helper = kiwixrag_paths(cfg)
+    if not (os.path.isfile(venv_python) and os.path.isfile(index_helper)):
+        die("KiwixRAG is not installed; run: sudo ./work/scripts/post-install-ai.sh --yes")
 
-    out = os.path.abspath(args.out)
-    roots = [os.path.abspath(root) for root in cfg["AI_INGEST_DIRS"].split()]
-    covered = any(out == root or out.startswith(root + os.sep) for root in roots)
-    prefixes = args.prefix or []
-    total = 0
+    zim_home = os.path.abspath(os.path.expanduser(cfg["AI_ZIM_HOME"]))
+    if args.zim:
+        zims = [os.path.abspath(os.path.expanduser(path)) for path in args.zim]
+    else:
+        zims = sorted(glob(os.path.join(zim_home, "*.zim")))
+    if not zims:
+        die(f"no .zim files in {zim_home}")
 
-    for zim in args.zim:
-        zim = os.path.abspath(zim)
+    for zim in zims:
         if not os.path.isfile(zim):
             die(f"ZIM not found: {zim}")
-        base = re.sub(r"[^A-Za-z0-9._-]+", "_", os.path.splitext(os.path.basename(zim))[0]) or "zim"
-        stem = f"{base}-{hashlib.sha1(zim.encode('utf-8')).hexdigest()[:8]}"
-        target = os.path.join(out, stem)
-        urls = zim_urls(zimdump, zim, args.namespace, prefixes, args.limit)
-        if not urls and args.namespace == "A":
-            print("no namespace-A URLs; scanning text entries across namespaces", file=sys.stderr)
-            urls = zim_text_urls(zimdump, zim, prefixes, args.limit)
-        print(f"{zim}: {len(urls)} article(s) selected")
-        if not urls:
-            print("no articles matched; existing staging left untouched", file=sys.stderr)
-            print(f"  inspect with: zimdump info {zim}; zimdump list --details {zim}", file=sys.stderr)
-            continue
-        if args.dry_run:
-            for url in urls:
-                print(f"  {url}")
-            continue
 
-        # Extract into a hidden temp directory and swap only on success. A failed zimdump run
-        # must not delete the articles that were already indexed.
-        temporary = os.path.join(out, f".{stem}.tmp")
-        shutil.rmtree(temporary, ignore_errors=True)
-        os.makedirs(temporary, exist_ok=True)
-
-        extracted = 0
-        for index, url in enumerate(urls, 1):
-            try:
-                result = subprocess.run(
-                    [zimdump, "show", f"--url={url}", zim],
-                    capture_output=True,
-                    timeout=120,
-                    check=False,
-                )
-            except subprocess.TimeoutExpired:
-                print(f"skip {url}: zimdump timed out", file=sys.stderr)
+    if args.status:
+        if not os.path.isfile(query_helper):
+            die(f"KiwixRAG query helper is missing: {query_helper}; re-run the AI installer")
+        for zim in zims:
+            result = subprocess.run(
+                [venv_python, query_helper, "--zim", zim, "--status", "--json"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            if result.returncode == 2:
+                print(f"{os.path.basename(zim)}: not indexed")
                 continue
-            if result.returncode != 0 or not result.stdout.strip():
-                message = result.stderr.decode("utf-8", "replace").strip()
-                print(f"skip {url}: {message or 'no content'}", file=sys.stderr)
+            if result.returncode != 0:
+                print(f"{os.path.basename(zim)}: {(result.stderr or result.stdout).strip()}")
                 continue
-            if b"\x00" in result.stdout[:2048]:
-                print(f"skip {url}: binary content", file=sys.stderr)
-                continue
-            destination = os.path.join(temporary, zim_article_name(index, url))
-            with open(destination, "wb") as handle:
-                handle.write(result.stdout)
-            extracted += 1
-            if extracted % 25 == 0 or extracted == len(urls):
-                print(f"  extracted {extracted}/{len(urls)}")
-
-        if not extracted:
-            shutil.rmtree(temporary, ignore_errors=True)
-            print("no articles extracted; existing staging left untouched", file=sys.stderr)
-            continue
-        shutil.rmtree(target, ignore_errors=True)
-        os.replace(temporary, target)
-        total += extracted
-        print(f"extracted {extracted} article(s) from {os.path.basename(zim)} into {target}")
-
-    if args.dry_run:
-        print("dry run: nothing written")
-        return 0
-    if args.extract_only:
-        print(f"extract-only: run 'ktemata-ai ingest' to index {out}")
-        return 0
-    if not total:
-        print("nothing extracted; the index is unchanged")
+            data = json.loads(result.stdout)
+            print(f"{os.path.basename(zim)}: {data.get('chunks', 0)} chunk(s) in {data.get('index')}")
         return 0
 
-    if not covered:
-        roots.append(out)
-    ingest_args = argparse.Namespace(root=list(dict.fromkeys(roots)), force=False, limit=0, no_prune=False)
-    print(f"indexing {total} new article(s) and the configured roots…")
-    return cmd_ingest(ingest_args, cfg)
+    for zim in zims:
+        command = [venv_python, index_helper, "--zim", zim]
+        if args.limit:
+            command += ["--limit", str(args.limit)]
+        if args.rebuild:
+            command.append("--rebuild")
+        print(f"indexing {zim} with KiwixRAG…")
+        result = subprocess.run(command, cwd=root, env=os.environ.copy())
+        if result.returncode != 0:
+            die(f"KiwixRAG failed for {zim} (exit {result.returncode})")
+        index = kiwixrag_index_path(zim)
+        fix_index_owner(index, cfg)
+        if args.json:
+            print(json.dumps({"zim": zim, "index": index, "indexed": True}))
+        else:
+            print(f"indexed {zim} -> {index}")
+    return 0
+
+
+
 
 
 def cmd_zim_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
-    llm_bin = os.path.abspath(os.path.expanduser(cfg.get("AI_LLM_BIN") or "/opt/ktemata-ai/venv/bin/llm"))
-    if not (os.path.isfile(llm_bin) and os.access(llm_bin, os.X_OK)):
-        die("llm-tools-kiwix is not installed; run: sudo ./work/scripts/post-install-ai.sh --yes")
+    root, venv_python, index_helper, helper = kiwixrag_paths(cfg)
+    if not (os.path.isfile(venv_python) and os.path.isfile(helper)):
+        die("KiwixRAG is not installed; run: sudo ./work/scripts/post-install-ai.sh --yes")
 
     zim_home = os.path.abspath(os.path.expanduser(cfg["AI_ZIM_HOME"]))
-    selected = ""
+    zims = sorted(glob(os.path.join(zim_home, "*.zim")))
     if args.zim:
         selected = os.path.abspath(os.path.expanduser(args.zim))
         if not os.path.isfile(selected):
             die(f"ZIM not found: {selected}")
-        zim_home = os.path.dirname(selected)
-    zims = sorted(glob(os.path.join(zim_home, "*.zim")))
-    if not zims:
+    elif len(zims) == 1:
+        selected = zims[0]
+    elif not zims:
         die(f"no .zim files in {zim_home}")
+    else:
+        die("multiple ZIM archives found; choose one with --zim")
 
-    model = (args.model or cfg.get("AI_ZIM_MODEL") or cfg["AI_MODEL"]).removeprefix("ollama/")
-    prompt = (
-        "You are Ktemata, an offline library assistant. Use the kiwix_search_and_collect tool "
-        "to search the local ZIM library, read the matching articles, and answer using only that "
-        "tool output. Cite the ZIM file and article path. If the tool finds nothing, say that the "
-        "library does not contain the answer. Do not invent facts.\n\n"
-        f"Question: {args.question}"
-    )
-    if selected:
-        prompt += f"\nUse only this ZIM file: {os.path.basename(selected)}."
-
-    search_home = zim_home
-    temporary = None
-    if selected:
-        # The plugin lists KIWIX_HOME/*.zim in the tool description and also scans the cwd.
-        # A private directory with only this symlink keeps the model on the chosen archive.
-        temporary = tempfile.mkdtemp(prefix="ktemata-zim-")
-        os.symlink(selected, os.path.join(temporary, os.path.basename(selected)))
-        search_home = temporary
-
-    env = os.environ.copy()
-    env["KIWIX_HOME"] = search_home
-    env["OLLAMA_HOST"] = cfg["AI_OLLAMA_URL"]
-    command = [
-        llm_bin,
-        "-m", f"ollama/{model}",
-        "-T", "kiwix_search_and_collect",
-        "-n",  # do not grow llm's SQLite log from a service
-        prompt,
-    ]
+    top = args.top or config_int(cfg, "AI_ZIM_TOP_K", 6, 1)
     try:
         result = subprocess.run(
-            command,
+            [
+                venv_python,
+                helper,
+                "--zim", selected,
+                f"--question={args.question}",
+                "--top", str(top),
+                "--json",
+            ],
             capture_output=True,
             text=True,
-            timeout=600,
-            env=env,
-            cwd=search_home,
+            timeout=300,
         )
     except subprocess.TimeoutExpired:
-        die("ZIM search timed out")
+        die("KiwixRAG retrieval timed out")
     except OSError as exc:
-        die(f"cannot run {llm_bin}: {exc}")
-    finally:
-        if temporary:
-            shutil.rmtree(temporary, ignore_errors=True)
+        die(f"cannot run {helper}: {exc}")
     if result.returncode != 0:
         lines = (result.stderr or result.stdout).strip().splitlines()
         message = lines[-1] if lines else f"exit {result.returncode}"
-        die(f"llm failed: {message}")
-    answer = result.stdout.strip()
-    if not answer:
-        die("llm returned no answer")
+        die(message)
+    try:
+        data = json.loads(result.stdout)
+    except ValueError:
+        die("KiwixRAG returned invalid JSON")
+    chunks = data.get("chunks") or []
+    if not chunks:
+        die("the KiwixRAG index returned no chunks; rebuild it with: "
+            f"sudo ktemata-ai zim-index --zim {selected} --rebuild")
+
+    context = "\n\n".join(
+        f"[{index}] {chunk.get('title', 'Untitled')} ({chunk.get('href', '')})\n"
+        f"{chunk.get('text', '')}"
+        for index, chunk in enumerate(chunks, 1)
+    )
+    model = (args.model or cfg.get("AI_ZIM_MODEL") or cfg["AI_MODEL"]).removeprefix("ollama/")
+    if not args.json:
+        eprint(f"asking {model} with {len(chunks)} KiwixRAG chunk(s)…")
+    answer = generate_answer(
+        cfg,
+        ZIM_PROMPT.format(context=context, question=args.question),
+        model,
+    )
+    sources = [
+        {
+            "title": chunk.get("title", ""),
+            "path": chunk.get("href", ""),
+            "chunk": int(chunk.get("chunk", 0)) + 1,
+        }
+        for chunk in chunks
+    ]
     if args.json:
         print(json.dumps({
             "answer": answer,
+            "sources": sources,
             "model": model,
-            "zim": selected or None,
-            "zims": len(zims),
+            "zim": selected,
         }))
-    else:
-        print(answer)
+        return 0
+    print(answer or "(the model returned an empty answer)")
+    print("\nSources:")
+    for index, source in enumerate(sources, 1):
+        print(f"[{index}] {source['title']} ({source['path']}, chunk {source['chunk']})")
     return 0
 
 
@@ -913,10 +878,18 @@ def cmd_status(args: argparse.Namespace, cfg: dict[str, str]) -> int:
         except sqlite3.Error:
             pass
     names = ollama_tags(cfg)
-    llm_bin = os.path.abspath(os.path.expanduser(cfg.get("AI_LLM_BIN") or "/opt/ktemata-ai/venv/bin/llm"))
+    root, venv_python, index_helper, helper = kiwixrag_paths(cfg)
     zim_home = os.path.abspath(os.path.expanduser(cfg["AI_ZIM_HOME"]))
     zims = sorted(glob(os.path.join(zim_home, "*.zim")))
     zim_model = cfg.get("AI_ZIM_MODEL") or cfg["AI_MODEL"]
+    indexed = [
+        {
+            "name": os.path.basename(zim),
+            "index": kiwixrag_index_path(zim),
+            "indexed": os.path.isfile(os.path.join(kiwixrag_index_path(zim), "metadata.json")),
+        }
+        for zim in zims
+    ]
     payload = {
         "installed": True,
         "db": db_path,
@@ -929,11 +902,15 @@ def cmd_status(args: argparse.Namespace, cfg: dict[str, str]) -> int:
         "ollama": names is not None,
         "ollama_models": names or [],
         "ingest_dirs": cfg["AI_INGEST_DIRS"].split(),
-        "zim": {
-            "installed": os.path.isfile(llm_bin) and os.access(llm_bin, os.X_OK),
+        "kiwixrag": {
+            "installed": all(os.path.isfile(path) for path in (venv_python, index_helper, helper)),
+            "dir": root,
             "home": zim_home,
             "files": len(zims),
+            "indexed": sum(1 for item in indexed if item["indexed"]),
+            "zims": indexed,
             "model": zim_model,
+            "top_k": config_int(cfg, "AI_ZIM_TOP_K", 6, 1),
         },
     }
     if args.json:
@@ -946,8 +923,8 @@ def cmd_status(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     print(f"chunks      {chunks}")
     print(f"last ingest {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_ingest)) if last_ingest else 'never'}")
     print(f"roots       {' '.join(cfg['AI_INGEST_DIRS'].split())}")
-    print(f"zim search  {len(zims)} archive(s) in {zim_home}, model {zim_model}, "
-          f"llm {'ready' if payload['zim']['installed'] else 'missing'}")
+    print(f"zim index   {payload['kiwixrag']['indexed']}/{len(zims)} archive(s) in {zim_home}, "
+          f"KiwixRAG {'ready' if payload['kiwixrag']['installed'] else 'missing'}, model {zim_model}")
     print(f"ollama      {'reachable' if names is not None else 'not reachable'}")
     return 0
 
@@ -984,29 +961,24 @@ def build_parser() -> argparse.ArgumentParser:
     status.add_argument("--json", action="store_true", help="machine-readable output")
     status.set_defaults(func=cmd_status)
 
-    zim = sub.add_parser(
-        "zim-ingest",
-        help="extract a bounded slice of ZIM articles and index them",
+    zim_index = sub.add_parser(
+        "zim-index",
+        help="build or inspect KiwixRAG vector indexes for ZIM files",
     )
-    zim.add_argument("--zim", action="append", required=True, help="ZIM file to extract (repeatable)")
-    zim.add_argument("--limit", type=int, default=200, help="articles per ZIM (default 200)")
-    zim.add_argument("--prefix", action="append", help="only URLs starting with this prefix (repeatable)")
-    zim.add_argument("--ns", dest="namespace", default="A", help="ZIM namespace (default A)")
-    zim.add_argument(
-        "--out",
-        default="/var/lib/kiwix/zim-text",
-        help="HTML staging directory (default /var/lib/kiwix/zim-text)",
-    )
-    zim.add_argument("--extract-only", action="store_true", help="extract but do not index")
-    zim.add_argument("--dry-run", action="store_true", help="list the selected articles only")
-    zim.set_defaults(func=cmd_zim_ingest)
+    zim_index.add_argument("--zim", action="append", help="ZIM file to index (repeatable; default: all in AI_ZIM_HOME)")
+    zim_index.add_argument("--limit", type=int, default=0, help="index at most N articles per ZIM (default: all)")
+    zim_index.add_argument("--rebuild", action="store_true", help="discard and rebuild an existing index")
+    zim_index.add_argument("--status", action="store_true", help="show index state instead of building")
+    zim_index.add_argument("--json", action="store_true", help="machine-readable output")
+    zim_index.set_defaults(func=cmd_zim_index)
 
     zim_ask = sub.add_parser(
         "zim-ask",
-        help="ask a question with Kiwix's own search index (llm-tools-kiwix)",
+        help="ask a question over a KiwixRAG index",
     )
     zim_ask.add_argument("question")
-    zim_ask.add_argument("--zim", default="", help="restrict to this ZIM file")
+    zim_ask.add_argument("--zim", default="", help="ZIM file whose index to query")
+    zim_ask.add_argument("--top", type=int, default=0, help="chunks to retrieve (default AI_ZIM_TOP_K)")
     zim_ask.add_argument("--model", default="", help="override AI_ZIM_MODEL")
     zim_ask.add_argument("--json", action="store_true", help="machine-readable output")
     zim_ask.set_defaults(func=cmd_zim_ask)

@@ -100,6 +100,21 @@
         <p id="ai-text"></p>
         <ul id="ai-sources" class="ai-sources"></ul>
       </div>
+      <form id="zim-form" class="ai-form">
+        <label class="sr-only" for="zim-select">ZIM archive</label>
+        <select id="zim-select" aria-label="ZIM archive" disabled></select>
+        <label class="sr-only" for="zim-question">Question about a ZIM</label>
+        <input id="zim-question" type="text" name="question" maxlength="2000" autocomplete="off"
+               placeholder="Ask about a KiwixRAG-indexed ZIM…" disabled required>
+        <button id="zim-ask" class="primary" type="submit" disabled>Ask ZIM</button>
+      </form>
+      <div id="zim-answer" class="ai-answer" hidden>
+        <p id="zim-text"></p>
+        <ul id="zim-sources" class="ai-sources"></ul>
+      </div>
+      <p class="path">ZIM indexing and retrieval by
+        <a href="https://github.com/brunuff/KiwixRAG" target="_blank" rel="noopener">KiwixRAG</a>
+        · brunuff</p>
     </section>
 
     <div id="banner" class="banner" hidden>
@@ -123,6 +138,7 @@
             <th scope="col" class="num">Size</th>
             <th scope="col" class="when">Modified</th>
             <th scope="col">Index</th>
+            <th scope="col">AI index</th>
             <th scope="col"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>

@@ -1,0 +1,5 @@
+# Ktemata constraints for KiwixRAG's Python environment.
+# The upstream requirements are unpinned; these keep the Chroma and embedding APIs we wrap.
+chromadb<2
+sentence-transformers<7
+tiktoken<1

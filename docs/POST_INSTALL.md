@@ -102,11 +102,12 @@ sudo ./work/scripts/post-install.sh --ai
 ```
 
 It indexes `/var/lib/kiwix` and `/srv/kiwix/zim` by default (text, Markdown, HTML, XML, PDF, EPUB,
-DOCX, ODT), answers with `ktemata-ai ask "..."`, and adds the **Ask the library** box to the admin
-page. ZIM archives are skipped by the normal ingest; use `ktemata-ai zim-ask` for Kiwix's own
-search index (no vector build), or `ktemata-ai zim-ingest` for a bounded vector slice. The
-installer also adds `export KIWIX_HOME=/srv/kiwix/zim` to the desktop user's `~/.bashrc` so the
-raw `llm tools list` / `llm` commands work after a new shell.
+DOCX, ODT), answers with `ktemata-ai ask "..."`, and adds **Ask the library**, **Ask ZIM**, and the
+**AI index** column to the admin page. ZIM archives are skipped by the normal document ingest.
+KiwixRAG is installed for them: build a vector index with
+`sudo ktemata-ai zim-index --zim FILE`, or use the **AI index** column in the admin archive table.
+Ask with `ktemata-ai zim-ask --zim FILE "..."` or the admin **Ask ZIM** form. KiwixRAG is by
+[brunuff](https://github.com/brunuff/KiwixRAG); see [OFFLINE_AI.md](OFFLINE_AI.md).
 
 ## Library hotspot
 
@@ -748,7 +749,7 @@ Mind the disk: the full English Wikipedia `maxi` archive is ~119 GB, Gutenberg `
     --rotate WHAT      normal | left | right | inverted (or 0|90|180|270 clockwise)
     --kiosk            install the kiosk launcher + autostart
     --kiosk-user NAME  desktop user to autostart it for (default: the sudo user)
-    --ai               install the offline AI (Ollama + ktemata-ai + llm-tools-kiwix);
+    --ai               install the offline AI (Ollama + ktemata-ai + KiwixRAG);
                        see OFFLINE_AI.md
     --no-hwtest        skip the hardware checks
     --hwtest-only      run the hardware checks and exit

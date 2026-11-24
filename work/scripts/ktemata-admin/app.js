@@ -20,6 +20,9 @@ const ui = {
   busyService: false,
   lastFetchError: 0,
   seq: 0,
+  aiInstalled: null,
+  aiIndexed: new Set(),
+  aiBuilding: new Set(),
 };
 
 /* ------------------------------------------------------------------ utils */
@@ -308,6 +311,36 @@ function renderTable(zims) {
       : 'Not in library.xml yet — rebuild the index to publish it';
     index.append(badge);
 
+    const ai = document.createElement('td');
+    ai.className = 'ai';
+    const aiReady = Boolean(zim.ai_indexed) || ui.aiIndexed.has(zim.name);
+    const building = ui.aiBuilding.has(zim.name);
+    const aiBadge = document.createElement('span');
+    if (ui.aiInstalled === false) {
+      aiBadge.className = 'badge';
+      aiBadge.textContent = 'AI off';
+      aiBadge.title = 'KiwixRAG is not installed — run post-install-ai.sh';
+      ai.append(aiBadge);
+    } else {
+      aiBadge.className = `badge ${aiReady ? 'ok' : 'stale'}`;
+      aiBadge.textContent = building ? 'Indexing' : aiReady ? 'AI ready' : 'AI';
+      aiBadge.title = aiReady
+        ? 'KiwixRAG vector index is ready'
+        : 'No KiwixRAG vector index yet';
+      const aiButton = document.createElement('button');
+      aiButton.type = 'button';
+      aiButton.className = 'mini';
+      aiButton.textContent = building ? 'Indexing…' : aiReady ? 'Rebuild' : 'Build';
+      aiButton.disabled = building || ui.aiInstalled === null;
+      aiButton.title = building
+        ? 'The KiwixRAG index is building; this page refreshes when it finishes'
+        : aiReady
+          ? 'Discard and rebuild the KiwixRAG vector index'
+          : 'Build the KiwixRAG vector index for this archive';
+      aiButton.addEventListener('click', () => buildAiIndex(zim.name));
+      ai.append(aiBadge, aiButton);
+    }
+
     const act = document.createElement('td');
     act.className = 'act';
 
@@ -328,7 +361,7 @@ function renderTable(zims) {
     del.addEventListener('click', () => deleteZim(zim.name));
 
     act.append(download, del);
-    tr.append(name, size, when, index, act);
+    tr.append(name, size, when, index, ai, act);
     rows.append(tr);
   }
   applyFilter();
@@ -674,6 +707,67 @@ async function runUpload(item) {
 }
 
 /* ------------------------------------------------------------------ offline AI */
+async function buildAiIndex(name) {
+  if (ui.aiBuilding.has(name)) return;
+  ui.aiBuilding.add(name);
+  if (ui.state) renderTable(ui.state.zims);
+  try {
+    await api('/api/ai/zim-index', { method: 'POST', json: { name } });
+    toast(`KiwixRAG index started for ${name}`, 'good');
+    setTimeout(() => waitForAiIndex(name), 1000);
+  } catch (err) {
+    ui.aiBuilding.delete(name);
+    if (ui.state) renderTable(ui.state.zims);
+    toast(err.message, 'bad');
+  }
+}
+
+async function waitForAiIndex(name) {
+  try {
+    const state = await api(`/api/ai/zim-index?name=${encodeURIComponent(name)}`);
+    if (state.active) {
+      setTimeout(() => waitForAiIndex(name), 3000);
+      return;
+    }
+    ui.aiBuilding.delete(name);
+    if (state.indexed) {
+      ui.aiIndexed.add(name);
+      toast(`KiwixRAG index ready for ${name}`, 'good');
+    } else if (state.result === 'failed') {
+      toast(`KiwixRAG indexing failed for ${name}; check journalctl -u ${state.unit}`, 'bad');
+    }
+    refreshAiStatus();
+    refresh();
+  } catch (err) {
+    ui.aiBuilding.delete(name);
+    if (ui.state) renderTable(ui.state.zims);
+    toast(`Cannot read AI index state: ${err.message}`, 'bad');
+  }
+}
+
+function renderZimOptions(rag) {
+  const select = $('#zim-select');
+  const input = $('#zim-question');
+  const button = $('#zim-ask');
+  const ready = (rag?.zims || []).filter((zim) => zim.indexed);
+  const current = select.value;
+  select.replaceChildren();
+  for (const zim of ready) {
+    const option = document.createElement('option');
+    option.value = zim.name;
+    option.textContent = zim.name;
+    select.append(option);
+  }
+  const enabled = ready.length > 0;
+  select.disabled = !enabled;
+  input.disabled = !enabled;
+  button.disabled = !enabled;
+  select.title = enabled
+    ? 'Choose a KiwixRAG-indexed archive'
+    : 'Build an AI index for a ZIM first';
+  if (current && ready.some((zim) => zim.name === current)) select.value = current;
+}
+
 async function refreshAiStatus() {
   const label = $('#ai-status');
   const input = $('#ai-question');
@@ -681,17 +775,30 @@ async function refreshAiStatus() {
   try {
     const state = await api('/api/ai/status');
     if (!state || state.installed === false) {
+      ui.aiInstalled = false;
+      renderZimOptions(null);
+      if (ui.state) renderTable(ui.state.zims);
       label.textContent = 'offline AI is not installed — run post-install-ai.sh';
       input.disabled = true;
       button.disabled = true;
       return;
     }
     if (state.error) {
+      ui.aiInstalled = null;
+      renderZimOptions(null);
+      if (ui.state) renderTable(ui.state.zims);
       label.textContent = `offline AI · ${state.error}`;
       input.disabled = true;
       button.disabled = true;
       return;
     }
+    const rag = state.kiwixrag;
+    ui.aiInstalled = Boolean(rag && rag.installed);
+    ui.aiIndexed = new Set(
+      (rag?.zims || []).filter((zim) => zim.indexed).map((zim) => zim.name),
+    );
+    renderZimOptions(rag);
+    if (ui.state) renderTable(ui.state.zims);
     if (!state.chunks) {
       label.textContent = 'offline AI · no documents indexed yet — run sudo ktemata-ai ingest';
       input.disabled = true;
@@ -716,10 +823,13 @@ async function refreshAiStatus() {
     input.disabled = false;
     button.disabled = false;
     const when = state.last_ingest ? relTime(state.last_ingest) : 'never';
+    const zimNote = rag ? ` · ${rag.indexed}/${rag.files} ZIM AI` : '';
     label.textContent =
       `offline AI · ${state.docs} documents · ${state.chunks} chunks · ` +
-      `${state.model} · indexed ${when}`;
+      `${state.model} · indexed ${when}${zimNote}`;
   } catch (err) {
+    ui.aiInstalled = null;
+    if (ui.state) renderTable(ui.state.zims);
     label.textContent = `offline AI · ${err.message}`;
     input.disabled = true;
     button.disabled = true;
@@ -763,6 +873,45 @@ async function askAi(event) {
 }
 
 /* ------------------------------------------------------------------ wiring */
+async function askZim(event) {
+  event.preventDefault();
+  const select = $('#zim-select');
+  const input = $('#zim-question');
+  const button = $('#zim-ask');
+  const box = $('#zim-answer');
+  const text = $('#zim-text');
+  const sources = $('#zim-sources');
+  const name = select.value;
+  const question = input.value.trim();
+  if (!name || !question) return;
+
+  button.disabled = true;
+  button.textContent = 'Thinking…';
+  box.hidden = true;
+  try {
+    const result = await api('/api/ai/zim-ask', {
+      method: 'POST',
+      json: { name, question },
+    });
+    text.textContent = result.answer || '(the model returned an empty answer)';
+    sources.replaceChildren();
+    for (const [index, source] of (result.sources || []).entries()) {
+      const item = document.createElement('li');
+      const where = document.createElement('span');
+      where.textContent = `[${index + 1}] ${source.title || source.path} · chunk ${source.chunk}`;
+      item.append(where);
+      sources.append(item);
+    }
+    box.hidden = false;
+  } catch (err) {
+    toast(err.message, 'bad');
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Ask ZIM';
+  }
+}
+
+/* ------------------------------------------------------------------ wiring */
 $('#pick').addEventListener('click', () => $('#file').click());
 $('#file').addEventListener('change', (event) => {
   enqueueFiles(event.target.files);
@@ -788,6 +937,7 @@ $('#clear-done').addEventListener('click', () => {
   $('#queue-panel').hidden = ui.queue.length === 0;
 });
 $('#ai-form').addEventListener('submit', askAi);
+$('#zim-form').addEventListener('submit', askZim);
 
 // Drag and drop anywhere on the page.
 let dragDepth = 0;
