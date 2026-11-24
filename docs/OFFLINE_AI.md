@@ -180,9 +180,23 @@ configured roots for one run; `--limit N` bounds a first test.
 
 ### ZIM indexing with KiwixRAG
 
-`zim-ingest` extracts selected articles from a ZIM with `zimdump`, writes them as HTML under
-`/var/lib/kiwix/zim-text`, and indexes them. The extraction is deliberately bounded; it is not a
-way to ingest an entire Wikipedia archive.
+`zim-index` uses KiwixRAG's chunker, BGE embeddings, Chroma store and metadata, and stores the
+index beside the archive. It reads articles directly with `zimdump`, so it does not need a
+`kiwix-serve` listener and works when the ZIM has no usable full-text index:
+
+```
+/srv/kiwix/zim/book.zim
+/srv/kiwix/zim/book_<8-char-md5>_rag_index/
+```
+
+Articles are chunked at 500 characters with 50-character overlap and embedded in batches of
+100 chunks. Enumerating through `zimdump` also handles book ZIMs whose articles live outside
+namespace `A`; only `text/html` and `text/plain` entries are indexed.
+
+The upstream `kiwix_chat.py --build-index` path is not used: it expects `sitemap.xml` from
+`kiwix-serve` (current builds return 404 for a single archive) and a server on `:8081`, which the
+Ktemata admin owns. `kiwixrag_index.py` calls KiwixRAG's own chunker, embeddings and Chroma store
+directly, with `zimdump` for article enumeration.
 
 ```bash
 # one archive, all articles
@@ -232,6 +246,27 @@ single very large article is split into KiwixRAG chunks (500 characters, 50 over
 ### From the library admin
 
 `http://<device>:8081/` has:
+
+- **Ask the library** for the document index, with source paths and chunks.
+- **Ask ZIM** for an archive with a KiwixRAG index; it calls `zim-ask --json` and lists the
+  matching article titles and chunks. It stays disabled until at least one index exists.
+- **AI index** controls in each ZIM row:
+  - **Build** starts `ktemata-ai-zim-index@<name>.service` in the background;
+  - **Rebuild** does the same with `--rebuild`;
+  - the badge changes to **Indexing** while the unit is active and **AI ready** when the metadata
+    is present;
+  - **AI off** means KiwixRAG is not installed.
+
+The admin service is root, but the index build is a separate systemd oneshot. The page polls the
+unit's `ActiveState`/`Result`; it does not hold an HTTP request open for hours. Check progress
+with:
+
+```bash
+journalctl -u 'ktemata-ai-zim-index@*' -f
+```
+
+Both forms are in the same AI panel: **Ask the library** uses the SQLite document index, and
+**Ask ZIM** uses the selected KiwixRAG Chroma index. The CLI remains `ktemata-ai zim-ask`.
 
 The admin page is protected by HTTP Basic auth, but there is no TLS. Keep it on the hotspot or a
 trusted LAN, or bind it to loopback and use an SSH tunnel.
@@ -285,15 +320,19 @@ the isolated box. `--no-models` skips the warm-up but does not remove an existin
 ## Security and limits
 
 - Ollama binds `127.0.0.1`; no API port is opened on the LAN.
-- The ZIM direct-search venv is installed from PyPI at install time. At runtime `llm` only talks
-  to the local Ollama server and reads the ZIM files; it adds no listening service.
-- The admin page is authenticated; the AI route is under the same auth.
-- The ingest service runs as root because it reads the library and writes the index. It is
-  `ProtectSystem=strict` with only the index directory writable.
-- The model can be wrong. The prompt restricts it to the retrieved sources and prints them; always
-  check the cited path for a factual answer.
-- This is retrieval over documents; ZIM archives are only included through the bounded
-  `zim-ingest` extraction. Large PDFs and OCR-free scans produce poor text.
+- KiwixRAG's dependencies and the BGE model are downloaded from PyPI/Hugging Face at install time.
+  At runtime `zim-index` reads the ZIM with `zimdump`; `zim-ask` reads Chroma and calls Ollama.
+  Neither adds a listening service.
+- The admin page is authenticated; the AI routes are under the same auth.
+- The document ingest service runs as root because it reads the library and writes the index. It is
+  `ProtectSystem=strict` with only the index directory writable. The ZIM index unit has only the
+  ZIM directory writable.
+- The model can be wrong. Both prompts restrict it to the retrieved sources and print them; always
+  check the cited document path or ZIM article/chunk for a factual answer.
+- Large PDFs and OCR-free scans produce poor document text. A ZIM with no readable text entries
+  produces an empty KiwixRAG index; inspect it with `zimdump info` / `zimdump list --details`.
+- KiwixRAG's deduplication is per article in its own retriever; `zim-ask` uses the raw hybrid
+  top-k so a single large article still contributes several chunks.
 
 ## Uninstall
 
@@ -315,9 +354,23 @@ the old venv.
 
 ## Credits
 
+ZIM retrieval uses [KiwixRAG](https://github.com/brunuff/KiwixRAG) by brunuff, cloned at install
+time. Its upstream README describes the project as work in progress. The chunker, BGE
+embeddings and Chroma store remain upstream's; Ktemata adds direct `zimdump` enumeration, the
+metadata writer, the headless query wrapper, the CLI, the on-demand systemd unit, and the admin
+controls.
 
 The document index, prompts, CLI and admin integration are part of Ktemata.
 
 ## Verified
 
-This is the recommended ZIM path on a Pi; `zim-ingest` (above) is only for bounded vector slices.
+The document CLI and admin **Ask the library** box were exercised against a fake Ollama endpoint
+and headless Chromium. The **AI index** column and **Ask ZIM** form were driven in headless
+Chromium against a fake `ktemata-ai`/`systemctl` with a sample archive, including the per-row
+Build/Rebuild controls and ZIM answer sources. The KiwixRAG path was exercised on Debian 13 arm64
+with a venv containing `sentence-transformers`, `chromadb` and `torch`. With the 4.4 MB `wikiciv`
+sample and `--limit 3`, the wrapper indexed 3 articles / 10 chunks; the query
+`What is an abacus?` returned the Abacus article. `zim-ask` was then exercised end-to-end with a
+fake Ollama endpoint and the real Chroma index. The installer dry run was checked in Debian 13.
+Real 3B model latency on the Pi is not benchmarked in this repository; the numbers above are
+expectations, not measurements.
