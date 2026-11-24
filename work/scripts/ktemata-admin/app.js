@@ -61,6 +61,14 @@ function absTime(seconds) {
   return new Date(seconds * 1000).toLocaleString();
 }
 
+function archiveLabel(name) {
+  const match = /^gutenberg-[0-9]+-(.+)$/i.exec(name);
+  if (!match) return name;
+  const title = match[1].replace(/\.zim$/i, '');
+  if (!title) return name;
+  return title.length > 24 ? `${title.slice(0, 24)}..` : title;
+}
+
 function toast(message, kind = '') {
   const box = $('#toasts');
   const el = document.createElement('div');
@@ -368,7 +376,7 @@ function renderTable(zims) {
     name.className = 'name';
     const nameSpan = document.createElement('span');
     nameSpan.className = 'name';
-    nameSpan.textContent = zim.name;
+    nameSpan.textContent = archiveLabel(zim.name);
     nameSpan.title = zim.name;
     name.append(nameSpan);
 
