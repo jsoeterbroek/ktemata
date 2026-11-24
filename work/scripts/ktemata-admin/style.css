@@ -277,6 +277,8 @@ button.primary svg { width: 16px; height: 16px; }
 }
 .ai-panel .panel-head { padding: 0 0 .8rem; }
 .ai-panel h2 { color: var(--accent-bright); }
+#ai-title { display: flex; align-items: center; gap: .45rem; }
+.heading-icon { width: 1.05em; height: 1.05em; flex: none; color: var(--accent-bright); }
 .ai-panel .ai-form { padding: 0; }
 .ai-panel .ai-answer { margin: .85rem 0 0; }
 
