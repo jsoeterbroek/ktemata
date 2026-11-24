@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Build guide — Ktemata</title>
-<meta name="description" content="Ktemata build guide: placeholders for the step-by-step photo and video record of the r5 cassette build.">
+<meta name="description" content="Ktemata R6 build guide: placeholders for the step-by-step photo and video record of the cassette, 7-inch display and UPS Module 3S build.">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -15,7 +15,7 @@
   <a href="index.html">Ktemata</a>
   <a href="build.html" aria-current="page">Build</a>
   <a href="power.html">Power</a>
-  <a href="comparisons.html">Comparisons</a>
+  <a href="admin.html">Admin</a>
   <a href="alexandria.html">Alexandria</a>
   <a href="license.html">Licence</a>
   <a href="https://github.com/jsoeterbroek/ktemata">Source</a>
@@ -23,7 +23,7 @@
 
 <h1>Build guide</h1>
 <p class="deck">
-  A step-by-step record of the r5 cassette build, with photographs and short video of each stage.
+  A step-by-step record of the R6 cassette build, with photographs and short video of each stage.
   <b>This page is a placeholder.</b> The parts and the geometry are final enough to print; the
   photographs are being shot during the build itself.
 </p>
@@ -31,7 +31,7 @@
 <p class="note">
   <b>Status: not yet written.</b> Every step below is planned and will be filled in as the build
   progresses. Until then, the measurements, print settings and fit checks live in
-  <a href="https://github.com/jsoeterbroek/ktemata/blob/main/docs/R5.md">docs/R5.md</a>, and the
+  <a href="https://github.com/jsoeterbroek/ktemata/blob/main/docs/R6.md">docs/R6.md</a>, and the
   STLs in the <a href="https://github.com/jsoeterbroek/ktemata">repository</a>.
 </p>
 
@@ -40,14 +40,14 @@
 final wording.</p>
 
 <dl>
-  <dt>01</dt><dd>Parts check — Pi&nbsp;5, NVMe Base Duo and its drives, UPS HAT&nbsp;(B) with 2× 18650, Touch Display 2, K06, Peli 1200, pad foam</dd>
+  <dt>01</dt><dd>Parts check — Pi&nbsp;5, NVMe Base Duo and drives, UPS Module 3S with three 18650 cells, 7inch DSI LCD (C), K06, Peli 1200, pad foam</dd>
   <dt>02</dt><dd>Print the cassette — tray, deck and lid plate; orientation and profile</dd>
-  <dt>03</dt><dd>Bolt the boards to the tray floor — the eight posts, and which screws go where</dd>
-  <dt>04</dt><dd>Solder the power run from the HAT to the Pi, in place of the pogo pins</dd>
-  <dt>05</dt><dd>Fit the cells, the FireBeetle, the DS3231 and the charger module</dd>
+  <dt>03</dt><dd>Bolt the boards to the tray floor — the display/Pi/Duo stack and the UPS mounting posts</dd>
+  <dt>04</dt><dd>Connect the UPS Module 3S harness and the 12.6&nbsp;V charge input</dd>
+  <dt>05</dt><dd>Fit the three cells, the PCH/FireBeetle and the DS3231</dd>
   <dt>06</dt><dd>Glue the keyboard into the deck recess</dd>
-  <dt>07</dt><dd>Mount the display on the lid plate and tape it into the host lid</dd>
-  <dt>08</dt><dd>Route the FFC and GPIO leads through the hinge-side opening</dd>
+  <dt>07</dt><dd>Mount the display/Pi/Duo stack and the full-face deck</dd>
+  <dt>08</dt><dd>Route the DSI, touch and status-OLED leads through the deck slot and hinge side</dd>
   <dt>09</dt><dd>Close the case and check the closed-case clearances</dd>
   <dt>10</dt><dd>First boot, display rotation, hotspot, library install</dd>
 </dl>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Ktemata</title>
+<meta name="description" content="Ktemata's built-in admin page: storage and archives, library index, power and battery status, ZIM AI indexes and one Ask form. No external management stack.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<nav class="pages">
+  <a href="index.html">Ktemata</a>
+  <a href="build.html">Build</a>
+  <a href="power.html">Power</a>
+  <a href="admin.html" aria-current="page">Admin</a>
+  <a href="alexandria.html">Alexandria</a>
+  <a href="license.html">Licence</a>
+  <a href="https://github.com/jsoeterbroek/ktemata">Source</a>
+</nav>
+
+<h1>Admin</h1>
+<p class="deck">
+  Ktemata is managed from its own page on the device, not from a separate stack. Open
+  <code>http://&lt;device&gt;:8081/</code> on the hotspot or the LAN, sign in, and the library is
+  in one place.
+</p>
+
+<ul class="kpis">
+  <li><b>One page</b><span>storage, library, power and AI</span></li>
+  <li><b>Power</b><span>on power or on battery, with runtime</span></li>
+  <li><b>All indexed ZIMs</b><span>one question across the archives</span></li>
+  <li><b>Dark / light</b><span>a theme that stays with the browser</span></li>
+</ul>
+
+<h2>Storage &amp; archives</h2>
+<p>
+  The top row combines disk use with the archive count and total ZIM size. Upload a ZIM by drag and
+  drop — transfers are chunked, resumable and checked for the ZIM magic before they are published.
+  Delete an archive or discard an interrupted upload. A new or removed file is not served until the
+  library index is rebuilt.
+</p>
+
+<h2>Library index</h2>
+<p>
+  <strong>Rebuild index &amp; restart</strong> runs <code>kiwix-library</code>, then restarts
+  <code>kiwix-serve</code>. The index box flags an unreadable file, a missing index, an out-of-date
+  index, or a healthy one. Archive-row states use the same language everywhere:
+</p>
+<ul>
+  <li><b>green</b> — indexed and ready;</li>
+  <li><b>yellow</b> — not indexed yet;</li>
+  <li><b>orange</b> — being indexed now;</li>
+  <li><b>red</b> — an error that needs attention.</li>
+</ul>
+
+<h2>Power</h2>
+<p>
+  The power box reads the UPS Module 3S's INA219 gauge. It says <strong>On power</strong> or
+  <strong>On battery</strong>, shows the pack percentage, and gives an estimated time left while
+  discharging. The reading is cached for a few seconds so refreshing the page does not hammer the
+  I²C bus. The details are on the <a href="power.html">power page</a>.
+</p>
+
+<h2>AI indexes and Ask</h2>
+<p>
+  Every ZIM can carry its own KiwixRAG vector index. The <b>AI index</b> column builds or rebuilds one
+  in the background through a systemd unit, and shows the same four states as the library index. The
+  page reports the article and chunk count when it finishes.
+</p>
+<p>
+  <b>Ask the library</b> has one question box and a source selector:
+</p>
+<ul>
+  <li><b>Documents</b> searches the extracted document index;</li>
+  <li><b>a ZIM archive</b> queries that archive's Chroma index;</li>
+  <li><b>All indexed ZIMs</b> queries every complete index, merges the chunks by embedding distance,
+  and answers from the best few. Sources name the archive and chunk.</li>
+</ul>
+<p>
+  The answer is local-model output, not a lookup. It can be wrong even when the retrieval is right; the
+  source paths under the answer are the part to check.
+</p>
+
+<h2>Theme and access</h2>
+<p>
+  The header has a dark/light theme button; the choice is stored in the browser. The admin listens on
+  <code>:8081</code> with HTTP Basic auth, but no TLS. Keep it on the hotspot or a trusted LAN, or bind
+  it to loopback and use an SSH tunnel. The library itself is on <code>:8080</code>; the admin is a
+  separate service so a broken library rebuild does not take the management page down.
+</p>
+
+<div class="note">
+  <p>
+    The page is served by <code>ktemata-admin.py</code> in the repository. It needs no framework and no
+    external service; the same CLI it calls is available over SSH for automation.
+  </p>
+</div>
+
+<h2>Start it</h2>
+<pre><code>sudo ./work/scripts/post-install.sh
+# admin:    http://&lt;device&gt;:8081/
+# library:  http://&lt;device&gt;:8080/
+# CLI:      ktemata-ai status</code></pre>
+
+<footer>
+  <p>Ktemata · <a href="https://github.com/jsoeterbroek/ktemata">source</a> · text is CC BY-SA 4.0, see <a href="license.html">licence</a></p>
+</footer>
+</main>
+</body>
+</html>
