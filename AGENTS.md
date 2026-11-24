@@ -44,15 +44,15 @@ Git repository tracks both variants. Earlier revisions are historical and availa
 
 For development phase use:
 
-- **OpenSCAD 2021.01**: Primary CAD tool with CGAL support
+- **Freecad**: Primary CAD tool
 - **Python 3**: Export scripts and automation
 - **PlatformIO** (`.venv`): ESP32 firmware development
 - **kicad-cli**: Schematic and board manipulation
-- **firebeetle-toolchain**: Bootloader and flashing
+- **esp32-toolchain**: Bootloader and flashing
 
 ### Firmware Development
 
-For FireBeetle 2 components:
+For ESP32 components:
 
 ```bash
 source .venv/bin/activate
@@ -116,3 +116,9 @@ Hardware, design and build stay simple.
 ## Git Strategy
 
 Commit before large changes. `git push` to repository history preserves both R6 variants for future reference. Github is the source of truth — no local-only branches without commits. Older revisions remain in history for archival and debugging purposes.
+
+## Audible ping
+
+When a task is done, notify with an audible ping (afplay /System/Library/Sounds/Submarine.aiff -v 24)
+
+
