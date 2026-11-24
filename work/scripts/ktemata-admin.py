@@ -445,6 +445,86 @@ def disk_state(cfg, zim_bytes):
     }
 
 
+_power_cache = (0.0, None)
+_power_lock = threading.Lock()
+
+
+def _parse_power(text):
+    values = {}
+    for line in text.splitlines():
+        key, sep, value = line.partition(":")
+        if sep:
+            values[key.strip()] = value.strip()
+    state = values.get("State", "")
+    percent = None
+    match = re.search(r"([0-9]+(?:\.[0-9]+)?)%", values.get("Charge estimate", ""))
+    if match:
+        percent = round(float(match.group(1)), 1)
+    runtime = values.get("Runtime remaining", "")
+    if runtime.lower().startswith("unavailable"):
+        runtime = ""
+    elif " at " in runtime:
+        runtime = runtime.split(" at ", 1)[0].strip()
+    lowered = state.lower()
+    if lowered.startswith("charging"):
+        source = "charging"
+    elif "on battery" in lowered:
+        source = "battery"
+    elif "idle" in lowered:
+        # The INA219 sits within its deadband; with the Pi on, that means external power.
+        source = "power"
+    else:
+        source = "unknown"
+    return {
+        "available": True,
+        "state": state,
+        "source": source,
+        "percent": percent,
+        "runtime": runtime,
+    }
+
+
+def _read_power():
+    tool = os.environ.get("KTEMATA_UPS_TRAY", DEFAULT_UPS_TRAY)
+    if not os.path.isfile(tool):
+        return {"available": False, "reason": "missing", "source": "unknown"}
+    requested = os.environ.get("KTEMATA_UPS_BUS", "").strip()
+    buses = [int(requested)] if requested.isdigit() else [2, 1]
+    error = ""
+    for bus in buses:
+        try:
+            result = subprocess.run(
+                [tool, "--i2c-bus", str(bus), "--once"],
+                check=False,
+                capture_output=True,
+                text=True,
+                errors="replace",
+                timeout=8,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            error = str(exc)
+            continue
+        if result.returncode == 0 and "State:" in result.stdout:
+            payload = _parse_power(result.stdout)
+            payload["bus"] = bus
+            return payload
+        error = (result.stderr or result.stdout).strip().splitlines()
+        error = error[-1] if error else f"exit {result.returncode}"
+    return {"available": False, "reason": "sensor", "source": "unknown", "error": error}
+
+
+def power_state():
+    now = time.monotonic()
+    with _power_lock:
+        cached_at, cached = _power_cache
+        if cached is not None and now - cached_at < POWER_CACHE_SECONDS:
+            return dict(cached)
+    payload = _read_power()
+    with _power_lock:
+        globals()["_power_cache"] = (now, payload)
+    return dict(payload)
+
+
 def build_state(cfg):
     zims, parts = [], []
     indexed = set()
@@ -494,6 +574,7 @@ def build_state(cfg):
         "service": service_state(cfg),
         "index": index_state(cfg, names),
         "library_port": cfg.library_port,
+        "power": power_state(),
     }
 
 
