@@ -238,7 +238,15 @@ chunk for each source.
 ktemata-ai zim-ask --zim /srv/kiwix/zim/book.zim "What are the benefits of cooking food?"
 ktemata-ai zim-ask --zim /srv/kiwix/zim/book.zim "..." --top 8
 ktemata-ai zim-ask --zim /srv/kiwix/zim/book.zim "..." --json
+
+# search every complete index
+ktemata-ai zim-ask "What are the benefits of cooking food?"
 ```
+
+Omit `--zim` to search all complete KiwixRAG indexes. The helper embeds the question once,
+queries each Chroma collection, merges the candidates by embedding distance and sends the best
+`--top` chunks to the model. A shell glob such as `--zim *.zim` does not work: the shell expands it
+into several paths, while `--zim` takes one archive.
 
 The index is per archive; `--zim` is required when `AI_ZIM_HOME` contains more than one `.zim`.
 If the index is missing, build it first. The answer is only as good as the retrieved chunks: a
@@ -249,8 +257,8 @@ single very large article is split into KiwixRAG chunks (500 characters, 50 over
 
 `http://<device>:8081/` has:
 
-- **Ask** for documents or an indexed ZIM. One source selector chooses **Documents** or a
-  KiwixRAG-indexed archive; one input and one **Ask** button call `ask --json` or
+- **Ask** for documents or indexed ZIMs. One source selector chooses **Documents**, one
+  KiwixRAG archive, or **All indexed ZIMs**; one input and one **Ask** button call `ask --json` or
   `zim-ask --json` and list the matching document paths or ZIM article titles/chunks.
 - **AI index** controls in each ZIM row:
   - **Build** starts `ktemata-ai-zim-index@<name>.service` in the background;
@@ -333,8 +341,8 @@ the isolated box. `--no-models` skips the warm-up but does not remove an existin
   check the cited document path or ZIM article/chunk for a factual answer.
 - Large PDFs and OCR-free scans produce poor document text. A ZIM with no readable text entries
   produces an empty KiwixRAG index; inspect it with `zimdump info` / `zimdump list --details`.
-- KiwixRAG's deduplication is per article in its own retriever; `zim-ask` uses the raw hybrid
-  top-k so a single large article still contributes several chunks.
+- KiwixRAG's deduplication is per article in its own retriever; `zim-ask` uses the raw
+  distance-ranked top-k so a single large article still contributes several chunks.
 
 ## Uninstall
 
