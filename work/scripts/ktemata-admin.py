@@ -833,20 +833,25 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/ai/zim-ask":
                 payload = self.body_json()
                 name = str(payload.get("name") or "")
-                if not valid_name(name):
-                    raise AdminError(HTTPStatus.BAD_REQUEST, "invalid ZIM file name")
                 question = str(payload.get("question") or "").strip()
                 if not question:
                     raise AdminError(HTTPStatus.BAD_REQUEST, "question is required")
                 if len(question) > 2000:
                     raise AdminError(HTTPStatus.BAD_REQUEST, "question is too long (2000 characters)")
-                path = zim_path(self.cfg, name)
-                self.send_json(
-                    ai_command(
-                        ["zim-ask", "--zim", path, "--json", "--", question],
-                        timeout=600,
+                if name == "*":
+                    self.send_json(
+                        ai_command(["zim-ask", "--json", "--", question], timeout=600)
                     )
-                )
+                else:
+                    if not valid_name(name):
+                        raise AdminError(HTTPStatus.BAD_REQUEST, "invalid ZIM file name")
+                    path = zim_path(self.cfg, name)
+                    self.send_json(
+                        ai_command(
+                            ["zim-ask", "--zim", path, "--json", "--", question],
+                            timeout=600,
+                        )
+                    )
             else:
                 raise AdminError(HTTPStatus.NOT_FOUND, "not found")
         except AdminError as exc:

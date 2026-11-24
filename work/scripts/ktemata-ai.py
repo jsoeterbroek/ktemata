@@ -785,30 +785,32 @@ def cmd_zim_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
     zim_home = os.path.abspath(os.path.expanduser(cfg["AI_ZIM_HOME"]))
     zims = sorted(glob(os.path.join(zim_home, "*.zim")))
     if args.zim:
-        selected = os.path.abspath(os.path.expanduser(args.zim))
-        if not os.path.isfile(selected):
-            die(f"ZIM not found: {selected}")
-    elif len(zims) == 1:
-        selected = zims[0]
-    elif not zims:
-        die(f"no .zim files in {zim_home}")
+        selected = [os.path.abspath(os.path.expanduser(args.zim))]
+        if not os.path.isfile(selected[0]):
+            die(f"ZIM not found: {selected[0]}")
     else:
-        die("multiple ZIM archives found; choose one with --zim")
+        selected = [
+            zim
+            for zim in zims
+            if os.path.isfile(os.path.join(kiwixrag_index_path(zim), "metadata.json"))
+        ]
+        if not selected:
+            die(
+                f"no complete KiwixRAG indexes in {zim_home}; "
+                "build one with: sudo ktemata-ai zim-index --zim FILE"
+            )
 
     top = args.top or config_int(cfg, "AI_ZIM_TOP_K", 6, 1)
+    command = [venv_python, helper]
+    for zim in selected:
+        command += ["--zim", zim]
+    command += [f"--question={args.question}", "--top", str(top), "--json"]
     try:
         result = subprocess.run(
-            [
-                venv_python,
-                helper,
-                "--zim", selected,
-                f"--question={args.question}",
-                "--top", str(top),
-                "--json",
-            ],
+            command,
             capture_output=True,
             text=True,
-            timeout=300,
+            timeout=600,
         )
     except subprocess.TimeoutExpired:
         die("KiwixRAG retrieval timed out")
@@ -824,12 +826,12 @@ def cmd_zim_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
         die("KiwixRAG returned invalid JSON")
     chunks = data.get("chunks") or []
     if not chunks:
-        die("the KiwixRAG index returned no chunks; rebuild it with: "
-            f"sudo ktemata-ai zim-index --zim {selected} --rebuild")
+        die("the selected KiwixRAG indexes returned no chunks; rebuild one with "
+            "sudo ktemata-ai zim-index --zim FILE --rebuild")
 
     context = "\n\n".join(
-        f"[{index}] {chunk.get('title', 'Untitled')} ({chunk.get('href', '')})\n"
-        f"{chunk.get('text', '')}"
+        f"[{index}] {chunk.get('title', 'Untitled')} — {chunk.get('zim', '')} "
+        f"({chunk.get('href', '')})\n{chunk.get('text', '')}"
         for index, chunk in enumerate(chunks, 1)
     )
     model = (args.model or cfg.get("AI_ZIM_MODEL") or cfg["AI_MODEL"]).removeprefix("ollama/")
@@ -845,6 +847,8 @@ def cmd_zim_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
             "title": chunk.get("title", ""),
             "path": chunk.get("href", ""),
             "chunk": int(chunk.get("chunk", 0)) + 1,
+            "zim": chunk.get("zim", ""),
+            "score": round(float(chunk.get("score", 0.0)), 4),
         }
         for chunk in chunks
     ]
@@ -853,13 +857,17 @@ def cmd_zim_ask(args: argparse.Namespace, cfg: dict[str, str]) -> int:
             "answer": answer,
             "sources": sources,
             "model": model,
-            "zim": selected,
+            "zim": selected[0] if len(selected) == 1 else None,
+            "zims": selected,
         }))
         return 0
     print(answer or "(the model returned an empty answer)")
     print("\nSources:")
     for index, source in enumerate(sources, 1):
-        print(f"[{index}] {source['title']} ({source['path']}, chunk {source['chunk']})")
+        print(
+            f"[{index}] {source['title']} ({source['zim']}, {source['path']}, "
+            f"chunk {source['chunk']}, score {source['score']:.3f})"
+        )
     return 0
 
 
@@ -977,7 +985,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="ask a question over a KiwixRAG index",
     )
     zim_ask.add_argument("question")
-    zim_ask.add_argument("--zim", default="", help="ZIM file whose index to query")
+    zim_ask.add_argument("--zim", default="", help="restrict to this ZIM (default: all complete indexes)")
     zim_ask.add_argument("--top", type=int, default=0, help="chunks to retrieve (default AI_ZIM_TOP_K)")
     zim_ask.add_argument("--model", default="", help="override AI_ZIM_MODEL")
     zim_ask.add_argument("--json", action="store_true", help="machine-readable output")

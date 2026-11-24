@@ -905,6 +905,13 @@ function renderSources(state, docsReady, zimReady, zims) {
   if (zims.length) {
     const group = document.createElement('optgroup');
     group.label = 'ZIM archives';
+    if (zims.length > 1) {
+      const all = document.createElement('option');
+      all.value = 'zim:*';
+      all.textContent = 'All indexed ZIMs';
+      all.disabled = !zimReady;
+      group.append(all);
+    }
     for (const zim of zims) {
       const option = document.createElement('option');
       option.value = `zim:${zim.name}`;
@@ -1044,7 +1051,8 @@ async function askAi(event) {
       const where = document.createElement('span');
       if (isZim) {
         where.textContent =
-          `[${index + 1}] ${source.title || source.path} · chunk ${source.chunk}`;
+          `[${index + 1}] ${source.zim ? `${source.zim} — ` : ''}` +
+          `${source.title || source.path} · chunk ${source.chunk}`;
         item.append(where);
       } else {
         where.textContent = `[${index + 1}] ${source.path} · chunk ${source.ordinal}`;
