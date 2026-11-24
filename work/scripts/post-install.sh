@@ -1817,7 +1817,7 @@ install_admin() {
 
     run install -d -m 0755 "$ADMIN_ASSETS"
     local f
-    for f in index.html style.css app.js favicon.svg; do
+    for f in index.html style.css app.js theme.js favicon.svg; do
         run install -m 0644 "$assets/$f" "$ADMIN_ASSETS/$f"
     done
     run install -m 0755 -o root -g root "$src" /usr/local/bin/ktemata-admin

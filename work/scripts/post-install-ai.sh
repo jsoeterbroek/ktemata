@@ -233,7 +233,7 @@ pull_model() {
 install_admin_assets() {
     local dir=$1 file
     [ -d /usr/share/ktemata/admin ] || return 0
-    for file in index.html style.css app.js favicon.svg; do
+    for file in index.html style.css app.js theme.js favicon.svg; do
         [ -r "$dir/ktemata-admin/$file" ] || continue
         run install -m 0644 -o root -g root \
             "$dir/ktemata-admin/$file" "/usr/share/ktemata/admin/$file"

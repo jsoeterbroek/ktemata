@@ -30,7 +30,8 @@ http://<device>:8081/          # e.g. http://10.10.10.1:8081/ on the hotspot
 
 The installer also adds a **Ktemata Admin** desktop shortcut, like the library and Wi-Fi icons. It
 opens `http://127.0.0.1:8081/` in a new Firefox window (or the default browser via `xdg-open`);
-sign in with the credentials from `/etc/ktemata/admin.conf`.
+sign in with the credentials from `/etc/ktemata/admin.conf`. The header also has a dark/light
+theme button; the choice is kept in the browser.
 
 It lists every `*.zim` with its size, mtime and whether the current `library.xml` knows it, and
 shows a **Storage & archives** box (filesystem use plus archive count/size) and a **Power** box

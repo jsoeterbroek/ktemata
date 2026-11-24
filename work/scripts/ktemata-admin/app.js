@@ -10,6 +10,26 @@ const ICONS = {
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const THEME_KEY = 'ktemata-theme';
+
+function applyTheme(theme) {
+  const next = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try {
+    localStorage.setItem(THEME_KEY, next);
+  } catch {
+    // private mode or disabled storage: the theme still applies for this page.
+  }
+  const button = $('#theme-toggle');
+  if (button) {
+    const target = next === 'light' ? 'dark' : 'light';
+    const label = `Switch to ${target} theme`;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+  }
+}
+
+applyTheme(document.documentElement.dataset.theme || 'dark');
 
 const ui = {
   state: null,
@@ -1066,6 +1086,9 @@ $$('.sort').forEach((button) => {
 });
 $('#reindex').addEventListener('click', reindex);
 $('#banner-action').addEventListener('click', reindex);
+$('#theme-toggle').addEventListener('click', () => {
+  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+});
 $$('#service-actions button').forEach((button) => {
   button.addEventListener('click', () => serviceAction(button.dataset.service));
 });
