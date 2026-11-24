@@ -745,27 +745,45 @@ async function waitForAiIndex(name) {
   }
 }
 
-function renderZimOptions(rag) {
-  const select = $('#zim-select');
-  const input = $('#zim-question');
-  const button = $('#zim-ask');
-  const ready = (rag?.zims || []).filter((zim) => zim.indexed);
+function renderSources(state, docsReady, zimReady, zims) {
+  const select = $('#ai-source');
+  const input = $('#ai-question');
+  const button = $('#ai-ask');
   const current = select.value;
   select.replaceChildren();
-  for (const zim of ready) {
+
+  if (state?.chunks) {
     const option = document.createElement('option');
-    option.value = zim.name;
-    option.textContent = zim.name;
+    option.value = 'documents';
+    option.textContent = 'Documents';
+    option.disabled = !docsReady;
     select.append(option);
   }
-  const enabled = ready.length > 0;
+  if (zims.length) {
+    const group = document.createElement('optgroup');
+    group.label = 'ZIM archives';
+    for (const zim of zims) {
+      const option = document.createElement('option');
+      option.value = `zim:${zim.name}`;
+      option.textContent = zim.name;
+      option.disabled = !zimReady;
+      group.append(option);
+    }
+    select.append(group);
+  }
+
+  const choices = Array.from(select.options)
+    .filter((option) => !option.disabled)
+    .map((option) => option.value);
+  if (choices.includes(current)) select.value = current;
+  else if (choices.length) select.value = choices[0];
+  const enabled = choices.length > 0;
   select.disabled = !enabled;
   input.disabled = !enabled;
   button.disabled = !enabled;
   select.title = enabled
-    ? 'Choose a KiwixRAG-indexed archive'
-    : 'Build an AI index for a ZIM first';
-  if (current && ready.some((zim) => zim.name === current)) select.value = current;
+    ? 'Choose documents or a KiwixRAG-indexed ZIM'
+    : 'No indexed source with a pulled model';
 }
 
 async function refreshAiStatus() {
@@ -776,7 +794,7 @@ async function refreshAiStatus() {
     const state = await api('/api/ai/status');
     if (!state || state.installed === false) {
       ui.aiInstalled = false;
-      renderZimOptions(null);
+      renderSources(null, false, false, []);
       if (ui.state) renderTable(ui.state.zims);
       label.textContent = 'offline AI is not installed — run post-install-ai.sh';
       input.disabled = true;
@@ -785,50 +803,60 @@ async function refreshAiStatus() {
     }
     if (state.error) {
       ui.aiInstalled = null;
-      renderZimOptions(null);
+      renderSources(null, false, false, []);
       if (ui.state) renderTable(ui.state.zims);
       label.textContent = `offline AI · ${state.error}`;
       input.disabled = true;
       button.disabled = true;
       return;
     }
+
     const rag = state.kiwixrag;
+    const zims = (rag?.zims || []).filter((zim) => zim.indexed);
     ui.aiInstalled = Boolean(rag && rag.installed);
-    ui.aiIndexed = new Set(
-      (rag?.zims || []).filter((zim) => zim.indexed).map((zim) => zim.name),
-    );
-    renderZimOptions(rag);
+    ui.aiIndexed = new Set(zims.map((zim) => zim.name));
     if (ui.state) renderTable(ui.state.zims);
-    if (!state.chunks) {
-      label.textContent = 'offline AI · no documents indexed yet — run sudo ktemata-ai ingest';
-      input.disabled = true;
-      button.disabled = true;
-      return;
-    }
+
+    const models = state.ollama_models || [];
+    const hasModel = (wanted) =>
+      Boolean(wanted) &&
+      models.some((name) => name === wanted || name.startsWith(`${wanted}:`));
+    const docsReady = Boolean(state.chunks) && hasModel(state.model) && hasModel(state.embed_model);
+    const zimReady = zims.length > 0 && hasModel(rag?.model);
+    renderSources(state, docsReady, zimReady, zims);
+
     if (!state.ollama) {
       label.textContent = 'offline AI · Ollama is not running';
       input.disabled = true;
       button.disabled = true;
       return;
     }
-    const models = state.ollama_models || [];
-    const hasModel = (wanted) =>
-      models.some((name) => name === wanted || name.startsWith(`${wanted}:`));
-    if (!hasModel(state.model) || !hasModel(state.embed_model)) {
+    if (!state.chunks && !zims.length) {
+      label.textContent = 'offline AI · no indexed source yet — run ingest or build a ZIM index';
+      input.disabled = true;
+      button.disabled = true;
+      return;
+    }
+    if (!docsReady && !zimReady) {
       label.textContent = 'offline AI · model not pulled — see docs/OFFLINE_AI.md';
       input.disabled = true;
       button.disabled = true;
       return;
     }
-    input.disabled = false;
-    button.disabled = false;
+
     const when = state.last_ingest ? relTime(state.last_ingest) : 'never';
-    const zimNote = rag ? ` · ${rag.indexed}/${rag.files} ZIM AI` : '';
-    label.textContent =
-      `offline AI · ${state.docs} documents · ${state.chunks} chunks · ` +
-      `${state.model} · indexed ${when}${zimNote}`;
+    const parts = [];
+    if (state.chunks) {
+      parts.push(`${state.docs} documents`, `${state.chunks} chunks`, `indexed ${when}`);
+    }
+    if (zims.length) {
+      parts.push(`${rag.indexed}/${rag.files} ZIM AI`);
+    }
+    parts.push(docsReady ? state.model : rag.model);
+    label.textContent = `offline AI · ${parts.join(' · ')}`;
   } catch (err) {
     ui.aiInstalled = null;
+    renderSources(null, false, false, []);
     if (ui.state) renderTable(ui.state.zims);
     label.textContent = `offline AI · ${err.message}`;
     input.disabled = true;
