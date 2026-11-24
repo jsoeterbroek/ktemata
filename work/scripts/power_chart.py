@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Power model for docs/POWER.md: Ktemata r5 vs Project NOMAD, all running 24/7.
+"""Power model for docs/POWER.md: Ktemata R6 vs Project NOMAD, all running 24/7.
 
 Single source of truth for the numbers in that page. It prints the markdown tables and
 writes the two charts, so the prose, the tables and the images cannot drift apart.
@@ -24,26 +24,27 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DOCS = os.path.join(os.path.dirname(os.path.dirname(HERE)), "docs")
 
 # ---------------- assumptions ----------------
-ETA = 0.88          # UPS HAT (B) 2S -> 5 V buck, assumed
-DOD = 0.85          # usable depth of discharge of the 2S pack
+ETA = 0.88          # UPS Module 3S 3S -> 5 V converter, assumed
+DOD = 0.85          # usable depth of discharge of the 3S pack
 PSH = 3.5           # peak sun hours, Netherlands annual average
 DERATE = 0.65       # panel angle/soiling/temperature 0.70 x charger 0.93
 GRID = 0.30         # EUR/kWh, for the cost row
-PACK_WH = 7.4 * 3.0  # 2x18650 3.0 Ah in 2S = 22.2 Wh (3.5 Ah cells = 25.9 Wh)
+PACK_WH = 3 * 3.7 * 3.0     # 3x18650 3.0 Ah in 3S = 33.3 Wh
+PACK_WH_35 = 3 * 3.7 * 3.5  # 3.5 Ah cells = 38.9 Wh
 
-# ---------------- Ktemata r5, at the 5 V rail ----------------
+# ---------------- Ktemata R6, at the 5 V rail ----------------
 # Pi 5 4 GB: 3.0 W headless idle, 8.8 W all-core (raspberry.tips measurements, Oct 2026);
-# Touch Display 2: 1.4 W; SN740 NVMe: 0.5 W idle / 4.7 W max; FireBeetle 2 + OLED ~0.2 W.
-# r5 has no BME688, so the sensor line of r4 is gone (it was milliwatts in forced mode).
+# Waveshare 7inch DSI LCD (C): 5 V / 0.5 A = 2.5 W with backlight; SN740 NVMe: 0.5 W idle /
+# 4.7 W max; FireBeetle 2 + OLED ~0.2 W. The 7-inch panel is ~1.1 W above R5's 5-inch panel.
 K = {
     "screen off, Pi up":  (4.0, "Pi 3.0 + NVMe 0.5 + panel logic 0.3 + ESP32 0.2"),
-    "idle, screen on":    (5.1, "as above + 1.4 W backlight"),
-    "reading / Kiwix":    (6.5, "idle + touch and page turns"),
-    "browsing + maps":    (8.7, "Chromium, one tab set"),
-    "heavy (video/CPU)":  (12.5, "~8.8 W CPU-bound + display; thermally capped in r5's sealed host"),
+    "idle, screen on":    (6.2, "as above + 2.5 W 7-inch backlight"),
+    "reading / Kiwix":    (7.6, "idle + touch and page turns"),
+    "browsing + maps":    (9.8, "Chromium, one tab set"),
+    "heavy (video/CPU)":  (13.6, "~8.8 W CPU-bound + 7-inch display; thermally capped in R6"),
 }
 
-# Ktemata's Pi 5 has the same 2.4/5 GHz radio on board. r5 ships with it DISABLED by policy
+# Ktemata's Pi 5 has the same 2.4/5 GHz radio on board. R6 ships with it DISABLED by policy
 # (dtoverlay=disable-wifi), not because the hardware cannot do it; hostapd + dnsmasq make it an
 # access point in one config change. AP_EXTRA_W is the estimate for that mode - same order as the
 # Prepper Disk's figure, and explicitly not measured on a Pi 5.
@@ -54,13 +55,13 @@ AP_EXTRA_W = 0.40
 # a realistic profile; NOMAD is headless and serves over the LAN, so 100 % of its time is idle
 # or loaded with no display of its own.
 PROFILES = {   # values are energy per day at the 5 V rail (Wh), not watts
-    "Ktemata r5 — screen off 24 h": (24 * K["screen off, Pi up"][0],
+    "Ktemata R6 — screen off 24 h": (24 * K["screen off, Pi up"][0],
                                      "server role, display never lit"),
-    "Ktemata r5 — 4 h reading + 20 h off": (20 * K["screen off, Pi up"][0] + 4 * K["reading / Kiwix"][0],
+    "Ktemata R6 — 4 h reading + 20 h off": (20 * K["screen off, Pi up"][0] + 4 * K["reading / Kiwix"][0],
                                             "4 h reading, display off otherwise"),
-    "Ktemata r5 — kiosk, display on 24 h": (24 * K["idle, screen on"][0],
-                                            "display always lit; the worst case for r5"),
-    "Ktemata r5 — Wi-Fi hotspot (est. +0.4 W)": (24 * (K["screen off, Pi up"][0] + AP_EXTRA_W),
+    "Ktemata R6 — kiosk, display on 24 h": (24 * K["idle, screen on"][0],
+                                            "display always lit; the worst case for R6"),
+    "Ktemata R6 — Wi-Fi hotspot (est. +0.4 W)": (24 * (K["screen off, Pi up"][0] + AP_EXTRA_W),
                                             "radio enabled by config, screen off"),
 }
 
@@ -129,19 +130,19 @@ def table_247():
 
 
 def table_ktemata():
-    print("| State (r5) | 5 V rail | at pack | runtime, 22.2 Wh | runtime, 25.9 Wh |")
+    print("| State (R6) | 5 V rail | at pack | runtime, 33.3 Wh | runtime, 38.9 Wh |")
     print("|---|---|---|---|---|")
     for name, (w, note) in K.items():
-        r22 = PACK_WH * ETA * DOD / w
-        r26 = 7.4 * 3.5 * ETA * DOD / w
-        print(f"| {name} | {w:.1f} W | {pack(w):.1f} W | {r22:.1f} h | {r26:.1f} h |")
+        r30 = PACK_WH * ETA * DOD / w
+        r35 = PACK_WH_35 * ETA * DOD / w
+        print(f"| {name} | {w:.1f} W | {pack(w):.1f} W | {r30:.1f} h | {r35:.1f} h |")
     print()
 
 
 def table_profile_power():
     print("| Platform | Idle | Load | Ratio load/idle |")
     print("|---|---|---|---|")
-    print(f"| Ktemata r5 | {K['idle, screen on'][0]:.1f} W (5 V) | "
+    print(f"| Ktemata R6 | {K['idle, screen on'][0]:.1f} W (5 V) | "
           f"{K['heavy (video/CPU)'][0]:.1f} W (5 V) | {K['heavy (video/CPU)'][0] / K['idle, screen on'][0]:.1f}x |")
     for name, (idle, load, note) in NOMAD.items():
         print(f"| {name} | {idle:.1f} W | {load} W | {load / idle:.1f}x |")
@@ -176,7 +177,7 @@ def chart_247(path):
 
 def chart_profile(path):
     fig, ax = plt.subplots(figsize=(9, 3.9))
-    groups = [("Ktemata r5\n(5 V rail)", K["idle, screen on"][0], K["heavy (video/CPU)"][0])]
+    groups = [("Ktemata R6\n(5 V rail)", K["idle, screen on"][0], K["heavy (video/CPU)"][0])]
     for name, (idle, load, note) in NOMAD.items():
         groups.append((name.replace(" (", "\n("), idle, load))
     x = range(len(groups))
@@ -262,13 +263,13 @@ def prepper_tables():
     print("|---|---|---|---|---|---|---|")
     rows_pd = [
         ("Prepper Disk (Pi 4B, 512 GB)", PREPPER["draw"], PREPPER["devices"]),
-        ("Ktemata r5 (Pi 5, screen off)", K["screen off, Pi up"][0], 1),
-        ("Ktemata r5 as a Wi-Fi hotspot", K["screen off, Pi up"][0] + AP_EXTRA_W, PREPPER["devices"]),
-        ("Ktemata r5 (4 h reading)", None, 1),
+        ("Ktemata R6 (Pi 5, screen off)", K["screen off, Pi up"][0], 1),
+        ("Ktemata R6 as a Wi-Fi hotspot", K["screen off, Pi up"][0] + AP_EXTRA_W, PREPPER["devices"]),
+        ("Ktemata R6 (4 h reading)", None, 1),
     ]
     for name, w, n in rows_pd:
         if w is None:
-            wh = PROFILES["Ktemata r5 — 4 h reading + 20 h off"][0]
+            wh = PROFILES["Ktemata R6 — 4 h reading + 20 h off"][0]
             w = wh / 24.0
         else:
             wh = wh_day_5v(w)
@@ -283,9 +284,9 @@ def prepper_tables():
         wh = mah * 3.7 / 1000.0
         print(f"| {mah // 1000} Ah ({wh:.0f} Wh) | {wh * DOD * ETA / PREPPER['draw']:.1f} h |")
     print()
-    # cost: docs/BOM.md's indicative build total (parts + the r5 Peli case) against the vendor price
+    # cost: docs/BOM.md's indicative build total (parts + the R6 Peli case) against the vendor price
     kt, pd, pds = 580.0, PREPPER["price_eur"], PREPPER["price_sw_eur"]
-    print("| | Ktemata r5 (built) | Prepper Disk Premium | Prepper Disk, software only |")
+    print("| | Ktemata R6 (built) | Prepper Disk Premium | Prepper Disk, software only |")
     print("|---|---|---|---|")
     print(f"| Price | ≈ €{kt:.0f} (docs/BOM.md) | €{pd:.2f} | €{pds:.2f} |")
     print(f"| Ratio to Ktemata | 1.0x | {pd / kt:.2f}x | {pds / kt:.2f}x |")
@@ -297,8 +298,8 @@ def prepper_tables():
 def chart_prepper(path):
     fig, ax = plt.subplots(figsize=(8.8, 3.8))
     names = ["Prepper Disk\nper connected device (of 20)",
-             "Ktemata r5 as a hotspot\nper connected device (of 20)",
-             "Ktemata r5\nper reader (the device itself)"]
+             "Ktemata R6 as a hotspot\nper connected device (of 20)",
+             "Ktemata R6\nper reader (the device itself)"]
     vals = [PREPPER["draw"] / PREPPER["devices"] * 1000,
             (K["screen off, Pi up"][0] + AP_EXTRA_W) / PREPPER["devices"] * 1000,
             K["idle, screen on"][0] * 1000]
@@ -327,14 +328,14 @@ def chart_autonomy(path):
     # interchangeable and are not plotted against each other on a bank.
     fig, ax = plt.subplots(figsize=(7.6, 3.2))
     names = ["Prepper Disk\nships without a battery",
-             "Ktemata r5\nown 22.2 Wh pack"]
+             "Ktemata R6\nown 33.3 Wh pack"]
     hrs = [0.0, PACK_WH * ETA * DOD / K["idle, screen on"][0]]
     bars = ax.barh(names, hrs, color=["#4a72b0", "#c4622d"], height=0.5)
     for b, h in zip(bars, hrs):
         ax.text(max(h, 0.08) + 0.12, b.get_y() + b.get_height() / 2,
                 "needs mains or a USB bank" if h == 0 else f"{h:.1f} h with the screen on",
                 va="center", fontsize=9, color="#333")
-    ax.set_xlim(0, 5.2)
+    ax.set_xlim(0, 8.2)
     ax.set_xlabel("hours of operation without mains", fontsize=9)
     ax.set_title("Autonomy as shipped", fontsize=10.5)
     ax.grid(axis="x", color="#ddd", lw=0.6)
@@ -373,10 +374,10 @@ def site_style(fig, ax):
 def chart_site_247(path):
     """Daily energy, 24/7: the four Ktemata duty profiles and the three NOMAD tiers."""
     data = rows()
-    short = {"Ktemata r5 — screen off 24 h": "Ktemata r5 · screen off 24 h",
-             "Ktemata r5 — 4 h reading + 20 h off": "Ktemata r5 · 4 h reading",
-             "Ktemata r5 — kiosk, display on 24 h": "Ktemata r5 · kiosk, display on",
-             "Ktemata r5 — Wi-Fi hotspot (est. +0.4 W)": "Ktemata r5 · Wi-Fi hotspot",
+    short = {"Ktemata R6 — screen off 24 h": "Ktemata R6 · screen off 24 h",
+             "Ktemata R6 — 4 h reading + 20 h off": "Ktemata R6 · 4 h reading",
+             "Ktemata R6 — kiosk, display on 24 h": "Ktemata R6 · kiosk, display on",
+             "Ktemata R6 — Wi-Fi hotspot (est. +0.4 W)": "Ktemata R6 · Wi-Fi hotspot",
              "NOMAD budget (refurb SFF)": "NOMAD budget (refurb SFF)",
              "NOMAD recommended (UM890 class)": "NOMAD recommended",
              "NOMAD power (+RTX 3060)": "NOMAD power (+RTX 3060)"}
@@ -403,7 +404,7 @@ def chart_site_247(path):
 
 def chart_site_profile(path):
     fig, ax = plt.subplots(figsize=(7.0, 3.2))
-    groups = [("Ktemata r5", K["idle, screen on"][0], K["heavy (video/CPU)"][0])]
+    groups = [("Ktemata R6", K["idle, screen on"][0], K["heavy (video/CPU)"][0])]
     for name, (idle, load, note) in NOMAD.items():
         groups.append((name.replace(" (", "\n("), idle, load))
     x = list(range(len(groups)))
@@ -419,7 +420,7 @@ def chart_site_profile(path):
     ax.set_xticks(x)
     ax.set_xticklabels([g[0] for g in groups], fontsize=8, color=SC["fg"])
     ax.set_ylim(3, 900)
-    ax.set_title("Idle vs load: a small Pi peaks 2.5× above idle; a mini PC 10×",
+    ax.set_title("Idle vs load: the Pi peaks 2.2× above idle; a mini PC 10×",
                  fontsize=10.5, loc="left")
     site_style(fig, ax)
     leg = ax.legend(frameon=False, fontsize=9, loc="upper left")
@@ -441,8 +442,8 @@ def chart_site_runtime(path):
     for b, h in zip(bars, hrs):
         ax.text(b.get_width() + 0.06, b.get_y() + b.get_height() / 2,
                 f"{h:.1f} h", va="center", fontsize=9, color=SC["fg"])
-    ax.set_xlim(0, 5.2)
-    ax.set_xlabel("hours on the shipped 22.2 Wh pack (2× 18650, 3.0 Ah)", fontsize=9)
+    ax.set_xlim(0, 8.2)
+    ax.set_xlabel("hours on the shipped 33.3 Wh pack (3× 18650, 3.0 Ah)", fontsize=9)
     ax.set_title("Runtime by state, no charging", fontsize=10.5, loc="left")
     site_style(fig, ax)
     ax.grid(axis="x"); ax.grid(axis="y", visible=False)
@@ -459,9 +460,9 @@ def chart_site_energy(path):
     or battery has to supply. The Prepper Disk has no conversion of its own, so it is at its
     5 V input. Same basis as table_247(); the caption says so."""
     items = [("Prepper Disk (Pi 4B, headless)", PREPPER["draw"] * 24, SC["second"]),
-             ("Ktemata r5 · Wi-Fi hotspot", pack(K["screen off, Pi up"][0] + AP_EXTRA_W) * 24,
+             ("Ktemata R6 · Wi-Fi hotspot", pack(K["screen off, Pi up"][0] + AP_EXTRA_W) * 24,
               SC["accent"]),
-             ("Ktemata r5 · kiosk, 24 h on", pack(K["idle, screen on"][0]) * 24, SC["accent"]),
+             ("Ktemata R6 · kiosk, 24 h on", pack(K["idle, screen on"][0]) * 24, SC["accent"]),
              ("NOMAD recommended", NOMAD["NOMAD recommended (UM890 class)"][0] * 24, SC["second"]),
              ("NOMAD budget", NOMAD["NOMAD budget (refurb SFF)"][0] * 24, SC["second"]),
              ("NOMAD power (+RTX 3060)", NOMAD["NOMAD power (+RTX 3060)"][0] * 24, SC["second"])]
@@ -484,8 +485,8 @@ def chart_site_energy(path):
 
 def chart_site_readers(path):
     fig, ax = plt.subplots(figsize=(7.0, 2.7))
-    names = ["Prepper Disk\nper connected device", "Ktemata r5 hotspot\nper connected device",
-             "Ktemata r5\nper reader (the device)"]
+    names = ["Prepper Disk\nper connected device", "Ktemata R6 hotspot\nper connected device",
+             "Ktemata R6\nper reader (the device)"]
     vals = [PREPPER["draw"] / PREPPER["devices"] * 1000,
             (K["screen off, Pi up"][0] + AP_EXTRA_W) / PREPPER["devices"] * 1000,
             K["idle, screen on"][0] * 1000]
@@ -506,14 +507,14 @@ def chart_site_readers(path):
 
 def chart_site_autonomy(path):
     fig, ax = plt.subplots(figsize=(7.0, 2.3))
-    names = ["Prepper Disk — ships without a cell", "Ktemata r5 — own 22.2 Wh pack"]
+    names = ["Prepper Disk — ships without a cell", "Ktemata R6 — own 33.3 Wh pack"]
     hrs = [0.0, PACK_WH * ETA * DOD / K["idle, screen on"][0]]
     bars = ax.barh(names, hrs, color=[SC["second"], SC["accent"]], height=0.5)
     for b, h in zip(bars, hrs):
         ax.text(max(h, 0.05) + 0.1, b.get_y() + b.get_height() / 2,
                 "mains or a USB bank" if h == 0 else f"{h:.1f} h with the screen on",
                 va="center", fontsize=9, color=SC["fg"])
-    ax.set_xlim(0, 5.2)
+    ax.set_xlim(0, 8.2)
     ax.set_xlabel("hours without mains", fontsize=9)
     ax.set_title("Autonomy as shipped", fontsize=10.5, loc="left")
     site_style(fig, ax)
