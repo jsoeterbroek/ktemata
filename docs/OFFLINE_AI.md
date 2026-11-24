@@ -101,7 +101,8 @@ What it does:
 3. pulls the embedding and generation models through Ollama's API (skip with `--no-models`);
 4. installs `/usr/local/bin/ktemata-ai` and `/etc/ktemata/ai.conf`;
 5. clones [brunuff/KiwixRAG](https://github.com/brunuff/KiwixRAG) into
-   `/opt/ktemata-ai/kiwixrag`, creates its own venv, installs
+   `/opt/ktemata-ai/kiwixrag`, creates its own venv, installs the CPU-only
+   `torch==2.15.0+cpu` from the PyTorch CPU index, then
    `sentence-transformers`/`chromadb`/`tiktoken` with
    [`kiwixrag-constraints.txt`](../work/scripts/kiwixrag-constraints.txt), and warms the BGE model;
 6. installs `ktemata-ai-zim-index@.service`, the on-demand unit the admin uses to build a ZIM

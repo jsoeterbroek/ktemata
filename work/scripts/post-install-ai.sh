@@ -35,6 +35,8 @@ AI_KIWIXRAG_DIR=${AI_KIWIXRAG_DIR:-/opt/ktemata-ai/kiwixrag}
 AI_KIWIXRAG_URL=${AI_KIWIXRAG_URL:-https://github.com/brunuff/KiwixRAG.git}
 AI_KIWIXRAG_REF=${AI_KIWIXRAG_REF:-main}
 AI_KIWIX_USER=${AI_KIWIX_USER:-ktemata}
+AI_TORCH_INDEX=${AI_TORCH_INDEX:-https://download.pytorch.org/whl/cpu}
+AI_TORCH_SPEC=${AI_TORCH_SPEC:-torch==2.15.0+cpu}
 AI_ZIM_MODEL=${AI_ZIM_MODEL:-}
 AI_ZIM_HOME=${AI_ZIM_HOME:-/srv/kiwix/zim}
 AI_ZIM_TOP_K=${AI_ZIM_TOP_K:-6}
@@ -282,6 +284,12 @@ install_kiwixrag() {
         run python3 -m venv "$AI_KIWIXRAG_DIR/venv"
     fi
     run "$AI_KIWIXRAG_DIR/venv/bin/pip" install --upgrade pip
+    # PyPI's Linux aarch64 torch wheel pulls CUDA/NVIDIA wheels. The Pi has no GPU;
+    # install the CPU build first so sentence-transformers does not resolve the CUDA one.
+    run "$AI_KIWIXRAG_DIR/venv/bin/pip" install \
+        --index-url "$AI_TORCH_INDEX" \
+        --extra-index-url https://pypi.org/simple \
+        "$AI_TORCH_SPEC"
     run "$AI_KIWIXRAG_DIR/venv/bin/pip" install -r "$AI_KIWIXRAG_DIR/requirements.txt" \
         -c "$dir/kiwixrag-constraints.txt"
     run install -m 0755 -o root -g root "$dir/kiwixrag_query.py" "$AI_KIWIXRAG_DIR/kiwixrag_query.py"
