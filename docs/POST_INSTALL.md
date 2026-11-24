@@ -182,16 +182,16 @@ runtime — no reinstall and no reboot:
 From a terminal:
 
 ```bash
-wifi-mode status      # one line: off / client - connected to X / access point
-wifi-mode client
-wifi-mode ap
-wifi-mode off
-wifi-mode menu        # same chooser the desktop entry opens
+ktemata-wifi-mode status      # one line: off / client - connected to X / access point
+ktemata-wifi-mode client
+ktemata-wifi-mode ap
+ktemata-wifi-mode off
+ktemata-wifi-mode menu        # same chooser the desktop entry opens
 ```
 
 How it is put together:
 
-- **One root-owned helper**, `wifi-mode.sh` → `/usr/local/bin/wifi-mode`. It only drives
+- **One root-owned helper**, `ktemata-wifi-mode.sh` → `/usr/local/bin/ktemata-wifi-mode`. It only drives
   `nmcli`; there is no hostapd path, because the switch needs a live NetworkManager to change
   modes without a reboot. On an image without NetworkManager the step is skipped.
 - **AP settings live in `/etc/ktemata/wifi.conf`**, mode 0600:
@@ -209,7 +209,7 @@ How it is put together:
   installation from the old helper migrates `/etc/ktemata/wifi-mode.conf` once. The helper reads
   the old file as a fallback if the new one is absent. Because the file is sourced as root, the
   helper refuses to run if it is not root-owned or is group/other-writable.
-- **The config is applied on every `wifi-mode ap`.** An existing profile whose SSID matches
+- **The config is applied on every `ktemata-wifi-mode ap`.** An existing profile whose SSID matches
   `AP_WELCOME` is adopted and renamed to `AP_NAME`; the mode, SSID, address and password are then
   written from the file. The AP is brought down and up so a changed SSID or PSK actually takes
   effect. Editing `wifi.conf` is enough — no profile deletion. If the file is missing, AP mode
@@ -217,14 +217,14 @@ How it is put together:
 - **The active AP is found by mode, not by name.** `status` and `client` inspect
   `802-11-wireless.mode` on the active connection, so a profile called `ktemata-ap` is reported
   as an access point even when `AP_NAME=ktemata`. Set `AP_NAME=ktemata-ap` to keep that profile
-  name; otherwise the next `wifi-mode ap` adopts and renames it to `AP_NAME`.
+  name; otherwise the next `ktemata-wifi-mode ap` adopts and renames it to `AP_NAME`.
 - **Client mode cannot fall back into AP mode.** It disables autoconnect on every AP-mode
   profile, brings down the active AP, then joins a saved client profile. If NetworkManager's
   `device connect` picks the local AP anyway, the helper takes it down and activates a client
   profile explicitly. With no saved client network it leaves the radio on and the AP down.
 - **No password prompt.** `NetworkManager` connection changes are root operations on a stock
   image, so the installer writes `/etc/sudoers.d/ktemata-wifi`, which allows the desktop account
-  to run exactly `wifi-mode client`, `wifi-mode ap` and `wifi-mode off` without a password. The
+  to run exactly `ktemata-wifi-mode client`, `ktemata-wifi-mode ap` and `ktemata-wifi-mode off` without a password. The
   helper is root-owned; the rule cannot run arbitrary arguments.
 - **AP mode is NAT-less.** The helper writes the same
   `/etc/NetworkManager/conf.d/90-ktemata-no-nat.conf` drop-in as `--hotspot`, so
@@ -324,7 +324,7 @@ hciconfig -a 2>/dev/null           # nothing
 | 12c | **Enables the Pi RTC trickle charge** (`dtparam=rtc_bbat_vchg=3000000`) for the rechargeable ML-2020 | `--no-rtc-charge` (required with a non-rechargeable CR2032) |
 | 12b | **Optionally disables the Wi-Fi and Bluetooth radios in the firmware** — see below | `--no-radio` |
 | 13 | **Optionally serves the library over its own Wi-Fi AP** — see below | `--hotspot` |
-| 13b | **Install the desktop Wi-Fi mode switch** (`wifi-mode`: client / access point / off) — see above | `--no-wifi-switch`, `--no-gui`, `--no-radio`; skipped without NetworkManager |
+| 13b | **Install the desktop Wi-Fi mode switch** (`ktemata-wifi-mode`: client / access point / off) — see above | `--no-wifi-switch`, `--no-gui`, `--no-radio`; skipped without NetworkManager |
 | 14 | Optionally download a sample ZIM and confirm the server answers | `--sample` |
 
 The wallpaper and the early boot splash are installed as a **one-shot unit at `graphical.target`**

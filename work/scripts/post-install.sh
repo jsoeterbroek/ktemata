@@ -101,7 +101,7 @@ HOTSPOT_BAND=${HOTSPOT_BAND:-auto}      # auto (2.4+5 GHz) | 2.4 | 5
 # one-line sudoers rule, because NetworkManager connection changes need root on a stock image
 # and an appliance should not ask for a password. --no-wifi-switch skips it.
 WITH_WIFI_SWITCH=true
-WIFI_SWITCH_BIN=/usr/local/bin/wifi-mode
+WIFI_SWITCH_BIN=/usr/local/bin/ktemata-wifi-mode
 WIFI_SWITCH_CONF=/etc/ktemata/wifi.conf
 WIFI_SWITCH_LEGACY_CONF=/etc/ktemata/wifi-mode.conf
 WIFI_SWITCH_SUDOERS=/etc/sudoers.d/ktemata-wifi
@@ -1542,9 +1542,14 @@ install_wifi_switch() {
 
     local dir src
     dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-    src="$dir/wifi-mode.sh"
-    [ -f "$src" ] || die "cannot find wifi-mode.sh next to this script"
+    src="$dir/ktemata-wifi-mode.sh"
+    [ -f "$src" ] || die "cannot find ktemata-wifi-mode.sh next to this script"
     run install -m 0755 -o root -g root "$src" "$WIFI_SWITCH_BIN"
+    # Remove the pre-rename helper if it is ours; do not delete an unrelated user script.
+    if [ -f /usr/local/bin/wifi-mode ] && grep -q 'Ktemata Wi-Fi mode switch' /usr/local/bin/wifi-mode; then
+        run rm -f /usr/local/bin/wifi-mode
+        log_ok "removed old /usr/local/bin/wifi-mode"
+    fi
     WIFI_SWITCH_STATE="CLI installed"
     log_ok "$WIFI_SWITCH_BIN"
 
