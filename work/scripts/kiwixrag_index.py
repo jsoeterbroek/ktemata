@@ -65,7 +65,7 @@ def iter_articles(zimdump: str, zim: str, limit: int) -> Iterator[tuple[str, str
                 path = stripped.split(":", 1)[1].strip()
                 title = ""
                 continue
-            if stripped.startswith("title:"):
+            if stripped.startswith("title:") or stripped.startswith("* title:"):
                 title = stripped.split(":", 1)[1].strip()
                 continue
             if not stripped.startswith("* mime-type:") or not path:
@@ -178,6 +178,7 @@ def main() -> int:
     content_type = get_zim_content_description()
     article_count = 0
     chunk_count = 0
+    embedded = 0
     batch: list = []
     try:
         for title, href in iter_articles(zimdump, zim, args.limit):
@@ -201,18 +202,21 @@ def main() -> int:
             )
             if not chunks:
                 continue
-            batch.extend(chunks)
             article_count += 1
             chunk_count += len(chunks)
-            if len(batch) >= 100:
-                store.add_chunks(batch)
-                print(
-                    f"[rag] indexed {article_count} articles, {chunk_count} chunks",
-                    file=sys.stderr,
-                )
-                batch = []
+            for chunk in chunks:
+                batch.append(chunk)
+                if len(batch) >= 100:
+                    store.add_chunks(batch)
+                    embedded += len(batch)
+                    print(
+                        f"[rag] embedded {embedded}/{chunk_count} chunks",
+                        file=sys.stderr,
+                    )
+                    batch = []
         if batch:
             store.add_chunks(batch)
+            embedded += len(batch)
     except KeyboardInterrupt:
         if batch:
             store.add_chunks(batch)
