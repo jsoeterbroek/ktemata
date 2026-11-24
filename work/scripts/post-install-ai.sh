@@ -523,7 +523,7 @@ summary() {
         printf '  zim index  sudo ktemata-ai zim-index --zim FILE (KiwixRAG by brunuff)\n'
         printf '  zim ask    ktemata-ai zim-ask --zim FILE "..." (model %s)\n' "$AI_ZIM_MODEL"
         printf '  credit     https://github.com/brunuff/KiwixRAG\n'
-        printf '  admin      the library admin on :8081 has Ask the library, Ask ZIM and AI index controls\n'
+        printf '  admin      the library admin on :8081 has one Ask form (Documents/ZIM) and AI index controls\n'
     else
         printf '  zim        not installed (--no-kiwixrag)\n'
         printf '  admin      the library admin on :8081 has Ask the library\n'
