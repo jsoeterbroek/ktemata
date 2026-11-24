@@ -145,6 +145,7 @@ function applyState(data) {
   $('#foot-version').textContent = `ktemata-admin ${data.version}`;
   renderStorage(data.disk);
   renderCount(data.zims);
+  renderPower(data.power);
   renderService(data.service);
   renderIndex(data.index, data.zims);
   renderTable(data.zims);
@@ -162,19 +163,49 @@ function renderStorage(disk) {
   wrap.setAttribute('aria-valuenow', String(percent));
   wrap.setAttribute('aria-valuemin', '0');
   wrap.setAttribute('aria-valuemax', '100');
-  $('#disk-detail').textContent =
-    `${fmt(disk.zim_bytes)} in ZIM · ${fmt(disk.free)} free of ${fmt(disk.total)}`;
+  $('#disk-detail').textContent = `${fmt(disk.free)} free of ${fmt(disk.total)}`;
 }
 
 function renderCount(zims) {
   const bytes = zims.reduce((sum, z) => sum + z.size, 0);
-  $('#count-value').textContent = String(zims.length);
   const parts = ui.state && ui.state.parts ? ui.state.parts.length : 0;
   let detail = zims.length
-    ? `${fmt(bytes)} across ${zims.length === 1 ? 'one archive' : `${zims.length} archives`}`
+    ? `${zims.length} ${zims.length === 1 ? 'archive' : 'archives'} · ${fmt(bytes)}`
     : 'no archives yet';
   if (parts) detail += ` · ${parts} interrupted`;
   $('#count-detail').textContent = detail;
+}
+
+function renderPower(power) {
+  const value = $('#power-value');
+  const detail = $('#power-detail');
+  if (!power || power.available === false) {
+    value.textContent = 'Battery unavailable';
+    detail.textContent = power?.reason === 'missing'
+      ? 'No battery monitor is installed.'
+      : 'The battery gauge is not responding.';
+    return;
+  }
+  const percent = Number.isFinite(power.percent) ? Math.round(power.percent) : null;
+  if (power.source === 'battery') {
+    value.textContent = 'On battery';
+    detail.textContent = power.runtime
+      ? `About ${power.runtime} left${percent !== null ? ` · ${percent}%` : ''}`
+      : percent !== null
+        ? `Battery ${percent}% · runtime unavailable`
+        : 'Running from the battery';
+  } else if (power.source === 'charging') {
+    value.textContent = 'On power';
+    detail.textContent = percent !== null ? `Charging · battery ${percent}%` : 'Charging';
+  } else if (power.source === 'power') {
+    value.textContent = 'On power';
+    detail.textContent = percent !== null
+      ? `Battery ${percent}% · not draining`
+      : 'Battery is not draining';
+  } else {
+    value.textContent = 'Battery unknown';
+    detail.textContent = 'The battery gauge does not report a state.';
+  }
 }
 
 const SERVICE_WORDS = {

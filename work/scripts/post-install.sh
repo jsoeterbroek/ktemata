@@ -1882,7 +1882,7 @@ ProtectSystem=strict
 ReadWritePaths=$ZIM_DIR $STATE_DIR
 ProtectHome=true
 PrivateTmp=true
-PrivateDevices=true
+# The UPS INA219 is a character device on /dev/i2c; PrivateDevices would hide it.
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true

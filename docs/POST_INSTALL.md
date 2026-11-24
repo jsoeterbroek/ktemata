@@ -32,8 +32,9 @@ The installer also adds a **Ktemata Admin** desktop shortcut, like the library a
 opens `http://127.0.0.1:8081/` in a new Firefox window (or the default browser via `xdg-open`);
 sign in with the credentials from `/etc/ktemata/admin.conf`.
 
-It lists every `*.zim` with its size, mtime and whether the current `library.xml` knows it, shows
-filesystem use and the space taken by ZIM files, and can:
+It lists every `*.zim` with its size, mtime and whether the current `library.xml` knows it, and
+shows a **Storage & archives** box (filesystem use plus archive count/size) and a **Power** box
+(on power or on battery, battery percentage, and estimated runtime when discharging). It can:
 
 - **upload** archives by drag-and-drop. Transfers are chunked (8 MiB) and resumable: an interrupted
   upload leaves `<name>.zim.part`, and dropping the same file again continues where it stopped.

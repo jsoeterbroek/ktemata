@@ -31,17 +31,12 @@
 <main>
   <section class="metrics" aria-label="Overview">
     <article class="metric">
-      <span class="label">Storage</span>
+      <span class="label">Storage &amp; archives</span>
       <strong id="disk-value">–</strong>
       <div class="bar" role="progressbar" aria-labelledby="disk-value" id="disk-progress">
         <span id="disk-bar"></span>
       </div>
       <span class="detail" id="disk-detail">reading…</span>
-    </article>
-
-    <article class="metric">
-      <span class="label">Archives</span>
-      <strong id="count-value">–</strong>
       <span class="detail" id="count-detail">reading…</span>
     </article>
 
@@ -61,6 +56,12 @@
       <strong id="index-value">–</strong>
       <span class="detail" id="index-detail">reading…</span>
       <button id="reindex" class="mini" type="button">Rebuild index</button>
+    </article>
+
+    <article class="metric">
+      <span class="label">Power</span>
+      <strong id="power-value">reading…</strong>
+      <span class="detail" id="power-detail">checking the battery…</span>
     </article>
   </section>
 

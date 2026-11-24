@@ -16,7 +16,8 @@ WHAT THE PAGE CAN DO
   service   start, stop and restart kiwix.service, show its state
   reindex   rebuild library.xml with kiwix-library, then restart kiwix-serve
   ai        build KiwixRAG ZIM indexes and ask document/ZIM questions
-  storage   filesystem use and the share taken by ZIM files
+  storage   filesystem use, archive count/size
+  power     mains/battery state and estimated runtime
 
 SAFETY
   - HTTP Basic auth from --auth-file; without one the server refuses to bind beyond
@@ -38,6 +39,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -58,6 +60,8 @@ DEFAULT_AUTH_FILE = "/etc/ktemata/admin.conf"
 DEFAULT_LIBRARY_PORT = 8080
 DEFAULT_PORT = 8081
 DEFAULT_AI_CLI = "/usr/local/bin/ktemata-ai"
+DEFAULT_UPS_TRAY = "/usr/local/bin/ktemata-ups-tray"
+POWER_CACHE_SECONDS = 20.0
 ZIM_AI_UNIT = "ktemata-ai-zim-index@"
 
 # One chunk: small enough for a flaky link, large enough that the request overhead vanishes.
