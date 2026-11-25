@@ -27,9 +27,7 @@ python3 ../../../work/scripts/kicad_netlist_csv.py /tmp/ktemata_r6.xml \
   -o ktemata_r6_connections.csv
 ```
 
-There is no MCU/status sheet. The R6 status subsystem (controller, display, display button and
-status clock) was removed from the hardware, and with it the `3V3`, `CHG_SENSE`, I²C and
-display-button nets. The Pi 5 sheet keeps the display, storage, keyboard and RTC cell.
+There is no MCU/status sheet. The Pi 5 sheet keeps the display, storage, keyboard and RTC cell.
 
 # Power / charge carrier board (PCH)
 
