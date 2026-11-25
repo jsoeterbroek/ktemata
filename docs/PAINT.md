@@ -23,7 +23,7 @@ python3 cad/tools/stencil_stl.py --rev r6 --part deck --pass amber
 ### R6 prototype — not paint-ready
 
 **R6 output is for fit and layout review, not production painting.** The R6 display-frame CAD and measured
-connector keep-outs are not complete. The keyboard/OLED lid plate now exists as
+connector keep-outs are not complete. The keyboard lid plate now exists as
 [`r6_lid_plate.scad`](../cad/r6_lid_plate.scad), but its physical fit gates remain open. The generated rigid
 panels are real, manifold-checkable geometry, but that does not make them released masks. Do not cut final
 vinyl or spray a part from them until the R6 fit gates in [`R6.md`](R6.md) are closed.
@@ -32,7 +32,7 @@ R6 uses the same three schemes and shared hinge datum, but swaps the component d
 
 | Surface | R6 prototype contents |
 |---|---|
-| Upper `cover` / **keyboard lid** | K06 opening, OLED window, status button, KTEMATA wordmark |
+| Upper `cover` / **keyboard lid** | K06 opening, KTEMATA wordmark |
 | Lower `deck` | Waveshare 7-inch opening, proposed fastener apertures, power and charge controls, motto — the probe still uses its pre-deck proposal (see below) |
 
 The geometry comes from `cad/tools/paint_probe_r6.scad`, not from copies of R5's apertures:
@@ -44,6 +44,8 @@ The geometry comes from `cad/tools/paint_probe_r6.scad`, not from copies of R5's
 
 - The lid and frame retain the R5 host-derived outlines: **233.5 × 178.1 mm** for the lid and
   **243.282 × 186.841 mm** for the cavity-height frame plate.
+- The lid is a solid plate apart from the K06 opening, so its painted field runs unbroken around the
+  keyboard to the wordmark. There is no window or button aperture to mask.
 - The Waveshare panel is **192.96 × 110.76 mm**, R8, at `x 20.27`, `y 30.0`; with 1 mm clearance its
   paint opening is **194.96 × 112.76 mm**. The active-area annotation is **154.88 × 86.72 mm**.
 - Power and charge are proposed at `x 225`, `y 160` and `x 225`, `y 90`, respectively. They are marked
@@ -134,8 +136,8 @@ rather than drawing a line through a fan.
   outside the painted border in x** and a **35.32 mm latch band** below it, all on that same face.
   Nothing else on the cover breaks the painted face: the 7" build's FFC fold pocket is blind and
   lives in `cad/r5_lid_cover_waveshare_7in.scad`, and the 5" cover has no pocket at all.
-- **The deck's free fields** are the **40.95 mm side rails**, the **35.6 mm strip** between the OLED
-  window (ends `y 66.9`) and the keyboard pocket (starts `y 102.5`), and the **16 mm** between the
+- **The deck's free fields** are the **40.95 mm side rails**, the **35.6 mm strip** between the R5 window
+  opening (ends `y 66.9`) and the keyboard pocket (starts `y 102.5`), and the **16 mm** between the
   keyboard pocket (ends `y 162.1`) and the latch edge. The right rail carries the power button
   (`213.0, 160.1`) and the charge socket (`216.0, 90.0`).
 - **BEARING's retained trace uses the right-side lane at x 216.5 .. 223.0**. The **charge socket**
@@ -281,8 +283,8 @@ The cover is drawn **mirrored in y** so that its hinge edge meets the deck's at 
 that is the open-flat view, looking at both faces from the front. Consequently the cover's panel
 (the display) appears "above" the hinge line rather than below it. The x axis is *not* mirrored.
 
-Grey text and grey outlines name printed features — fan, screws, keyboard well, OLED window,
-panel, button, cable relief. They are annotations, not paint. Every painted element is clipped by
+Grey text and grey outlines name printed features — fan, screws, keyboard well, panel, button, cable
+relief. They are annotations, not paint. Every painted element is clipped by
 the part's real apertures (`deck_holes_d`, `cover_holes_d`), so a line that reaches the Pi opening
 or the power button **stops there** in the drawing exactly as it would under tape. Nothing in these
 sheets is "touched up by hand" after masking.

@@ -16,21 +16,20 @@ open cad/kicad/r6/PCH/PCH.kicad_pro
 
 ## 1. The projects
 
-The R6 system project uses an A3 index and three A4 sheets:
+The R6 system project uses an A3 index and two A4 sheets:
 
 | sheet | file | Contents |
 |---|---|---|
 | `/` | `ktemata.kicad_sch` | Index and reading notes |
-| `/Power` | `power.kicad_sch` | **3S pack, 12.6 V charging, UPS Module 3S, PCH block (J16)**, revised sensing |
-| `/Pi 5 and its peripherals` | `pi.kicad_sch` | **Waveshare 7inch DSI LCD (C)** including its touch interface; other functions retained |
-| `/FireBeetle …` | `mcu.kicad_sch` | FireBeetle/RTC in the base; OLED/button in the lid through a serviceable harness |
+| `/Power` | `power.kicad_sch` | **3S pack, 12.6 V charging, UPS Module 3S, PCH block (J16)** |
+| `/Pi 5 and its peripherals` | `pi.kicad_sch` | **Waveshare 7inch DSI LCD (C)** including its touch interface; UPS gauge I²C; other functions retained |
 
 The **R6 PCH** is a separate single-sheet project and a 63 × 66 mm two-layer board. It carries the
-charge-input sense tap, UPS header and 12.6 V auxiliary output. The supplied DC5521 charge lead and
+UPS header and the 12.6 V charge branch. The supplied DC5521 charge lead and
 self-lock button plug directly into the UPS, not into the PCH. Its schematic, exported
 netlist and board are `PCH.kicad_sch`, `PCH.net` and `PCH.kicad_pcb`; parts are in
-[`BOM.md`](BOM.md) section C. The R6 `/Power` sheet includes it as block **J16**; the Pi and MCU sheets use
-the same global nets, so they do not repeat the block. Connector pinouts stay in the project, not in this page.
+[`BOM.md`](BOM.md) section C. The R6 `/Power` sheet includes it as block **J16**; the Pi sheet uses
+the same global nets, so it does not repeat the block. Connector pinouts stay in the project, not in this page.
 
 In the system project, one connector-shaped block per module (`Ktemata:` symbols — also a real library, `ktemata.kicad_sym`,
 registered by the project's `sym-lib-table`). Within a sheet the nets are **routed**: each multi-pin net
@@ -81,55 +80,50 @@ Use the **R6** schematic for the prototyping build. The custom PCH is a separate
 
 1. **Pack and charging.** Three matched cells in 3S, with 12.6 V / 2 A charge equipment. Keep the
    insulating panels fitted and verify pack-fuse placement with the factory holders before assembly. The
-   supplied DC5521 lead connects directly to the UPS charge input; only the PCH's high-impedance sense tap
-   is added. The supplied self-lock button plugs directly into the UPS switch input.
+   supplied DC5521 lead connects directly to the UPS charge input; the PCH adds no sense or charge path.
+   The supplied self-lock button plugs directly into the UPS switch input.
 2. **Pi power.** Use the UPS manufacturer's Pi power lead. Never connect the bench USB-C supply and the UPS
    to the Pi simultaneously. No USB-PD capability is documented; verify loaded voltage, peripheral-current
    behaviour and `vcgencmd get_throttled` rather than relying on the desktop warning.
-3. **Base/lid split.** FireBeetle and DS3231 stay in the cassette. Only the OLED and its button move to the
-   lid. Use the specified five-conductor flexible harness with a keyed disconnect, strain relief and service
-   loops; do not route a display ribbon across the hinge.
-4. **Two controller domains.** The FireBeetle remains the sole master of the status/UPS bus. The Waveshare
-   display's touch interface belongs to the Pi and is a separate connection; do not join the two buses.
-5. **FireBeetle serial link.** A USB-A → USB-C **data** cable carries the Pi ↔ FireBeetle serial link; the
-   FireBeetle stays on the UPS, so the Pi's 5 V must not reach it. Cut the cable's **VBUS** wire (normally
-   red; confirm by continuity) near the A plug and splice in the `1N5819` (BOM 21a), **band toward the
-   FireBeetle**; leave GND, D+ and D− intact, and heat-shrink the joint. Do **not** cut VBUS outright and do
-   **not** use a USB power blocker: the DFR1140 powers its CH340 from USB VBUS, so either leaves the Pi with
-   no serial device. With the diode the CH340 runs at ≈4.7 V while the FireBeetle's 5 V rail stays at the
-   UPS 5.0 V. Check 5.0 V on the Pi side of the diode and ≈4.7 V on its FireBeetle side, then confirm
-   `lsusb` shows `1a86:7523` and `/dev/ttyUSB0` appears.
+3. **Nothing crosses the hinge.** The keyboard is wireless, the display lead stays inside the cassette, and
+   the lid plate is solid. Do not route any cable or ribbon across the case hinge.
+4. **One controller.** The Pi 5 is the only computer and the only I²C master. Its bus 2 carries the UPS
+   gauge; the Waveshare display's touch interface is a separate connection to the same Pi. Do not add a
+   second bus master or a separate controller board.
+5. **UPS gauge I²C.** Take SDA, SCL and GND from the UPS 2×4 header to Pi GPIO12/13 (physical pins 32/33)
+   plus a ground pin; the header's 3.3 V and 5 V pins stay open. Enable
+   `dtoverlay=i2c2-pi5,pins_12_13`, confirm the INA219 answers at `0x41` with `sudo i2cdetect -y 2`, then
+   install the tray monitor with `sudo ./work/scripts/UPS_3S/install.sh --i2c-bus 2`.
 6. **Display software.** The Waveshare panel is not the automatically configured Touch Display 2. Validate
    the R6 overlay and touch operation on the intended Ubuntu release before final assembly.
-7. **Charge sensing.** The divider values are in the power sheet; calibrate the reading against a
-   measured 12.6 V input.
-8. **First power-up.** Follow the R6 schematic with the Pi disconnected, verify the pack and regulated
-   outputs, then confirm the status devices including the UPS gauge at `0x41`. Connect the Pi only after
-   those checks pass, then repeat the undervoltage check under load.
-9. **Proposal gate.** ERC and netlist validation are complete, but the UPS, display, spacer stack, harness
-   and thermal design still require the bench and fit gates in [`R6.md`](R6.md).
+7. **First power-up.** Follow the R6 schematic with the Pi disconnected, verify the pack and regulated
+   outputs, then confirm the UPS gauge at `0x41` once the Pi is connected. Repeat the undervoltage check
+   under load.
+8. **Proposal gate.** ERC and netlist validation are complete, but the UPS, display, spacer stack and
+   thermal design still require the bench and fit gates in [`R6.md`](R6.md).
 
 ## 3. R6 PCH assembly rules
 
-The PCH is a passive connector hub — no conversion, no fuse, no protection of its own. Nets and pins live in
-[`PCH.kicad_pro`](../cad/kicad/r6/PCH/PCH.kicad_pro); the practice is here.
+The PCH is a passive carrier — no conversion, no fuse, no protection, no monitoring of its own. Nets and
+pins live in [`PCH.kicad_pro`](../cad/kicad/r6/PCH/PCH.kicad_pro); the practice is here.
 
-1. **Match pin 1.** Mate the PCH's 2×4 UPS header one-to-one with the module's header and mark pin 1 on the
-   cable. A reversed ribbon puts 5 V on an I²C line and 3.3 V on ground; use a keyed connector or a
+1. **Match pin 1.** Mate the PCH's 2×4 UPS header J5 one-to-one with the module's header and mark pin 1 on
+   the cable. A reversed ribbon puts 5 V on an I²C line and 3.3 V on ground; use a keyed connector or a
    shrouded header if you can.
-2. **Auxiliary 5 V only.** The PCH's 5 V output feeds the status side. The Pi 5 and 7-inch display stay on the
-   UPS Module 3S's USB-C lead; do not route the Pi's 5 A through this board.
+2. **No 5 V distribution.** J5 breaks out the UPS header's SDA, SCL and GND; its 3.3 V and 5 V pins are
+   left open. The Pi 5 and 7-inch display stay on the UPS Module 3S's USB-C lead; do not route the Pi's
+   5 A through this board.
 3. **Direct supplied harnesses.** The red/black self-lock button plugs directly into the UPS switch input;
-   the supplied DC5521 lead plugs directly into the UPS charge input. PCH J1 is only a high-impedance
-   sense tap on that input. The pack charges with the output switch off.
+   the supplied DC5521 lead plugs directly into the UPS charge input. The pack charges with the output
+   switch off.
 4. **No fuse on the PCH.** The Module 3S's protection covers the in-module 3S pack; the PCH only carries
    post-protection 2 A branches. Do not fit the 5 A cartridge here. If a pack is built outside the module,
    its fuse belongs in the pack's positive lead, upstream of the module.
 5. **Ground and mounting.** GND is a filled zone on both copper layers (F.Cu coplanar with the routing, B.Cu solid underneath); re-check both fills after any layout change. Mount on
    the four M2.5 holes with nylon standoffs so the JST shells cannot touch the tray or shielding.
 6. **First power-up.** With the UPS output off, check the 12.6 V branches for shorts. Then connect the charge
-   source and the UPS and confirm the aux rails and the UPS gauge at `0x41`; connect the Pi last.
-7. **PCH↔UPS cables.** C3 is the 2×4 header and C4 is the 12.6 V branch. C1 charging and C2 switch use
-   the supplied harnesses directly at the UPS, not the PCH. The only additional input connection is the
-   high-impedance sense tap at PCH J1. The UPS header's 3.3 V pins are left open — the FireBeetle's
-   regulator supplies the status 3.3 V rail — and the J8 12.6 V aux remains unused.
+   source and the UPS and confirm the charge branch and the UPS gauge at `0x41`; connect the Pi last.
+7. **PCH↔UPS cables.** J5 is the 2×4 UPS header and J7/J8 the 12.6 V branch. The supplied charge and
+   switch leads connect directly at the UPS, not the PCH. Nothing else connects: there is no sense tap,
+   the UPS header's 3.3 V pins are left open because there is no second 3.3 V source, and the J8 12.6 V aux
+   remains unused.

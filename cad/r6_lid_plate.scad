@@ -2,7 +2,8 @@
 //
 // This is the HOST LID plate, not the 7-inch display mount: R6's Waveshare panel belongs to the
 // separate cassette deck. The K06 and its keys finish flush with the broad front face. The rear
-// face tapes into the Peli lid. No host hole, OLED opening, button opening or harness channel.
+// face tapes into the Peli lid; apart from the keyboard opening the plate is solid, with no host
+// hole or harness channel.
 //
 // Prototype fit part: keyboard positions are shared with paint_probe_r6.scad through common.scad.
 // Measure the actual lid and keyboard before painting or final assembly.

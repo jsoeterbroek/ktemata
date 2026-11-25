@@ -112,13 +112,13 @@ failed screen is €60; a cracked shell is a reprint. The Prepper Disk's alumini
 custom integration are not field-serviceable, and its warranty is one year against a lifetime of
 expected use.
 
-**No vendor, no licence, no dependency.** MIT firmware and tooling, CC BY-SA CAD and prose in this
+**No vendor, no licence, no dependency.** MIT-licensed tooling, CC BY-SA CAD and prose in this
 repo, ZIM files from the Kiwix catalogue, no account, no content licence that can be withdrawn, no
 company that can stop shipping. The Prepper Disk's exclusive content and curated UI are genuine value
 — and also a dependency.
 
-**It is repairable and inspectable at the source level.** The firmware in `firmware/` is 1,000 lines
-you can read, with the I²C addresses, the UPS gauge protocol and the OLED screens all documented. A
+**It is repairable and inspectable at the source level.** The Pi-side software in `work/scripts/` is
+plain Python and shell you can read, with the I²C addresses and the UPS gauge protocol documented. A
 battery-percentage bug is a pull request, not a support ticket.
 
 ## EMP: a case lining versus a bag
@@ -160,14 +160,14 @@ The practical build for r6:
   wire over silicone gives the ~5 mm contact spacing that Level 3 needs and keeps the case's own
   water resistance; a solid extruded profile can do both jobs in one part. The stock O-ring must be
   kept or replaced by a dual-purpose gasket, or the case loses IP67 in exchange for EMP.
-- **Penetrations:** the charge socket, the status button and the vent are holes in the shield. Each
+- **Penetrations:** the charge socket, the power switch and the vent are holes in the shield. Each
   needs either a filtered/feed-through connector or a waveguide-below-cutoff treatment; the vent
   membrane is transparent to RF and must be replaced by a shielded vent or closed in the shielded
   build.
 - **The display is a window.** 143 × 91 mm of glass is an aperture larger than any realistic gasket
   can seal. A conductive mesh or transparent conductive coating over it is the only answer, and it
   costs optical quality. This is the point where "shield the case" stops being a weekend job.
-- **The keyboard is a hole too.** Its 151 × 59 mm opening in the deck is another aperture; a
+- **The keyboard is a hole too.** Its 151 × 59 mm opening in the lid is another aperture; a
   shielded case with an open key window is only shielded when the lid is shut over a sealed face.
 
 Cost estimate: conductive paint €25–40, 1 m of gasketed profile €20–50, shielded vent and feed-through

@@ -1,7 +1,8 @@
 // Print-oriented export wrapper (placed on the bed by tools/export.py)
 //   openscad -D 'PART="r5_deck"' -o deck.stl export.scad
 //
-// R5: tray, deck, lid plate, lid cover and alternatives. R6: named keyboard lid prototype.
+// R5: tray, deck, lid plate, lid cover and alternatives. R6: keyboard lid, tray and full-face
+// deck, named individually.
 // R5 parts print as modelled except the deck, which flips; the R6 lid flips for the same reason.
 ASSEMBLY = true;
 include <common.scad>

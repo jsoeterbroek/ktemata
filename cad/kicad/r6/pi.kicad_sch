@@ -6,8 +6,8 @@
   (paper "A4")
   (title_block
     (title "Pi 5 and its peripherals")
-    (date "2026-11-15")
-    (rev "1")
+    (date "2026-11-25")
+    (rev "2")
     (company "Ktemata")
   )
 
@@ -409,6 +409,7 @@
       )
     )
   )
+  (no_connect (at 168.91 40.64) (uuid "0c3a4d21-8f7f-4a54-9c3e-1a8e5b5fbb01"))
   (wire (pts (xy 120.65 21.59) (xy 120.65 99.06)) (stroke (width 0) (type solid)) (uuid "eacd4f12-bc1c-5930-9a12-da0f3e923b33"))
   (wire (pts (xy 120.65 27.94) (xy 168.91 27.94)) (stroke (width 0) (type solid)) (uuid "4c5e76a4-5518-57c5-a0dd-c3649244f986"))
   (wire (pts (xy 120.65 59.69) (xy 168.91 59.69)) (stroke (width 0) (type solid)) (uuid "64500881-aa48-5419-a3be-6be1aebdd519"))
@@ -436,7 +437,6 @@
   (wire (pts (xy 31.75 48.26) (xy 168.91 48.26)) (stroke (width 0) (type solid)) (uuid "7581e29a-4109-4797-9e22-1a56bea6069b"))
   (wire (pts (xy 31.75 64.77) (xy 168.91 64.77)) (stroke (width 0) (type solid)) (uuid "54997c0a-9774-47cc-9329-e4eedc6d1162"))
   (wire (pts (xy 168.91 25.40) (xy 158.75 25.40)) (stroke (width 0) (type solid)) (uuid "38d6fdbb-404c-5124-9436-5c13f987a9a5"))
-  (wire (pts (xy 168.91 40.64) (xy 158.75 40.64)) (stroke (width 0) (type solid)) (uuid "3abf324b-f987-5d1a-b04d-a699668aef30"))
   (junction (at 120.65 27.94) (diameter 0) (color 0 0 0 0) (uuid "f691b2ca-d589-5174-8e7c-83fbe2f05f4a"))
   (junction (at 120.65 59.69) (diameter 0) (color 0 0 0 0) (uuid "52f98129-8e22-55c5-8931-0a5706960ad9"))
   (junction (at 120.65 73.66) (diameter 0) (color 0 0 0 0) (uuid "61937847-cc05-53ee-acf0-8e35a3623474"))
@@ -458,7 +458,6 @@
   (global_label "DISP_SDA" (shape bidirectional) (at 44.45 40.64 90) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "b2fff973-38da-4c39-bd5b-24c25716c93e"))
   (global_label "DISP_SCL" (shape bidirectional) (at 31.75 43.18 90) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify left)) (uuid "5a95d234-539f-410c-ae45-15aa2ff90305"))
   (global_label "UPS_5V" (shape bidirectional) (at 158.75 25.40 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "3ad8b0aa-1065-5688-a16e-c71b34f82d13"))
-  (global_label "USB_FB_SERIAL" (shape bidirectional) (at 158.75 40.64 180) (fields_autoplaced yes) (effects (font (size 1.27 1.27)) (justify right)) (uuid "a91b4592-1541-5ab0-8424-ab42fa50590d"))
   (text "Waveshare 7inch DSI LCD (C): DSI plus a separate 5 V / touch lead; all display wiring stays in the cassette."
     (at 20.32 149.86 0) (effects (font (size 1.7 1.7)) (justify left)) (uuid "d655fe5f-572c-5f3f-b6c4-cd9dc3822999"))
   (text "The NVMe Base Duo takes data and power on the PCIe FFC; its standoffs carry the Pi."

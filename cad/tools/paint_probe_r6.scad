@@ -1,5 +1,5 @@
 // R6 PROTOTYPE paint geometry: fit/layout artwork only, not paint-ready production masks.
-// The visible surfaces swap against R5: the cover is the keyboard/OLED lid; the deck is the
+// The visible surfaces swap against R5: the cover is the keyboard lid; the deck is the
 // cassette's Waveshare 7-inch display frame.  Component dimensions and the host/plate outlines
 // come from common.scad.  Proposed R6-only placements are named here, not hidden in paint.py.
 // The keyboard-lid parameters are now shared with r6_lid_plate.scad through common.scad.
@@ -33,19 +33,13 @@ echo(P_DECK_R = R5_DECK_R);
 echo(P_DECK_T = R5_DECK_T);
 echo(P_COVER_R = COVER_R);
 
-// R6 lid: retain the measured K06/OLED/button envelopes at the proposed R5-derived coordinates.
+// R6 lid: the measured K06 envelope at the R5-derived coordinates. The lid carries no display
+// or status hardware, so the keyboard opening is its only aperture.
 echo(P_KB_X0 = R5_KB_X0);
 echo(P_KB_Y0 = R5_KB_Y0);
 echo(P_KB_W = R5_KB_POCKET[0]);
 echo(P_KB_H = R5_KB_POCKET[1]);
 echo(P_KB_R = R5_KB_CORNER + R5_KB_CLR);
-echo(P_OLED_X0 = R5_OLED_WIN_X0);
-echo(P_OLED_Y0 = R5_OLED_WIN_Y0);
-echo(P_OLED_W = R5_OLED_WIN[0]);
-echo(P_OLED_H = R5_OLED_WIN[1]);
-echo(P_OBTN_X = R5_OLED_BTN_X);
-echo(P_OBTN_Y = R5_OLED_BTN_Y);
-echo(P_OBTN_D = R5_OLED_BTN_D);
 
 // R6 display frame: panel, flat paint-border datum and active-area annotation.
 echo(P_C_GAP = COVER_GAP);

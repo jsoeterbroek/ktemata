@@ -3,8 +3,7 @@
 // The tray is the R6 cassette floor. It carries everything that is not bolted to the display:
 // the Waveshare UPS Module 3S with its three 18650 cells, and the PCH carrier. The Pi 5 and the
 // NVMe Base Duo are bolted to the back of the display (docs/R6.md "Display/Pi/Duo structural
-// assembly"), so they hang inside the display well and the tray never touches them. The
-// FireBeetle is socketed on the PCH, so there is no controller tray any more.
+// assembly"), so they hang inside the display well and the tray never touches them.
 //
 // Coordinates: x left->right, drawing y = 0 at the hinge end, z = 0 at the underside, rising.
 // PRINT FLOOR DOWN as modelled: walls and bosses grow upward and the vent grid drops straight

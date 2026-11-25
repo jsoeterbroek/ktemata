@@ -2,7 +2,7 @@
 """Ktemata R5 and R6-prototype airbrush schemes, masks and lettering.
 
 R5 writes the established docs/paint/ files. `--rev r6` writes docs/paint/r6/ and swaps the visible
-hardware: keyboard/OLED/button on the lid, Waveshare 7-inch display and controls on the cassette frame.
+hardware: keyboard on the lid, Waveshare 7-inch display and controls on the cassette frame.
 R6 output is explicitly a fit/layout prototype, not paint-ready production tooling. Every dimension
 comes from the selected OpenSCAD probe; SVG, printable STL and sticker geometry share the same model.
 
@@ -105,7 +105,6 @@ class Model:
         self.cover_r = g("P_COVER_R")
 
         self.kb = (g("P_KB_X0"), g("P_KB_Y0"), g("P_KB_W"), g("P_KB_H"), g("P_KB_R"))
-        self.oled = (g("P_OLED_X0"), g("P_OLED_Y0"), g("P_OLED_W"), g("P_OLED_H"))
         self.screws = [(g(f"P_S{i}"), g(f"P_S{i}Y")) for i in range(7)]
 
         self.gap = g("P_C_GAP")
@@ -121,8 +120,6 @@ class Model:
         self.active = (g("P_ACTIVE_W"), g("P_ACTIVE_H"))
         # the button is on the DECK now (a centred 7" panel leaves no latch band for it)
         self.btn = (g("P_BTN_X"), g("P_BTN_Y"), g("P_BTN_D"))
-        # the 12 mm OLED button: a plain hole through the plate, no bezel to paint round
-        self.obtn = (g("P_OBTN_X"), g("P_OBTN_Y"), g("P_OBTN_D"))
         self.btn_body = g("P_BTN_BODY")
         # 8.4 V charge socket through the deck's right rail: hole + the bezel/nut envelope
         self.chg = (g("P_CHG_X"), g("P_CHG_Y"), g("P_CHG_D"), g("P_CHG_NUT_D"))
@@ -132,8 +129,11 @@ class Model:
             self.fan = (g("P_FAN_X"), g("P_FAN_Y"), g("P_FAN_D"))
             self.fan_bars, self.fan_bar = int(v["P_FAN_BARS"]), g("P_FAN_BAR")
             self.cable = (g("P_CABLE_X"), g("P_CABLE_Y"), g("P_CABLE_W"), g("P_CABLE_H"))
+            # R5's status OLED window and its 12 mm through-button, both on the deck.
+            self.oled = (g("P_OLED_X0"), g("P_OLED_Y0"), g("P_OLED_W"), g("P_OLED_H"))
+            self.obtn = (g("P_OBTN_X"), g("P_OBTN_Y"), g("P_OBTN_D"))
         else:
-            # R6 has no display hinge notch or R5 deck port/fan geometry in the prototype model.
+            # R6 has no display hinge notch, R5 deck port/fan geometry or status side.
             self.port = self.fan = self.cable = None
             self.fan_bars, self.fan_bar = 0, 0.0
 
@@ -142,9 +142,18 @@ class Model:
         # signwriter would leave one there.  Declaring the blocks here means every scheme stops
         # at the lettering by construction instead of relying on draw order.
         x, y, bw, bh, _ = self.kb
-        # baseline in the 35.6 mm strip between the OLED window (ends y 66.9) and the keyboard
-        # (starts y 102.5): 4 mm clear above the cap, 4 mm below the small line
-        self.deck_text_y = g("P_OLED_Y0") + g("P_OLED_H") + 4.0 + 10.5
+        if rev == "r6":
+            # R6's lid carries only the K06: centre the wordmark block in the clear strip
+            # between the lid's hinge edge and the keyboard opening.
+            _spec = sticker_specs()[0]
+            _bx0, _by0, _bx1, _by1 = _sticker_box(_spec)
+            _th = sticker_trim_spec(_spec)[1]
+            _top = (y - _th) / 2
+            self.deck_text_y = _top - _by0 + STICKER_MARGIN
+        else:
+            # baseline in the 35.6 mm strip between the OLED window (ends y 66.9) and the keyboard
+            # (starts y 102.5): 4 mm clear above the cap, 4 mm below the small line
+            self.deck_text_y = g("P_OLED_Y0") + g("P_OLED_H") + 4.0 + 10.5
         # Keep the cover block in the latch band below the painted border. The border is still a
         # useful layout datum, but it is not a height change: the sticker and every painted pass
         # share the same flat front. The band's top comes from the panel, clearance and frame;
@@ -659,10 +668,7 @@ def cover_apertures(m: Model) -> list[Aperture]:
     """Openings in the upper part: R5 display cover or R6 keyboard-lid prototype."""
     if m.rev == "r6":
         kx, ky, kw, kh, kr = m.kb
-        ox, oy, ow, oh = m.oled
-        return [Aperture.rrect(kx, ky, kw, kh, kr),
-                Aperture.rrect(ox, oy, ow, oh, 0.8),
-                Aperture.circle(m.obtn[0], m.obtn[1], m.obtn[2])]
+        return [Aperture.rrect(kx, ky, kw, kh, kr)]
     wx, wy, ww, wh, wr = m.well
     cx, cy, cw, ch = m.cable
     return [Aperture.rrect(wx, wy, ww, wh, wr), Aperture.rrect(cx, cy, cw, ch, 0.0)]
@@ -725,8 +731,7 @@ def cover_hit(m: Model, px, py, pad=0.0) -> bool:
     if m.rev == "r6":
         return (_off_plate(px, py, m.w, m.l, m.cover_r)
                 or _in_rect(px, py, m.type_boxes["cover"], pad)
-                or _in_rect(px, py, m.kb, pad) or _in_rect(px, py, m.oled, pad)
-                or _in_circle(px, py, m.obtn[0], m.obtn[1], m.obtn[2] / 2, pad))
+                or _in_rect(px, py, m.kb, pad))
     return (_off_plate(px, py, m.w, m.l, m.cover_r)
             or _in_rect(px, py, m.type_boxes["cover"], pad)
             or _in_rect(px, py, m.well, pad) or _in_rect(px, py, m.cable, pad))
@@ -761,7 +766,7 @@ def runs_clear(test, a: float, b: float, step: float = 1.0) -> list[tuple[float,
 # Both brand blocks are positioned in drawing coordinates (y from the hinge), so they land in
 # the same place whether the part is drawn as modelled or hinged above the deck.
 def brand_deck(p: Surface, tagline: str, cap: float = 10.5) -> None:
-    """Wordmark in the deck's free strip between the OLED and the keyboard (y 72.2 - 102.5)."""
+    """Wordmark in the free strip above the keyboard (R5 deck, R6 keyboard lid)."""
     m = p.m
     x, y = m.w / 2, m.deck_text_y
     p.text("KTEMATA", cap, x, y, AMBER_L, track=cap * 0.28, anchor="middle", group="word")
@@ -1068,7 +1073,7 @@ R6_NOTES = {
                 "Waveshare panel to the deck. Measure final R6 CAD before cutting.",
     "STRATA": "R6 PROTOTYPE, not paint-ready: the selected x-keyed rails run straight from the "
               "keyboard lid into the cassette deck. The proposed display, controls, "
-              "keyboard, OLED and fasteners clip the marks. Rigid masks are fit/layout tools "
+              "keyboard and fasteners clip the marks. Rigid masks are fit/layout tools "
               "until the final R6 deck CAD exists.",
     "BEARING": "R6 PROTOTYPE, not paint-ready: the proposed 3 mm trace at x = 215.5 crosses "
                "from the keyboard lid to the deck. It is clipped by the current "
@@ -1097,14 +1102,6 @@ def r6_lid_features(p: Surface) -> None:
            layer="features", stroke="#2b353e", sw=0.6)
     p.text("K06  ·  KEYBOARD  LID", 2.6, kx + kw / 2, ky + kh / 2 + 1.0, LABEL,
            layer="features", track=1.4, anchor="middle")
-
-    ox, oy, ow, oh = m.oled
-    p.rect(ox, oy, ow, oh, INK, 0.8, layer="features", stroke="#48545f", sw=0.8)
-    p.text("OLED", 2.0, ox + ow / 2, oy + oh / 2 + 0.7, LABEL,
-           layer="features", anchor="middle")
-    bx, by, bd = m.obtn
-    p.circle(bx, by, bd / 2, "#111820", layer="features", stroke="#6a7784", sw=0.8)
-    p.text("STATUS", 1.7, bx, by + bd / 2 + 4.0, LABEL, layer="features", anchor="middle")
 
 
 def r6_frame_features(p: Surface) -> None:

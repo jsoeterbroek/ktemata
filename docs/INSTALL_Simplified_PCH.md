@@ -1,8 +1,11 @@
-# Simplified PCH Installation Notes
+# Simplified PCH installation notes
 
-## Required Configuration Changes
+The simplified PCH is a passive power/charge carrier: UPS header, 12.6 V charge branch and no
+on-board monitoring. The Pi 5 reads the UPS Module 3S gauge itself.
 
-### 1. Enable I²C bus for Pi5 (dtoverlay=i2c2-pi5,pins_12_13)
+## Required configuration changes
+
+### 1. Enable I²C bus 2 for the Pi 5
 
 Add to `/boot/firmware/config.txt`:
 
@@ -10,38 +13,45 @@ Add to `/boot/firmware/config.txt`:
 dtoverlay=i2c2-pi5,pins_12_13
 ```
 
-This enables the Raspberry Pi 5 I²C bus and routes it to the PCH's GPIO pins (Pi5-12=SDA, Pi5-13=SCL).
+This routes I²C bus 2 to GPIO 12/13 (physical pins 32/33), which is where the UPS gauge line lands.
+Reboot afterwards.
 
-### 2. Fix INA219 i2c_bus parameter
+### 2. Point the monitor at bus 2
 
-Modify `INA219.py` from Waveshare UPS code:
+The INA219 is at `0x41` on bus 2. Install the tray monitor for that bus:
+
+```bash
+cd work/scripts/UPS_3S
+sudo ./install.sh --i2c-bus 2
+```
+
+`post-install.sh --ups-i2c-alt-pins` applies the same overlay and bus choice. If you write your own
+script against the vendor-derived module, pass the bus explicitly — the default is bus 1:
 
 ```python
-# Line 194 - Change from:
-ina219 = INA219(addr=0x41)
-# To:
 ina219 = INA219(i2c_bus=2, addr=0x41)
 ```
 
-This specifies I²C bus 2 (the Pi5-connected bus), not the default I²C bus 1.
-
 ## Rationale
 
-The simplified PCH removes all hardware monitoring and OLED display. Battery monitoring was moved to the standard ESP32 SPI peripheral in FireBeetle 2, reading directly from the main board's battery voltage via I²C. This simplifies the PCH design by eliminating:
-- DC5521 charge management chip
-- INA219 hardware monitor chip
-- OLED display driver circuit
+The simplified PCH removes all on-board monitoring and display circuitry. It keeps the UPS 2×4 header
+and the 12.6 V charge branch, so the board carries no conversion, no fuse, no ADC divider and no
+display driver:
 
-All monitoring is now handled by FireBeetle 2's built-in capabilities, accessed through Pi5's I²C bus.
+- DC5521 charge management chip — gone
+- INA219 monitor chip — gone
+- Display driver circuit — gone
+
+Battery monitoring is the Pi's job: the UPS Module 3S already has its INA219 at `0x41` with a 0.1 Ω
+shunt, and `work/scripts/UPS_3S` reads it on bus 2 through the PCH header. The supplied DC5521 lead
+and self-lock button connect directly at the UPS, not on the carrier.
 
 ## Verification
 
-After configuration:
-
 ```bash
-sudo nano /boot/firmware/config.txt
-# Add or uncomment: dtoverlay=i2c2-pi5,pins_12_13
-sudo reboot
+sudo i2cdetect -y 2          # 41 should appear
+ktemata-ups-tray --i2c-bus 2 --once
 ```
 
-Test battery monitoring with FireBeetle 2 firmware accessing I²C bus 2.
+The one-shot reading reports pack voltage, charge state and runtime estimate from the gauge. If `41`
+is missing, check the overlay, the SDA/SCL swap and the ground return before installing the monitor.

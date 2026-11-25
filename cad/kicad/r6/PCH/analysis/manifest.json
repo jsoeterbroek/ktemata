@@ -1,7 +1,7 @@
 {
   "version": 1,
   "project": "PCH.kicad_pro",
-  "current": "2026-11-18_0955",
+  "current": "2026-11-25_0709-2",
   "runs": {
     "2026-11-17_2002": {
       "source_hashes": {
@@ -37,6 +37,39 @@
         "pcb": "analyze_pcb.py PCH.kicad_pcb"
       },
       "generated": "2026-11-18T09:55:11+01:00",
+      "pinned": false
+    },
+    "2026-11-25_0709": {
+      "source_hashes": {
+        "PCH.kicad_sch": "sha256:22d0da20ff32d08b9319d33fd94f2f6e5c12eccc191c3a850402ede67a98840d",
+        "PCH.kicad_pcb": "sha256:f1c0ca5a0cb28a91cdfc6b9a777d762e9d6916449cfa7cb23d866b1444a6dc7a"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json"
+      },
+      "scripts": {
+        "schematic": "analyze_schematic.py PCH.kicad_sch"
+      },
+      "generated": "2026-11-25T07:09:24+01:00",
+      "pinned": false
+    },
+    "2026-11-25_0709-2": {
+      "source_hashes": {
+        "PCH.kicad_sch": "sha256:22d0da20ff32d08b9319d33fd94f2f6e5c12eccc191c3a850402ede67a98840d",
+        "PCH.kicad_pcb": "sha256:ac9ede2d9ce0465d8c0f85c55905cce8b76d32e2b211085928b785d33a8e4a30",
+        "schematic.json": "sha256:95b761d3e2e6ddda3a92578ff286efdc77492514cee7ed8cb94a1b57176a7131",
+        "pcb.json": "sha256:c4a0dd25fae9dc2a86cba1b26f834ce177da5afdcaebcf11d2b7ecdbd57daf17"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "emc": "emc.json"
+      },
+      "scripts": {
+        "pcb": "analyze_pcb.py PCH.kicad_pcb"
+      },
+      "generated": "2026-11-25T07:09:26+01:00",
       "pinned": false
     }
   }

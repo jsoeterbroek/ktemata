@@ -1,57 +1,81 @@
-# UPS Pinout Configuration (Pi5-connected)
+# UPS pinout configuration (Pi 5-connected)
 
-## Connection Reference
+The Waveshare UPS Module 3S is the only battery and charge stage. Its INA219 gauge (`0x41`, 0.1 Ω
+shunt) is read by the Pi 5 directly on I²C bus 2; there is no separate controller, display or ADC
+sense line anywhere in the R6 harness.
 
-|UPS 6-Pin Header Label|Pi 5 Physical Pin|Pi 5 BCM / Function|Suggested Wire Color|Notes|
+## Connection reference
+
+| UPS 2×4 header pin | Signal | Pi 5 physical pin | Pi 5 BCM / function | Suggested wire colour |
 |---|---|---|---|---|
-|**GND**|**Pin 30**_(or Pin 34)|Ground (`GND`)|**Black**|Required for a shared reference voltage.|
-|**SDA**|**Pin 32**|`GPIO 12` (I2C2 Data)|**Blue**_(or Green)|Connects to your new `i2c-2` data line.|
-|**SCL**|**Pin 33**|`GPIO 13` (I2C2 Clock)|**Yellow**_(or White)|Connects to your new `i2c-2` clock line.|
+| **1** | **SCL** | **Pin 33** | `GPIO 13` (I²C2 clock) | **Yellow** (or white) |
+| **2** | **SDA** | **Pin 32** | `GPIO 12` (I²C2 data) | **Blue** (or green) |
+| 3 | 3V3 | — | not connected | — |
+| 4 | 3V3 | — | not connected | — |
+| **5** | **GND** | **Pin 30** (or Pin 34) | Ground | **Black** |
+| **6** | **GND** | **Pin 30** (or Pin 34) | Ground | **Black** |
+| 7 | 5V | — | not connected | — |
+| 8 | 5V | — | not connected | — |
 
-## Wiring Diagram
+Pin 1 is marked on the module and on the PCH's J5 header; mate them one-to-one. The 3.3 V and 5 V pins
+of the UPS header stay open — the Pi and the display are powered from the UPS's USB-C lead, and
+nothing else in the case needs those rails.
 
-```
-UPS Battery Module (6-pin header)
+## Wiring diagram
+
+```text
+UPS Module 3S (2×4 header)                Pi 5 40-pin header
       ┌───┐
-      │   │
-      ├──GND──┬────────[Pi5 Pin 30/34]──── GND reference
-              │                    │
-      ├──SDA──┤──── [i2c-2 SDACLK]──┘
-              │       │          SDA line
-              ├──SCL─┤
-              │       │    GPIO13 (I2C2 CLK)
-              └───────┘  GPIO12 (I2C2 DATA)
-
-Pi5 BCM Pin Assignments:
-- Pin 30/34: GPIO 0 (GND) - Ground reference for all I²C circuits
-- Pin 32: GPIO 12 - I2C2 data line (SDACLK) - Connect to UPS SDA output  
-- Pin 33: GPIO 13 - I2C2 clock (SCLK) - Connect to UPS SCL output
-
-Note: Use jumper block headers if connecting multiple devices.
-Verify voltage levels (5V/3.3V) with multimeter before permanent connection.
+      │ 1 ├──── SCL ──────────────────── Pin 33  GPIO13, I²C2 clock
+      │ 2 ├──── SDA ──────────────────── Pin 32  GPIO12, I²C2 data
+      │ 3 ├─ 3V3   (open)
+      │ 4 ├─ 3V3   (open)
+      │ 5 ├──── GND ─────────────┬────── Pin 30  (or 34) ground
+      │ 6 ├──── GND ─────────────┘
+      │ 7 ├─ 5V    (open)
+      │ 8 ├─ 5V    (open)
+      └───┘
 ```
 
-## Pi5 I²C Configuration
+Three conductors plus a second ground return are all the gauge needs. Keep the wires short, use the
+same colour convention at both ends, and do not run them across the case hinge.
 
-Enable the I²C bus for PCH's PI5 module in `/boot/firmware/config.txt`:
+## Pi I²C configuration
+
+Enable bus 2 on GPIO 12/13 in `/boot/firmware/config.txt`:
 
 ```bash
 dtoverlay=i2c2-pi5,pins_12_13
 ```
 
-This routes GPIO 12/13 to the PCH connector and enables the UPS battery monitoring sensor on I²C bus 2.
+Reboot, then confirm the gauge answers at `0x41`:
 
-## Hardware Reference
+```bash
+sudo i2cdetect -y 2
+```
 
-The simplified PCH board routes:
-- **J9**: Rii K06 Touch Keyboard (I²C + ground/power)
-- **No other connectors** - Removed DC5521 charge management, removed INA219 monitor, removed OLED display driver circuit
-- All battery monitoring and charging handled by FireBeetle 2's built-in I²C interface
+`post-install.sh --ups-i2c-alt-pins` applies the same overlay. On standard GPIO2/3 pins the UPS is on
+bus 1 and the overlay is not needed; both cases use the same tray monitor, selected with `--i2c-bus`.
 
-## Verification Checklist
+## Harness reference
 
-After wiring:
-- [ ] GPIO12/13 configured for I2C2 in config.txt
-- [ ] Pi5 rebooted to apply config
-- [ ] GND pin shared with system ground reference
-- [ ] Battery voltage readable via FireBeetle 2 SPI peripheral
+The PCH is a power/charge carrier: it routes the 12.6 V charge branch and the UPS header, and it
+carries no gauge chip, display driver or microcontroller. The UPS header's SDA, SCL and GND pins are
+the whole telemetry interface.
+
+| Item | Carries |
+|---|---|
+| UPS 2×4 header (PCH J5) | SDA, SCL, GND; 3.3 V and 5 V open |
+| PCH J7 / J8 | 12.6 V charge branch (J8 auxiliary output unused) |
+| Supplied DC5521 lead | charge input, directly at the UPS |
+| Supplied self-lock button | UPS switch input, directly at the UPS |
+| UPS USB-C output lead | Pi 5 power |
+
+## Verification checklist
+
+- [ ] `dtoverlay=i2c2-pi5,pins_12_13` present in `config.txt` and the Pi rebooted
+- [ ] `sudo i2cdetect -y 2` lists `41`
+- [ ] GND shared between the UPS header and the Pi
+- [ ] 3.3 V and 5 V header pins left open at both ends
+- [ ] `sudo ./work/scripts/UPS_3S/install.sh --i2c-bus 2` installed
+- [ ] `ktemata-ups-tray --i2c-bus 2 --once` reports pack voltage, charge state and runtime

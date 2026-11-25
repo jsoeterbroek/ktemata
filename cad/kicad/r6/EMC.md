@@ -1,8 +1,8 @@
 # EMC pre-compliance — r6 (system)
 
 **There is no r6 PCB to analyse.** `ktemata.kicad_pcb` is an empty 79-byte stub (0 footprints,
-0 tracks, no outline); the r6 project is a 4-sheet interface hierarchy (`ktemata`, `power`, `pi`,
-`mcu`) with 16 connector-shaped module symbols and 25 nets. The only laid-out board in this folder
+0 tracks, no outline); the r6 project is a 3-sheet interface hierarchy (`ktemata`, `power`, `pi`)
+with 11 connector-shaped module symbols and 21 nets. The only laid-out board in this folder
 is the PCH sub-project — its EMC review is [`PCH/EMC.md`](PCH/EMC.md) and is not repeated here.
 
 So this document is a **system-level EMC assessment and a board-layout requirement set**, not a
@@ -34,12 +34,9 @@ datasheet-level numbers there unless marked:
 | 2 | Pi 5 → NVMe Base Duo, PCIe Gen 2 ×1 through the ASM1182e | 5 GT/s serial; 100 MHz refclk | refclk harmonics every 100 MHz, 100→1000 MHz | high |
 | 3 | Pi 5 USB (K06 dongle) | USB 2.0 HS 480 Mbit/s | 240 MHz + harmonics | medium |
 | 4 | Active Cooler fan | PWM ~25 kHz + brush commutation | broadband floor, 30–300 MHz | medium-low |
-| 5 | OLED/button harness across the hinge (I2C, 5 conductors) | 100–400 kHz, ≈100 ns edges ≈3.5 MHz BW | below the 30 MHz test floor | low |
-| 6 | 12.6 V / 2 A charge lead (adapter, solar or crank) | DC | only the source's ripple/switch noise | low from the device side |
-| 7 | INA219 / DS3231 / OLED I2C, PCH rails | ≤400 kHz | none | none |
+| 5 | 12.6 V / 2 A charge lead (adapter, solar or crank) | DC | only the source's ripple/switch noise | low from the device side |
 
-Two things that are **not** emitters in this design: the FireBeetle's radios are off (`AGENTS.md`),
-and the K06's 2.4 GHz link is an intentional radiator in a separately CE/RED-marked dongle — it
+The K06's 2.4 GHz link is an intentional radiator in a separately CE/RED-marked dongle — it
 does not fall under CISPR 32, but it does set a coexistence constraint (below).
 
 The enclosure contributes no mitigation: the Peli 1200 is plastic and R6's operating posture is
@@ -52,7 +49,7 @@ parts can stay 2-layer as built.
 
 1. **Stackup.** Any board carrying DSI or PCIe is 4-layer (F.Cu / GND / PWR / B.Cu) with an
    uninterrupted GND plane under every differential pair. A 2-layer board is fine for the 12.6 V /
-   5 V / 3V3 / I2C distribution class (PCH already proves it: 88 % B.Cu fill, all routing on F.Cu).
+   5 V distribution class (the PCH is the built example).
 2. **Differential pairs.** DSI 100 Ω, PCIe 85–90 Ω, both referenced to the same plane from end to
    end, no layer changes, no stubs at the FFC connector, skew inside the protocol limit (DSI
    intra-pair <25 ps, PCIe <5 ps). Ground pins on the FFC connector stitched to the plane
@@ -61,8 +58,8 @@ parts can stay 2-layer as built.
    DSI lead inside the cassette (R6's architecture already does this — do not route it across the
    hinge).
 4. **Connector filtering.** Every internal harness connector gets one GND pin per signal pair or
-   better; do not repeat PCH's J3 pattern (1 GND for 3 signals) on a new board. External-facing
-   conductors (charge input) get TVS + bulk cap at the connector, per `PCH/EMC.md` finding 1.
+   better. Conductors that leave the enclosure (the charge input at the UPS) get TVS + bulk cap at
+   the connector.
 5. **Charge input conditioning.** The supplied 12.6 V/2 A adapter is its own product under the EMC
    directive; a solar or crank source is not, and its ripple is unbounded. Put a common-mode choke
    plus the TVS on the charge entry, and keep the chassis/earth return short.
@@ -71,9 +68,7 @@ parts can stay 2-layer as built.
    not only at the source.
 7. **Fan.** Treat the Active Cooler lead as a noise source: twisted pair, 100 nF across the fan
    terminals for a 2-wire fan, return to the Pi's ground plane, not to a harness.
-8. **Hinge harness.** I2C pair with an adjacent GND wire, 33–100 Ω series resistors at the
-   FireBeetle end, no long stubs, and a keyed connector as `R6.md` already requires.
-9. **Coexistence.** Keep the K06's 2.4 GHz dongle out of the near field of the DSI FFC — a ribbon
+8. **Coexistence.** Keep the K06's 2.4 GHz dongle out of the near field of the DSI FFC — a ribbon
    carrying 221 MHz edges next to a 2.4 GHz receiver is a desense risk, not an emissions one.
 
 ## Product-level test plan
@@ -89,10 +84,10 @@ Test the assembled, flat-open device; the boards are not separable for complianc
 | ESD, EN 61000-4-2 ±8 kV contact / ±15 kV air | DC jack, keys, USB port, case seams | high (no TVS exists anywhere today) |
 | EFT, EN 61000-4-4 1 kV | charge lead | medium |
 | Surge, EN 61000-4-5 1 kV / 2 Ω | charge lead | medium |
-| Radiated immunity, EN 61000-3/4, 80 MHz–6 GHz | display link and I2C must not drop; watch for DSI flicker and I2C lockups | **high** — plastic case, no shielding |
+| Radiated immunity, EN 61000-3/4, 80 MHz–6 GHz | display link must not drop; watch for DSI flicker | **high** — plastic case, no shielding |
 
-Pre-scan probe points before the lab: DSI FFC tail, the PCIe FPC at both ends, the fan lead, the
-12.6 V harness at the DC jack, and the hinge harness.
+Pre-scan probe points before the lab: DSI FFC tail, the PCIe FPC at both ends, the fan lead, and
+the 12.6 V harness at the DC jack.
 
 ## Gaps and limits
 
@@ -116,5 +111,5 @@ python3 ~/.omp/agent/skills/kicad/scripts/analyze_pcb.py ktemata.kicad_pcb --ful
 python3 ~/.omp/agent/skills/emc/scripts/analyze_emc.py --analysis-dir analysis/ --standard cispr-class-b
 ```
 
-This run: `analysis/2026-11-17_2005/{schematic,pcb,emc}.json` (16 blocks, 25 nets, 0 footprints,
+This run: `analysis/2026-11-25_0710/{schematic,pcb,emc}.json` (11 blocks, 21 nets, 0 footprints,
 2 vacuous findings, risk 98.5). Re-run unchanged until `ktemata.kicad_pcb` has real geometry.

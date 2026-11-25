@@ -87,8 +87,6 @@ from:
 |---|---|---|
 | pack voltage, current, power | UPS Module 3S INA219 at **0x41**, 0.1 Ω shunt | 4 mV / 0.5 mA resolution, on the **pack branch** |
 | total system draw | pack power × η | exact on battery; **not observable on mains**, where the gauge sits in the charge branch and the charger feeds the regulator |
-| a source is connected | charge-input sense divider, `A0` (ADC1) | 47k/10k from the 12.6 V input; present above 3.0 V, absent below 2.5 V |
-| the source is steady or sagging | the same line, 60 s window | spread within 4 % of the median reads `steady` |
 | mains vs solar vs crank | **no** | one socket, one voltage; the telemetry says `steady`/`varying` rather than claim a type |
 | Pi per-rail current | Pi 5 PMIC (`vcgencmd pmic_read_adc`) | the basis for attributing draw to the Pi rather than the panel or the drive |
 | display backlight, NVMe | A/B bench runs + datasheets | switch the Pi off and the INA219 reads what is left |

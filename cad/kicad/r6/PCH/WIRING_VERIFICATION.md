@@ -1,38 +1,46 @@
-# PCH Simplified Wiring Verification Report
+# PCH wiring verification report
 
-**Date:** 2026-11-22  
-**Status:** All connections verified and correct
+**Date:** 2026-11-25
+**Status:** verified — ERC and DRC clean
 
-## Design Summary
+## Design summary
 
-The simplified PCH board removes all hardware monitoring:
-- **Removed DC5521**: Charge management chip eliminated from board
-- **Removed INA219**: Battery monitor chip removed (monitoring via FireBeetle 2 SPI)
-- **Removed OLED**: Display driver circuit removed
-- **Kept J9**: Rii K06 Touch Keyboard connector only
+The R6 PCH is a power/charge carrier only. The separate status subsystem was removed: no status
+controller, no display, no display button, no status clock, no charge-sense tap. The board keeps:
 
-## Verification Process
+- **J5** — Waveshare UPS Module 3S 2×4 header
+- **J7** — UPS 12.6 V branch in
+- **J8** — 12.6 V auxiliary output (unused in the current build)
+- four M2.5 mounting holes
 
-### Simplified Connection Topology
+## Verified net topology
 
-Since the simplified PCH removes hardware monitoring, all battery and display functions are now handled by FireBeetle 2's built-in I²C/SPI interfaces accessing the main board. The PCH is now a pure I²C pass-through carrier.
+| Net | Pins | Status |
+|---|---|---|
+| `+5V` | J5.7, J5.8 | OK — UPS 5 V pair, no consumer on this board |
+| `BAT_12V6_OUT` | J7.1, J8.1 | OK — 12.6 V feed-through |
+| `GND` | J5.5, J5.6, J7.2, J8.2 | OK — both-layer pour |
+| no-connect | J5.1, J5.2, J5.3, J5.4 | OK — UPS I²C pair and both 3V3 pins marked NC |
 
-### Verified Network Topology
+No other net exists. `PCH.net` exported from the schematic lists exactly these three nets and the
+four unconnected pads.
 
-| Net | Name | Connections | Status |
-|-----|------|-------------|--------|
-| 1 | +3V3 | J9.Pin_1 (Keyboard) | ✅ OK |
-| 2 | +5V | N/A (Power from Pi5) | ✅ OK |
-| 3 | GND | Shared with system ground reference | ✅ OK |
-| 4 | I²C_SCL | J9 → Pi5 GPIO13 (SCLK) via i2c-2 bus | ✅ OK |
-| 5 | I²C_SDA | J9 → Pi5 GPIO12 (SDACLK) via i2c-2 bus | ✅ OK |
+## Removed with the status subsystem
 
-### Notes
+J1 (charge-sense tap), J6 (lid harness), J9/J10 (controller socket rows), J11 (display header),
+R2/R3/C1 (charge-sense divider and filter), and all status-only nets (charge input/sense, 3.3 V,
+I²C and the display button). Their footprints, tracks and vias were deleted from the PCB, J5 pads
+1–4 are now no-connect, and the two GND pours were refilled.
 
-- No hardware components remain on PCH: no DC5521, no INA219, no OLED driver
-- Battery monitoring performed by FireBeetle 2's SPI peripheral reading main board voltage
-- The Pi5 I²C bus (i2c2) routes to PCH connector via GPIO 12/13 per configuration in `/boot/firmware/config.txt`
+## Checks run
 
-## Conclusion
+```bash
+kicad-cli sch erc --severity-all -o /tmp/pch_erc.rpt PCH.kicad_sch
+# 0 errors, 6 warnings — all lib_symbol_mismatch (project symbols are embedded)
 
-All simplified wiring connections are correct and match the official netlist topology. Design is ready for physical fabrication with reduced component count and no hardware monitoring circuitry.
+kicad-cli pcb drc --severity-all --refill-zones -o DRC.rpt PCH.kicad_pcb
+# 0 violations, 0 unconnected pads, 0 footprint errors
+```
+
+The board is a power-only carrier with 7 footprints, 4 track segments, 0 vias and two GND pours.
+It is ready for fabrication from `gerbers/`.

@@ -3,7 +3,7 @@
   "version": 1,
   "part": {
     "id": "ktemata-r6-pch",
-    "name": "Ktemata R6 PCH (external harness)",
+    "name": "Ktemata R6 PCH (power-only carrier)",
     "category": "Ktemata / Carrier boards",
     "dimensions": [63, 66, 1.6],
     "format": "procedural-pcb",
@@ -18,29 +18,18 @@
       "verified": false
     },
     "pins": [
-      {"id": "J1-1", "label": "J1.1 CHG_12V6_IN · sense tap only", "notes": "High-impedance tap on the supplied DC5521 input; no charge current through the PCH", "side": "top", "index": 0, "physicalPosition": 1, "electrical": "power-in", "voltage": 12.6, "localPosition": [-18.5, 25, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J1-2", "label": "J1.2 GND · sense-tap return", "side": "top", "index": 1, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-16, 25, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J5-1", "label": "J5.1 I2C_SCL", "side": "top", "index": 2, "physicalPosition": 1, "electrical": "bidirectional", "localPosition": [2.5, 19.08, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J5-2", "label": "J5.2 I2C_SDA", "side": "top", "index": 3, "physicalPosition": 2, "electrical": "bidirectional", "localPosition": [5.04, 19.08, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J5-3", "label": "J5.3 +3V3", "side": "top", "index": 4, "physicalPosition": 3, "electrical": "power-in", "voltage": 3.3, "localPosition": [2.5, 16.54, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J5-4", "label": "J5.4 +3V3 · host side unused", "side": "top", "index": 5, "physicalPosition": 4, "electrical": "power-in", "voltage": 3.3, "localPosition": [5.04, 16.54, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J5-5", "label": "J5.5 GND", "side": "top", "index": 6, "physicalPosition": 5, "electrical": "ground", "voltage": 0, "localPosition": [2.5, 14, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J5-6", "label": "J5.6 GND", "side": "top", "index": 7, "physicalPosition": 6, "electrical": "ground", "voltage": 0, "localPosition": [5.04, 14, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J5-7", "label": "J5.7 +5V", "side": "top", "index": 8, "physicalPosition": 7, "electrical": "power-in", "voltage": 5, "localPosition": [2.5, 11.46, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J5-8", "label": "J5.8 +5V", "side": "top", "index": 9, "physicalPosition": 8, "electrical": "power-in", "voltage": 5, "localPosition": [5.04, 11.46, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J6-1", "label": "J6.1 I2C_SCL", "side": "top", "index": 10, "physicalPosition": 1, "electrical": "bidirectional", "localPosition": [11.5, 19.08, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J6-2", "label": "J6.2 I2C_SDA", "side": "top", "index": 11, "physicalPosition": 2, "electrical": "bidirectional", "localPosition": [11.5, 16.54, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J6-3", "label": "J6.3 +3V3", "side": "top", "index": 12, "physicalPosition": 3, "electrical": "power-out", "voltage": 3.3, "localPosition": [11.5, 14, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J6-4", "label": "J6.4 GND", "side": "top", "index": 13, "physicalPosition": 4, "electrical": "ground", "voltage": 0, "localPosition": [11.5, 11.46, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J6-5", "label": "J6.5 OLED_BTN", "side": "top", "index": 14, "physicalPosition": 5, "electrical": "passive", "localPosition": [11.5, 8.92, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J7-1", "label": "J7.1 BAT_12V6_OUT", "side": "top", "index": 15, "physicalPosition": 1, "electrical": "power-in", "voltage": 12.6, "localPosition": [-12.5, 2, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J7-2", "label": "J7.2 GND", "side": "top", "index": 16, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-10, 2, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J8-1", "label": "J8.1 AUX_12V6_OUT · unused", "notes": "Intentionally unused in the current R6 build", "side": "top", "index": 17, "physicalPosition": 1, "electrical": "power-out", "voltage": 12.6, "localPosition": [-3.5, 2, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J8-2", "label": "J8.2 GND · unused", "notes": "Intentionally unused in the current R6 build", "side": "top", "index": 18, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-1, 2, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J11-1", "label": "J11.1 +3V3 · OLED red · FB J9.17", "side": "top", "index": 19, "physicalPosition": 1, "electrical": "power-out", "voltage": 3.3, "localPosition": [-21, -18, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J11-2", "label": "J11.2 GND · OLED black · FB J9.15", "side": "top", "index": 20, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-23.5, -18, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J11-3", "label": "J11.3 I2C_SCL · OLED white · FB J9.10", "side": "top", "index": 21, "physicalPosition": 3, "electrical": "bidirectional", "localPosition": [-26, -18, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
-      {"id": "J11-4", "label": "J11.4 I2C_SDA · OLED green · FB J9.9", "side": "top", "index": 22, "physicalPosition": 4, "electrical": "bidirectional", "localPosition": [-28.5, -18, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]}
+      {"id": "J5-1", "label": "J5.1 NC · UPS I2C_SCL", "notes": "No-connect on the power-only PCH", "side": "top", "index": 0, "physicalPosition": 1, "electrical": "passive", "localPosition": [2.5, 19.08, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J5-2", "label": "J5.2 NC · UPS I2C_SDA", "notes": "No-connect on the power-only PCH", "side": "top", "index": 1, "physicalPosition": 2, "electrical": "passive", "localPosition": [5.04, 19.08, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J5-3", "label": "J5.3 NC · UPS 3V3", "notes": "No-connect on the power-only PCH", "side": "top", "index": 2, "physicalPosition": 3, "electrical": "passive", "localPosition": [2.5, 16.54, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J5-4", "label": "J5.4 NC · UPS 3V3", "notes": "No-connect on the power-only PCH", "side": "top", "index": 3, "physicalPosition": 4, "electrical": "passive", "localPosition": [5.04, 16.54, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J5-5", "label": "J5.5 GND", "side": "top", "index": 4, "physicalPosition": 5, "electrical": "ground", "voltage": 0, "localPosition": [2.5, 14, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J5-6", "label": "J5.6 GND", "side": "top", "index": 5, "physicalPosition": 6, "electrical": "ground", "voltage": 0, "localPosition": [5.04, 14, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J5-7", "label": "J5.7 +5V", "side": "top", "index": 6, "physicalPosition": 7, "electrical": "power-in", "voltage": 5, "localPosition": [2.5, 11.46, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J5-8", "label": "J5.8 +5V", "side": "top", "index": 7, "physicalPosition": 8, "electrical": "power-in", "voltage": 5, "localPosition": [5.04, 11.46, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J7-1", "label": "J7.1 BAT_12V6_OUT", "side": "top", "index": 8, "physicalPosition": 1, "electrical": "power-in", "voltage": 12.6, "localPosition": [-12.5, 2, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J7-2", "label": "J7.2 GND", "side": "top", "index": 9, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-10, 2, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J8-1", "label": "J8.1 AUX_12V6_OUT · unused", "notes": "Intentionally unused in the current R6 build", "side": "top", "index": 10, "physicalPosition": 1, "electrical": "power-out", "voltage": 12.6, "localPosition": [-3.5, 2, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]},
+      {"id": "J8-2", "label": "J8.2 GND · unused", "notes": "Intentionally unused in the current R6 build", "side": "top", "index": 11, "physicalPosition": 2, "electrical": "ground", "voltage": 0, "localPosition": [-1, 2, 6], "orientation": [0, 0, 0], "exitDirection": [0, 0, 1]}
     ]
   }
 }

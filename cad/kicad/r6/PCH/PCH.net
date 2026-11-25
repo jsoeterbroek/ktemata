@@ -2,17 +2,17 @@
 	(version "E")
 	(design
 		(source "/Users/jsoeterbroek/Development/ktemata/cad/kicad/r6/PCH/PCH.kicad_sch")
-		(date "2026-11-20T10:01:35")
+		(date "2026-11-25T07:12:19")
 		(tool "Eeschema 10.0.8")
 		(sheet
 			(number "1")
 			(name "/")
 			(tstamps "/")
 			(title_block
-				(title "Ktemata R6 - PCH (Power Distribution & Communication Hub)")
+				(title "Ktemata R6 - PCH (Power and Charge Carrier)")
 				(company)
-				(rev "1.1")
-				(date "2026-11-17")
+				(rev "1.3")
+				(date "2026-11-25")
 				(source "PCH.kicad_sch")
 				(comment
 					(number "1")
@@ -55,102 +55,10 @@
 	)
 	(components
 		(comp
-			(ref "C1")
-			(value "100nF")
-			(footprint "Capacitor_SMD:C_0603_1608Metric")
-			(datasheet "~")
-			(description "Charge-sense filter, 50 V X7R")
-			(fields
-				(field
-					(name "Footprint") "Capacitor_SMD:C_0603_1608Metric")
-				(field
-					(name "Datasheet") "~")
-				(field
-					(name "Description") "Charge-sense filter, 50 V X7R")
-			)
-			(libsource
-				(lib "Device")
-				(part "C")
-				(description "Unpolarized capacitor")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b1000000-0000-4000-8000-000000000004")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J1")
-			(value "CHG_SENSE_IN")
-			(footprint "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
-			(description "High-impedance sense tap on supplied DC5521 lead; direct charge path goes to UPS, not through PCH")
-			(fields
-				(field
-					(name "Footprint") "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "High-impedance sense tap on supplied DC5521 lead; direct charge path goes to UPS, not through PCH")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x02")
-				(description "")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "f36bd257-5388-4298-87d5-06db1b9cf434")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
 			(ref "J5")
 			(value "UPS3S_HDR_2X4")
 			(footprint "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical")
-			(description "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 NC, 4 NC, 5 GND, 6 GND, 7 5V, 8 5V; UPS 3V3 left open so the FireBeetle regulates the 3.3 V rail")
+			(description "Waveshare UPS Module 3S 2x4 header; on the R6 power-only PCH pins 1-4 are no-connect and only GND (5/6) and 5V (7/8) are used")
 			(fields
 				(field
 					(name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_2x04_P2.54mm_Vertical")
@@ -158,7 +66,7 @@
 					(name "Datasheet")
 				)
 				(field
-					(name "Description") "Waveshare UPS Module 3S 2x4 header, wired 1:1: 1 SCL, 2 SDA, 3 NC, 4 NC, 5 GND, 6 GND, 7 5V, 8 5V; UPS 3V3 left open so the FireBeetle regulates the 3.3 V rail")
+					(name "Description") "Waveshare UPS Module 3S 2x4 header; on the R6 power-only PCH pins 1-4 are no-connect and only GND (5/6) and 5V (7/8) are used")
 			)
 			(libsource
 				(lib "Connector_Generic")
@@ -205,61 +113,6 @@
 						)
 						(pin
 							(num "8")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J6")
-			(value "LID_I2C_BTN")
-			(footprint "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical")
-			(description "Lid harness: 1 SCL, 2 SDA, 3 3V3, 4 GND, 5 OLED button (GND-return contact)")
-			(fields
-				(field
-					(name "Footprint") "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "Lid harness: 1 SCL, 2 SDA, 3 3V3, 4 GND, 5 OLED button (GND-return contact)")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x05")
-				(description "")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b342010d-fc56-40ff-982c-32c5159844ca")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-						(pin
-							(num "5")
 						)
 					)
 				)
@@ -357,326 +210,6 @@
 				)
 			)
 		)
-		(comp
-			(ref "J9")
-			(value "FB18_ESP32-UE")
-			(footprint "Connector_PinSocket_2.54mm:PinSocket_1x18_P2.54mm_Vertical")
-			(description "FireBeetle 2 ESP32-UE 18-pin socket; OLED uses 17 3V3, 15 GND, 10 SCL, 9 SDA")
-			(fields
-				(field
-					(name "Footprint") "Connector_PinSocket_2.54mm:PinSocket_1x18_P2.54mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "FireBeetle 2 ESP32-UE 18-pin socket; OLED uses 17 3V3, 15 GND, 10 SCL, 9 SDA")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x18")
-				(description "FireBeetle 2 ESP32-UE 18-pin socket row")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b4000000-0000-4000-8000-000000000009")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-						(pin
-							(num "5")
-						)
-						(pin
-							(num "6")
-						)
-						(pin
-							(num "7")
-						)
-						(pin
-							(num "8")
-						)
-						(pin
-							(num "9")
-						)
-						(pin
-							(num "10")
-						)
-						(pin
-							(num "11")
-						)
-						(pin
-							(num "12")
-						)
-						(pin
-							(num "13")
-						)
-						(pin
-							(num "14")
-						)
-						(pin
-							(num "15")
-						)
-						(pin
-							(num "16")
-						)
-						(pin
-							(num "17")
-						)
-						(pin
-							(num "18")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J10")
-			(value "FB14_ESP32-UE")
-			(footprint "Connector_PinSocket_2.54mm:PinSocket_1x14_P2.54mm_Vertical")
-			(description "FireBeetle 2 ESP32-UE socket, 14-pin row: 1 VCC 5V, 2 3V3, 3 GND, 4 SCL, 5 SDA, 6 A4, 7 A3, 8 A2, 9 A1, 10 A0, 11 D13, 12 IO4, 13 GND, 14 D10")
-			(fields
-				(field
-					(name "Footprint") "Connector_PinSocket_2.54mm:PinSocket_1x14_P2.54mm_Vertical")
-				(field
-					(name "Datasheet")
-				)
-				(field
-					(name "Description") "FireBeetle 2 ESP32-UE socket, 14-pin row: 1 VCC 5V, 2 3V3, 3 GND, 4 SCL, 5 SDA, 6 A4, 7 A3, 8 A2, 9 A1, 10 A0, 11 D13, 12 IO4, 13 GND, 14 D10")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x14")
-				(description "FireBeetle 2 ESP32-UE 14-pin socket row")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b1000000-0000-4000-8000-000000000001")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-						(pin
-							(num "5")
-						)
-						(pin
-							(num "6")
-						)
-						(pin
-							(num "7")
-						)
-						(pin
-							(num "8")
-						)
-						(pin
-							(num "9")
-						)
-						(pin
-							(num "10")
-						)
-						(pin
-							(num "11")
-						)
-						(pin
-							(num "12")
-						)
-						(pin
-							(num "13")
-						)
-						(pin
-							(num "14")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "J11")
-			(value "OLED_3V3_I2C")
-			(footprint "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical")
-			(datasheet "https://www.jst-mfg.com/product/pdf/eng/eXH.pdf")
-			(description "OLED JST-XH: 1 3V3 red, 2 GND black, 3 SCL white, 4 SDA green; tested at J9.17/15/10/9")
-			(fields
-				(field
-					(name "Footprint") "Connector_JST:JST_XH_B4B-XH-A_1x04_P2.50mm_Vertical")
-				(field
-					(name "Datasheet") "https://www.jst-mfg.com/product/pdf/eng/eXH.pdf")
-				(field
-					(name "Description") "OLED JST-XH: 1 3V3 red, 2 GND black, 3 SCL white, 4 SDA green; tested at J9.17/15/10/9")
-			)
-			(libsource
-				(lib "Connector_Generic")
-				(part "Conn_01x04")
-				(description "")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b4000000-0000-4000-8000-000000000011")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-						(pin
-							(num "3")
-						)
-						(pin
-							(num "4")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "R2")
-			(value "47k")
-			(footprint "Resistor_SMD:R_0603_1608Metric")
-			(datasheet "~")
-			(description "Charge-sense divider upper leg, 1 % 0.25 W")
-			(fields
-				(field
-					(name "Footprint") "Resistor_SMD:R_0603_1608Metric")
-				(field
-					(name "Datasheet") "~")
-				(field
-					(name "Description") "Charge-sense divider upper leg, 1 % 0.25 W")
-			)
-			(libsource
-				(lib "Device")
-				(part "R")
-				(description "")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b1000000-0000-4000-8000-000000000002")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
-		(comp
-			(ref "R3")
-			(value "10k")
-			(footprint "Resistor_SMD:R_0603_1608Metric")
-			(datasheet "~")
-			(description "Charge-sense divider lower leg, 1 % 0.25 W")
-			(fields
-				(field
-					(name "Footprint") "Resistor_SMD:R_0603_1608Metric")
-				(field
-					(name "Datasheet") "~")
-				(field
-					(name "Description") "Charge-sense divider lower leg, 1 % 0.25 W")
-			)
-			(libsource
-				(lib "Device")
-				(part "R")
-				(description "")
-			)
-			(property
-				(name "Sheetname")
-				(value "PCH")
-			)
-			(property
-				(name "Sheetfile")
-				(value "PCH.kicad_sch")
-			)
-			(sheetpath
-				(names "/")
-				(tstamps "/")
-			)
-			(tstamps "b1000000-0000-4000-8000-000000000003")
-			(units
-				(unit
-					(name "A")
-					(pins
-						(pin
-							(num "1")
-						)
-						(pin
-							(num "2")
-						)
-					)
-				)
-			)
-		)
 	)
 	(groups)
 	(variants)
@@ -708,295 +241,6 @@
 				(pin
 					(num "2")
 					(name "Pin_2")
-					(type "passive")
-				)
-			)
-		)
-		(libpart
-			(lib "Connector_Generic")
-			(part "Conn_01x04")
-			(docs "~")
-			(fields
-				(field
-					(name "Reference") "J")
-				(field
-					(name "Value") "Conn_01x04")
-				(field
-					(name "Footprint")
-				)
-				(field
-					(name "Datasheet") "~")
-				(field
-					(name "Description")
-				)
-			)
-			(pins
-				(pin
-					(num "1")
-					(name "Pin_1")
-					(type "passive")
-				)
-				(pin
-					(num "2")
-					(name "Pin_2")
-					(type "passive")
-				)
-				(pin
-					(num "3")
-					(name "Pin_3")
-					(type "passive")
-				)
-				(pin
-					(num "4")
-					(name "Pin_4")
-					(type "passive")
-				)
-			)
-		)
-		(libpart
-			(lib "Connector_Generic")
-			(part "Conn_01x05")
-			(docs "~")
-			(fields
-				(field
-					(name "Reference") "J")
-				(field
-					(name "Value") "Conn_01x05")
-				(field
-					(name "Footprint")
-				)
-				(field
-					(name "Datasheet") "~")
-				(field
-					(name "Description")
-				)
-			)
-			(pins
-				(pin
-					(num "1")
-					(name "Pin_1")
-					(type "passive")
-				)
-				(pin
-					(num "2")
-					(name "Pin_2")
-					(type "passive")
-				)
-				(pin
-					(num "3")
-					(name "Pin_3")
-					(type "passive")
-				)
-				(pin
-					(num "4")
-					(name "Pin_4")
-					(type "passive")
-				)
-				(pin
-					(num "5")
-					(name "Pin_5")
-					(type "passive")
-				)
-			)
-		)
-		(libpart
-			(lib "Connector_Generic")
-			(part "Conn_01x14")
-			(description "FireBeetle 2 ESP32-UE 14-pin socket row")
-			(docs "~")
-			(fields
-				(field
-					(name "Reference") "J")
-				(field
-					(name "Value") "Conn_01x14")
-				(field
-					(name "Footprint")
-				)
-				(field
-					(name "Datasheet") "~")
-				(field
-					(name "Description") "FireBeetle 2 ESP32-UE 14-pin socket row")
-			)
-			(pins
-				(pin
-					(num "1")
-					(name "Pin_1")
-					(type "passive")
-				)
-				(pin
-					(num "2")
-					(name "Pin_2")
-					(type "passive")
-				)
-				(pin
-					(num "3")
-					(name "Pin_3")
-					(type "passive")
-				)
-				(pin
-					(num "4")
-					(name "Pin_4")
-					(type "passive")
-				)
-				(pin
-					(num "5")
-					(name "Pin_5")
-					(type "passive")
-				)
-				(pin
-					(num "6")
-					(name "Pin_6")
-					(type "passive")
-				)
-				(pin
-					(num "7")
-					(name "Pin_7")
-					(type "passive")
-				)
-				(pin
-					(num "8")
-					(name "Pin_8")
-					(type "passive")
-				)
-				(pin
-					(num "9")
-					(name "Pin_9")
-					(type "passive")
-				)
-				(pin
-					(num "10")
-					(name "Pin_10")
-					(type "passive")
-				)
-				(pin
-					(num "11")
-					(name "Pin_11")
-					(type "passive")
-				)
-				(pin
-					(num "12")
-					(name "Pin_12")
-					(type "passive")
-				)
-				(pin
-					(num "13")
-					(name "Pin_13")
-					(type "passive")
-				)
-				(pin
-					(num "14")
-					(name "Pin_14")
-					(type "passive")
-				)
-			)
-		)
-		(libpart
-			(lib "Connector_Generic")
-			(part "Conn_01x18")
-			(description "FireBeetle 2 ESP32-UE 18-pin socket row")
-			(docs "~")
-			(fields
-				(field
-					(name "Reference") "J")
-				(field
-					(name "Value") "Conn_01x18")
-				(field
-					(name "Footprint")
-				)
-				(field
-					(name "Datasheet") "~")
-				(field
-					(name "Description") "FireBeetle 2 ESP32-UE 18-pin socket row")
-			)
-			(pins
-				(pin
-					(num "1")
-					(name "Pin_1")
-					(type "passive")
-				)
-				(pin
-					(num "2")
-					(name "Pin_2")
-					(type "passive")
-				)
-				(pin
-					(num "3")
-					(name "Pin_3")
-					(type "passive")
-				)
-				(pin
-					(num "4")
-					(name "Pin_4")
-					(type "passive")
-				)
-				(pin
-					(num "5")
-					(name "Pin_5")
-					(type "passive")
-				)
-				(pin
-					(num "6")
-					(name "Pin_6")
-					(type "passive")
-				)
-				(pin
-					(num "7")
-					(name "Pin_7")
-					(type "passive")
-				)
-				(pin
-					(num "8")
-					(name "Pin_8")
-					(type "passive")
-				)
-				(pin
-					(num "9")
-					(name "Pin_9")
-					(type "passive")
-				)
-				(pin
-					(num "10")
-					(name "Pin_10")
-					(type "passive")
-				)
-				(pin
-					(num "11")
-					(name "Pin_11")
-					(type "passive")
-				)
-				(pin
-					(num "12")
-					(name "Pin_12")
-					(type "passive")
-				)
-				(pin
-					(num "13")
-					(name "Pin_13")
-					(type "passive")
-				)
-				(pin
-					(num "14")
-					(name "Pin_14")
-					(type "passive")
-				)
-				(pin
-					(num "15")
-					(name "Pin_15")
-					(type "passive")
-				)
-				(pin
-					(num "16")
-					(name "Pin_16")
-					(type "passive")
-				)
-				(pin
-					(num "17")
-					(name "Pin_17")
-					(type "passive")
-				)
-				(pin
-					(num "18")
-					(name "Pin_18")
 					(type "passive")
 				)
 			)
@@ -1062,113 +306,18 @@
 				)
 			)
 		)
-		(libpart
-			(lib "Device")
-			(part "C")
-			(description "Unpolarized capacitor")
-			(docs "~")
-			(fields
-				(field
-					(name "Reference") "C")
-				(field
-					(name "Value") "C")
-				(field
-					(name "Footprint")
-				)
-				(field
-					(name "Datasheet") "~")
-				(field
-					(name "Description") "Unpolarized capacitor")
-			)
-			(pins
-				(pin
-					(num "1")
-					(name "")
-					(type "passive")
-				)
-				(pin
-					(num "2")
-					(name "")
-					(type "passive")
-				)
-			)
-		)
-		(libpart
-			(lib "Device")
-			(part "R")
-			(docs "~")
-			(fields
-				(field
-					(name "Reference") "R")
-				(field
-					(name "Value") "R")
-				(field
-					(name "Footprint")
-				)
-				(field
-					(name "Datasheet") "~")
-				(field
-					(name "Description")
-				)
-			)
-			(pins
-				(pin
-					(num "1")
-					(name "~")
-					(type "passive")
-				)
-				(pin
-					(num "2")
-					(name "~")
-					(type "passive")
-				)
-			)
-		)
 	)
 	(libraries
 		(library
 			(logical "Connector_Generic")
 			(uri "${KICAD10_SYMBOL_DIR}/Connector_Generic.kicad_sym")
 		)
-		(library
-			(logical "Device")
-			(uri "${KICAD10_SYMBOL_DIR}/Device.kicad_sym")
-		)
 	)
 	(nets
 		(net
 			(code "1")
-			(name "/+3V3")
-			(class "Default")
-			(node
-				(ref "J11")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-			(node
-				(ref "J6")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive")
-			)
-			(node
-				(ref "J9")
-				(pin "17")
-				(pinfunction "Pin_17_17")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "2")
 			(name "/+5V")
 			(class "Default")
-			(node
-				(ref "J10")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
 			(node
 				(ref "J5")
 				(pin "7")
@@ -1183,7 +332,7 @@
 			)
 		)
 		(net
-			(code "3")
+			(code "2")
 			(name "/BAT_12V6_OUT")
 			(class "Default")
 			(node
@@ -1200,83 +349,9 @@
 			)
 		)
 		(net
-			(code "4")
-			(name "/CHG_12V6_IN")
-			(class "Default")
-			(node
-				(ref "J1")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-			(node
-				(ref "R2")
-				(pin "1")
-				(pinfunction "~_1")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "5")
-			(name "/CHG_SENSE")
-			(class "Default")
-			(node
-				(ref "C1")
-				(pin "1")
-				(pintype "passive")
-			)
-			(node
-				(ref "J10")
-				(pin "10")
-				(pinfunction "Pin_10_10")
-				(pintype "passive")
-			)
-			(node
-				(ref "R2")
-				(pin "2")
-				(pinfunction "~_2")
-				(pintype "passive")
-			)
-			(node
-				(ref "R3")
-				(pin "1")
-				(pinfunction "~_1")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "6")
+			(code "3")
 			(name "/GND")
 			(class "Default")
-			(node
-				(ref "C1")
-				(pin "2")
-				(pintype "passive")
-			)
-			(node
-				(ref "J1")
-				(pin "2")
-				(pinfunction "Pin_2_2")
-				(pintype "passive")
-			)
-			(node
-				(ref "J10")
-				(pin "13")
-				(pinfunction "Pin_13_13")
-				(pintype "passive")
-			)
-			(node
-				(ref "J10")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive")
-			)
-			(node
-				(ref "J11")
-				(pin "2")
-				(pinfunction "Pin_2_2")
-				(pintype "passive")
-			)
 			(node
 				(ref "J5")
 				(pin "5")
@@ -1287,12 +362,6 @@
 				(ref "J5")
 				(pin "6")
 				(pinfunction "Pin_6_6")
-				(pintype "passive")
-			)
-			(node
-				(ref "J6")
-				(pin "4")
-				(pinfunction "Pin_4_4")
 				(pintype "passive")
 			)
 			(node
@@ -1307,108 +376,31 @@
 				(pinfunction "Pin_2_2")
 				(pintype "passive")
 			)
-			(node
-				(ref "J9")
-				(pin "15")
-				(pinfunction "Pin_15_15")
-				(pintype "passive")
-			)
-			(node
-				(ref "R3")
-				(pin "2")
-				(pinfunction "~_2")
-				(pintype "passive")
-			)
 		)
 		(net
-			(code "7")
-			(name "/I2C_SCL")
+			(code "4")
+			(name "unconnected-(J5-Pin_1-Pad1)")
 			(class "Default")
-			(node
-				(ref "J10")
-				(pin "4")
-				(pinfunction "Pin_4_4")
-				(pintype "passive")
-			)
-			(node
-				(ref "J11")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive")
-			)
 			(node
 				(ref "J5")
 				(pin "1")
 				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-			(node
-				(ref "J6")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive")
-			)
-			(node
-				(ref "J9")
-				(pin "10")
-				(pinfunction "Pin_10_10")
-				(pintype "passive")
+				(pintype "passive+no_connect")
 			)
 		)
 		(net
-			(code "8")
-			(name "/I2C_SDA")
+			(code "5")
+			(name "unconnected-(J5-Pin_2-Pad2)")
 			(class "Default")
-			(node
-				(ref "J10")
-				(pin "5")
-				(pinfunction "Pin_5_5")
-				(pintype "passive")
-			)
-			(node
-				(ref "J11")
-				(pin "4")
-				(pinfunction "Pin_4_4")
-				(pintype "passive")
-			)
 			(node
 				(ref "J5")
 				(pin "2")
 				(pinfunction "Pin_2_2")
-				(pintype "passive")
-			)
-			(node
-				(ref "J6")
-				(pin "2")
-				(pinfunction "Pin_2_2")
-				(pintype "passive")
-			)
-			(node
-				(ref "J9")
-				(pin "9")
-				(pinfunction "Pin_9_9")
-				(pintype "passive")
+				(pintype "passive+no_connect")
 			)
 		)
 		(net
-			(code "9")
-			(name "/OLED_BTN")
-			(class "Default")
-			(node
-				(ref "J10")
-				(pin "12")
-				(pinfunction "Pin_12_12")
-				(pintype "passive")
-			)
-			(node
-				(ref "J6")
-				(pin "5")
-				(pinfunction "Pin_5_5")
-				(pintype "passive")
-			)
-		)
-		(net
-			(code "10")
+			(code "6")
 			(name "unconnected-(J5-Pin_3-Pad3)")
 			(class "Default")
 			(node
@@ -1419,244 +411,13 @@
 			)
 		)
 		(net
-			(code "11")
+			(code "7")
 			(name "unconnected-(J5-Pin_4-Pad4)")
 			(class "Default")
 			(node
 				(ref "J5")
 				(pin "4")
 				(pinfunction "Pin_4_4")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "12")
-			(name "unconnected-(J9-Pin_1-Pad1)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "1")
-				(pinfunction "Pin_1_1")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "13")
-			(name "unconnected-(J9-Pin_2-Pad2)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "2")
-				(pinfunction "Pin_2_2")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "14")
-			(name "unconnected-(J9-Pin_3-Pad3)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "3")
-				(pinfunction "Pin_3_3")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "15")
-			(name "unconnected-(J9-Pin_4-Pad4)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "4")
-				(pinfunction "Pin_4_4")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "16")
-			(name "unconnected-(J9-Pin_5-Pad5)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "5")
-				(pinfunction "Pin_5_5")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "17")
-			(name "unconnected-(J9-Pin_6-Pad6)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "6")
-				(pinfunction "Pin_6_6")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "18")
-			(name "unconnected-(J9-Pin_7-Pad7)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "7")
-				(pinfunction "Pin_7_7")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "19")
-			(name "unconnected-(J9-Pin_8-Pad8)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "8")
-				(pinfunction "Pin_8_8")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "20")
-			(name "unconnected-(J9-Pin_11-Pad11)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "11")
-				(pinfunction "Pin_11_11")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "21")
-			(name "unconnected-(J9-Pin_12-Pad12)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "12")
-				(pinfunction "Pin_12_12")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "22")
-			(name "unconnected-(J9-Pin_13-Pad13)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "13")
-				(pinfunction "Pin_13_13")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "23")
-			(name "unconnected-(J9-Pin_14-Pad14)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "14")
-				(pinfunction "Pin_14_14")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "24")
-			(name "unconnected-(J9-Pin_16-Pad16)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "16")
-				(pinfunction "Pin_16_16")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "25")
-			(name "unconnected-(J9-Pin_18-Pad18)")
-			(class "Default")
-			(node
-				(ref "J9")
-				(pin "18")
-				(pinfunction "Pin_18_18")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "26")
-			(name "unconnected-(J10-Pin_2-Pad2)")
-			(class "Default")
-			(node
-				(ref "J10")
-				(pin "2")
-				(pinfunction "Pin_2_2")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "27")
-			(name "unconnected-(J10-Pin_6-Pad6)")
-			(class "Default")
-			(node
-				(ref "J10")
-				(pin "6")
-				(pinfunction "Pin_6_6")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "28")
-			(name "unconnected-(J10-Pin_7-Pad7)")
-			(class "Default")
-			(node
-				(ref "J10")
-				(pin "7")
-				(pinfunction "Pin_7_7")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "29")
-			(name "unconnected-(J10-Pin_8-Pad8)")
-			(class "Default")
-			(node
-				(ref "J10")
-				(pin "8")
-				(pinfunction "Pin_8_8")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "30")
-			(name "unconnected-(J10-Pin_9-Pad9)")
-			(class "Default")
-			(node
-				(ref "J10")
-				(pin "9")
-				(pinfunction "Pin_9_9")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "31")
-			(name "unconnected-(J10-Pin_11-Pad11)")
-			(class "Default")
-			(node
-				(ref "J10")
-				(pin "11")
-				(pinfunction "Pin_11_11")
-				(pintype "passive+no_connect")
-			)
-		)
-		(net
-			(code "32")
-			(name "unconnected-(J10-Pin_14-Pad14)")
-			(class "Default")
-			(node
-				(ref "J10")
-				(pin "14")
-				(pinfunction "Pin_14_14")
 				(pintype "passive+no_connect")
 			)
 		)
