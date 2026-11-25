@@ -35,9 +35,9 @@ PACK_WH_35 = 3 * 3.7 * 3.5  # 3.5 Ah cells = 38.9 Wh
 # ---------------- Ktemata R6, at the 5 V rail ----------------
 # Pi 5 4 GB: 3.0 W headless idle, 8.8 W all-core (raspberry.tips measurements, Oct 2026);
 # Waveshare 7inch DSI LCD (C): 5 V / 0.5 A = 2.5 W with backlight; SN740 NVMe: 0.5 W idle /
-# 4.7 W max; FireBeetle 2 + OLED ~0.2 W. The 7-inch panel is ~1.1 W above R5's 5-inch panel.
+# 4.7 W max. The 7-inch panel is ~1.1 W above R5's 5-inch panel.
 K = {
-    "screen off, Pi up":  (4.0, "Pi 3.0 + NVMe 0.5 + panel logic 0.3 + ESP32 0.2"),
+    "screen off, Pi up":  (4.0, "Pi 3.0 + NVMe 0.5 + panel logic 0.3 + 0.2 W margin"),
     "idle, screen on":    (6.2, "as above + 2.5 W 7-inch backlight"),
     "reading / Kiwix":    (7.6, "idle + touch and page turns"),
     "browsing + maps":    (9.8, "Chromium, one tab set"),

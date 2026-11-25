@@ -1,7 +1,5 @@
 # Development Python dependencies (includes everything from packages.txt).
 #
-#   platformio   build/flash the status-OLED firmware in firmware/ (pio run, pio device monitor)
-#   intelhex     runtime import used by PlatformIO's bundled esptool
 #   ruff         lint/format the Python helpers
 #
 # Install:
@@ -9,7 +7,5 @@
 
 -r packages.txt
 
-platformio>=6.1
-intelhex>=2.3
 ruff>=0.6
 nautiluszim==1.2.1
