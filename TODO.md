@@ -8,3 +8,4 @@
 - [ ] Add a Raspberry Pi Case Fan.
 - [ ] Add a Raspberry Pi Active Cooler.
 - [ ] Add fan control based on CPU temperature.
+- [ ] Add a temperature sensor for the case interior.
