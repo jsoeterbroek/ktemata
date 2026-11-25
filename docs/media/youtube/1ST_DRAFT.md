@@ -1,4 +1,5 @@
 # 1st draft
+- create video script
 - about 10/12 minutes long
 - no music
 - use photo's and video's of a assembly and final result
