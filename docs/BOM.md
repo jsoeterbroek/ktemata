@@ -29,22 +29,11 @@ Design notes: [`R6.md`](R6.md).
 | 10 | microSDHC 32 GB (A1/V30) | 1 | Boot card. Too small for the library; that stays on the NVMe. | € 13 |
 | 11 | Raspberry Pi 5 27 W USB-C supply | 1 | Bench power for the Pi alone. It **cannot charge the R6 UPS Module 3S** and must not be connected simultaneously with the UPS Pi-power lead. | € 12 |
 | 12 | Panasonic ML-2020, JST plug | 1 | Pi 5 clock backup on J5. Enable with `dtparam=rtc_bbat_vchg=3000000`. | € 5.43 |
-| 13 | Adafruit DS3231 RTC breakout | 1 | FireBeetle clock at 0x68, keeps time with the Pi off. **CR1220 not included.** | € 19.35 |
-| 14 | CR1220 coin cell | 1 | DS3231 backup; without it the OLED clock resets on power loss. | € 2.77 |
-| 15 | DFRobot FireBeetle 2 ESP32-UE (DFR1140) | 1 | ESP32-WROOM-32UE-N16R2, 16 MB flash, 2 MB PSRAM, 25.4 × 60 mm, all radios off. | € 10 |
-| 16 | 1.3" 128 × 64 I²C OLED, 4-pin | 1 | SH1106 default / SSD1306 option, 35 × 34 mm module. | € 5 |
-| 17 | **PBS-33B 12 mm momentary NO button** (TinyTronics 001543) + 12 mm rubber boot | 1 + 1 | Cycles the OLED screens / wakes it (`PIN_BUTTON` GPIO4 → GND). M12×0.75, **thread 6 mm, panel max 3.0 mm**, so the 4.5 mm deck gets a **16 × 2 mm spot face** on the underside at the OLED button (leaves 2.5 mm); cap Ø18, to the right of the OLED and centred on it. The spot face must be wider than your nut — measure it before printing. The boot seals it. | € 0.65 + € 3 |
-| 18 | STEMMA QT / Qwiic JST-SH 4-pin cable, 200 mm | 2 | I²C chain: DS3231, OLED (FireBeetle side uses the header cable below). | € 1.44 ea |
-| 19 | STEMMA QT / Qwiic → male headers, 150 mm | 1 | FireBeetle header → Qw/ST bus. | € 1.15 |
-| 20 | Dupont jumpers, female–female, 20 cm | 1 set | R6 UPS INA219 I²C (**0x41**) + auxiliary 5 V to the FireBeetle. The Module 3S gauge has a 0.1 Ω shunt; firmware calibration must change with it. | € 5 |
-| 20a | Resistors **47k** and **10k** (1 %, 0.25 W) + **100 nF** ceramic | 1 + 1 + 1 | R6 charge-input sense divider on the UPS Module 3S input → `A0` (ADC1). **12.6 V → 2.21 V**, 221 µA; leaves ADC margin. Soldered inline; the circuit is on the `/Power` sheet of the [`R6 KiCad project`](../cad/kicad/r6/ktemata.kicad_pro). | € 0.30 |
-| 21 | USB-A → USB-C **data** cable, 20–30 cm | 1 | FireBeetle ↔ Pi serial. Any data cable; its +5 V wire is fed through 21a, not straight from the Pi. | € 5 |
-| 21a | **1N5819 Schottky diode**, in the cable's +5 V wire at the Pi end | 1 | **An open-circuit power blocker does not work here.** The DFR1140 powers its CH340K from USB VBUS (U4 VCC = VUSB), so with VBUS cut the Pi sees no serial device. The diode keeps the CH340 alive at ≈4.7 V while the FireBeetle's VCC stays on the UPS 5 V, so with the UPS on the board's D2 stays reverse-biased and the Pi cannot backfeed the UPS. Band toward the FireBeetle; splice it into the VBUS wire (normally red) or build a 5 cm A-male → A-female adapter. The PortaPow USB Power Blocker (5 V open) is **not usable** for this link. | € 0.20 |
-| 22 | 2-pin auxiliary 5 V lead (JST-XH / Dupont, as fitted) | 1 | R6 UPS Module 3S auxiliary 5 V output → FireBeetle; keeps the status system alive with the Pi off. The Module 3S has no USB-A output; use its header and supplied harness where compatible. | € 5 |
+| 20 | Dupont jumpers, female–female, 20 cm | 1 set | R6 UPS INA219 I²C (**0x41**) to the Pi. The Module 3S gauge has a 0.1 Ω shunt; the software reads it directly. | € 5 |
 | 23 | [M3 × 10 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/bzk-inbus-verzonkenkopschroef-staal-din-7991-m3x10.html) | **7** | DIN 7991 / ISO 10642; **dk 6.0 mm, k 1.7 mm, 2.0 mm hex**. Seven deck screws into the heat-set inserts; the full-face deck needs **4 × M3 × 20** countersunk into the tray's Ø2.6 pilots (13.5 mm deck + 6.5 mm engagement), and the panel screws through the deck's 3 mm floor are **4 × M3 × 6–8**. Sold in packs of 25. | € 2.60 / 25 |
 | 23a | [M3 × 6 **countersunk hex screws**, steel](https://www.kingmicroschroeven.nl/inbus-torx-schroeven/inbusbout-met-verzonken-kop-staal/inbusbout-verzonkenkop-m3/) | **4** | Same DIN 7991 head and 2.0 mm hex. For the 4 mm lid cover **or** alternate plate into the display's rear inserts; gives ≈1.04 mm engagement. **Do not substitute M3 × 8**, which can bottom out. Sold in packs of 25. | € 2.45 / 25 |
 | 23b | **Waveshare XH2.54 self-lock output button**, red/black, 15 cm | 1 | Supplied with the UPS Module 3S (item 4). Plugs directly into the UPS switch port; no PCH connection or LED. Shut the Pi down in software before switching off. | Included |
-| 23c | **XH2.54 → DC5521 female charge lead**, 15 cm | 1 | Supplied with the UPS Module 3S (item 4). The 12.6 V / 2 A source plugs directly into the UPS through this lead. PCH J1 is only a high-impedance charge-sense tap, not a charge-current path. | Included |
+| 23c | **XH2.54 → DC5521 female charge lead**, 15 cm | 1 | Supplied with the UPS Module 3S (item 4). The 12.6 V / 2 A source plugs directly into the UPS through this lead. | Included |
 | 24 | Filament, PETG/PLA + TPU | ≈ 500 g | The R6 cassette; the TPU is only for the charge plug. | € 15 + € 20 |
 | 25 | Peli 1200 hard case (a 1400 is also accepted) | 1 | 236.5 × 181.1 × 30.2 mm base + 74.4 mm lid interior. See [`R6.md`](R6.md). | € 100–145 |
 | 26 | **Prototyping board**, 2.54 mm (breadboard or perfboard) | 1 | R6 system build and test, wired with the Dupont jumpers (20); the custom PCH is the cassette carrier. | € 5 |
@@ -102,7 +91,7 @@ Price the R6 total after the parts are selected and bench-verified.
    be fitted with the UPS board and its pogo pins. Do not buy it.
 5. **Storage and clocks.** The NVMe Base Duo + drives and the ML-2020 are the storage side. One 512 GB
    drive holds the OS, Wikipedia, the maps and the small references, **not** the whole 833 GiB library —
-   the second slot is what closes that gap (note 7). The DS3231 still needs its CR1220.
+   the second slot is what closes that gap (note 7). 
 6. **The UPS Module 3S is offered with a 12.6 V / 2 A supply.** Use that supply or a verified 3S regulator;
    an 8.4 V adapter is incompatible. The panel-mount charge hardware stays inside the cassette so the
    bought Peli needs no hole. A 5 V USB-C charger cannot charge the 3S pack, and the Pi's bench USB-C supply
@@ -124,18 +113,12 @@ Price the R6 total after the parts are selected and bench-verified.
 
 ## C. PCH board
 
-Carrier board for the R6 power/communication hub — project [`cad/kicad/r6/PCH/PCH.kicad_pro`](../cad/kicad/r6/PCH/PCH.kicad_pro).
+Carrier board for the R6 power/charge hub — project [`cad/kicad/r6/PCH/PCH.kicad_pro`](../cad/kicad/r6/PCH/PCH.kicad_pro).
 Parts from `PCH.csv`; the board is fabricated from `PCH/gerbers/`. Connectors and passives are not yet priced.
 
 | Ref | Value | Qty | Part |
 |---|---|---|---|
-| J1 | CHG_SENSE_IN | 1 | JST XH **B2B-XH-A** 2-pin header |
 | J5 | UPS3S_HDR_2X4 | 1 | 2.54 mm 2×4 pin header |
-| J6 | LID_I2C_BTN | 1 | 2.54 mm 1×5 pin header |
 | J7 | UPS_12V6_IN | 1 | JST XH **B2B-XH-A** 2-pin header |
 | J8 | AUX_12V6_OUT | 1 | JST XH **B2B-XH-A** 2-pin header |
-| J9 | FB18_ESP32-UE | 1 | 2.54 mm 1×18 socket |
-| J10 | FB14_ESP32-UE | 1 | 2.54 mm 1×14 socket |
-| J11 | OLED_3V3_I2C | 1 | JST XH **B4B-XH-A** 4-pin header |
-| R2 / R3 / C1 | 47k / 10k / 100 nF | 1 each | 0603 resistors and capacitor |
 | — | **PCH PCB** | 5 | 63 × 66 mm, 2-layer, 1.6 mm; fabricate from `PCH/gerbers/` |

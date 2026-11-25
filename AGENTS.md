@@ -8,11 +8,11 @@ Be direct, ultra-concise, and straight to the point. Skip all pleasantries, intr
 
 ## What this is
 
-Parametric OpenSCAD case for the **Ktemata** handheld: a rugged offline library device — Wikipedia, maps, Gutenberg — that keeps its content when power and networking are gone. The name is Greek κτήματα, "possessions". 
+Parametric OpenSCAD case for the **Ktemata** handheld: a rugged offline library device — Wikipedia, maps, Gutenberg — that keeps its content when power and networking are gone. The name is Greek κτήματα, "possessions".
 
 **R6 is the default build.** Two variants:
 - **R6**: perfboard variant with DC5521 charge management
-- **R6 PCH**: custom carrier board with FireBeetle 2 integration
+- **R6 PCH**: custom power/charge carrier board
 
 Both keep Wikipedia, maps and Gutenberg when power and networking are gone. Github repository history tracks both variants.
 
@@ -21,10 +21,11 @@ Both keep Wikipedia, maps and Gutenberg when power and networking are gone. Gith
 ### Target Platforms
 
 - **Host Case**: Peli 1200 (rugged, IP67-rated)
-- **Microcontroller**: FireBeetle 2 ESP32-UE (N16R2) with 16 MB flash, 2 MB PSRAM
-- **Display**: Waveshare 7" DSI LCD
+- **Computer**: Raspberry Pi 5 (4 GB)
+- **Display**: Waveshare 7" DSI LCD (C)
 - **Keyboard**: Rii K06 Touch Keyboard
 - **Storage**: NVMe SSD
+- **Power**: Waveshare UPS Module 3S with three 18650 cells in 3S
 
 ### Build Strategy
 
@@ -34,30 +35,19 @@ Git repository tracks both variants. Earlier revisions are historical and availa
 
 **KISS principle**. Hardware, design and build stay simple.
 
-- Core: FireBeetle 2 ESP32-UE, 7" Touch Display, K06 keyboard, NVMe SSD
+- Core: Pi 5, 7" DSI display, K06 keyboard, NVMe SSD, UPS Module 3S
 - R6 variant uses simple perfboard for cost-effectiveness and rapid iteration
-- R6 PCH variant provides socketed FireBeetle integration with I²C routing
-- Charging managed by DC5521 (R6) or integrated on PCH carrier board
+- R6 PCH variant provides a power/charge carrier
+- Charging managed by DC5521 (R6) or the PCH carrier
 - Everything else is complexity. A nice-to-have is a point of failure.
 
 ## Tools
 
 For development phase use:
 
-- **Freecad**: Primary CAD tool
+- **FreeCAD / OpenSCAD**: CAD tools
 - **Python 3**: Export scripts and automation
-- **PlatformIO** (`.venv`): ESP32 firmware development
 - **kicad-cli**: Schematic and board manipulation
-- **esp32-toolchain**: Bootloader and flashing
-
-### Firmware Development
-
-For ESP32 components:
-
-```bash
-source .venv/bin/activate
-pio run build flash
-```
 
 ## Commands
 
@@ -67,9 +57,9 @@ python3 cad/tools/export.py --variant R6_PERFBOARD
 python3 cad/tools/export.py --variant R6_PCH
 
 # Export specific parts
-python3 cad/tools/export.py r6_lid_plate        # keyboard/OLED lid prototype
+python3 cad/tools/export.py r6_lid_plate        # keyboard lid prototype
 python3 cad/tools/export.py r6_tray             # cassette tray with UPS 3S
-python3 cad/tools/export.py r6_deck              # full-face deck with panel
+python3 cad/tools/export.py r6_deck             # full-face deck with panel
 
 # Render and validate
 openscad -o out.png --render --imgsize=1400,1100 cad/assembly.scad
@@ -91,9 +81,9 @@ Each part file models itself in assembly position with pattern: `difference() { 
 
 ### KiCad Integration
 
-- `cad/kicad/R6_PERFBOARD/` contains the perfboard variant project
-- `cad/kicad/R6_PCH/` contains the custom carrier board project
-- Each is a self-contained KiCad 10 project — `ktemata.kicad_pro` with indexed and sheet files
+- `cad/kicad/r6/` contains the current R6 KiCad project
+- `cad/kicad/r6/PCH/` contains the power/charge carrier project
+- Each is a self-contained KiCad project — `ktemata.kicad_pro` with indexed and sheet files
 - One connector-shaped `Ktemata:` symbol per module. Global labels carry names across sheets.
 
 ### Tooling Usage
@@ -105,11 +95,9 @@ Each part file models itself in assembly position with pattern: `difference() { 
 
 ## KISS Principles Applied
 
-Hardware, design and build stay simple.
-
-- FireBeetle 2 is the MCU — no Pi or extra add-ons on the status side
+- The Pi 5 is the only computer; there is no separate status MCU
 - Charging managed cleanly by DC5521 or PCH without parallel sources
-- I²C routing dedicated to OLED and peripherals
+- I²C carries the UPS gauge
 - Both variants share the same rugged case envelope
 - Neither variant adds unnecessary radios, sensors, or network stacks
 
@@ -120,5 +108,3 @@ Commit before large changes. `git push` to repository history preserves both R6 
 ## Audible ping
 
 When a task is done, notify with an audible ping (afplay /System/Library/Sounds/Submarine.aiff -v 24)
-
-

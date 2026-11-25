@@ -1,7 +1,7 @@
 # Power budget — Ktemata R6 vs Project NOMAD, all running 24/7, no AI
 
 R6 is the current build: Raspberry Pi 5 (4 GB), Waveshare **7inch DSI LCD (C)**, NVMe Base Duo,
-Rii K06, FireBeetle/OLED status system, and a **Waveshare UPS Module 3S with three 18650 cells in
+Rii K06, and a **Waveshare UPS Module 3S with three 18650 cells in
 3S**. R5 (Pi 5, 5-inch Touch Display 2, UPS HAT (B) with 2×18650) is historical; this page is
 recalculated for the 3S pack and larger display.
 
@@ -43,11 +43,9 @@ Component draws, from measurements where measurements exist:
 | Pi 5 (4 GB) | 3.0 W headless; 3.6 W with Ethernet + USB + HDMI | 8.8 W all-core; up to 16 W with USB-SSD + 4K | [raspberry.tips Pi 5 measurements, Oct 2026](https://raspberry.tips/en/raspberrypi-tutorials/raspberry-pi-power-consumption-update-2026-all-models-compared) |
 | Waveshare 7inch DSI LCD (C) | 2.5 W (5 V / 0.5 A) with backlight | 2.5 W | Waveshare specification; ~1.1 W above R5's 5-inch panel |
 | NVMe, WD SN740 | ~0.5 W | 4.7 W max | drive datasheet; Pi 5 NVMe figures |
-| FireBeetle 2 + 1.3" OLED, radios off | ~0.2 W | ~0.2 W | ESP32 ~40–50 mA at 3.3 V + OLED, estimate |
 | UPS Module 3S, 3S → 5 V | — | η ≈ 0.88 **assumed** | not measured on this build |
 
-The R6 idle-screen-on figure is therefore **6.2 W** (Pi 3.0 + 7-inch panel 2.5 + NVMe 0.5 +
-FireBeetle 0.2), and heavy load is **13.6 W** (Pi load + 7-inch panel). R6's flat-open case has
+The R6 idle-screen-on figure is therefore **6.2 W** (Pi 3.0 + 7-inch panel 2.5 + NVMe 0.5 + 0.2 W margin), and heavy load is **13.6 W** (Pi load + 7-inch panel). R6's flat-open case has
 more airflow than R5's sealed host; the Pi still thermal-limits a sustained all-core load, so the
 heavy figure is a power ceiling, not a promise of indefinite full-speed operation.
 
@@ -91,9 +89,9 @@ from:
 | total system draw | pack power × η | exact on battery; **not observable on mains**, where the gauge sits in the charge branch and the charger feeds the regulator |
 | a source is connected | charge-input sense divider, `A0` (ADC1) | 47k/10k from the 12.6 V input; present above 3.0 V, absent below 2.5 V |
 | the source is steady or sagging | the same line, 60 s window | spread within 4 % of the median reads `steady` |
-| mains vs solar vs crank | **no** | one socket, one voltage; the OLED and telemetry say `steady`/`varying` rather than claim a type |
+| mains vs solar vs crank | **no** | one socket, one voltage; the telemetry says `steady`/`varying` rather than claim a type |
 | Pi per-rail current | Pi 5 PMIC (`vcgencmd pmic_read_adc`) | the basis for attributing draw to the Pi rather than the panel or the drive |
-| display backlight, NVMe, ESP32 | A/B bench runs + datasheets | the ESP32's floor is measurable directly: switch the Pi off and the INA219 reads what is left |
+| display backlight, NVMe | A/B bench runs + datasheets | switch the Pi off and the INA219 reads what is left |
 
 A current reading on the assembled Pi is **12.29 V, 91% charge, battery idle** (on external power).
 That is a state check, not a discharge run: it confirms the gauge and 3S pack are alive, not the

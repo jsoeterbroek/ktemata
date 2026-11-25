@@ -1,27 +1,26 @@
 ## Ktemata (R6 — Default Build)
 
-R6 is the default build. Two variants: 'R6' uses a perfboard with DC5521 charge management, and 'R6 PCH' uses the custom PCH carrier board with FireBeetle 2 integration. Both keep Wikipedia, maps and Gutenberg when power and networking are gone.
+R6 is the default build. Two variants: **R6** uses a perfboard with DC5521 charge management, and **R6 PCH** uses a custom power/charge carrier board. Both keep Wikipedia, maps and Gutenberg when power and networking are gone.
 
 ---
 
 ### R6 Perfboard Variant
 
-The base R6 variant uses a flat perfboard for cost-effectiveness and rapid iteration. The DC5521 charge IC manages the charging interface directly from the supplied USB-C lead, eliminating the need for a separate carrier board while maintaining the rugged Peli 1200 enclosure design.
+The base R6 variant uses a flat perfboard for cost-effectiveness and rapid iteration. The DC5521 charge path feeds the Waveshare UPS Module 3S directly, eliminating the need for a separate carrier board while maintaining the rugged Peli 1200 enclosure design.
 
 #### Target Hardware
 
 - **Host Case:** Peli 1200 (rugged, IP67-rated)
-- **Microcontroller:** FireBeetle 2 ESP32-UE (N16R2)
-- **Display:** Waveshare 7" DSI LCD
+- **Computer:** Raspberry Pi 5 (4 GB)
+- **Display:** Waveshare 7" DSI LCD (C)
 - **Keyboard:** Rii K06 Touch Keyboard
 - **Storage:** NVMe SSD
-- **Charging:** USB-C with DC5521 charge management
+- **Power:** Waveshare UPS Module 3S with three 18650 cells in 3S
 
 #### Features
 
-- FireBeetle 2 firmware for battery monitoring and system status
-- I²C OLED display for quick status checks
-- Integrated charge sense circuit using DC5521
+- Built-in Ktemata Admin at `:8081` for storage, library, power and AI
+- UPS INA219 telemetry read by the Pi
 - Wikipedia, maps, and Gutenberg content preservation
 - Offline library access without networking
 
@@ -29,34 +28,29 @@ The base R6 variant uses a flat perfboard for cost-effectiveness and rapid itera
 
 ### R6 PCH Variant
 
-The R6 PCH (Power/Communication Hub) variant uses a custom 63 × 66 mm two-layer carrier board that integrates the FireBeetle 2 ESP32-UE with charge management and I²C routing. This board provides a robust, socketed interface for easy board replacement and firmware updates.
+The R6 PCH (Power/Charge Hub) variant uses a custom 63 × 66 mm two-layer carrier board for the UPS Module 3S, charge input and sense routing. It does not carry a separate microcontroller or display.
 
 #### Target Hardware
 
 - **Host Case:** Peli 1200 (rugged, IP67-rated)
-- **Microcontroller:** FireBeetle 2 ESP32-UE (N16R2) via socketed J9/J10
-- **Display:** Waveshare 7" DSI LCD
+- **Computer:** Raspberry Pi 5 (4 GB)
+- **Display:** Waveshare 7" DSI LCD (C)
 - **Keyboard:** Rii K06 Touch Keyboard
 - **Storage:** NVMe SSD
-- **Charging:** USB-C with DC5521 charge management via UPS Module 3S
+- **Power:** UPS Module 3S with three 18650 cells
 
 #### Features
 
-- Socketed FireBeetle 2 integration for easy firmware updates
-- I²C bus routing to OLED and system components
-- Charge-sense divider (R2/R3/C1) for precise battery monitoring
 - UPS Module 3S (3S 2×4 configuration) with integrated protection
-- Dual FireBeetle 2 sockets for hot-swapping capability
-- Full I²C routing for status OLED and peripherals
+- Charge-input routing and 12.6 V / 2 A input
+- I²C routing for the UPS INA219
+- Modular carrier for power and charge connections
 
 #### Design Highlights
 
-The PCH carrier board provides a complete power and communication hub:
-
-- **Power Management:** DC5521 handles charge sense and management from the USB-C input
-- **I²C Integration:** Dedicated trace routing to OLED, status displays, and sensors
-- **Dual FireBeetle Support:** Two socketed FireBeetle 2 ESP32-UE chips enable hot-swapping and failover
-- **Modular Design:** Detachable modules allow for firmware upgrades without case modification
+- **Power Management:** 12.6 V charge input and UPS carrier
+- **I²C Integration:** INA219 routed to the Pi
+- **Modular Design:** the carrier is serviceable without opening the case
 
 ---
 
@@ -65,38 +59,30 @@ The PCH carrier board provides a complete power and communication hub:
 #### Basic Setup
 
 ```bash
-# Clone repository
-git clone https://github.com/<your-org>/ktemata.git
+git clone https://github.com/jsoeterbroek/ktemata.git
 cd ktemata
-
-# Install dependencies
 python3 -m venv .venv
 source .venv/bin/activate
-pip install kicad-cli openscad
-
-# Export the desired variant
-python3 cad/tools/export.py --variant R6
+pip install -r packages.txt
 ```
 
 #### Build Variants
 
-1. **R6 (Perfboard)** — Lower cost, faster iteration
-   - Simple 3-layer perfboard with DC5521 charge management
-   - No carrier board overhead
-   - Ideal for prototyping and early development
+1. **R6 (Perfboard)** — lower cost, faster iteration
+2. **R6 PCH** — custom power/charge carrier
 
-2. **R6 PCH** — Production-ready integration
-   - Custom carrier board with socketed FireBeetle 2
-   - Integrated I²C routing and charge management
-   - Production-grade design with failover capability
+```bash
+python3 cad/tools/export.py --variant R6_PERFBOARD
+python3 cad/tools/export.py --variant R6_PCH
+```
 
 ---
 
 ### Documentation
 
-- [`docs/R6.md`](docs/R6.md) — R6 variant hardware and CAD specifications
+- [`docs/R6.md`](docs/R6.md) — R6 hardware and CAD specifications
 - [`cad/kicad/r6/README.md`](cad/kicad/r6/README.md) — KiCad design rules and board documentation
-- [`work/scripts/check_r6.sh`](work/scripts/check_r6.sh) — Interference check script for R6 variants
+- [`work/scripts/check_r6.sh`](work/scripts/check_r6.sh) — interference check script for R6 variants
 
 ---
 
