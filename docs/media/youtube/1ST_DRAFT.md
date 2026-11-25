@@ -2,7 +2,7 @@
 
 **Working title:** *The Offline Library — knowledge that survives the internet*  
 **Target length:** 10–12 minutes  
-**Format:** voice-over + hands-only build footage, archival stills/animation and screen recordings. No music. No face on camera.  
+**Format:** voice-over + hands-only build footage, original/public-domain animation and screen recordings. No music. No face on camera. No copyrighted material.  
 **Status:** draft 1 for review; timings are targets, not locked.
 
 ## Original brief
@@ -60,7 +60,7 @@ Then, smaller beneath it:
 
 ### 0:50–2:40 — Knowledge is a chain of copies
 
-**[VISUAL]** Archival/animated sequence, slow and tactile: Greek papyrus and carved stone; a stylised Library of Alexandria; a monk’s hand copying a manuscript by candlelight; a printing press; a 19th-century scientific notebook; a stack of modern textbooks. Keep it quiet and physical — paper, ink, stone, dust. No glossy stock “cyber” imagery.
+**[VISUAL]** Original/public-domain sequence, slow and tactile: Greek papyrus and carved stone; a stylised Library of Alexandria; a monk’s hand copying a manuscript by candlelight; a printing press; a 19th-century scientific notebook; public-domain technical diagrams. Keep it quiet and physical — paper, ink, stone, dust. No glossy stock “cyber” imagery.
 
 **[VO]**
 > Knowledge has never survived by itself. It survives because someone copies it, carries it, and teaches it again.
@@ -206,13 +206,15 @@ Then, smaller beneath it:
 - **Real build footage, hands only:** case opening, tray/deck, UPS and cells, display/Pi stack, DSI/touch leads, keyboard, first boot, final closed case.
 - **Detail stills:** UPS Module 3S, INA219, 18650 cells with insulating rings, NVMe drive, display connector, case latches.
 - **Screen recordings:** admin `:8081` (storage, upload, index rebuild, power, AI index), Kiwix `:8080` (search, article, map/book), optional Ask box, terminal `ktemata-ai`.
-- **Archival/animation:** papyrus/stone, Library of Alexandria, manuscript copying, printing press, 19th-century science, textbooks. Use public-domain sources and a consistent paper/ink treatment.
+- **Original/public-domain animation:** papyrus/stone, Library of Alexandria, manuscript copying, printing press, 19th-century science, technical diagrams. Use only original artwork, public-domain or CC0 sources; no stock, film, TV or licensed stills.
 - **Diagrams:** power path, offline topology, four admin states. Build them as simple line animations; do not use glossy stock 3D.
 - **Closing graphics:** KTEMATA wordmark, Greek phrase, URL/GitHub card.
 
 ## Production notes
 
 - **No music.** Use room tone, latch clicks, keyboard, fan, drive and case handling. Keep the sound close and quiet.
+- **No copyrighted material.** No commercial music, film/TV clips, stock footage, stock photos, licensed maps, third-party logos or CC BY-SA content. Use only footage/photos you shot, original diagrams/animation, and public-domain or CC0 material. Product names may be spoken; do not frame third-party logos.
+- **Screen recordings:** show the project’s own admin UI and public-domain library content (for example a Gutenberg text). Do not display copyrighted book pages, maps or web content; a ZIM’s CC BY-SA text is still copyrighted.
 - **No face.** Hands, device and screen only.
 - **Pace:** let the build shots breathe. Cut on actions, not on every word. The script is a guide; do not read it like a list.
 - **Captions:** include on-screen numbers for power and runtime; keep them visible long enough to read.
@@ -224,6 +226,6 @@ Then, smaller beneath it:
 ## Open questions for review
 
 1. Do we have enough real R6 assembly footage for the 3½-minute build section, or do we need a dedicated shoot?
-2. Should the cultural-knowledge opening use licensed archival footage or original animation? Animation is safer and more consistent.
+2. The cultural-knowledge opening uses original animation plus public-domain/CC0 stills only; no licensed archival footage.
 3. Is the AI section staying in the main cut, or becoming a separate follow-up video?
 4. Final runtime target: 10 minutes (tighter) or 12 minutes (more build detail)?
