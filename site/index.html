@@ -56,7 +56,6 @@
     <dt>Charge</dt><dd>Mains, solar or axial-flux hand crank through a 3S regulator</dd>
     <dt>Content</dt><dd>Built-in Ktemata Admin; no separate management stack</dd>
     <dt>AI</dt><dd>Optional local document and ZIM search through Ollama and KiwixRAG</dd>
-    <dt>Hardware monitoring</dt><dd>ESP32 + 1.3&Prime; OLED for battery, time and storage status</dd>
     <dt>Time/date</dt><dd>DS3231 real-time clock with backup cell</dd>
     <dt>Inner case</dt><dd>Custom parametric R6 cassette, printable STLs</dd>
     <dt>Outer case</dt><dd>Peli 1200, IP67</dd>
@@ -67,9 +66,9 @@
     The whole project is based on the KISS principle — <strong>keep everything simple</strong>. The core
     is the Pi&nbsp;5, the 7&Prime; touch display, the keyboard, the UPS Module 3S with three
     18650 cells, the SSD and the real-time clock. Everything else has a job and nothing more: the
-    status OLED reads the pack with the Pi off, the Wi-Fi is a local access point with no uplink, and
-    charging is one sealed input. Extra boards, adapters and switches are another point of failure to
-    debug when nothing else works.
+    battery gauge is readable from the admin page, the Wi-Fi is a local access point with no uplink,
+    and charging is one sealed input. Extra boards, adapters and switches are another point of failure
+    to debug when nothing else works.
   </p>
 
   <h2>Explore</h2>
