@@ -8,8 +8,8 @@
 // One joint: four M3 countersunk screws down through the top face into the tray's four Ø8 bosses
 // (pattern shared with r6_tray.scad). Those four points sit outside the panel's 192.96 x 110.76
 // outline, so no screw ever passes through the display. The panel is held by its own four M3
-// inserts through the 3 mm pocket floor, entered from below once the deck is out - the same
-// service order r5 used.
+// inserts through the floor ring around a large central through-opening, entered from below once
+// the deck is out - the same service order r5 used.
 //
 // Coordinates: deck-local, y = 0 at the hinge edge, z = 0 at the underside (the plane that lands on
 // the bosses) and z = 13.5 at the visible top face. In the cassette the underside is at z 53, so the
@@ -18,12 +18,13 @@
 //
 // PRINT AS MODELLED: underside on the bed. The panel pocket, the two connector recesses, the
 // countersinks and the fan opening face upward; the lead slot and screw holes are through. The
-// full-height guard bars grow from the bed, so nothing needs support. The deck is a solid 13.5 mm
-// slab: a 3 mm skin would need a 190 mm ceiling over the pocket or a 57 mm unsupported rim over the
-// power band.
+// full-height guard bars grow from the bed, so nothing needs support. The deck keeps a full-thickness
+// frame outside the pocket; the 3 mm pocket-floor ring is printed on the bed, and the central opening
+// is cut through it.
 //
 // Fit prototype: the panel's insert depth, standoff-extension diameter and two lead exits are not
-// measured. The opening aids convection in the open operating posture; it is not matched to a fan curve.
+// measured. The large through-opening leaves the panel on a 60 mm side-rail frame and lets the Pi's
+// inner standoffs hang into the tray; the fan opening is a separate convection aid, not a fan curve.
 include <common.scad>
 
 // ---------------------------------------------------------------- tray interface (assembly)
@@ -44,24 +45,34 @@ R6D_BOSS      = [[9, 74], [9, 150], [224.5, 74], [224.5, 150]];
 
 // ---------------------------------------------------------------- panel
 R6D_PANEL     = [192.96, 110.76];         // Waveshare 7inch DSI LCD (C)
+R6D_PANEL_R   = 8;                        // panel corner radius (Waveshare drawing)
 R6D_PANEL_T   = 10.50;                    // glass to rear envelope
 R6D_PANEL_CLR = 0.35;                     // pocket wall clearance per side
 R6D_PANEL_C   = [116.75 - R6D_TRAY_X0 - R6D_CLR,
                  115.52 - R6D_TRAY_Y0 - R6D_CLR];   // 113.95 x 112.72, centred over the tray's well
 R6D_PANEL_X0  = R6D_PANEL_C[0] - R6D_PANEL[0]/2;
 R6D_PANEL_Y0  = R6D_PANEL_C[1] - R6D_PANEL[1]/2;
-// Measured panel-relative rear features from r5_lid_cover_waveshare_7in.scad. Neither pattern is
-// centred on the glass: the outer inserts and inner Pi standoffs are independent mounting interfaces.
+// Measured panel-relative rear features from r5_lid_cover_waveshare_7in.scad. The outer inserts are
+// not centred on the glass; the inner Pi standoffs sit in the through-opening and need no passages.
 R6D_PANEL_INSETS = [[34.42, 31.58], [160.67, 31.58],
                     [34.42, 97.07], [160.67, 97.07]];  // M3, 126.25 x 65.49 span
-R6D_PI_POSTS     = [[73.97, 32.43], [131.97, 32.43],
-                    [73.97, 81.43], [131.97, 81.43]];  // M2.5, 58 x 49 span
-R6D_PI_POST_D    = 6.5;                     // standoff-extension passage; measure the fitted hardware
 R6D_POCKET    = [R6D_PANEL[0] + 2*R6D_PANEL_CLR,
                  R6D_PANEL[1] + 2*R6D_PANEL_CLR];   // 193.66 x 111.46
+R6D_POCKET_R  = R6D_PANEL_R + R6D_PANEL_CLR;       // 8.35, follows the display corners
 
-// Panel leads: a through-slot in the 3 mm pocket floor, under the panel, near its hinge edge. The
-// DSI/touch tails drop straight into the tray volume where the Pi already hangs.
+// Large through-opening in the pocket floor. Margins are measured from the deck outline:
+// 60 mm side rails, 60 mm on the fan/connector side, 10 mm at the far edge. The display panel
+// bridges the opening and is still fixed by its four outer inserts, which sit outside it.
+R6D_OPEN_MARGIN_X      = 60;
+R6D_OPEN_MARGIN_TOP    = 60;   // fan, jack and switch edge (deck y = 0)
+R6D_OPEN_MARGIN_BOTTOM = 10;
+R6D_OPEN_X0 = R6D_OPEN_MARGIN_X;
+R6D_OPEN_X1 = R6D_W - R6D_OPEN_MARGIN_X;
+R6D_OPEN_Y0 = R6D_OPEN_MARGIN_TOP;
+R6D_OPEN_Y1 = R6D_L - R6D_OPEN_MARGIN_BOTTOM;
+
+// Panel leads: a slot in the 3 mm floor ring at the panel's hinge edge; it merges into the large
+// through-opening. The DSI/touch tails drop straight into the tray volume where the Pi already hangs.
 R6D_SLOT      = [34, 6];
 R6D_SLOT_Y    = 58;                       // 1 mm clear of the pocket edge at 56.99
 R6D_SLOT_CX   = R6D_PANEL_C[0];
@@ -113,10 +124,21 @@ for (p = R6D_PANEL_INSETS)
     assert(p[0] > R6D_SCREW/2 + 1 && p[0] < R6D_PANEL[0] - R6D_SCREW/2 - 1
            && p[1] > R6D_SCREW/2 + 1 && p[1] < R6D_PANEL[1] - R6D_SCREW/2 - 1,
            "a panel fixing screw would break out of the pocket floor");
-for (p = R6D_PI_POSTS)
-    assert(p[0] > R6D_PI_POST_D/2 + 1 && p[0] < R6D_PANEL[0] - R6D_PI_POST_D/2 - 1
-           && p[1] > R6D_PI_POST_D/2 + 1 && p[1] < R6D_PANEL[1] - R6D_PI_POST_D/2 - 1,
-           "a Pi standoff passage would break out of the pocket floor");
+// The Pi standoffs sit inside the large through-opening, so they no longer need passages
+// through a pocket floor.
+assert(R6D_OPEN_X0 > R6D_POCKET_X0 + 1 && R6D_OPEN_X1 < R6D_POCKET_X1 - 1
+       && R6D_OPEN_Y0 > R6D_POCKET_Y0 + 1 && R6D_OPEN_Y1 < R6D_POCKET_Y1 - 1,
+       "the through-opening must stay inside the display pocket");
+for (p = R6D_PANEL_INSETS) {
+    px = R6D_PANEL_X0 + p[0];
+    py = R6D_PANEL_Y0 + p[1];
+    assert(px < R6D_OPEN_X0 || px > R6D_OPEN_X1 || py < R6D_OPEN_Y0 || py > R6D_OPEN_Y1,
+           "a panel fixing insert would fall inside the through-opening");
+}
+for (b = R6D_BOSS)
+    assert(b[0] - R6D_TRAY_X0 - R6D_CLR < R6D_OPEN_X0
+           || b[0] - R6D_TRAY_X0 - R6D_CLR > R6D_OPEN_X1,
+           "a deck screw boss would fall inside the through-opening");
 assert(R6D_SLOT_Y > R6D_POCKET_Y0 && R6D_SLOT_Y + R6D_SLOT[1] < R6D_POCKET_Y1,
        "the panel lead slot must stay under the panel");
 assert(R6D_JACK[1] - R6D_RECESS/2 > 2 && R6D_SW[1] - R6D_RECESS/2 > 2,
@@ -167,11 +189,13 @@ module r6d_fan_grille() {
 module r6_deck() union() {
     difference() {
         linear_extrude(R6D_T) rrect(R6D_W, R6D_L, R6D_R);
-        // panel pocket, opening in the top face
+        // panel pocket, opening in the top face; corners follow the panel's R8
         translate([R6D_PANEL_C[0] - R6D_POCKET[0]/2,
                    R6D_PANEL_C[1] - R6D_POCKET[1]/2, R6D_BASE])
             linear_extrude(R6D_PANEL_T + 1)
-                rrect(R6D_POCKET[0], R6D_POCKET[1], 0.5);   // sharp enough for any panel corner radius
+                rrect(R6D_POCKET[0], R6D_POCKET[1], R6D_POCKET_R);
+        // large through-opening in the pocket floor, leaving the deck as a frame
+        r6d_box(R6D_OPEN_X0, R6D_OPEN_Y0, R6D_OPEN_X1, R6D_OPEN_Y1, -1, R6D_T + 2);
         // panel lead slot through the pocket floor
         r6d_box(R6D_SLOT_CX - R6D_SLOT[0]/2, R6D_SLOT_Y,
                 R6D_SLOT_CX + R6D_SLOT[0]/2, R6D_SLOT_Y + R6D_SLOT[1], -1, R6D_BASE + 2);
@@ -186,10 +210,6 @@ module r6_deck() union() {
         for (p = R6D_PANEL_INSETS)
             translate([R6D_PANEL_X0 + p[0], R6D_PANEL_Y0 + p[1], -1])
                 cylinder(d=R6D_SCREW, h=R6D_BASE + 2);
-        // 4 passages for the display's inner standoff extensions; the Pi bolts to them below the floor
-        for (p = R6D_PI_POSTS)
-            translate([R6D_PANEL_X0 + p[0], R6D_PANEL_Y0 + p[1], -1])
-                cylinder(d=R6D_PI_POST_D, h=R6D_BASE + 2);
         // charge jack and power switch: nut recess in the top face, bore through
         translate([R6D_JACK[0], R6D_JACK[1], R6D_T - R6D_RECESS_D])
             cylinder(d=R6D_RECESS, h=R6D_RECESS_D + 1);
